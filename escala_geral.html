@@ -208,7 +208,7 @@
                 </div>
             </section>
 
-            <!-- ESTATÍSTICAS -->
+            <!-- ESTATÍSTICAS (NOVO LAYOUT INTERATIVO E COM SCROLL) -->
             <section id="sec-estatisticas" class="tab-content hidden animate-fade-in flex-1 flex flex-col min-h-0 min-w-0 w-full h-full">
                 <!-- Cabeçalho com Busca -->
                 <div class="mb-4 md:mb-6 shrink-0 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-3 md:gap-6 px-1">
@@ -370,6 +370,52 @@
         // ==========================================
         // INICIALIZAÇÃO E FIREBASE
         // ==========================================
+        function normalizeData(data) {
+            let needsSave = false;
+            const keyMap = {
+                "TRANSMISSÃO": "Transmissão",
+                "OP. CÂMERA": "Op. Câmera",
+                "FOTOGRAFIA": "Fotografia"
+            };
+
+            if (data.members) {
+                for (let oldKey in keyMap) {
+                    if (data.members[oldKey]) {
+                        data.members[keyMap[oldKey]] = data.members[oldKey];
+                        delete data.members[oldKey];
+                        needsSave = true;
+                    }
+                }
+            }
+
+            if (data.schedules) {
+                data.schedules.forEach(esc => {
+                    if (esc.assignments) {
+                        for (let oldKey in keyMap) {
+                            if (esc.assignments[oldKey]) {
+                                esc.assignments[keyMap[oldKey]] = esc.assignments[oldKey];
+                                delete esc.assignments[oldKey];
+                                needsSave = true;
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (data.substitutions) {
+                data.substitutions.forEach(sub => {
+                    for (let oldKey in keyMap) {
+                        if (sub.role === oldKey) {
+                            sub.role = keyMap[oldKey];
+                            needsSave = true;
+                        }
+                    }
+                });
+            }
+
+            return { normalizedData: data, needsSave };
+        }
+
         async function startApp() {
             try { await signInAnonymously(auth); } catch (err) { console.warn("Modo offline"); }
             initFirebaseConnection();
@@ -380,7 +426,13 @@
             const docRef = doc(db, "app_ipcvt", "escala_geral_dados");
             onSnapshot(docRef, (docSnap) => {
                 if (docSnap.exists()) {
-                    appState = docSnap.data();
+                    const { normalizedData, needsSave } = normalizeData(docSnap.data());
+                    appState = normalizedData;
+                    
+                    if (needsSave) {
+                        saveStateToFirebase();
+                    }
+
                     if (!isFirebaseConnected) {
                         isFirebaseConnected = true;
                         document.getElementById('loading-data').classList.add('hidden');
@@ -452,7 +504,7 @@
                 "Tenor": ["Hudson", "Pastor", "João Victor", "Jean Lucas"], "Violão": ["Guilherme", "Pastor", "Alexandre", "Jean Lucas"],
                 "Guitarra": ["Allysson", "Germano", "Nilson"], "Baixo": ["Lorran", "João Victor", "Angelo"],
                 "Bateria": ["Jean Lucas", "Flávio", "Pedro"], "Piano": ["Hudson"], "Violino": ["Isadora"],
-                "Transmissão": ["Erick", "Lucas", "Kauã", "Samuel"], "OP. CÂMERA": ["Lucas", "Manuella", "Mariana"],
+                "Transmissão": ["Erick", "Lucas", "Kauã", "Samuel"], "Op. Câmera": ["Lucas", "Manuella", "Mariana"],
                 "Fotografia": ["Mariana", "Arlete", "Manuela", "Gabi", "Victor"],
                 "Op. Som": [], "Projeção": [], "Seleção de Repertório": ["João Victor", "Liliane"]
             };
@@ -486,7 +538,6 @@
                 closeAuthModal(); 
                 updateAuthUI();
                 
-                // Redirecionamento instantâneo
                 if (pendingAction === 'switch_tab') proceedSwitchTab(pendingTab);
                 else if (pendingAction === 'edit_escala') renderEscalas(); 
                 else refreshCurrentTab(); 
@@ -555,17 +606,17 @@
         }
 
         // ==========================================
-        // RENDERIZAÇÃO: ESCALAS (AGORA COM BORDAS BRANCAS E CONTRASTE)
+        // RENDERIZAÇÃO: ESCALAS 
         // ==========================================
         function renderEscalas() {
             const thead = document.getElementById('escala-table-head');
             
-            let thHTML = `<tr class="text-slate-600 text-[9px] md:text-[10px] uppercase tracking-widest bg-slate-200 shadow-md">
-                            <th class="p-2 md:p-4 font-black sticky top-0 left-0 bg-slate-200 z-[60] w-[65px] min-w-[65px] md:w-[112px] md:min-w-[112px] border-2 border-white text-center md:text-left shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Data</th>
-                            <th class="p-1 md:p-4 font-black sticky top-0 left-[65px] md:left-[112px] bg-slate-200 z-[60] w-[35px] min-w-[35px] md:w-[64px] md:min-w-[64px] border-2 border-white text-center shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Dom</th>`;
+            let thHTML = `<tr class="text-slate-600 bg-slate-200 shadow-md">
+                            <th class="p-2 md:p-4 font-black sticky top-0 left-0 bg-slate-200 z-[60] w-[65px] min-w-[65px] md:w-[112px] md:min-w-[112px] border-2 border-white text-center md:text-left shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-[9px] md:text-[10px] uppercase tracking-widest">Data</th>
+                            <th class="p-1 md:p-4 font-black sticky top-0 left-[65px] md:left-[112px] bg-slate-200 z-[60] w-[35px] min-w-[35px] md:w-[64px] md:min-w-[64px] border-2 border-white text-center shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-[9px] md:text-[10px] uppercase tracking-widest">Dom</th>`;
             COLUMNS_ORDER.forEach(col => {
                 const dept = DEPARTMENTS[col];
-                thHTML += `<th class="p-2 md:p-4 font-black sticky top-0 z-[50] min-w-[110px] md:min-w-[160px] border-2 border-white ${DEPT_COLORS[dept].header}">${col}</th>`;
+                thHTML += `<th class="p-2 md:p-4 font-black sticky top-0 z-[50] min-w-[110px] md:min-w-[160px] border-2 border-white text-[10px] md:text-[13px] ${DEPT_COLORS[dept].header}">${col}</th>`;
             });
             thHTML += `</tr>`;
             thead.innerHTML = thHTML;
@@ -582,7 +633,6 @@
             }
 
             filteredSchedules.forEach((esc, index) => {
-                // Escurecemos os backgrounds para a grade branca brilhar
                 const rowBg = index % 2 === 0 ? 'bg-slate-100' : 'bg-slate-200/50';
                 const tr = document.createElement('tr');
                 tr.className = `${rowBg} hover:bg-presb-gold/10 transition-colors`;
@@ -689,7 +739,7 @@
         }
 
         // ==========================================
-        // SUBSTITUIÇÕES (BORDAS BRANCAS)
+        // SUBSTITUIÇÕES
         // ==========================================
         function updateAbsentPerson() {
             const date = document.getElementById('sub-data').value;
@@ -765,7 +815,7 @@
         }
 
         // ==========================================
-        // ESTATÍSTICAS (COM ORDENAÇÃO INTERATIVA, MENOR FONTE E GRADES BRANCAS)
+        // ESTATÍSTICAS
         // ==========================================
         function handleSort(column) {
             if (statsSort.column === column) {
@@ -801,25 +851,16 @@
                 stats.push({ nome, esperado, faltas, extras, totalReal, percentual: parseFloat(percentual) });
             });
 
-            // Filtro da barra de pesquisa interativa
             const searchTerm = document.getElementById('search-stats')?.value.toLowerCase() || '';
-            if (searchTerm) {
-                stats = stats.filter(st => st.nome.toLowerCase().includes(searchTerm));
-            }
+            if (searchTerm) stats = stats.filter(st => st.nome.toLowerCase().includes(searchTerm));
 
-            // Lógica de Ordenação
             stats.sort((a, b) => {
                 let valA = a[statsSort.column];
                 let valB = b[statsSort.column];
-                
-                if (typeof valA === 'string') {
-                    return statsSort.direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
-                } else {
-                    return statsSort.direction === 'asc' ? valA - valB : valB - valA;
-                }
+                if (typeof valA === 'string') return statsSort.direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                else return statsSort.direction === 'asc' ? valA - valB : valB - valA;
             });
 
-            // Renderiza o Cabeçalho Dinâmico
             const thead = document.getElementById('estatisticas-table-head');
             const getIcon = (col) => {
                 if (statsSort.column !== col) return `<i class="ph-bold ph-caret-up text-transparent group-hover:text-slate-400"></i>`;
