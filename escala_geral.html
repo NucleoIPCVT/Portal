@@ -195,7 +195,7 @@
                         </form>
                     </div>
 
-                    <!-- Card 2: Relatório Histórico c/ Scrollbars -->
+                    <!-- Card 2: Relatório Histórico c/ Scrollbars e Ordenadores -->
                     <div class="w-full lg:w-2/3 bg-slate-100 rounded-[1.5rem] md:rounded-[2rem] shadow-xl border-2 border-white flex flex-col shrink-0 h-[450px] lg:h-full lg:min-h-0">
                         <div class="p-4 md:p-6 border-b-2 border-white bg-slate-200 flex justify-between items-center shrink-0">
                             <h3 class="font-serif font-bold text-presb-green text-sm md:text-base">Relatório de Registros</h3>
@@ -206,17 +206,8 @@
                         </div>
                         <div class="flex-1 overflow-auto table-container bg-slate-50 relative">
                             <table class="w-full text-left whitespace-nowrap border-collapse relative">
-                                <thead class="sticky top-0 z-[50]">
-                                    <tr class="bg-slate-200 text-slate-600 text-[9px] md:text-[10px] font-bold uppercase tracking-widest shadow-sm">
-                                        <th class="p-3 md:p-4 border-2 border-white text-center w-12">
-                                            <input type="checkbox" id="selectAllSubs" onchange="toggleAllSubs(this.checked)" class="w-4 h-4 accent-presb-gold cursor-pointer">
-                                        </th>
-                                        <th class="p-3 md:p-4 border-2 border-white">Data/Turno</th>
-                                        <th class="p-3 md:p-4 border-2 border-white">Função</th>
-                                        <th class="p-3 md:p-4 text-red-600 border-2 border-white">Faltou</th>
-                                        <th class="p-3 md:p-4 text-emerald-700 border-2 border-white">Substituiu</th>
-                                        <th class="p-3 md:p-4 border-2 border-white">Motivo</th>
-                                    </tr>
+                                <thead class="sticky top-0 z-[50]" id="substituicoes-table-head">
+                                    <!-- Cabecalho gerado via JS para suporte a ordenação -->
                                 </thead>
                                 <tbody id="substituicoes-table-body" class="text-[10px] md:text-xs font-medium text-slate-700 bg-white"></tbody>
                             </table>
@@ -359,8 +350,9 @@
         let pendingAction = null; 
         let pendingTab = null;
         
-        // Novo estado de ordenação para as Estatísticas
+        // Estados de ordenação
         let statsSort = { column: 'percentual', direction: 'desc' };
+        let subsSort = { column: 'date', direction: 'desc' }; // Ordenação das Trocas
 
         const COLUMNS_ORDER = [
             "Seleção de Repertório", "Soprano", "Contralto", "Tenor", 
@@ -375,7 +367,6 @@
             "Op. Som": "Técnica", "Projeção": "Técnica"
         };
 
-        // Reduzimos as opacidades da tabela de escala e removemos as bordas coloridas pra forçar o border-white
         const DEPT_COLORS = {
             "Louvor": { header: "bg-emerald-100 text-emerald-900", cellAlt1: "bg-emerald-50/50", cellAlt2: "bg-emerald-100/50" },
             "Mídia": { header: "bg-blue-100 text-blue-900", cellAlt1: "bg-blue-50/50", cellAlt2: "bg-blue-100/50" },
@@ -384,7 +375,6 @@
 
         let appState = { members: {}, schedules: [], substitutions: [] };
         
-        // Novo estado para seleção em massa nas Trocas
         let selectedSubs = [];
 
         // ==========================================
@@ -759,7 +749,7 @@
         }
 
         // ==========================================
-        // SUBSTITUIÇÕES
+        // SUBSTITUIÇÕES E ORDENAÇÃO DE REGISTOS
         // ==========================================
         function updateAbsentPerson() {
             const date = document.getElementById('sub-data').value;
@@ -799,13 +789,6 @@
             appState.substitutions.push(payload);
             document.getElementById('form-substituicao').reset();
             updateAbsentPerson(); saveStateToFirebase(); renderSubstituicoes(); showToast('Salvo!');
-        }
-
-        function deleteSubstituicao(subId) {
-            openConfirmModal('Remover', 'Deseja excluir?', () => {
-                appState.substitutions = appState.substitutions.filter(s => String(s.id) !== String(subId));
-                saveStateToFirebase(); renderSubstituicoes(); showToast('Excluído.');
-            });
         }
 
         // ==========================================
@@ -852,11 +835,22 @@
             openConfirmModal('Excluir Registros', `Deseja excluir ${selectedSubs.length} registro(s) selecionado(s)?`, () => {
                 appState.substitutions = appState.substitutions.filter(s => !selectedSubs.includes(String(s.id)));
                 selectedSubs = [];
-                document.getElementById('selectAllSubs').checked = false;
+                const selectAll = document.getElementById('selectAllSubs');
+                if(selectAll) selectAll.checked = false;
                 saveStateToFirebase(); 
                 renderSubstituicoes(); 
                 showToast('Excluídos com sucesso.');
             });
+        }
+        
+        function handleSortSubs(column) {
+            if (subsSort.column === column) {
+                subsSort.direction = subsSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                subsSort.column = column;
+                subsSort.direction = column === 'date' ? 'desc' : 'asc';
+            }
+            renderSubstituicoes();
         }
 
         function renderSubstituicoes() {
@@ -865,8 +859,52 @@
             document.getElementById('sub-funcao').innerHTML = '<option value="">Função...</option>' + COLUMNS_ORDER.map(r => `<option value="${r}">${r}</option>`).join('');
             document.getElementById('sub-substituto').innerHTML = '<option value="">Substituto...</option>' + uniqueMembers.map(m => `<option value="${m}">${m}</option>`).join('');
 
+            const thead = document.getElementById('substituicoes-table-head');
+            const getIcon = (col) => {
+                if (subsSort.column !== col) return `<i class="ph-bold ph-caret-up text-transparent group-hover:text-slate-300"></i>`;
+                return subsSort.direction === 'asc' ? `<i class="ph-bold ph-caret-up text-presb-green"></i>` : `<i class="ph-bold ph-caret-down text-presb-green"></i>`;
+            };
+
+            let subsArray = [...(appState.substitutions || [])];
+            
+            // Ordenação dos Registos
+            subsArray.sort((a, b) => {
+                let valA = a[subsSort.column] || '';
+                let valB = b[subsSort.column] || '';
+                
+                if (subsSort.column === 'date') {
+                    let dateA = new Date(valA).getTime();
+                    let dateB = new Date(valB).getTime();
+                    return subsSort.direction === 'asc' ? dateA - dateB : dateB - dateA;
+                } else {
+                    return subsSort.direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                }
+            });
+            
+            const isAllSelected = subsArray.length > 0 && selectedSubs.length === subsArray.length;
+
+            thead.innerHTML = `
+                <tr class="bg-slate-200 text-slate-600 text-[9px] md:text-[10px] font-bold uppercase tracking-widest shadow-sm">
+                    <th class="p-3 md:p-4 border-2 border-white text-center w-12">
+                        <input type="checkbox" id="selectAllSubs" onchange="toggleAllSubs(this.checked)" class="w-4 h-4 accent-presb-gold cursor-pointer" ${isAllSelected ? 'checked' : ''}>
+                    </th>
+                    <th class="p-3 md:p-4 border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" onclick="handleSortSubs('date')">
+                        <div class="flex items-center gap-1">Data/Turno ${getIcon('date')}</div>
+                    </th>
+                    <th class="p-3 md:p-4 border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" onclick="handleSortSubs('role')">
+                        <div class="flex items-center gap-1">Função ${getIcon('role')}</div>
+                    </th>
+                    <th class="p-3 md:p-4 text-red-600 border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" onclick="handleSortSubs('absent')">
+                        <div class="flex items-center gap-1">Faltou ${getIcon('absent')}</div>
+                    </th>
+                    <th class="p-3 md:p-4 text-emerald-700 border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" onclick="handleSortSubs('substitute')">
+                        <div class="flex items-center gap-1">Substituiu ${getIcon('substitute')}</div>
+                    </th>
+                    <th class="p-3 md:p-4 border-2 border-white">Motivo</th>
+                </tr>
+            `;
+
             const tbody = document.getElementById('substituicoes-table-body');
-            const subsArray = [...(appState.substitutions || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
 
             if(subsArray.length === 0) { 
                 tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400 border-2 border-white">Nenhum registro encontrado</td></tr>`; 
@@ -1069,14 +1107,29 @@
             setTimeout(() => { modal.classList.add('hidden'); if(confirmed && confirmActionCallback) confirmActionCallback(); confirmActionCallback = null; }, 300);
         }
 
-        window.startApp = startApp; window.attemptSwitchTab = attemptSwitchTab; window.requestAuth = requestAuth;
-        window.handleAuthSubmit = handleAuthSubmit; window.closeAuthModal = closeAuthModal; window.logoutAdmin = logoutAdmin;
-        window.renderEscalas = renderEscalas; window.exportarPDF = exportarPDF; window.updateAssignment = updateAssignment;
-        window.updateAbsentPerson = updateAbsentPerson; window.handleSubstituicao = handleSubstituicao;
-        window.deleteSubstituicao = deleteSubstituicao; window.handleAddMember = handleAddMember; window.deleteMember = deleteMember;
+        // ==========================================
+        // EXPORTAÇÃO GLOBAL DE FUNÇÕES
+        // ==========================================
+        window.startApp = startApp; 
+        window.attemptSwitchTab = attemptSwitchTab; 
+        window.requestAuth = requestAuth;
+        window.handleAuthSubmit = handleAuthSubmit; 
+        window.closeAuthModal = closeAuthModal; 
+        window.logoutAdmin = logoutAdmin;
+        window.renderEscalas = renderEscalas; 
+        window.exportarPDF = exportarPDF; 
+        window.updateAssignment = updateAssignment;
+        window.updateAbsentPerson = updateAbsentPerson; 
+        window.handleSubstituicao = handleSubstituicao;
+        window.handleAddMember = handleAddMember; 
+        window.deleteMember = deleteMember;
         window.closeConfirmModal = closeConfirmModal;
-        window.renderEstatisticas = renderEstatisticas; window.handleSort = handleSort;
-        window.toggleSubSelection = toggleSubSelection; window.toggleAllSubs = toggleAllSubs; window.deleteSelectedSubs = deleteSelectedSubs;
+        window.renderEstatisticas = renderEstatisticas; 
+        window.handleSort = handleSort;
+        window.handleSortSubs = handleSortSubs;
+        window.toggleSubSelection = toggleSubSelection; 
+        window.toggleAllSubs = toggleAllSubs; 
+        window.deleteSelectedSubs = deleteSelectedSubs;
 
         window.onload = startApp;
     </script>
