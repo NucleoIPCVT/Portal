@@ -880,7 +880,7 @@ Letra completa: "${song.lyrics}"`;
         
         window.loginAdmin = (e) => {
             e.preventDefault();
-            if (document.getElementById('admin-password').value === '123') { state.isAdminAuthenticated = true; }
+            if (document.getElementById('admin-password').value === 'Pr3sbit3ri4n4') { state.isAdminAuthenticated = true; }
             else { document.getElementById('auth-error').classList.remove('hidden'); }
             render();
         };
@@ -930,7 +930,7 @@ Letra completa: "${song.lyrics}"`;
         window.closeNewPeriodModal = () => { state.modals.cycle.isOpen = false; render(); };
         
         window.handleCycleModalNext = () => {
-            if (document.getElementById('cycle-password-input').value === '123') { state.modals.cycle.step = 2; state.modals.cycle.error = false; }
+            if (document.getElementById('cycle-password-input').value === 'Pr3sbit3ri4n4') { state.modals.cycle.step = 2; state.modals.cycle.error = false; }
             else { state.modals.cycle.error = true; }
             render();
         };
