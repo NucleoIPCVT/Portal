@@ -90,7 +90,7 @@
             <div id="campaigns-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
         </div>
 
-        <!-- ================= FORMULÁRIO (CRIAR) ================= -->
+        <!-- ================= FORMULÁRIO (CRIAR/EDITAR) ================= -->
         <div id="view-form" class="max-w-3xl mx-auto bg-white p-8 md:p-10 rounded-[3rem] shadow-xl border border-slate-100 fade-in hidden">
             <button onclick="window.switchView('list')" class="flex items-center gap-2 text-slate-400 hover:text-presb-green font-bold text-[10px] uppercase tracking-widest mb-8 transition-colors">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar
@@ -112,7 +112,7 @@
                     </div>
                 </div>
 
-                <div class="bg-slate-50 p-6 rounded-[2rem] border border-slate-200 space-y-6 mt-8">
+                <div id="type-mode-section" class="bg-slate-50 p-6 rounded-[2rem] border border-slate-200 space-y-6 mt-8 transition-opacity duration-300">
                     <h3 class="font-bold font-serif text-presb-green flex items-center gap-2 text-lg"><i data-lucide="target" class="w-5 h-5 text-presb-gold"></i> Formato da Arrecadação</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <label id="lbl-type-finance" class="cursor-pointer border-2 p-5 rounded-2xl flex items-start gap-3 transition-all">
@@ -134,7 +134,7 @@
 
                     <div class="pt-2">
                         <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Modo de Oferta</label>
-                        <select id="input-mode" onchange="window.handleModeChange()" class="w-full px-5 py-4 border border-slate-200 rounded-2xl outline-none bg-white focus:ring-2 focus:ring-presb-gold/50 font-medium">
+                        <select id="input-mode" onchange="window.handleModeChange()" class="w-full px-5 py-4 border border-slate-200 rounded-2xl outline-none bg-white focus:ring-2 focus:ring-presb-gold/50 font-medium disabled:opacity-50">
                             <option value="open">Valor Livre</option>
                             <option value="fixed">Cotas Fixas</option>
                         </select>
@@ -197,6 +197,9 @@
                     <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar
                 </button>
                 <div class="flex gap-3 w-full sm:w-auto">
+                    <button onclick="window.requireAuth('edit')" class="flex-1 sm:flex-none flex items-center justify-center gap-2 text-presb-dark bg-presb-gold/20 hover:bg-presb-gold/40 px-5 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-colors">
+                        <i data-lucide="pencil" class="w-4 h-4"></i> <span class="hidden sm:inline">Editar</span>
+                    </button>
                     <button onclick="window.requireAuth('delete')" class="flex-1 sm:flex-none flex items-center justify-center gap-2 text-red-600 bg-red-50 hover:bg-red-100 px-5 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-colors">
                         <i data-lucide="trash-2" class="w-4 h-4"></i> <span class="hidden sm:inline">Excluir</span>
                     </button>
@@ -314,6 +317,7 @@
         let selectedCampaign = null; 
         let pendingAction = null; 
         let formItemsNeeded = [];
+        let editingCampaignId = null; // Controle do modo de Edição
 
         window.formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
 
@@ -369,9 +373,18 @@
                 document.getElementById('view-form').classList.remove('hidden');
                 document.getElementById('nav-btn-form').classList.replace('border-transparent', 'border-presb-gold');
                 document.getElementById('nav-btn-form').classList.add('text-presb-gold');
-                formItemsNeeded = [];
-                document.getElementById('campaign-form').reset();
-                window.handleTypeChange();
+                
+                // Se NÃO for modo de edição, reseta o formulário
+                if (!editingCampaignId) {
+                    formItemsNeeded = [];
+                    document.getElementById('campaign-form').reset();
+                    document.getElementById('form-title').innerText = "Cadastrar Nova Intera";
+                    document.getElementById('btn-form-submit').innerText = "Publicar Intera";
+                    
+                    // Libera as opções de formato de arrecadação
+                    document.getElementById('type-mode-section').classList.remove('opacity-50', 'pointer-events-none');
+                    window.handleTypeChange();
+                }
             } else if (viewName === 'detail') {
                 document.getElementById('view-detail').classList.remove('hidden');
                 renderDetail();
@@ -395,22 +408,70 @@
             e.preventDefault();
             if (document.getElementById('auth-password').value === '123') {
                 window.closeAuthModal();
-                if (pendingAction === 'create') { window.switchView('form'); }
-                else if (pendingAction === 'delete') { window.deleteCampaign(selectedCampaign.id); }
+                if (pendingAction === 'create') { 
+                    editingCampaignId = null; // Garante que é criação
+                    window.switchView('form'); 
+                } else if (pendingAction === 'edit') {
+                    window.openEditForm();
+                } else if (pendingAction === 'delete') { 
+                    window.deleteCampaign(selectedCampaign.id); 
+                }
             } else { 
                 document.getElementById('auth-error').classList.remove('hidden'); 
             }
         };
 
         // Lógica do Form
+        window.openEditForm = function() {
+            editingCampaignId = selectedCampaign.id;
+            
+            // Popula as informações básicas
+            document.getElementById('input-title').value = selectedCampaign.title;
+            document.getElementById('input-desc').value = selectedCampaign.description;
+            
+            // Define o tipo e modo de oferta (mas bloqueia a alteração pra evitar bugs nos dados de contribuição)
+            const typeRadios = document.querySelectorAll('input[name="type"]');
+            typeRadios.forEach(r => r.checked = (r.value === selectedCampaign.type));
+            
+            // Atualiza a UI para o formato correto
+            window.handleTypeChange();
+            
+            document.getElementById('input-mode').value = selectedCampaign.mode;
+            window.handleModeChange();
+            
+            // Trava as opções principais
+            document.getElementById('type-mode-section').classList.add('opacity-50', 'pointer-events-none');
+            
+            // Popula os detalhes baseados no tipo
+            if (selectedCampaign.type === 'finance') {
+                document.getElementById('input-goal').value = selectedCampaign.goal || '';
+                document.getElementById('input-pixkey').value = selectedCampaign.pixKey || '';
+                document.getElementById('input-pixname').value = selectedCampaign.pixName || '';
+                if (selectedCampaign.mode === 'fixed') {
+                    document.getElementById('input-quota').value = selectedCampaign.quotaValue || '';
+                }
+            } else if (selectedCampaign.type === 'item' && selectedCampaign.mode === 'fixed') {
+                // Faz uma cópia da lista de itens para não alterar o banco antes de clicar em salvar
+                formItemsNeeded = JSON.parse(JSON.stringify(selectedCampaign.itemsNeeded || []));
+                renderFormItems();
+            }
+            
+            document.getElementById('form-title').innerText = "Editar Intera";
+            document.getElementById('btn-form-submit').innerText = "Salvar Alterações";
+            
+            window.switchView('form');
+        };
+
         window.handleTypeChange = function() {
             const type = document.querySelector('input[name="type"]:checked')?.value || 'finance';
             const modeSelect = document.getElementById('input-mode');
             
-            // Só recria as opções se o TIPO (Dinheiro/Item) mudar
-            modeSelect.innerHTML = type === 'finance' 
-                ? `<option value="open">Valor Livre</option><option value="fixed">Cotas Fixas</option>` 
-                : `<option value="open">Oferta Livre</option><option value="fixed">Lista Pré-definida</option>`;
+            // Só recria as opções se o TIPO (Dinheiro/Item) mudar e não for edição
+            if (!editingCampaignId) {
+                modeSelect.innerHTML = type === 'finance' 
+                    ? `<option value="open">Valor Livre</option><option value="fixed">Cotas Fixas</option>` 
+                    : `<option value="open">Oferta Livre</option><option value="fixed">Lista Pré-definida</option>`;
+            }
             
             document.getElementById('lbl-type-finance').className = type === 'finance' ? 'cursor-pointer border-2 p-5 rounded-2xl flex items-start gap-3 transition-all border-presb-green bg-presb-green/5' : 'cursor-pointer border-2 p-5 rounded-2xl flex items-start gap-3 transition-all border-slate-200 bg-white hover:border-presb-gold/50';
             document.getElementById('lbl-type-item').className = type === 'item' ? 'cursor-pointer border-2 p-5 rounded-2xl flex items-start gap-3 transition-all border-presb-gold bg-presb-gold/10' : 'cursor-pointer border-2 p-5 rounded-2xl flex items-start gap-3 transition-all border-slate-200 bg-white hover:border-presb-green/30';
@@ -450,7 +511,7 @@
             const list = document.getElementById('form-items-list');
             list.innerHTML = formItemsNeeded.map(i => `
                 <li class="flex justify-between items-center py-2 text-sm">
-                    <span class="font-bold text-slate-700">${i.name} (x${i.needed})</span>
+                    <span class="font-bold text-slate-700">${i.name} (x${i.needed}) ${i.pledged > 0 ? `<span class="text-[10px] text-emerald-600 bg-emerald-50 px-2 rounded-md ml-2">Já doaram ${i.pledged}</span>` : ''}</span>
                     <button type="button" onclick="window.removeFormItem('${i.id}')" class="text-red-500 hover:text-red-700 font-bold"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                 </li>
             `).join('');
@@ -463,28 +524,49 @@
             const type = document.querySelector('input[name="type"]:checked').value;
             const mode = document.getElementById('input-mode').value;
             
-            let newCamp = {
-                id: Date.now(),
-                type, mode,
+            let campData = {
                 title: document.getElementById('input-title').value,
                 description: document.getElementById('input-desc').value,
-                contributors: []
             };
 
+            // Captura os dados com base no tipo
             if (type === 'finance') {
-                newCamp.goal = parseFloat(document.getElementById('input-goal').value);
-                newCamp.raised = 0;
-                newCamp.pixKey = document.getElementById('input-pixkey').value;
-                newCamp.pixName = document.getElementById('input-pixname').value;
-                if(mode === 'fixed') newCamp.quotaValue = parseFloat(document.getElementById('input-quota').value);
+                campData.goal = parseFloat(document.getElementById('input-goal').value);
+                campData.pixKey = document.getElementById('input-pixkey').value;
+                campData.pixName = document.getElementById('input-pixname').value;
+                if(mode === 'fixed') campData.quotaValue = parseFloat(document.getElementById('input-quota').value);
             } else if (type === 'item' && mode === 'fixed') {
                 if(formItemsNeeded.length === 0) return alert("Adicione itens à lista!");
-                newCamp.itemsNeeded = [...formItemsNeeded];
+                campData.itemsNeeded = [...formItemsNeeded];
             }
 
-            campaigns.push(newCamp);
+            if (editingCampaignId) {
+                // Modo Edição: Atualiza os dados sem apagar as doações (raised e contributors)
+                const index = campaigns.findIndex(c => c.id === editingCampaignId);
+                if (index !== -1) {
+                    campaigns[index] = { ...campaigns[index], ...campData };
+                }
+            } else {
+                // Modo Criação: Prepara os blocos primários
+                campData.id = Date.now();
+                campData.type = type;
+                campData.mode = mode;
+                campData.contributors = [];
+                if (type === 'finance') campData.raised = 0;
+                
+                campaigns.push(campData);
+            }
+
             saveStateToFirebase();
-            window.switchView('list');
+            
+            // Retorna para a tela de visualização da campanha caso seja edição
+            if (editingCampaignId) {
+                selectedCampaign = campaigns.find(c => c.id === editingCampaignId);
+                editingCampaignId = null;
+                window.switchView('detail');
+            } else {
+                window.switchView('list');
+            }
         };
 
         window.deleteCampaign = function(id) {
