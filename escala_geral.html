@@ -149,26 +149,31 @@
             </section>
 
             <!-- SUBSTITUIÇÕES -->
-            <section id="sec-substituicoes" class="tab-content hidden animate-fade-in flex-1 flex-col overflow-y-auto px-1 md:pr-2">
-                <div class="mb-6 md:mb-10 shrink-0">
+            <section id="sec-substituicoes" class="tab-content hidden animate-fade-in flex-1 flex-col overflow-y-auto lg:overflow-hidden min-h-0 px-1 md:pr-2">
+                <div class="mb-4 md:mb-6 shrink-0">
                     <h2 class="text-2xl md:text-4xl font-bold text-presb-green font-serif tracking-tight">Trocas e Faltas</h2>
-                    <p class="text-slate-500 text-[10px] md:text-xs mt-1 md:mt-2 font-medium uppercase tracking-widest italic">Gestão de imprevistos.</p>
+                    <p class="text-slate-500 text-[10px] md:text-xs mt-1 md:mt-2 font-medium uppercase tracking-widest italic">Preenchimento e relatório de imprevistos.</p>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-                    <div class="bg-white p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] shadow-xl border border-slate-100 lg:col-span-1 h-fit">
-                        <form id="form-substituicao" onsubmit="handleSubstituicao(event)" class="space-y-4 md:space-y-5">
+                <div class="flex-1 flex flex-col lg:flex-row gap-6 md:gap-8 min-h-0 pb-4 lg:pb-0">
+                    
+                    <!-- Card 1: Formulário de Preenchimento -->
+                    <div class="w-full lg:w-1/3 bg-white p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] shadow-xl border border-slate-100 flex flex-col shrink-0 h-fit lg:h-full lg:overflow-y-auto table-container">
+                        <h3 class="font-serif font-bold text-lg mb-4 md:mb-6 flex items-center gap-2 text-presb-green border-b border-slate-100 pb-3 md:pb-4 shrink-0">
+                            <i class="ph-fill ph-note-pencil text-presb-gold"></i> Preenchimento
+                        </h3>
+                        <form id="form-substituicao" onsubmit="handleSubstituicao(event)" class="space-y-4 md:space-y-5 overflow-y-visible no-scrollbar pb-2 pr-1">
                             <div>
                                 <label class="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Domingo Afetado</label>
-                                <select id="sub-data" required onchange="updateAbsentPerson()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 md:px-4 py-2.5 md:py-3 outline-none focus:ring-2 text-xs md:text-sm"></select>
+                                <select id="sub-data" required onchange="updateAbsentPerson()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 md:px-4 py-2.5 md:py-3 outline-none focus:ring-2 focus:ring-presb-gold/50 text-xs md:text-sm font-medium"></select>
                             </div>
                             <div>
                                 <label class="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Função</label>
-                                <select id="sub-funcao" required onchange="updateAbsentPerson()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 md:px-4 py-2.5 md:py-3 outline-none focus:ring-2 text-xs md:text-sm"></select>
+                                <select id="sub-funcao" required onchange="updateAbsentPerson()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 md:px-4 py-2.5 md:py-3 outline-none focus:ring-2 focus:ring-presb-gold/50 text-xs md:text-sm font-medium"></select>
                             </div>
                             <div>
                                 <label class="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Turno</label>
-                                <select id="sub-turno" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 md:px-4 py-2.5 md:py-3 outline-none text-xs md:text-sm">
+                                <select id="sub-turno" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 md:px-4 py-2.5 md:py-3 outline-none focus:ring-2 focus:ring-presb-gold/50 text-xs md:text-sm font-medium">
                                     <option value="Ambos">Ambos</option><option value="Manhã">Manhã</option><option value="Noite">Noite</option>
                                 </select>
                             </div>
@@ -178,30 +183,42 @@
                             </div>
                             <div class="p-3 md:p-4 bg-emerald-50 rounded-xl border border-emerald-100">
                                 <label class="block text-[9px] md:text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Substituto (+)</label>
-                                <select id="sub-substituto" required class="w-full bg-transparent text-emerald-800 font-bold outline-none text-xs md:text-sm"></select>
+                                <select id="sub-substituto" required class="w-full bg-transparent text-emerald-800 font-bold outline-none cursor-pointer text-xs md:text-sm"></select>
                             </div>
                             <div>
-                                <label class="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Motivo / Observação (Opcional)</label>
+                                <label class="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Motivo (Opcional)</label>
                                 <input type="text" id="sub-obs" placeholder="Ex: Doença, viagem..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 md:px-4 py-2.5 md:py-3 outline-none focus:ring-2 focus:ring-presb-gold/50 text-xs md:text-sm font-medium text-slate-700">
                             </div>
-                            <button type="submit" id="btn-salvar-sub" class="w-full bg-presb-green hover:bg-black text-white px-4 py-3 md:py-4 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-colors mt-2 shadow-lg active:scale-95">
+                            <button type="submit" id="btn-salvar-sub" class="w-full bg-presb-green hover:bg-black text-white px-4 py-3 md:py-4 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-colors mt-2 shadow-lg active:scale-95 shrink-0">
                                 Gravar Registro
                             </button>
                         </form>
                     </div>
 
-                    <div class="bg-slate-100 rounded-[1.5rem] md:rounded-[2rem] shadow-xl border-2 border-white lg:col-span-2 overflow-hidden flex flex-col">
-                        <div class="p-4 md:p-6 border-b-2 border-white bg-slate-200">
-                            <h3 class="font-serif font-bold text-presb-green text-sm md:text-base">Histórico</h3>
+                    <!-- Card 2: Relatório Histórico c/ Scrollbars -->
+                    <div class="w-full lg:w-2/3 bg-slate-100 rounded-[1.5rem] md:rounded-[2rem] shadow-xl border-2 border-white flex flex-col shrink-0 h-[450px] lg:h-full lg:min-h-0">
+                        <div class="p-4 md:p-6 border-b-2 border-white bg-slate-200 flex justify-between items-center shrink-0">
+                            <h3 class="font-serif font-bold text-presb-green text-sm md:text-base">Relatório de Registros</h3>
+                            <!-- Botão de Exclusão em Massa -->
+                            <button id="btn-bulk-delete" onclick="deleteSelectedSubs()" class="hidden items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 md:px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-colors shadow-md active:scale-95">
+                                <i class="ph-bold ph-trash text-sm"></i> <span class="hidden sm:inline">Excluir</span> (<span id="bulk-delete-count">0</span>)
+                            </button>
                         </div>
-                        <div class="overflow-x-auto flex-1 bg-slate-50">
-                            <table class="w-full text-left whitespace-nowrap border-collapse">
-                                <thead>
-                                    <tr class="bg-slate-200 text-slate-600 text-[9px] md:text-[10px] font-bold uppercase tracking-widest">
-                                        <th class="p-3 md:p-5 border-2 border-white">Data/Turno</th><th class="p-3 md:p-5 border-2 border-white">Função</th><th class="p-3 md:p-5 text-red-600 border-2 border-white">Faltou</th><th class="p-3 md:p-5 text-emerald-700 border-2 border-white">Substituiu</th><th class="p-3 md:p-5 border-2 border-white">Motivo</th><th class="p-3 md:p-5 border-2 border-white"></th>
+                        <div class="flex-1 overflow-auto table-container bg-slate-50 relative">
+                            <table class="w-full text-left whitespace-nowrap border-collapse relative">
+                                <thead class="sticky top-0 z-[50]">
+                                    <tr class="bg-slate-200 text-slate-600 text-[9px] md:text-[10px] font-bold uppercase tracking-widest shadow-sm">
+                                        <th class="p-3 md:p-4 border-2 border-white text-center w-12">
+                                            <input type="checkbox" id="selectAllSubs" onchange="toggleAllSubs(this.checked)" class="w-4 h-4 accent-presb-gold cursor-pointer">
+                                        </th>
+                                        <th class="p-3 md:p-4 border-2 border-white">Data/Turno</th>
+                                        <th class="p-3 md:p-4 border-2 border-white">Função</th>
+                                        <th class="p-3 md:p-4 text-red-600 border-2 border-white">Faltou</th>
+                                        <th class="p-3 md:p-4 text-emerald-700 border-2 border-white">Substituiu</th>
+                                        <th class="p-3 md:p-4 border-2 border-white">Motivo</th>
                                     </tr>
                                 </thead>
-                                <tbody id="substituicoes-table-body" class="text-[10px] md:text-xs font-medium text-slate-700"></tbody>
+                                <tbody id="substituicoes-table-body" class="text-[10px] md:text-xs font-medium text-slate-700 bg-white"></tbody>
                             </table>
                         </div>
                     </div>
@@ -366,6 +383,9 @@
         };
 
         let appState = { members: {}, schedules: [], substitutions: [] };
+        
+        // Novo estado para seleção em massa nas Trocas
+        let selectedSubs = [];
 
         // ==========================================
         // INICIALIZAÇÃO E FIREBASE
@@ -788,6 +808,57 @@
             });
         }
 
+        // ==========================================
+        // SELEÇÃO E EXCLUSÃO EM MASSA
+        // ==========================================
+        function toggleSubSelection(id) {
+            const cb = document.getElementById(`sub-cb-${id}`);
+            if (cb && cb.checked) {
+                if (!selectedSubs.includes(String(id))) selectedSubs.push(String(id));
+            } else {
+                selectedSubs = selectedSubs.filter(subId => subId !== String(id));
+            }
+            
+            const totalCb = document.querySelectorAll('.sub-cb').length;
+            document.getElementById('selectAllSubs').checked = (totalCb > 0 && selectedSubs.length === totalCb);
+            updateBulkDeleteButton();
+        }
+
+        function toggleAllSubs(checked) {
+            selectedSubs = [];
+            const checkboxes = document.querySelectorAll('.sub-cb');
+            checkboxes.forEach(cb => {
+                cb.checked = checked;
+                if (checked) selectedSubs.push(cb.value);
+            });
+            updateBulkDeleteButton();
+        }
+
+        function updateBulkDeleteButton() {
+            const btn = document.getElementById('btn-bulk-delete');
+            const countSpan = document.getElementById('bulk-delete-count');
+            if (selectedSubs.length > 0) {
+                btn.classList.remove('hidden');
+                btn.classList.add('flex');
+                countSpan.innerText = selectedSubs.length;
+            } else {
+                btn.classList.add('hidden');
+                btn.classList.remove('flex');
+            }
+        }
+
+        function deleteSelectedSubs() {
+            if (selectedSubs.length === 0) return;
+            openConfirmModal('Excluir Registros', `Deseja excluir ${selectedSubs.length} registro(s) selecionado(s)?`, () => {
+                appState.substitutions = appState.substitutions.filter(s => !selectedSubs.includes(String(s.id)));
+                selectedSubs = [];
+                document.getElementById('selectAllSubs').checked = false;
+                saveStateToFirebase(); 
+                renderSubstituicoes(); 
+                showToast('Excluídos com sucesso.');
+            });
+        }
+
         function renderSubstituicoes() {
             const uniqueMembers = getUniqueMembers();
             document.getElementById('sub-data').innerHTML = '<option value="">Data...</option>' + appState.schedules.map(s => `<option value="${s.date}">${formatDateBR(s.date)}</option>`).join('');
@@ -797,25 +868,34 @@
             const tbody = document.getElementById('substituicoes-table-body');
             const subsArray = [...(appState.substitutions || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-            if(subsArray.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400 border-2 border-white">Vazio</td></tr>`; return; }
+            if(subsArray.length === 0) { 
+                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400 border-2 border-white">Nenhum registro encontrado</td></tr>`; 
+                updateBulkDeleteButton();
+                return; 
+            }
 
             tbody.innerHTML = subsArray.map((sub, index) => {
-                const rowBg = index % 2 === 0 ? 'bg-slate-100' : 'bg-slate-200/50';
+                const rowBg = index % 2 === 0 ? 'bg-slate-50' : 'bg-slate-100';
+                const isChecked = selectedSubs.includes(String(sub.id)) ? 'checked' : '';
                 return `
-                <tr class="${rowBg}">
-                    <td class="p-3 md:p-5 font-bold text-slate-800 border-2 border-white">${formatDateBR(sub.date)} <span class="block text-[9px] text-slate-400">${sub.turno || 'Ambos'}</span></td>
-                    <td class="p-3 md:p-5 font-medium border-2 border-white">${sub.role}</td>
-                    <td class="p-3 md:p-5 text-red-600 font-bold border-2 border-white">(-) ${sub.absent}</td>
-                    <td class="p-3 md:p-5 text-emerald-700 font-bold border-2 border-white">(+) ${sub.substitute}</td>
-                    <td class="p-3 md:p-5 text-slate-500 font-medium text-[10px] md:text-xs border-2 border-white max-w-[120px] md:max-w-[180px] truncate" title="${sub.obs || '-'}">${sub.obs || '-'}</td>
-                    <td class="p-3 md:p-5 text-center border-2 border-white"><button onclick="deleteSubstituicao('${sub.id}')" class="text-red-400 hover:text-red-600"><i class="ph-fill ph-trash text-lg"></i></button></td>
+                <tr class="${rowBg} hover:bg-presb-gold/10 transition-colors cursor-pointer" onclick="document.getElementById('sub-cb-${sub.id}').click()">
+                    <td class="p-3 md:p-4 text-center border-2 border-white" onclick="event.stopPropagation()">
+                        <input type="checkbox" class="sub-cb w-4 h-4 accent-presb-gold cursor-pointer" value="${sub.id}" id="sub-cb-${sub.id}" onchange="toggleSubSelection('${sub.id}')" ${isChecked}>
+                    </td>
+                    <td class="p-3 md:p-4 font-bold text-slate-800 border-2 border-white">${formatDateBR(sub.date)} <span class="block text-[9px] text-slate-400">${sub.turno || 'Ambos'}</span></td>
+                    <td class="p-3 md:p-4 font-medium border-2 border-white">${sub.role}</td>
+                    <td class="p-3 md:p-4 text-red-600 font-bold border-2 border-white">(-) ${sub.absent}</td>
+                    <td class="p-3 md:p-4 text-emerald-700 font-bold border-2 border-white">(+) ${sub.substitute}</td>
+                    <td class="p-3 md:p-4 text-slate-500 font-medium text-[10px] md:text-xs border-2 border-white max-w-[120px] md:max-w-[180px] truncate" title="${sub.obs || '-'}">${sub.obs || '-'}</td>
                 </tr>
                 `
             }).join('');
+            
+            updateBulkDeleteButton();
         }
 
         // ==========================================
-        // ESTATÍSTICAS
+        // ESTATÍSTICAS (COM ORDENAÇÃO E GRADES BRANCAS)
         // ==========================================
         function handleSort(column) {
             if (statsSort.column === column) {
@@ -851,24 +931,33 @@
                 stats.push({ nome, esperado, faltas, extras, totalReal, percentual: parseFloat(percentual) });
             });
 
+            // Filtro da barra de pesquisa interativa
             const searchTerm = document.getElementById('search-stats')?.value.toLowerCase() || '';
-            if (searchTerm) stats = stats.filter(st => st.nome.toLowerCase().includes(searchTerm));
+            if (searchTerm) {
+                stats = stats.filter(st => st.nome.toLowerCase().includes(searchTerm));
+            }
 
+            // Lógica de Ordenação
             stats.sort((a, b) => {
                 let valA = a[statsSort.column];
                 let valB = b[statsSort.column];
-                if (typeof valA === 'string') return statsSort.direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
-                else return statsSort.direction === 'asc' ? valA - valB : valB - valA;
+                
+                if (typeof valA === 'string') {
+                    return statsSort.direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                } else {
+                    return statsSort.direction === 'asc' ? valA - valB : valB - valA;
+                }
             });
 
+            // Renderiza o Cabeçalho Dinâmico
             const thead = document.getElementById('estatisticas-table-head');
             const getIcon = (col) => {
-                if (statsSort.column !== col) return `<i class="ph-bold ph-caret-up text-transparent group-hover:text-slate-400"></i>`;
+                if (statsSort.column !== col) return `<i class="ph-bold ph-caret-up text-transparent group-hover:text-slate-300"></i>`;
                 return statsSort.direction === 'asc' ? `<i class="ph-bold ph-caret-up text-presb-green"></i>` : `<i class="ph-bold ph-caret-down text-presb-green"></i>`;
             };
 
             thead.innerHTML = `
-                <tr class="bg-slate-200 text-slate-600 text-[7px] md:text-[9px] font-bold uppercase tracking-widest">
+                <tr class="bg-slate-200 text-slate-600 text-[8px] md:text-[10px] font-bold uppercase tracking-widest">
                     <th class="p-2 md:p-4 sticky top-0 left-0 bg-slate-200 z-[70] border-2 border-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] cursor-pointer hover:bg-slate-300 transition-colors group" onclick="handleSort('nome')">
                         <div class="flex items-center justify-between">Integrante ${getIcon('nome')}</div>
                     </th>
@@ -905,9 +994,9 @@
                 return `
                     <tr class="${rowBg} hover:bg-presb-gold/10 transition-colors">
                         <td class="p-2 md:p-4 font-black text-presb-green sticky left-0 z-[40] ${rowBg} border-2 border-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">${st.nome}</td>
-                        <td class="px-1 py-2 md:px-2 md:py-4 text-center font-bold text-slate-500 text-[9px] md:text-xs border-2 border-white">${st.esperado}</td>
-                        <td class="px-1 py-2 md:px-2 md:py-4 text-center font-bold ${st.faltas > 0 ? 'text-red-600' : 'text-slate-400'} text-[9px] md:text-xs border-2 border-white">${st.faltas > 0 ? '-'+st.faltas : 0}</td>
-                        <td class="px-1 py-2 md:px-2 md:py-4 text-center font-bold ${st.extras > 0 ? 'text-emerald-700' : 'text-slate-400'} text-[9px] md:text-xs border-2 border-white">${st.extras > 0 ? '+'+st.extras : 0}</td>
+                        <td class="px-1 py-2 md:px-2 md:py-4 text-center font-bold text-slate-500 text-[10px] md:text-xs border-2 border-white">${st.esperado}</td>
+                        <td class="px-1 py-2 md:px-2 md:py-4 text-center font-bold ${st.faltas > 0 ? 'text-red-600' : 'text-slate-400'} text-[10px] md:text-xs border-2 border-white">${st.faltas > 0 ? '-'+st.faltas : 0}</td>
+                        <td class="px-1 py-2 md:px-2 md:py-4 text-center font-bold ${st.extras > 0 ? 'text-emerald-700' : 'text-slate-400'} text-[10px] md:text-xs border-2 border-white">${st.extras > 0 ? '+'+st.extras : 0}</td>
                         <td class="px-1 py-2 md:px-2 md:py-4 text-center font-black text-[10px] md:text-sm border-2 border-white">${st.totalReal}</td>
                         <td class="p-2 md:p-4 border-2 border-white">
                             <div class="flex flex-col items-end gap-1 md:gap-2 w-full">
@@ -987,6 +1076,7 @@
         window.deleteSubstituicao = deleteSubstituicao; window.handleAddMember = handleAddMember; window.deleteMember = deleteMember;
         window.closeConfirmModal = closeConfirmModal;
         window.renderEstatisticas = renderEstatisticas; window.handleSort = handleSort;
+        window.toggleSubSelection = toggleSubSelection; window.toggleAllSubs = toggleAllSubs; window.deleteSelectedSubs = deleteSelectedSubs;
 
         window.onload = startApp;
     </script>
