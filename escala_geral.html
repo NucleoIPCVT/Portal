@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gestão de Escala - Núcleo IPCVT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Bibliotecas para Exportação PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+    <!-- Fontes Institucionais -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'presb-green': '#1B4332',
+                        'presb-gold': '#D4AF37',
+                        'presb-dark': '#0d2119',
+                    },
+                    fontFamily: {
+                        'serif': ['Merriweather', 'serif'],
+                        'sans': ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Estilização da Barra de Rolagem */
+        .table-container::-webkit-scrollbar { height: 10px; width: 8px; }
+        @media (min-width: 768px) { .table-container::-webkit-scrollbar { height: 14px; width: 12px; } }
+        
+        .table-container::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 0 0 1.5rem 1.5rem; border-top: 1px solid #ffffff; border-left: 1px solid #ffffff; }
+        .table-container::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 10px; border: 2px solid #f1f5f9; }
+        .table-container::-webkit-scrollbar-thumb:hover { background: #b8962d; }
+        
+        .select-inline { width: 100%; background: transparent; border: 1px solid transparent; border-radius: 4px; padding: 2px; outline: none; cursor: pointer; transition: all 0.2s; font-size: 10px; }
+        @media (min-width: 768px) { .select-inline { padding: 6px; border-radius: 6px; font-size: 12px; } }
+        
+        .select-inline:hover { background: rgba(255, 255, 255, 0.5); border-color: #ffffff; }
+        .select-inline:focus { background: white; border-color: #D4AF37; box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2); }
+        .select-inline.filled { font-weight: 700; color: #1B4332; }
+        .select-inline.duplicated { font-weight: 800; color: #dc2626; background-color: #fef2f2; border-color: #fca5a5; }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans h-[100dvh] overflow-hidden">
+
+    <div id="app-layout" class="h-full flex flex-col md:flex-row w-full overflow-hidden">
+        
+        <!-- Sidebar -->
+        <nav class="bg-presb-green text-white w-full md:w-64 shrink-0 shadow-2xl md:h-full z-20 border-b md:border-r border-black/20 flex flex-col justify-between">
+            <div class="hidden md:block">
+                <div class="p-8 text-center border-b border-white/5">
+                    <i class="ph-fill ph-calendar-check text-5xl text-presb-gold mb-4 inline-block"></i>
+                    <h1 class="text-xl font-bold font-serif uppercase tracking-tight">Núcleo<span class="text-presb-gold">IPCVT</span></h1>
+                    <p class="text-[9px] text-white/40 mt-1 uppercase tracking-[0.3em] font-bold">Escalas e Gestão</p>
+                </div>
+            </div>
+            <ul class="flex md:flex-col py-2 md:py-4 overflow-x-auto md:overflow-y-auto no-scrollbar w-full">
+                <li class="flex-none w-1/3 md:w-full">
+                    <button onclick="attemptSwitchTab('escalas')" id="tab-escalas" class="nav-btn w-full flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 px-2 md:px-6 py-3 md:py-5 hover:bg-white/5 transition-all text-white border-b-4 md:border-b-0 md:border-l-4 border-presb-gold bg-white/5">
+                        <i class="ph ph-table text-xl text-presb-gold"></i>
+                        <span class="text-[9px] md:text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Geral</span>
+                    </button>
+                </li>
+                <li class="flex-none w-1/3 md:w-full">
+                    <button onclick="attemptSwitchTab('substituicoes')" id="tab-substituicoes" class="nav-btn w-full flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 px-2 md:px-6 py-3 md:py-5 hover:bg-white/5 transition-all text-white/50 border-b-4 md:border-b-0 md:border-l-4 border-transparent relative">
+                        <i class="ph ph-arrows-left-right text-xl"></i>
+                        <span class="text-[9px] md:text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Trocas</span>
+                        <i id="lock-substituicoes" class="ph-fill ph-lock-key absolute top-2 right-2 md:top-auto md:right-6 text-white/20 hidden md:block"></i>
+                    </button>
+                </li>
+                <li class="flex-none w-1/3 md:w-full">
+                    <button onclick="attemptSwitchTab('estatisticas')" id="tab-estatisticas" class="nav-btn w-full flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 px-2 md:px-6 py-3 md:py-5 hover:bg-white/5 transition-all text-white/50 border-b-4 md:border-b-0 md:border-l-4 border-transparent relative">
+                        <i class="ph ph-chart-pie text-xl"></i>
+                        <span class="text-[9px] md:text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Relatórios</span>
+                        <i id="lock-estatisticas" class="ph-fill ph-lock-key absolute top-2 right-2 md:top-auto md:right-6 text-white/20 hidden md:block"></i>
+                    </button>
+                </li>
+                <li class="flex-none w-1/3 md:w-full">
+                    <button onclick="attemptSwitchTab('cadastro')" id="tab-cadastro" class="nav-btn w-full flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 px-2 md:px-6 py-3 md:py-5 hover:bg-white/5 transition-all text-white/50 border-b-4 md:border-b-0 md:border-l-4 border-transparent relative">
+                        <i class="ph ph-users-three text-xl"></i>
+                        <span class="text-[9px] md:text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Equipe</span>
+                        <i id="lock-cadastro" class="ph-fill ph-lock-key absolute top-2 right-2 md:top-auto md:right-6 text-white/20 hidden md:block"></i>
+                    </button>
+                </li>
+            </ul>
+            <div id="admin-logout-container" class="hidden p-3 md:p-6 border-t border-white/5 mt-auto shrink-0">
+                <button onclick="logoutAdmin()" class="w-full text-white/40 hover:text-white text-[9px] md:text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-colors">
+                    <i class="ph ph-sign-out text-lg"></i> Sair da Edição
+                </button>
+            </div>
+        </nav>
+
+        <!-- Área de Conteúdo -->
+        <main class="flex-1 p-2 sm:p-4 md:p-8 bg-slate-50 relative flex flex-col min-w-0 min-h-0 overflow-hidden">
+            
+            <div id="loading-data" class="absolute inset-0 bg-white/90 backdrop-blur-md z-[100] flex flex-col items-center justify-center">
+                <i class="ph ph-circle-notch text-6xl text-presb-gold animate-spin mb-4"></i>
+                <p class="text-presb-green font-black uppercase text-xs tracking-widest">Sincronizando Nuvem</p>
+            </div>
+
+            <!-- ESCALAS -->
+            <section id="sec-escalas" class="tab-content block animate-fade-in flex-1 flex flex-col min-h-0 min-w-0 w-full h-full">
+                <div class="mb-4 md:mb-6 shrink-0 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-3 md:gap-6 px-1">
+                    <div>
+                        <h2 class="text-2xl md:text-4xl font-bold text-presb-green font-serif tracking-tight">Escala de Domingos</h2>
+                        <p class="text-slate-500 text-[10px] md:text-xs mt-1 md:mt-2 font-medium uppercase tracking-widest italic" id="escala-subtitle">Modo de visualização.</p>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row gap-2 md:gap-3 w-full lg:w-auto">
+                        <select id="filtro-mes" onchange="renderEscalas()" class="bg-white border-2 border-slate-200 text-slate-700 rounded-xl px-3 md:px-4 py-2 md:py-3 text-[10px] md:text-xs font-bold uppercase tracking-widest shadow-sm outline-none focus:border-presb-gold">
+                            <option value="">Ano Inteiro</option>
+                            <option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option><option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option><option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
+                        </select>
+                        <div class="flex gap-2">
+                            <button onclick="exportarPDF()" class="flex-1 sm:flex-none bg-slate-800 hover:bg-slate-900 text-white px-3 md:px-5 py-2 md:py-3 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-md transition-all active:scale-95">
+                                <i class="ph-bold ph-file-pdf text-lg"></i> <span class="hidden md:inline">Exportar</span>
+                            </button>
+                            <button id="btn-toggle-edit" onclick="requestAuth('edit_escala')" class="flex-[2] sm:flex-none bg-presb-gold hover:bg-yellow-600 text-presb-dark px-3 md:px-5 py-2 md:py-3 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95">
+                                <i class="ph-bold ph-lock-key-open text-lg"></i> Habilitar Edição
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-[1rem] md:rounded-[2rem] shadow-xl border-2 border-white overflow-hidden flex-1 flex flex-col min-h-0 min-w-0 w-full relative">
+                    <div class="table-container overflow-auto flex-1 min-h-0 w-full relative outline-none bg-slate-100 touch-pan-x touch-pan-y">
+                        <table class="w-full text-left whitespace-nowrap border-collapse relative">
+                            <thead id="escala-table-head"></thead>
+                            <tbody id="escala-table-body" class="font-medium bg-white"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SUBSTITUIÇÕES -->
+            <section id="sec-substituicoes" class="tab-content hidden animate-fade-in flex-1 flex-col overflow-y-auto px-1 md:pr-2">
+                <div class="mb-6 md:mb-10 shrink-0">
+                    <h2 class="text-2xl md:text-4xl font-bold text-presb-green font-serif tracking-tight">Trocas e Faltas</h2>
+                    <p class="text-slate-500 text-[10px] md:text-xs mt-1 md:mt-2 font-medium uppercase tracking-widest italic">Gestão de imprevistos.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+                    <div class="bg-white p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] shadow-xl border border-slate-100 lg:col-span-1 h-fit">
+                        <form id="form-substituicao" onsubmit="handleSubstituicao(event)" class="space-y-4 md:space-y-5">
+                            <div>
+                                <label class="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Domingo Afetado</label>
+                                <select id="sub-data" required onchange="updateAbsentPerson()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 md:px-4 py-2.5 md:py-3 outline-none focus:ring-2 text-xs md:text-sm"></select>
+                            </div>
+                            <div>
+                                <label class="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Função</label>
+                                <select id="sub-funcao" required onchange="updateAbsentPerson()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 md:px-4 py-2.5 md:py-3 outline-none focus:ring-2 text-xs md:text-sm"></select>
+                            </div>
+                            <div>
+                                <label class="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Turno</label>
+                                <select id="sub-turno" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 md:px-4 py-2.5 md:py-3 outline-none text-xs md:text-sm">
+                                    <option value="Ambos">Ambos</option><option value="Manhã">Manhã</option><option value="Noite">Noite</option>
+                                </select>
+                            </div>
+                            <div class="p-3 md:p-4 bg-red-50 rounded-xl border border-red-100">
+                                <label class="block text-[9px] md:text-[10px] font-black text-red-500 uppercase tracking-widest mb-1">Ausente (-)</label>
+                                <input type="text" id="sub-ausente" readonly placeholder="Selecione data..." class="w-full bg-transparent text-red-800 font-bold outline-none cursor-not-allowed text-xs md:text-sm">
+                            </div>
+                            <div class="p-3 md:p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+                                <label class="block text-[9px] md:text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Substituto (+)</label>
+                                <select id="sub-substituto" required class="w-full bg-transparent text-emerald-800 font-bold outline-none text-xs md:text-sm"></select>
+                            </div>
+                            <button type="submit" id="btn-salvar-sub" class="w-full bg-presb-green hover:bg-black text-white px-4 py-3 md:py-4 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-colors mt-2 shadow-lg active:scale-95">
+                                Gravar Registro
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-xl border-2 border-white lg:col-span-2 overflow-hidden flex flex-col">
+                        <div class="p-4 md:p-6 border-b-2 border-white bg-slate-100">
+                            <h3 class="font-serif font-bold text-presb-green text-sm md:text-base">Histórico</h3>
+                        </div>
+                        <div class="overflow-x-auto flex-1 bg-slate-50">
+                            <table class="w-full text-left whitespace-nowrap border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-200 text-slate-600 text-[9px] md:text-[10px] font-bold uppercase tracking-widest">
+                                        <th class="p-3 md:p-5 border-2 border-white">Data/Turno</th><th class="p-3 md:p-5 border-2 border-white">Função</th><th class="p-3 md:p-5 text-red-600 border-2 border-white">Faltou</th><th class="p-3 md:p-5 text-emerald-700 border-2 border-white">Substituiu</th><th class="p-3 md:p-5 border-2 border-white"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="substituicoes-table-body" class="text-[10px] md:text-xs font-medium text-slate-700"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ESTATÍSTICAS (NOVO LAYOUT INTERATIVO E COM SCROLL) -->
+            <section id="sec-estatisticas" class="tab-content hidden animate-fade-in flex-1 flex flex-col min-h-0 min-w-0 w-full h-full">
+                <!-- Cabeçalho com Busca -->
+                <div class="mb-4 md:mb-6 shrink-0 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-3 md:gap-6 px-1">
+                    <div>
+                        <h2 class="text-2xl md:text-4xl font-bold text-presb-green font-serif tracking-tight">Engajamento</h2>
+                        <p class="text-slate-500 text-[10px] md:text-xs mt-1 md:mt-2 font-medium uppercase tracking-widest italic">Painel Gráfico de Participação</p>
+                    </div>
+                    
+                    <div class="w-full lg:w-80 flex items-center bg-white border-2 border-slate-200 rounded-xl px-4 py-2 md:py-3 shadow-sm focus-within:border-presb-gold focus-within:ring-4 focus-within:ring-presb-gold/10 transition-all">
+                        <i class="ph-bold ph-magnifying-glass text-slate-400 text-lg mr-3"></i>
+                        <input type="text" id="search-stats" onkeyup="renderEstatisticas()" placeholder="Buscar integrante..." class="bg-transparent outline-none w-full text-xs md:text-sm font-bold text-slate-700 placeholder-slate-400">
+                    </div>
+                </div>
+
+                <!-- Tabela de Estatísticas com Scroll Próprio, Barra de Progresso, Fontes Menores e Ordenação -->
+                <div class="bg-white rounded-[1rem] md:rounded-[2rem] shadow-xl border-2 border-white overflow-hidden flex-1 flex flex-col min-h-0 min-w-0 w-full relative">
+                    <div class="table-container overflow-auto flex-1 min-h-0 w-full relative outline-none bg-slate-50 touch-pan-x touch-pan-y">
+                        <table class="w-full text-left whitespace-nowrap border-collapse relative">
+                            <thead class="sticky top-0 z-[60] shadow-sm" id="estatisticas-table-head">
+                                <!-- Gerado via JS para suportar ordenação -->
+                            </thead>
+                            <tbody id="estatisticas-table-body" class="text-[10px] md:text-sm bg-white"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CADASTRO -->
+            <section id="sec-cadastro" class="tab-content hidden animate-fade-in flex-1 flex-col overflow-y-auto px-1 md:pr-2">
+                <div class="mb-6 md:mb-10 shrink-0">
+                    <h2 class="text-2xl md:text-4xl font-bold text-presb-green font-serif tracking-tight">Equipe IPCVT</h2>
+                    <p class="text-slate-500 text-[10px] md:text-xs mt-1 md:mt-2 font-medium uppercase tracking-widest italic">Gerenciamento de Funções.</p>
+                </div>
+
+                <div class="bg-white p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] shadow-xl border border-slate-100 mb-8 max-w-4xl">
+                    <form id="form-cadastro" onsubmit="handleAddMember(event)" class="flex flex-col md:flex-row gap-4 md:gap-5 items-end">
+                        <div class="w-full md:w-1/3">
+                            <label class="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 md:mb-2">Função</label>
+                            <select id="cad-funcao" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 md:px-4 py-2.5 md:py-4 outline-none text-xs md:text-sm"></select>
+                        </div>
+                        <div class="w-full md:w-2/3">
+                            <label class="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 md:mb-2">Nome</label>
+                            <input type="text" id="cad-nome" required placeholder="Nome..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 md:px-4 py-2.5 md:py-4 outline-none font-bold text-slate-700 text-xs md:text-sm">
+                        </div>
+                        <button type="submit" class="w-full md:w-auto bg-presb-green hover:bg-black text-white px-6 md:px-8 py-3 md:py-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-colors shadow-lg active:scale-95">
+                            Salvar
+                        </button>
+                    </form>
+                </div>
+
+                <div id="cadastro-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6"></div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MODAL DE SENHA -->
+    <div id="auth-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden z-[200] flex items-center justify-center p-4">
+        <div class="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden animate-fade-in border-t-8 border-presb-gold">
+            <div class="p-6 md:p-8 text-center relative">
+                <button onclick="closeAuthModal()" class="absolute top-4 right-4 md:top-6 md:right-6 text-slate-300 hover:text-slate-600 transition-colors">
+                    <i class="ph-bold ph-x text-xl"></i>
+                </button>
+                <div class="w-16 h-16 md:w-20 md:h-20 bg-presb-gold/20 text-presb-gold rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6 shadow-inner">
+                    <i class="ph-fill ph-lock-key text-3xl md:text-4xl"></i>
+                </div>
+                <h3 class="text-xl md:text-2xl font-black text-slate-800 mb-1 md:mb-2 font-serif tracking-tight">Acesso Restrito</h3>
+                <p class="text-slate-400 text-[9px] md:text-[10px] uppercase tracking-widest font-bold mb-6 md:mb-8">Digite a senha administrativa</p>
+                
+                <form onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                    <input type="password" id="auth-password" placeholder="••••••" required 
+                           class="w-full border-2 border-slate-100 bg-slate-50 rounded-2xl px-4 py-3 md:py-4 outline-none focus:border-presb-gold text-center text-xl md:text-2xl tracking-[0.5em] font-black shadow-inner">
+                    <p id="auth-error" class="text-red-500 text-[9px] font-bold uppercase hidden animate-pulse pt-1">Senha incorreta</p>
+                    <button type="submit" class="w-full bg-presb-green text-white font-black py-3 md:py-4 rounded-2xl shadow-xl uppercase tracking-[0.2em] text-[10px] mt-4">
+                        Desbloquear
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRMAÇÃO -->
+    <div id="confirm-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden z-[200] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-300 border-t-8 border-red-600" id="confirm-content">
+            <div class="p-6 md:p-8 text-center">
+                <i class="ph-fill ph-warning-octagon text-5xl md:text-6xl text-red-500 mb-4 md:mb-6 inline-block"></i>
+                <h3 class="text-xl md:text-2xl font-black text-slate-800 mb-2 font-serif" id="confirm-title">Confirmar</h3>
+                <p class="text-slate-500 text-xs md:text-sm mb-6 md:mb-8 font-medium leading-relaxed" id="confirm-message">Você tem certeza?</p>
+                <div class="flex gap-3 md:gap-4">
+                    <button onclick="closeConfirmModal(false)" class="flex-1 py-3 md:py-4 rounded-xl font-bold text-[9px] md:text-[10px] uppercase tracking-widest text-slate-500 bg-slate-100">Cancelar</button>
+                    <button onclick="closeConfirmModal(true)" class="flex-1 py-3 md:py-4 rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest text-white bg-red-600 shadow-lg">Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="fixed bottom-4 right-4 md:bottom-6 md:right-6 bg-presb-green border-2 border-presb-gold text-white px-5 md:px-6 py-3 md:py-4 rounded-xl shadow-2xl flex items-center gap-3 transform translate-y-32 opacity-0 transition-all duration-500 z-[300]">
+        <i class="ph-fill ph-check-circle text-presb-gold text-xl md:text-2xl" id="toast-icon"></i>
+        <span id="toast-message" class="text-[9px] md:text-[10px] font-bold uppercase tracking-widest">Sucesso</span>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAg9w5QohkcmXUFRgLfSI5Sh1chnCD1Owc",
+            authDomain: "repertorio-ipcvt.firebaseapp.com",
+            projectId: "repertorio-ipcvt",
+            storageBucket: "repertorio-ipcvt.firebasestorage.app",
+            messagingSenderId: "774659782213",
+            appId: "1:774659782213:web:5e9cbf88fec30eb382152c",
+            measurementId: "G-DJ8E3VPMSY"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // ==========================================
+        // VARIÁVEIS GLOBAIS
+        // ==========================================
+        const CURRENT_YEAR = 2026;
+        const APP_PASSWORD = "123";
+        let isFirebaseConnected = false;
+        let activeTab = 'escalas';
+        
+        let isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+        let pendingAction = null; 
+        let pendingTab = null;
+        
+        // Novo estado de ordenação para as Estatísticas
+        let statsSort = { column: 'percentual', direction: 'desc' };
+
+        const COLUMNS_ORDER = [
+            "Seleção de Repertório", "Soprano", "Contralto", "Tenor", 
+            "Violão", "Guitarra", "Baixo", "Bateria", "Piano", "Violino",
+            "TRANSMISSÃO", "OP. CÂMERA", "FOTOGRAFIA", "Op. Som", "Projeção"
+        ];
+
+        const DEPARTMENTS = {
+            "Seleção de Repertório": "Louvor", "Soprano": "Louvor", "Contralto": "Louvor", "Tenor": "Louvor",
+            "Violão": "Louvor", "Guitarra": "Louvor", "Baixo": "Louvor", "Bateria": "Louvor", "Piano": "Louvor", "Violino": "Louvor",
+            "TRANSMISSÃO": "Mídia", "OP. CÂMERA": "Mídia", "FOTOGRAFIA": "Mídia",
+            "Op. Som": "Técnica", "Projeção": "Técnica"
+        };
+
+        // Reduzimos as opacidades da tabela de escala e removemos as bordas coloridas pra forçar o border-white
+        const DEPT_COLORS = {
+            "Louvor": { header: "bg-emerald-100 text-emerald-900", cellAlt1: "bg-emerald-50/50", cellAlt2: "bg-emerald-100/50" },
+            "Mídia": { header: "bg-blue-100 text-blue-900", cellAlt1: "bg-blue-50/50", cellAlt2: "bg-blue-100/50" },
+            "Técnica": { header: "bg-amber-100 text-amber-900", cellAlt1: "bg-amber-50/50", cellAlt2: "bg-amber-100/50" }
+        };
+
+        let appState = { members: {}, schedules: [], substitutions: [] };
+
+        // ==========================================
+        // INICIALIZAÇÃO E FIREBASE
+        // ==========================================
+        async function startApp() {
+            try { await signInAnonymously(auth); } catch (err) { console.warn("Modo offline"); }
+            initFirebaseConnection();
+            updateAuthUI();
+        }
+
+        function initFirebaseConnection() {
+            const docRef = doc(db, "app_ipcvt", "escala_geral_dados");
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    appState = docSnap.data();
+                    if (!isFirebaseConnected) {
+                        isFirebaseConnected = true;
+                        document.getElementById('loading-data').classList.add('hidden');
+                        proceedSwitchTab('escalas'); 
+                    } else {
+                        refreshCurrentTab();
+                    }
+                } else {
+                    generateDefaultData();
+                    saveStateToFirebase().then(() => {
+                        isFirebaseConnected = true;
+                        document.getElementById('loading-data').classList.add('hidden');
+                        proceedSwitchTab('escalas');
+                    });
+                }
+            }, (error) => {
+                showToast("Erro ao conectar com a nuvem.", true);
+                document.getElementById('loading-data').classList.add('hidden');
+            });
+        }
+
+        async function saveStateToFirebase() {
+            try { await setDoc(doc(db, "app_ipcvt", "escala_geral_dados"), appState); } catch (e) { showToast("Erro ao salvar!", true); }
+        }
+
+        function generateDefaultData() {
+            const sundays = [];
+            let date = new Date(CURRENT_YEAR, 0, 1);
+            while (date.getDay() !== 0) date.setDate(date.getDate() + 1);
+
+            let currentMonth = date.getMonth(), weekOfMonth = 1;
+
+            while (date.getFullYear() === CURRENT_YEAR) {
+                if (date.getMonth() !== currentMonth) { currentMonth = date.getMonth(); weekOfMonth = 1; }
+                const dateStr = date.toLocaleDateString('en-CA'); 
+                
+                let assignments = {};
+                if (weekOfMonth === 1) {
+                    assignments = { "Soprano": "Jamylle", "Contralto": "Liliane", "Tenor": "Hudson", "Violão": "Guilherme", "Guitarra": "Allysson", "Baixo": "Lorran", "Bateria": "Jean Lucas" };
+                } else if (weekOfMonth === 2) {
+                    assignments = { "Soprano": "Laura", "Contralto": [3,4,8,10].includes(currentMonth) ? "Roberta" : "Daiane", "Tenor": "Pastor", "Violão": "Pastor", "Guitarra": "Germano", "Baixo": "João Victor", "Bateria": "Flávio" };
+                } else if (weekOfMonth === 3) {
+                    assignments = { "Soprano": "Mônica", "Contralto": [3,4,8,10].includes(currentMonth) ? "Daiane" : "Roberta", "Guitarra": "Allysson", "Baixo": "Lorran", "Bateria": "Pedro" };
+                    if (currentMonth === 0) { assignments["Tenor"] = "João Victor"; assignments["Violão"] = "Alexandre"; }
+                    else if ([3,4,8,10].includes(currentMonth)) { assignments["Tenor"] = "Jean Lucas"; assignments["Violão"] = "Jean Lucas"; }
+                    else { assignments["Tenor"] = "Hudson"; assignments["Violão"] = "Alexandre"; }
+                } else if (weekOfMonth === 4) {
+                    assignments = { "Soprano": "Arlete", "Contralto": "Amanda", "Guitarra": "Nilson", "Bateria": "Flávio" };
+                    if (currentMonth === 0) { assignments["Tenor"] = "Pastor"; assignments["Violão"] = "Pastor"; assignments["Baixo"] = "João Victor"; }
+                    else if ([3,4,11].includes(currentMonth)) { assignments["Tenor"] = "Hudson"; assignments["Violão"] = "Alexandre"; assignments["Baixo"] = currentMonth === 4 ? "João Victor" : "Angelo"; }
+                    else { assignments["Tenor"] = "Jean Lucas"; assignments["Violão"] = "Jean Lucas"; assignments["Baixo"] = [6,8,10].includes(currentMonth) ? "João Victor" : "Angelo"; }
+                } else if (weekOfMonth === 5) {
+                    assignments = { "Soprano": "Arlete", "Tenor": "Pastor", "Violão": "Pastor", "Guitarra": "Allysson", "Baixo": "Nilson", "Bateria": "Pedro" };
+                    if (currentMonth === 2) assignments["Contralto"] = "Roberta";
+                    if (currentMonth === 4) assignments["Contralto"] = "Daiane";
+                    if (currentMonth === 7) assignments["Contralto"] = "Liliane";
+                    if (currentMonth === 10) assignments["Contralto"] = "Amanda";
+                }
+
+                sundays.push({ date: dateStr, dom: `${weekOfMonth}º`, assignments });
+                date.setDate(date.getDate() + 7);
+                weekOfMonth++;
+            }
+
+            appState.schedules = sundays;
+            appState.substitutions = [];
+            appState.members = {
+                "Soprano": ["Jamylle", "Laura", "Mônica", "Arlete"], "Contralto": ["Liliane", "Daiane", "Roberta", "Amanda"],
+                "Tenor": ["Hudson", "Pastor", "João Victor", "Jean Lucas"], "Violão": ["Guilherme", "Pastor", "Alexandre", "Jean Lucas"],
+                "Guitarra": ["Allysson", "Germano", "Nilson"], "Baixo": ["Lorran", "João Victor", "Angelo"],
+                "Bateria": ["Jean Lucas", "Flávio", "Pedro"], "Piano": ["Hudson"], "Violino": ["Isadora"],
+                "TRANSMISSÃO": ["Erick", "Lucas", "Kauã", "Samuel"], "OP. CÂMERA": ["Lucas", "Manuella", "Mariana"],
+                "FOTOGRAFIA": ["Mariana", "Arlete", "Manuela", "Gabi", "Victor"],
+                "Op. Som": [], "Projeção": [], "Seleção de Repertório": ["João Victor", "Liliane"]
+            };
+        }
+
+        // ==========================================
+        // AUTENTICAÇÃO E NAVEGAÇÃO
+        // ==========================================
+        function requestAuth(action, target = null) {
+            if (isAdmin) {
+                if (action === 'edit_escala') return; 
+                if (action === 'switch_tab') proceedSwitchTab(target);
+                return;
+            }
+            pendingAction = action; pendingTab = target;
+            document.getElementById('auth-modal').classList.remove('hidden');
+            document.getElementById('auth-password').value = '';
+            document.getElementById('auth-error').classList.add('hidden');
+            setTimeout(() => document.getElementById('auth-password').focus(), 100);
+        }
+
+        function closeAuthModal() {
+            document.getElementById('auth-modal').classList.add('hidden');
+            pendingAction = null; pendingTab = null;
+        }
+
+        function handleAuthSubmit(e) {
+            e.preventDefault();
+            if (document.getElementById('auth-password').value === APP_PASSWORD) {
+                isAdmin = true; sessionStorage.setItem('isAdmin', 'true');
+                closeAuthModal(); 
+                updateAuthUI();
+                
+                // Redireciona de forma inteligente: Se for tab switch, vai; senão, recarrega a tabela atual editável.
+                if (pendingAction === 'switch_tab') proceedSwitchTab(pendingTab);
+                else refreshCurrentTab(); 
+                
+                showToast("Acesso Liberado");
+            } else {
+                document.getElementById('auth-error').classList.remove('hidden');
+            }
+        }
+
+        function logoutAdmin() {
+            isAdmin = false; sessionStorage.removeItem('isAdmin'); updateAuthUI();
+            if (activeTab !== 'escalas') proceedSwitchTab('escalas'); else renderEscalas();
+            showToast("Edição bloqueada.");
+        }
+
+        function updateAuthUI() {
+            const btnEdit = document.getElementById('btn-toggle-edit');
+            const logoutContainer = document.getElementById('admin-logout-container');
+            const subtitle = document.getElementById('escala-subtitle');
+            
+            ['lock-substituicoes', 'lock-estatisticas', 'lock-cadastro'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) isAdmin ? el.classList.add('hidden') : el.classList.remove('hidden');
+            });
+
+            if (isAdmin) {
+                btnEdit.classList.add('hidden'); logoutContainer.classList.remove('hidden');
+                subtitle.innerText = "Modo EDIÇÃO. Salvo automaticamente.";
+                subtitle.classList.replace('text-slate-500', 'text-presb-gold');
+            } else {
+                btnEdit.classList.remove('hidden'); logoutContainer.classList.add('hidden');
+                subtitle.innerText = "Modo de visualização.";
+                subtitle.classList.replace('text-presb-gold', 'text-slate-500');
+            }
+        }
+
+        function attemptSwitchTab(tabId) {
+            if (tabId !== 'escalas' && !isAdmin) requestAuth('switch_tab', tabId);
+            else proceedSwitchTab(tabId);
+        }
+
+        function proceedSwitchTab(tabId) {
+            activeTab = tabId;
+            document.querySelectorAll('.tab-content').forEach(el => { el.classList.add('hidden'); el.classList.remove('flex'); });
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-white/5', 'text-white', 'border-presb-gold');
+                btn.classList.add('text-white/50', 'border-transparent');
+            });
+
+            const actSec = document.getElementById(`sec-${tabId}`);
+            actSec.classList.remove('hidden');
+            if (tabId === 'escalas' || tabId === 'estatisticas') actSec.classList.add('flex'); else actSec.classList.add('flex');
+
+            const actBtn = document.getElementById(`tab-${tabId}`);
+            actBtn.classList.remove('text-white/50', 'border-transparent');
+            actBtn.classList.add('bg-white/5', 'text-white', 'border-presb-gold');
+            refreshCurrentTab();
+        }
+
+        function refreshCurrentTab() {
+            if(activeTab === 'escalas') renderEscalas();
+            if(activeTab === 'substituicoes') renderSubstituicoes();
+            if(activeTab === 'estatisticas') renderEstatisticas();
+            if(activeTab === 'cadastro') renderCadastro();
+        }
+
+        // ==========================================
+        // RENDERIZAÇÃO: ESCALAS (AGORA COM BORDAS BRANCAS)
+        // ==========================================
+        function renderEscalas() {
+            const thead = document.getElementById('escala-table-head');
+            
+            let thHTML = `<tr class="text-slate-600 text-[9px] md:text-[10px] uppercase tracking-widest bg-slate-200 shadow-md">
+                            <th class="p-2 md:p-4 font-black sticky top-0 left-0 bg-slate-200 z-[60] w-[65px] min-w-[65px] md:w-[112px] md:min-w-[112px] border-2 border-white text-center md:text-left shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Data</th>
+                            <th class="p-1 md:p-4 font-black sticky top-0 left-[65px] md:left-[112px] bg-slate-200 z-[60] w-[35px] min-w-[35px] md:w-[64px] md:min-w-[64px] border-2 border-white text-center shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Dom</th>`;
+            COLUMNS_ORDER.forEach(col => {
+                const dept = DEPARTMENTS[col];
+                thHTML += `<th class="p-2 md:p-4 font-black sticky top-0 z-[50] min-w-[110px] md:min-w-[160px] border-2 border-white ${DEPT_COLORS[dept].header}">${col}</th>`;
+            });
+            thHTML += `</tr>`;
+            thead.innerHTML = thHTML;
+
+            const tbody = document.getElementById('escala-table-body');
+            tbody.innerHTML = '';
+
+            const selectedMonth = document.getElementById('filtro-mes')?.value;
+            let filteredSchedules = appState.schedules;
+            if (selectedMonth) filteredSchedules = appState.schedules.filter(s => s.date.split('-')[1] === selectedMonth);
+
+            if(filteredSchedules.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${COLUMNS_ORDER.length + 2}" class="p-10 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">Nenhum domingo encontrado</td></tr>`; return;
+            }
+
+            filteredSchedules.forEach((esc, index) => {
+                const rowBg = index % 2 === 0 ? 'bg-slate-50' : 'bg-slate-100';
+                const tr = document.createElement('tr');
+                tr.className = `${rowBg} hover:bg-presb-gold/10 transition-colors`;
+                
+                let rowHTML = `
+                    <td class="p-1 md:p-4 font-bold sticky left-0 z-[40] border-2 border-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] ${rowBg} text-slate-700 text-[10px] md:text-sm text-center md:text-left">
+                        <span class="md:hidden">${formatDateBR(esc.date).substring(0,5)}</span>
+                        <span class="hidden md:inline">${formatDateBR(esc.date)}</span>
+                    </td>
+                    <td class="p-1 md:p-3 sticky left-[65px] md:left-[112px] z-[40] border-2 border-white text-center shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] ${rowBg}">
+                        <span class="bg-presb-green/10 text-presb-green text-[9px] md:text-[10px] px-1 md:px-2.5 py-1 md:py-1.5 rounded font-black block md:inline">${esc.dom.replace('º','')}</span>
+                    </td>
+                `;
+
+                const personDepts = {};
+                Object.entries(esc.assignments).forEach(([role, name]) => {
+                    if(name) { if(!personDepts[name]) personDepts[name] = new Set(); personDepts[name].add(DEPARTMENTS[role] || "Outros"); }
+                });
+
+                COLUMNS_ORDER.forEach(role => {
+                    const currentPerson = esc.assignments[role] || "";
+                    const dept = DEPARTMENTS[role];
+                    const bgCellClass = index % 2 === 0 ? DEPT_COLORS[dept].cellAlt1 : DEPT_COLORS[dept].cellAlt2;
+                    let cellContent = '';
+
+                    if (isAdmin) {
+                        let options = `<option value="">- Livre -</option>`;
+                        if(appState.members[role]) appState.members[role].sort().forEach(m => options += `<option value="${m}" ${m === currentPerson ? 'selected' : ''}>${m}</option>`);
+                        
+                        let selectClass = 'select-inline text-slate-400 font-medium';
+                        if (currentPerson) selectClass = (personDepts[currentPerson] && personDepts[currentPerson].size > 1) ? 'select-inline duplicated' : 'select-inline filled';
+                        cellContent = `<select id="sel-${esc.date}-${role.replace(/\s+/g, '-').replace(/\./g, '')}" onchange="updateAssignment('${esc.date}', '${role}', this.value)" class="${selectClass}">${options}</select>`;
+                    } else {
+                        if (currentPerson) {
+                            const isDuplicated = personDepts[currentPerson] && personDepts[currentPerson].size > 1;
+                            cellContent = `<span class="${isDuplicated ? 'text-red-600 font-black' : 'text-presb-green font-bold'} text-[10px] md:text-xs px-1 md:px-2 block truncate">${currentPerson}</span>`;
+                        } else {
+                            cellContent = `<span class="text-slate-300 text-[9px] md:text-[10px] italic px-1 md:px-2 font-bold uppercase tracking-widest">- Livre -</span>`;
+                        }
+                    }
+                    
+                    rowHTML += `<td class="p-1 md:p-2 border-2 border-white ${bgCellClass}">${cellContent}</td>`;
+                });
+
+                tr.innerHTML = rowHTML;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateAssignment(dateStr, role, newValue) {
+            const schedule = appState.schedules.find(s => s.date === dateStr);
+            if(schedule) {
+                newValue ? schedule.assignments[role] = newValue : delete schedule.assignments[role];
+                saveStateToFirebase(); renderEscalas(); 
+            }
+        }
+
+        // ==========================================
+        // UTILITÁRIOS E EXPORTAÇÃO PDF
+        // ==========================================
+        function getUniqueMembers() {
+            const all = new Set();
+            for (let role in appState.members) appState.members[role].forEach(m => all.add(m));
+            return Array.from(all).sort();
+        }
+
+        function formatDateBR(dateString) {
+            if(!dateString) return "";
+            const [y, m, d] = dateString.split('-');
+            return `${d}/${m}/${y}`;
+        }
+
+        function exportarPDF() {
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'landscape', format: 'a4' });
+                const selectMes = document.getElementById('filtro-mes');
+                const selectedMonthValue = selectMes.value;
+                const mesNome = selectedMonthValue ? selectMes.options[selectMes.selectedIndex].text : "Ano Inteiro";
+                
+                let filteredSchedules = appState.schedules;
+                if (selectedMonthValue) filteredSchedules = appState.schedules.filter(s => s.date.split('-')[1] === selectedMonthValue);
+
+                if (filteredSchedules.length === 0) { showToast("Nenhum dado", true); return; }
+
+                doc.setFont("helvetica", "bold"); doc.setFontSize(16); doc.setTextColor(27, 67, 50);
+                doc.text(`Escala IPCVT - ${mesNome}`, 14, 20);
+                doc.setFontSize(9); doc.setTextColor(100, 100, 100);
+                doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 14, 26);
+
+                const columns = ["Data", "Dom", ...COLUMNS_ORDER];
+                const rows = filteredSchedules.map(esc => [formatDateBR(esc.date), esc.dom, ...COLUMNS_ORDER.map(role => esc.assignments[role] || '-')]);
+
+                doc.autoTable({
+                    startY: 32, head: [columns], body: rows, theme: 'grid',
+                    styles: { fontSize: 6, cellPadding: 2, overflow: 'linebreak', halign: 'center', valign: 'middle' },
+                    headStyles: { fillColor: [27, 67, 50], textColor: 255, fontStyle: 'bold' },
+                    alternateRowStyles: { fillColor: [248, 250, 252] },
+                    columnStyles: { 0: { cellWidth: 35 }, 1: { cellWidth: 20 } }
+                });
+                doc.save(`Escala_${mesNome}.pdf`);
+                showToast("PDF gerado!");
+            } catch (error) { showToast("Erro no PDF", true); }
+        }
+
+        // ==========================================
+        // SUBSTITUIÇÕES (BORDAS BRANCAS)
+        // ==========================================
+        function updateAbsentPerson() {
+            const date = document.getElementById('sub-data').value;
+            const role = document.getElementById('sub-funcao').value;
+            const absentInput = document.getElementById('sub-ausente');
+            const btnSalvar = document.getElementById('btn-salvar-sub');
+            const turnoSelect = document.getElementById('sub-turno');
+
+            if(role && DEPARTMENTS[role] === "Mídia") turnoSelect.value = "Noite"; else if(role) turnoSelect.value = "Ambos";
+
+            if(date && role) {
+                const schedule = appState.schedules.find(s => s.date === date);
+                if(schedule && schedule.assignments[role]) {
+                    absentInput.value = schedule.assignments[role];
+                    btnSalvar.disabled = false; btnSalvar.classList.remove('opacity-50', 'cursor-not-allowed');
+                } else {
+                    absentInput.value = "Vazio na escala";
+                    btnSalvar.disabled = true; btnSalvar.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            } else {
+                absentInput.value = ""; btnSalvar.disabled = false; btnSalvar.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        function handleSubstituicao(e) {
+            e.preventDefault();
+            const payload = {
+                id: Date.now(), date: document.getElementById('sub-data').value,
+                role: document.getElementById('sub-funcao').value, turno: document.getElementById('sub-turno').value,
+                absent: document.getElementById('sub-ausente').value, substitute: document.getElementById('sub-substituto').value,
+                obs: document.getElementById('sub-obs').value.trim()
+            };
+            if(!payload.absent || payload.absent === "Vazio na escala") return showToast("Inválido", true);
+            if(payload.absent === payload.substitute) return showToast("Erro: Mesmo nome", true);
+
+            if(!appState.substitutions) appState.substitutions = [];
+            appState.substitutions.push(payload);
+            document.getElementById('form-substituicao').reset();
+            updateAbsentPerson(); saveStateToFirebase(); renderSubstituicoes(); showToast('Salvo!');
+        }
+
+        function deleteSubstituicao(subId) {
+            openConfirmModal('Remover', 'Deseja excluir?', () => {
+                appState.substitutions = appState.substitutions.filter(s => String(s.id) !== String(subId));
+                saveStateToFirebase(); renderSubstituicoes(); showToast('Excluído.');
+            });
+        }
+
+        function renderSubstituicoes() {
+            const uniqueMembers = getUniqueMembers();
+            document.getElementById('sub-data').innerHTML = '<option value="">Data...</option>' + appState.schedules.map(s => `<option value="${s.date}">${formatDateBR(s.date)}</option>`).join('');
+            document.getElementById('sub-funcao').innerHTML = '<option value="">Função...</option>' + COLUMNS_ORDER.map(r => `<option value="${r}">${r}</option>`).join('');
+            document.getElementById('sub-substituto').innerHTML = '<option value="">Substituto...</option>' + uniqueMembers.map(m => `<option value="${m}">${m}</option>`).join('');
+
+            const tbody = document.getElementById('substituicoes-table-body');
+            const subsArray = [...(appState.substitutions || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if(subsArray.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400 border-2 border-white">Vazio</td></tr>`; return; }
+
+            tbody.innerHTML = subsArray.map((sub, index) => `
+                <tr class="${index % 2 === 0 ? 'bg-slate-50' : 'bg-slate-100'}">
+                    <td class="p-3 md:p-5 font-bold text-slate-800 border-2 border-white">${formatDateBR(sub.date)} <span class="block text-[9px] text-slate-400">${sub.turno || 'Ambos'}</span></td>
+                    <td class="p-3 md:p-5 font-medium border-2 border-white">${sub.role}</td>
+                    <td class="p-3 md:p-5 text-red-600 font-bold border-2 border-white">(-) ${sub.absent}</td>
+                    <td class="p-3 md:p-5 text-emerald-700 font-bold border-2 border-white">(+) ${sub.substitute}</td>
+                    <td class="p-3 md:p-5 text-center border-2 border-white"><button onclick="deleteSubstituicao('${sub.id}')" class="text-red-400 hover:text-red-600"><i class="ph-fill ph-trash text-lg"></i></button></td>
+                </tr>
+            `).join('');
+        }
+
+        // ==========================================
+        // ESTATÍSTICAS (COM ORDENAÇÃO INTERATIVA E GRADES BRANCAS)
+        // ==========================================
+        function handleSort(column) {
+            if (statsSort.column === column) {
+                statsSort.direction = statsSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                statsSort.column = column;
+                statsSort.direction = column === 'nome' ? 'asc' : 'desc';
+            }
+            renderEstatisticas();
+        }
+
+        function renderEstatisticas() {
+            const uniqueMembers = getUniqueMembers();
+            const subsArray = appState.substitutions || [];
+            let stats = [];
+
+            uniqueMembers.forEach(nome => {
+                let esperado = 0;
+                appState.schedules.forEach(esc => Object.entries(esc.assignments).forEach(([role, membro]) => {
+                    if (role !== "Seleção de Repertório" && membro === nome) esperado += (DEPARTMENTS[role] === "Mídia") ? 1 : 2;
+                }));
+
+                let faltas = 0, extras = 0;
+                subsArray.forEach(sub => {
+                    if (sub.role === "Seleção de Repertório") return;
+                    let peso = (sub.turno === 'Manhã' || sub.turno === 'Noite' || DEPARTMENTS[sub.role] === "Mídia") ? 1 : 2;
+                    if (sub.absent === nome) faltas += peso;
+                    if (sub.substitute === nome) extras += peso;
+                });
+
+                let totalReal = esperado - faltas + extras;
+                let percentual = esperado > 0 ? ((totalReal / esperado) * 100).toFixed(1) : (totalReal > 0 ? 100 : 0);
+                stats.push({ nome, esperado, faltas, extras, totalReal, percentual: parseFloat(percentual) });
+            });
+
+            // Filtro da barra de pesquisa interativa
+            const searchTerm = document.getElementById('search-stats')?.value.toLowerCase() || '';
+            if (searchTerm) {
+                stats = stats.filter(st => st.nome.toLowerCase().includes(searchTerm));
+            }
+
+            // Lógica de Ordenação
+            stats.sort((a, b) => {
+                let valA = a[statsSort.column];
+                let valB = b[statsSort.column];
+                
+                if (typeof valA === 'string') {
+                    return statsSort.direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                } else {
+                    return statsSort.direction === 'asc' ? valA - valB : valB - valA;
+                }
+            });
+
+            // Renderiza o Cabeçalho Dinâmico
+            const thead = document.getElementById('estatisticas-table-head');
+            const getIcon = (col) => {
+                if (statsSort.column !== col) return `<i class="ph-bold ph-caret-up text-transparent group-hover:text-slate-300"></i>`;
+                return statsSort.direction === 'asc' ? `<i class="ph-bold ph-caret-up text-presb-green"></i>` : `<i class="ph-bold ph-caret-down text-presb-green"></i>`;
+            };
+
+            thead.innerHTML = `
+                <tr class="bg-slate-200 text-slate-600 text-[8px] md:text-[10px] font-bold uppercase tracking-widest">
+                    <th class="p-2 md:p-4 sticky top-0 left-0 bg-slate-200 z-[70] border-2 border-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] cursor-pointer hover:bg-slate-300 transition-colors group" onclick="handleSort('nome')">
+                        <div class="flex items-center justify-between">Integrante ${getIcon('nome')}</div>
+                    </th>
+                    <th class="p-1 md:p-2 text-center border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" title="Domingos Escalados" onclick="handleSort('esperado')">
+                        <div class="flex items-center justify-center gap-1">Escalado ${getIcon('esperado')}</div>
+                    </th>
+                    <th class="p-1 md:p-2 text-center text-red-600 border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" title="Faltas Registradas" onclick="handleSort('faltas')">
+                        <div class="flex items-center justify-center gap-1">Faltas ${getIcon('faltas')}</div>
+                    </th>
+                    <th class="p-1 md:p-2 text-center text-emerald-700 border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" title="Substituições Extra" onclick="handleSort('extras')">
+                        <div class="flex items-center justify-center gap-1">Extra ${getIcon('extras')}</div>
+                    </th>
+                    <th class="p-1 md:p-2 text-center font-black border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" title="Total de Participações Reais" onclick="handleSort('totalReal')">
+                        <div class="flex items-center justify-center gap-1">Real ${getIcon('totalReal')}</div>
+                    </th>
+                    <th class="p-2 md:p-4 text-right w-full md:w-48 border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" onclick="handleSort('percentual')">
+                        <div class="flex items-center justify-end gap-1">Desempenho ${getIcon('percentual')}</div>
+                    </th>
+                </tr>
+            `;
+            
+            const tbody = document.getElementById('estatisticas-table-body');
+
+            if(stats.length === 0) {
+                 tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">Nenhum integrante encontrado</td></tr>`;
+                 return;
+            }
+
+            tbody.innerHTML = stats.map((st, index) => {
+                const rowBg = index % 2 === 0 ? 'bg-slate-50' : 'bg-slate-100';
+                let barColor = st.percentual < 50 ? 'bg-red-500' : (st.percentual < 80 ? 'bg-amber-400' : 'bg-emerald-500');
+                let badgeClass = st.percentual < 50 ? 'text-red-700 bg-red-50 border-red-200' : (st.percentual < 80 ? 'text-amber-700 bg-amber-50 border-amber-200' : 'text-emerald-700 bg-emerald-50 border-emerald-200');
+                
+                return `
+                    <tr class="${rowBg} hover:bg-presb-gold/10 transition-colors">
+                        <td class="p-2 md:p-4 font-black text-presb-green sticky left-0 z-[40] ${rowBg} border-2 border-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">${st.nome}</td>
+                        <td class="p-1 md:p-2 text-center font-bold text-slate-500 text-[10px] md:text-xs border-2 border-white">${st.esperado}</td>
+                        <td class="p-1 md:p-2 text-center font-bold ${st.faltas > 0 ? 'text-red-600' : 'text-slate-300'} text-[10px] md:text-xs border-2 border-white">${st.faltas > 0 ? '-'+st.faltas : 0}</td>
+                        <td class="p-1 md:p-2 text-center font-bold ${st.extras > 0 ? 'text-emerald-700' : 'text-slate-300'} text-[10px] md:text-xs border-2 border-white">${st.extras > 0 ? '+'+st.extras : 0}</td>
+                        <td class="p-1 md:p-2 text-center font-black text-xs md:text-sm border-2 border-white">${st.totalReal}</td>
+                        <td class="p-2 md:p-4 border-2 border-white">
+                            <div class="flex flex-col items-end gap-1 md:gap-2 w-full min-w-[80px] md:min-w-[120px]">
+                                <span class="px-2 py-1 rounded-md border text-[9px] md:text-[10px] font-black tracking-widest ${badgeClass}">${st.percentual}%</span>
+                                <div class="w-full bg-slate-200 rounded-full h-1 md:h-2 overflow-hidden shadow-inner">
+                                    <div class="${barColor} h-full rounded-full transition-all duration-1000 ease-out" style="width: ${Math.min(st.percentual, 100)}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderCadastro() {
+            document.getElementById('cad-funcao').innerHTML = '<option value="">Selecione...</option>' + COLUMNS_ORDER.map(r => `<option value="${r}">${r}</option>`).join('');
+            document.getElementById('cadastro-grid').innerHTML = COLUMNS_ORDER.map(role => {
+                const members = appState.members[role] || [];
+                let listHTML = members.length === 0 ? `<p class="text-slate-400 text-[10px] italic p-4 text-center">Vazio</p>` : 
+                    `<ul class="divide-y divide-slate-50 max-h-48 overflow-y-auto">` + members.sort().map(m => `
+                        <li class="p-3 flex justify-between items-center text-xs group"><span class="font-bold">${m}</span><button onclick="deleteMember('${role}', '${m}')" class="text-red-400"><i class="ph-bold ph-trash"></i></button></li>`).join('') + `</ul>`;
+                return `<div class="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden"><div class="bg-slate-50 border-b p-3 flex justify-between items-center"><h4 class="font-serif font-bold text-presb-green text-xs">${role}</h4><span class="bg-presb-green/10 text-presb-green text-[9px] font-black px-2 py-1 rounded-lg">${members.length}</span></div>${listHTML}</div>`;
+            }).join('');
+        }
+
+        function handleAddMember(e) {
+            e.preventDefault();
+            const role = document.getElementById('cad-funcao').value;
+            const nameInput = document.getElementById('cad-nome');
+            const name = formatName(nameInput.value.trim());
+
+            if(!role || !name) return;
+            if(!appState.members[role]) appState.members[role] = [];
+            if(appState.members[role].includes(name)) return showToast("Já cadastrado!", true);
+            appState.members[role].push(name); nameInput.value = '';
+            saveStateToFirebase(); renderCadastro(); showToast('Adicionado!');
+        }
+
+        function deleteMember(role, name) {
+            openConfirmModal('Remover', `Excluir ${name}?`, () => {
+                appState.members[role] = appState.members[role].filter(m => m !== name);
+                saveStateToFirebase(); renderCadastro(); showToast('Removido.');
+            });
+        }
+
+        function formatName(name) {
+            const exceptions = ['da', 'de', 'do', 'das', 'dos'];
+            return name.toLowerCase().split(' ').map((word, i) => (i > 0 && exceptions.includes(word)) ? word : word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.className = `fixed bottom-4 right-4 md:bottom-6 md:right-6 border-2 text-white px-5 md:px-6 py-3 md:py-4 rounded-xl shadow-2xl flex items-center gap-3 transform z-[300] transition-all duration-500 ${isError ? 'bg-red-600 border-red-400' : 'bg-presb-green border-presb-gold'}`;
+            document.getElementById('toast-icon').className = `text-xl md:text-2xl ${isError ? 'ph-bold ph-warning-circle text-white' : 'ph-fill ph-check-circle text-presb-gold'}`;
+            document.getElementById('toast-message').innerText = message;
+            toast.classList.remove('translate-y-32', 'opacity-0'); setTimeout(() => toast.classList.add('translate-y-32', 'opacity-0'), 3000);
+        }
+
+        let confirmActionCallback = null;
+        function openConfirmModal(title, message, callback) {
+            document.getElementById('confirm-title').innerText = title; document.getElementById('confirm-message').innerText = message;
+            confirmActionCallback = callback;
+            const modal = document.getElementById('confirm-modal'); const content = document.getElementById('confirm-content');
+            modal.classList.remove('hidden'); setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); }, 10);
+        }
+
+        function closeConfirmModal(confirmed) {
+            const modal = document.getElementById('confirm-modal'); const content = document.getElementById('confirm-content');
+            modal.classList.add('opacity-0'); content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); if(confirmed && confirmActionCallback) confirmActionCallback(); confirmActionCallback = null; }, 300);
+        }
+
+        window.startApp = startApp; window.attemptSwitchTab = attemptSwitchTab; window.requestAuth = requestAuth;
+        window.handleAuthSubmit = handleAuthSubmit; window.closeAuthModal = closeAuthModal; window.logoutAdmin = logoutAdmin;
+        window.renderEscalas = renderEscalas; window.exportarPDF = exportarPDF; window.updateAssignment = updateAssignment;
+        window.updateAbsentPerson = updateAbsentPerson; window.handleSubstituicao = handleSubstituicao;
+        window.deleteSubstituicao = deleteSubstituicao; window.handleAddMember = handleAddMember; window.deleteMember = deleteMember;
+        window.closeConfirmModal = closeConfirmModal;
+        window.renderEstatisticas = renderEstatisticas; window.handleSort = handleSort;
+
+        window.onload = startApp;
+    </script>
+</body>
+</html>

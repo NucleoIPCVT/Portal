@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interas Comunidade - Núcleo IPCVT</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'presb-green': '#1B4332',
+                        'presb-gold': '#D4AF37',
+                        'presb-dark': '#0d2119'
+                    },
+                    fontFamily: {
+                        'serif': ['Merriweather', 'serif'],
+                        'sans': ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 4px; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 font-sans text-slate-800 selection:bg-presb-gold selection:text-presb-green">
+
+    <!-- Loading Screen -->
+    <div id="loading-data" class="fixed inset-0 bg-white/90 backdrop-blur-md z-[2000] flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="animate-spin mb-4"><i data-lucide="loader-2" class="w-16 h-16 text-presb-gold"></i></div>
+        <p class="text-presb-green font-black uppercase text-xs tracking-widest">Sincronizando Projetos</p>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-presb-green text-white shadow-xl sticky top-0 z-40 border-b-4 border-presb-gold">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-4 cursor-pointer group" onclick="window.switchView('list')">
+                <div class="bg-presb-gold p-2.5 rounded-xl text-presb-dark group-hover:scale-110 transition-transform shadow-inner">
+                    <i data-lucide="piggy-bank" class="w-7 h-7 stroke-[2.5px]"></i>
+                </div>
+                <div class="flex flex-col">
+                    <h1 class="text-2xl font-black font-serif uppercase tracking-tight leading-none">Interas <span class="text-presb-gold">IPCVT</span></h1>
+                    <span class="text-[9px] text-white/60 tracking-[0.4em] font-bold uppercase mt-1">Comunidade Viva</span>
+                </div>
+            </div>
+            
+            <nav class="hidden md:flex gap-8 text-[10px] font-bold text-white/70 uppercase tracking-widest">
+                <button onclick="window.switchView('list')" id="nav-btn-list" class="hover:text-presb-gold transition-colors py-7 border-b-4 border-transparent">
+                    Início
+                </button>
+                <button onclick="window.requireAuth('create')" id="nav-btn-form" class="hover:text-presb-gold transition-colors py-7 flex items-center gap-2 border-b-4 border-transparent">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Nova Arrecadação
+                </button>
+                <a href="index.html" class="hover:text-presb-gold transition-colors py-7 flex items-center gap-2 ml-4 pl-8 border-l border-white/20">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Portal
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-12 relative">
+        
+        <!-- ================= LISTA ================= -->
+        <div id="view-list" class="space-y-8 fade-in hidden">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
+                <div>
+                    <h2 class="text-3xl md:text-4xl font-bold text-presb-green font-serif tracking-tight">Projetos Ativos</h2>
+                    <p class="text-slate-500 text-xs mt-2 font-medium uppercase tracking-widest italic">Participe e abençoe nossa comunidade</p>
+                </div>
+                <button onclick="window.requireAuth('create')" class="flex items-center gap-2 bg-presb-green hover:bg-black text-white px-6 py-3 rounded-2xl font-bold uppercase tracking-widest text-[10px] transition-all w-full sm:w-auto justify-center shadow-lg active:scale-95">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    <span>Nova Intera</span>
+                </button>
+            </div>
+            <div id="campaigns-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+        </div>
+
+        <!-- ================= FORMULÁRIO (CRIAR) ================= -->
+        <div id="view-form" class="max-w-3xl mx-auto bg-white p-8 md:p-10 rounded-[3rem] shadow-xl border border-slate-100 fade-in hidden">
+            <button onclick="window.switchView('list')" class="flex items-center gap-2 text-slate-400 hover:text-presb-green font-bold text-[10px] uppercase tracking-widest mb-8 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar
+            </button>
+            
+            <h2 id="form-title" class="text-3xl font-bold font-serif text-presb-green mb-8 border-b border-slate-100 pb-6">
+                Cadastrar Nova Intera
+            </h2>
+            
+            <form id="campaign-form" onsubmit="window.handleFormSubmit(event)" class="space-y-6">
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Título da Intera</label>
+                        <input required id="input-title" type="text" placeholder="Ex: Piquenique, Reforma..." class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-presb-gold/50 outline-none transition-all font-bold text-slate-700">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Descrição</label>
+                        <textarea required id="input-desc" rows="3" placeholder="Explique o motivo, data, local..." class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-presb-gold/50 outline-none transition-all font-medium text-slate-600 resize-none"></textarea>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 p-6 rounded-[2rem] border border-slate-200 space-y-6 mt-8">
+                    <h3 class="font-bold font-serif text-presb-green flex items-center gap-2 text-lg"><i data-lucide="target" class="w-5 h-5 text-presb-gold"></i> Formato da Arrecadação</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <label id="lbl-type-finance" class="cursor-pointer border-2 p-5 rounded-2xl flex items-start gap-3 transition-all">
+                            <input type="radio" name="type" value="finance" checked class="mt-1 accent-presb-green" onchange="window.handleTypeChange()">
+                            <div>
+                                <div class="font-bold text-presb-green flex items-center gap-2"><i data-lucide="wallet" class="w-4 h-4"></i> Financeira (R$)</div>
+                                <div class="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-medium">Arrecadação de dinheiro</div>
+                            </div>
+                        </label>
+
+                        <label id="lbl-type-item" class="cursor-pointer border-2 p-5 rounded-2xl flex items-start gap-3 transition-all border-slate-200 bg-white">
+                            <input type="radio" name="type" value="item" class="mt-1 accent-presb-gold" onchange="window.handleTypeChange()">
+                            <div>
+                                <div class="font-bold text-yellow-700 flex items-center gap-2"><i data-lucide="coffee" class="w-4 h-4"></i> Itens / Comida</div>
+                                <div class="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-medium">Junta-panelas, doações</div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="pt-2">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Modo de Oferta</label>
+                        <select id="input-mode" onchange="window.handleModeChange()" class="w-full px-5 py-4 border border-slate-200 rounded-2xl outline-none bg-white focus:ring-2 focus:ring-presb-gold/50 font-medium">
+                            <option value="open">Valor Livre</option>
+                            <option value="fixed">Cotas Fixas</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Secão Financeira -->
+                <div id="section-finance" class="space-y-5 border-l-4 border-presb-green pl-6 mt-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Meta Total (R$)</label>
+                            <input id="input-goal" type="number" min="1" step="0.01" placeholder="Ex: 1000.00" class="w-full px-5 py-4 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-presb-gold/50 font-bold">
+                        </div>
+                        <div id="wrap-quota-value" class="hidden">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Valor da Cota (R$)</label>
+                            <input id="input-quota" type="number" min="1" step="0.01" placeholder="Ex: 50.00" class="w-full px-5 py-4 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-presb-gold/50 font-bold">
+                        </div>
+                    </div>
+                    
+                    <div class="bg-presb-green/5 p-6 rounded-[2rem] border border-presb-green/10 mt-4">
+                        <h4 class="font-bold text-presb-green flex items-center gap-2 mb-4"><i data-lucide="qr-code" class="w-4 h-4"></i> Dados (PIX)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Chave PIX</label>
+                                <input id="input-pixkey" type="text" placeholder="Sua chave Pix" class="w-full px-4 py-3 text-sm border border-slate-300 rounded-xl outline-none focus:border-presb-green font-medium">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Nome do Titular</label>
+                                <input id="input-pixname" type="text" placeholder="Nome na conta" class="w-full px-4 py-3 text-sm border border-slate-300 rounded-xl outline-none focus:border-presb-green font-medium">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Secão Itens -->
+                <div id="section-items" class="space-y-4 border-l-4 border-presb-gold pl-6 hidden mt-8">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Montar Lista de Itens</label>
+                    <div class="flex flex-col sm:flex-row gap-3 items-start">
+                        <input id="new-item-name" type="text" placeholder="Ex: Refrigerante" class="flex-grow w-full sm:w-auto px-4 py-3 border border-slate-300 rounded-xl outline-none focus:border-presb-gold font-medium">
+                        <div class="flex gap-3 w-full sm:w-auto">
+                            <input id="new-item-qty" type="number" min="1" placeholder="Qtd" class="w-24 px-4 py-3 border border-slate-300 rounded-xl outline-none focus:border-presb-gold font-medium">
+                            <button type="button" onclick="window.addFormItem()" class="bg-slate-800 hover:bg-black text-white px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-colors w-full sm:w-auto">Adicionar</button>
+                        </div>
+                    </div>
+                    <ul id="form-items-list" class="mt-4 divide-y divide-slate-100 border border-slate-200 rounded-[1.5rem] p-3 bg-slate-50 hidden"></ul>
+                </div>
+
+                <div class="pt-8 border-t border-slate-100 mt-8">
+                    <button type="submit" id="btn-form-submit" class="w-full bg-presb-green hover:bg-black text-white font-black py-5 px-4 rounded-[1.5rem] transition-all shadow-xl active:scale-95 text-xs uppercase tracking-widest">
+                        Publicar Intera
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ================= DETALHE DA INTERA ================= -->
+        <div id="view-detail" class="max-w-5xl mx-auto fade-in hidden">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                <button onclick="window.switchView('list')" class="flex items-center gap-2 text-slate-400 hover:text-presb-green font-bold text-[10px] uppercase tracking-widest transition-colors">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar
+                </button>
+                <div class="flex gap-3 w-full sm:w-auto">
+                    <button onclick="window.requireAuth('delete')" class="flex-1 sm:flex-none flex items-center justify-center gap-2 text-red-600 bg-red-50 hover:bg-red-100 px-5 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-colors">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> <span class="hidden sm:inline">Excluir</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 space-y-8">
+                    <div class="bg-white p-8 md:p-10 rounded-[3rem] shadow-xl border border-slate-100 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 p-8 opacity-5">
+                            <i data-lucide="piggy-bank" class="w-32 h-32 text-presb-green"></i>
+                        </div>
+                        <div id="detail-tags" class="flex flex-wrap items-center gap-3 mb-6 relative z-10"></div>
+                        <h1 id="detail-title" class="text-3xl md:text-5xl font-bold font-serif text-presb-green mb-6 leading-tight relative z-10 tracking-tight"></h1>
+                        <p id="detail-desc" class="text-slate-500 text-base mb-10 leading-relaxed whitespace-pre-wrap relative z-10 font-medium"></p>
+                        
+                        <div id="detail-finance-progress" class="relative z-10"></div>
+                        <div id="detail-items-needed" class="relative z-10"></div>
+                    </div>
+
+                    <div id="detail-pix-block"></div>
+
+                    <div class="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-100">
+                        <h3 class="text-xl font-bold font-serif text-presb-green mb-8 flex items-center gap-3 pb-6 border-b border-slate-100">
+                            <i data-lucide="users" class="w-6 h-6 text-presb-gold"></i> Quem já abençoou
+                        </h3>
+                        <div id="detail-contributors-list"></div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-1">
+                    <div class="bg-presb-green p-8 rounded-[3rem] shadow-2xl text-white sticky top-28 border-t-8 border-presb-gold">
+                        <h3 class="text-2xl font-bold font-serif mb-3 flex items-center gap-3">
+                            Fazer Parte <i data-lucide="heart-handshake" class="w-6 h-6 text-presb-gold"></i>
+                        </h3>
+                        <p id="contrib-subtitle" class="text-presb-gold/80 mb-8 text-xs font-medium leading-relaxed"></p>
+                        
+                        <div id="contrib-init">
+                            <button onclick="window.toggleContribForm(true)" class="w-full bg-presb-gold hover:bg-yellow-500 text-presb-dark font-black py-4 px-4 rounded-2xl transition-all shadow-lg active:scale-95 text-[11px] uppercase tracking-widest border-b-4 border-yellow-600">
+                                Registrar minha Oferta
+                            </button>
+                        </div>
+
+                        <form id="contrib-form" onsubmit="window.submitContribution(event)" class="space-y-6 bg-white/5 p-6 rounded-[2rem] border border-white/10 hidden fade-in">
+                            <div>
+                                <label class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Seu Nome / Família</label>
+                                <input required id="contrib-name" type="text" placeholder="Ex: Família Silva" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none focus:ring-4 focus:ring-presb-gold/50 text-sm">
+                            </div>
+
+                            <div id="contrib-dynamic-fields"></div>
+
+                            <div class="pt-6 flex flex-col gap-3">
+                                <button type="submit" class="w-full bg-presb-gold hover:bg-yellow-500 text-presb-dark font-black py-4 px-4 rounded-xl transition-all shadow-md text-[10px] uppercase tracking-widest">
+                                    Confirmar Oferta
+                                </button>
+                                <button type="button" onclick="window.toggleContribForm(false)" class="w-full text-white/50 hover:text-white font-bold py-3 transition-colors text-[10px] uppercase tracking-widest">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Admin -->
+    <div id="auth-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-[2.5rem] shadow-2xl max-w-sm w-full overflow-hidden fade-in border-t-8 border-presb-gold">
+            <div class="bg-slate-50 p-6 flex justify-between items-center text-presb-green border-b border-slate-100">
+                <h3 class="font-bold font-serif flex items-center gap-2"><i data-lucide="lock" class="w-5 h-5 text-presb-gold"></i> Acesso Restrito</h3>
+                <button onclick="window.closeAuthModal()" class="text-slate-400 hover:text-slate-800 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="window.handleAuthSubmit(event)" class="p-8 text-center">
+                <p class="text-slate-500 text-xs mb-8 font-medium leading-relaxed">Insira a senha de gestão para autorizar a ação.</p>
+                <div class="mb-6">
+                    <input type="password" id="auth-password" placeholder="••••••" class="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-presb-gold focus:ring-4 focus:ring-presb-gold/20 transition-all font-black tracking-[0.5em] text-center text-xl shadow-inner">
+                    <p id="auth-error" class="text-red-500 text-[10px] mt-3 font-bold uppercase tracking-widest hidden animate-pulse">Senha incorreta</p>
+                </div>
+                <button type="submit" class="w-full bg-presb-green hover:bg-black text-white font-black py-4 rounded-2xl transition-colors text-[10px] uppercase tracking-[0.2em] shadow-lg">
+                    Acessar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- CÓDIGO DO FIREBASE E LÓGICA -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAg9w5QohkcmXUFRgLfSI5Sh1chnCD1Owc",
+            authDomain: "repertorio-ipcvt.firebaseapp.com",
+            projectId: "repertorio-ipcvt",
+            storageBucket: "repertorio-ipcvt.firebasestorage.app",
+            messagingSenderId: "774659782213",
+            appId: "1:774659782213:web:5e9cbf88fec30eb382152c",
+            measurementId: "G-DJ8E3VPMSY"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Estado do Banco de Dados
+        let campaigns = [];
+        let isFirebaseConnected = false;
+        
+        // Controle de Tela
+        let currentView = 'list'; 
+        let selectedCampaign = null; 
+        let pendingAction = null; 
+        let formItemsNeeded = [];
+
+        window.formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
+
+        // Inicializa Banco
+        window.onload = async () => {
+            try { await signInAnonymously(auth); } catch (e) { console.warn("Modo offline ativo"); }
+            
+            const docRef = doc(db, "app_ipcvt", "interas_dados");
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    campaigns = docSnap.data().campaigns || [];
+                } else {
+                    campaigns = [];
+                }
+                
+                if (!isFirebaseConnected) {
+                    isFirebaseConnected = true;
+                    document.getElementById('loading-data').classList.add('opacity-0');
+                    setTimeout(() => document.getElementById('loading-data').classList.add('hidden'), 500);
+                    window.switchView('list');
+                } else {
+                    // Atualiza a tela se alguém mexer em outro computador
+                    if (currentView === 'list') renderList();
+                    if (currentView === 'detail' && selectedCampaign) {
+                        selectedCampaign = campaigns.find(c => c.id === selectedCampaign.id);
+                        if(selectedCampaign) renderDetail(); else window.switchView('list');
+                    }
+                }
+            });
+        };
+
+        async function saveStateToFirebase() {
+            if(!isFirebaseConnected) return;
+            try { await setDoc(doc(db, "app_ipcvt", "interas_dados"), { campaigns }); } 
+            catch (err) { console.error("Erro ao salvar:", err); alert("Erro ao salvar dados."); }
+        }
+
+        // Navegação e Views
+        window.switchView = function(viewName) {
+            ['list', 'form', 'detail'].forEach(v => document.getElementById(`view-${v}`).classList.add('hidden'));
+            ['list', 'form'].forEach(v => {
+                document.getElementById(`nav-btn-${v}`).classList.replace('border-presb-gold', 'border-transparent');
+                document.getElementById(`nav-btn-${v}`).classList.remove('text-presb-gold');
+            });
+
+            currentView = viewName;
+            if (viewName === 'list') {
+                document.getElementById('view-list').classList.remove('hidden');
+                document.getElementById('nav-btn-list').classList.replace('border-transparent', 'border-presb-gold');
+                document.getElementById('nav-btn-list').classList.add('text-presb-gold');
+                renderList();
+            } else if (viewName === 'form') {
+                document.getElementById('view-form').classList.remove('hidden');
+                document.getElementById('nav-btn-form').classList.replace('border-transparent', 'border-presb-gold');
+                document.getElementById('nav-btn-form').classList.add('text-presb-gold');
+                formItemsNeeded = [];
+                document.getElementById('campaign-form').reset();
+                window.handleTypeChange();
+            } else if (viewName === 'detail') {
+                document.getElementById('view-detail').classList.remove('hidden');
+                renderDetail();
+            }
+            lucide.createIcons();
+        };
+
+        window.requireAuth = function(action) {
+            pendingAction = action;
+            const modal = document.getElementById('auth-modal');
+            const input = document.getElementById('auth-password');
+            document.getElementById('auth-error').classList.add('hidden');
+            input.value = '';
+            modal.classList.remove('hidden'); 
+            setTimeout(() => input.focus(), 100);
+        };
+
+        window.closeAuthModal = function() { document.getElementById('auth-modal').classList.add('hidden'); };
+
+        window.handleAuthSubmit = function(e) {
+            e.preventDefault();
+            if (document.getElementById('auth-password').value === '123') {
+                window.closeAuthModal();
+                if (pendingAction === 'create') { window.switchView('form'); }
+                else if (pendingAction === 'delete') { window.deleteCampaign(selectedCampaign.id); }
+            } else { 
+                document.getElementById('auth-error').classList.remove('hidden'); 
+            }
+        };
+
+        // Lógica do Form
+        window.handleTypeChange = function() {
+            const type = document.querySelector('input[name="type"]:checked')?.value || 'finance';
+            const modeSelect = document.getElementById('input-mode');
+            
+            // Só recria as opções se o TIPO (Dinheiro/Item) mudar
+            modeSelect.innerHTML = type === 'finance' 
+                ? `<option value="open">Valor Livre</option><option value="fixed">Cotas Fixas</option>` 
+                : `<option value="open">Oferta Livre</option><option value="fixed">Lista Pré-definida</option>`;
+            
+            document.getElementById('lbl-type-finance').className = type === 'finance' ? 'cursor-pointer border-2 p-5 rounded-2xl flex items-start gap-3 transition-all border-presb-green bg-presb-green/5' : 'cursor-pointer border-2 p-5 rounded-2xl flex items-start gap-3 transition-all border-slate-200 bg-white hover:border-presb-gold/50';
+            document.getElementById('lbl-type-item').className = type === 'item' ? 'cursor-pointer border-2 p-5 rounded-2xl flex items-start gap-3 transition-all border-presb-gold bg-presb-gold/10' : 'cursor-pointer border-2 p-5 rounded-2xl flex items-start gap-3 transition-all border-slate-200 bg-white hover:border-presb-green/30';
+            
+            window.handleModeChange();
+        };
+
+        window.handleModeChange = function() {
+            const type = document.querySelector('input[name="type"]:checked')?.value || 'finance';
+            const mode = document.getElementById('input-mode').value;
+            
+            document.getElementById('section-finance').classList.toggle('hidden', type !== 'finance');
+            document.getElementById('wrap-quota-value').classList.toggle('hidden', !(type === 'finance' && mode === 'fixed'));
+            document.getElementById('section-items').classList.toggle('hidden', !(type === 'item' && mode === 'fixed'));
+            
+            if(type === 'finance') { document.getElementById('input-goal').required = true; } 
+            else { document.getElementById('input-goal').required = false; }
+        };
+
+        window.addFormItem = function() {
+            const name = document.getElementById('new-item-name').value;
+            const qty = document.getElementById('new-item-qty').value;
+            if(name && qty) {
+                formItemsNeeded.push({ id: 'i'+Date.now(), name, needed: parseInt(qty), pledged: 0 });
+                document.getElementById('new-item-name').value = '';
+                document.getElementById('new-item-qty').value = '';
+                renderFormItems();
+            }
+        };
+
+        window.removeFormItem = function(id) {
+            formItemsNeeded = formItemsNeeded.filter(i => i.id !== id);
+            renderFormItems();
+        };
+
+        function renderFormItems() {
+            const list = document.getElementById('form-items-list');
+            list.innerHTML = formItemsNeeded.map(i => `
+                <li class="flex justify-between items-center py-2 text-sm">
+                    <span class="font-bold text-slate-700">${i.name} (x${i.needed})</span>
+                    <button type="button" onclick="window.removeFormItem('${i.id}')" class="text-red-500 hover:text-red-700 font-bold"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                </li>
+            `).join('');
+            list.classList.toggle('hidden', formItemsNeeded.length === 0);
+            lucide.createIcons();
+        }
+
+        window.handleFormSubmit = function(e) {
+            e.preventDefault();
+            const type = document.querySelector('input[name="type"]:checked').value;
+            const mode = document.getElementById('input-mode').value;
+            
+            let newCamp = {
+                id: Date.now(),
+                type, mode,
+                title: document.getElementById('input-title').value,
+                description: document.getElementById('input-desc').value,
+                contributors: []
+            };
+
+            if (type === 'finance') {
+                newCamp.goal = parseFloat(document.getElementById('input-goal').value);
+                newCamp.raised = 0;
+                newCamp.pixKey = document.getElementById('input-pixkey').value;
+                newCamp.pixName = document.getElementById('input-pixname').value;
+                if(mode === 'fixed') newCamp.quotaValue = parseFloat(document.getElementById('input-quota').value);
+            } else if (type === 'item' && mode === 'fixed') {
+                if(formItemsNeeded.length === 0) return alert("Adicione itens à lista!");
+                newCamp.itemsNeeded = [...formItemsNeeded];
+            }
+
+            campaigns.push(newCamp);
+            saveStateToFirebase();
+            window.switchView('list');
+        };
+
+        window.deleteCampaign = function(id) {
+            campaigns = campaigns.filter(c => c.id !== id);
+            saveStateToFirebase();
+            window.switchView('list');
+        };
+
+        // Renders
+        function renderList() {
+            const grid = document.getElementById('campaigns-grid');
+            if(campaigns.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-20 text-slate-400 font-bold italic">Nenhum projeto ativo no momento.</div>`;
+                return;
+            }
+            grid.innerHTML = '';
+            campaigns.slice().reverse().forEach(camp => {
+                const isFinance = camp.type === 'finance';
+                const progress = isFinance ? Math.min((camp.raised / camp.goal) * 100, 100) : 0;
+                
+                const card = document.createElement('div');
+                card.className = "bg-white border-t-8 border-t-presb-gold rounded-[2rem] shadow-xl border border-slate-100 hover:shadow-2xl hover:border-presb-gold transition-all cursor-pointer overflow-hidden flex flex-col group relative";
+                card.onclick = () => { selectedCampaign = camp; window.switchView('detail'); };
+
+                card.innerHTML = `
+                    <div class="absolute top-6 right-6 transition-colors opacity-10 group-hover:opacity-30 text-presb-green">
+                        <i data-lucide="${isFinance ? 'wallet' : 'coffee'}" class="w-12 h-12"></i>
+                    </div>
+                    <div class="p-8 flex-grow flex flex-col">
+                        <div class="mb-4 pr-10">
+                            <h3 class="text-xl font-bold font-serif text-presb-green leading-tight mb-3 tracking-tight">${camp.title}</h3>
+                            <span class="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-bold px-3 py-1.5 rounded-lg border ${isFinance ? 'bg-presb-green/10 text-presb-green border-presb-green/20' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}">
+                                ${isFinance ? 'Financeira' : 'Itens / Comida'}
+                            </span>
+                        </div>
+                        <p class="text-slate-500 text-sm mb-8 line-clamp-3 flex-grow font-medium leading-relaxed">${camp.description}</p>
+                        <div class="space-y-4 mt-auto border-t border-slate-100 pt-6">
+                            ${isFinance ? `
+                                <div class="flex justify-between text-xs font-bold mb-2">
+                                    <span class="font-black text-presb-green">${window.formatCurrency(camp.raised)}</span>
+                                    <span class="text-slate-400">Meta: ${window.formatCurrency(camp.goal)}</span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-2.5 shadow-inner">
+                                    <div class="h-2.5 rounded-full ${progress >= 100 ? 'bg-emerald-500' : 'bg-presb-gold'}" style="width: ${progress}%"></div>
+                                </div>
+                            ` : `
+                                <div class="flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <i data-lucide="gift" class="w-4 h-4 text-presb-gold"></i>
+                                    <span>${camp.contributors.length > 0 ? `<strong class="text-slate-700">${camp.contributors.length}</strong> participações` : 'Seja o primeiro a participar!'}</span>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function renderDetail() {
+            const camp = selectedCampaign; const isFinance = camp.type === 'finance';
+            document.getElementById('detail-tags').innerHTML = `
+                <span class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm ${isFinance ? 'bg-presb-green text-white' : 'bg-presb-gold text-presb-dark'}">
+                    <i data-lucide="${isFinance ? 'wallet' : 'coffee'}" class="w-4 h-4"></i> ${isFinance ? 'Financeira' : 'Itens/Comida'}
+                </span>
+                <span class="bg-slate-50 text-slate-500 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-slate-200">
+                    ${camp.mode === 'fixed' ? 'Modelo Fechado' : 'Oferta Livre'}
+                </span>
+            `;
+
+            document.getElementById('detail-title').innerText = camp.title;
+            document.getElementById('detail-desc').innerText = camp.description;
+
+            const financeBlock = document.getElementById('detail-finance-progress');
+            financeBlock.innerHTML = '';
+            if (isFinance) {
+                const progress = Math.min((camp.raised / camp.goal) * 100, 100);
+                financeBlock.innerHTML = `
+                    <div class="bg-slate-50 p-8 rounded-[2rem] border border-slate-200 mb-8">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 gap-4">
+                            <div>
+                                <span class="text-4xl md:text-5xl font-black font-serif text-presb-green block mb-2 tracking-tight">${window.formatCurrency(camp.raised)}</span>
+                                <span class="text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px]">Total Arrecadado</span>
+                            </div>
+                            <div class="sm:text-right bg-white px-5 py-3 rounded-xl border border-slate-100 shadow-sm w-full sm:w-auto">
+                                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-[0.2em] block mb-1">Meta Desejada</span>
+                                <span class="font-black text-slate-700 text-xl">${window.formatCurrency(camp.goal)}</span>
+                            </div>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-4 mb-3 overflow-hidden shadow-inner">
+                            <div class="h-full transition-all duration-1000 ease-out ${progress >= 100 ? 'bg-emerald-500' : 'bg-presb-gold'}" style="width: ${progress}%"></div>
+                        </div>
+                        <div class="text-right text-xs font-bold text-slate-500">${progress.toFixed(1)}% alcançado</div>
+                    </div>
+                `;
+            }
+
+            const itemsBlock = document.getElementById('detail-items-needed');
+            itemsBlock.innerHTML = '';
+            if (!isFinance && camp.mode === 'fixed') {
+                let itemsHtml = camp.itemsNeeded.map(item => {
+                    const completed = item.pledged >= item.needed;
+                    return `
+                        <div class="p-5 rounded-2xl border-2 ${completed ? 'bg-emerald-50 border-emerald-100' : 'bg-white border-slate-100 shadow-sm'} flex justify-between items-center transition-colors">
+                            <div>
+                                <span class="block font-bold text-sm ${completed ? 'text-emerald-800 line-through opacity-60' : 'text-slate-700'}">${item.name}</span>
+                                <span class="text-[10px] uppercase tracking-widest font-bold text-slate-400 mt-1 block">Temos ${item.pledged} de ${item.needed}</span>
+                            </div>
+                            ${completed ? '<i data-lucide="check-circle-2" class="text-emerald-500 w-6 h-6"></i>' : `<div class="text-[10px] font-black text-presb-dark bg-presb-gold px-3 py-1.5 rounded-lg">Faltam ${item.needed - item.pledged}</div>`}
+                        </div>
+                    `;
+                }).join('');
+                itemsBlock.innerHTML = `<div class="mb-8 bg-slate-50 p-8 rounded-[2rem] border border-slate-200"><h3 class="text-lg font-bold font-serif text-presb-green mb-5 flex items-center gap-2"><i data-lucide="list-checks" class="text-presb-gold w-5 h-5"></i> O que precisamos:</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-4">${itemsHtml}</div></div>`;
+            }
+
+            const pixBlock = document.getElementById('detail-pix-block');
+            pixBlock.innerHTML = '';
+            if (isFinance && camp.pixKey) {
+                pixBlock.innerHTML = `
+                    <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl flex flex-col sm:flex-row items-center gap-6 relative overflow-hidden mb-8 group">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-presb-green opacity-5 rounded-bl-full -z-10 group-hover:scale-110 transition-transform"></div>
+                        <div class="p-5 rounded-2xl bg-slate-50 text-presb-green shadow-inner border border-slate-200 flex-shrink-0">
+                            <i data-lucide="qr-code" class="w-10 h-10"></i>
+                        </div>
+                        <div class="flex-grow text-center sm:text-left z-10 w-full">
+                            <h4 class="text-lg font-bold font-serif text-presb-green mb-1">Dados para PIX</h4>
+                            <p class="text-slate-500 text-xs mb-5 font-medium">Favorecido: <strong class="text-slate-700">${camp.pixName}</strong></p>
+                            <div class="flex flex-col sm:flex-row items-stretch sm:items-center max-w-lg bg-slate-50 border-2 border-slate-200 rounded-xl overflow-hidden focus-within:border-presb-gold transition-colors mx-auto sm:mx-0">
+                                <div class="px-5 py-4 text-slate-600 font-mono text-sm font-bold flex-grow truncate text-center sm:text-left">${camp.pixKey}</div>
+                                <button id="btn-copy-pix" onclick="window.copyPix('${camp.pixKey}')" class="px-6 py-4 font-bold text-[10px] uppercase tracking-widest transition-colors flex items-center justify-center gap-2 bg-slate-800 text-white hover:bg-black">
+                                    <i data-lucide="copy" class="w-4 h-4"></i> Copiar Chave
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const listBlock = document.getElementById('detail-contributors-list');
+            if (camp.contributors.length === 0) {
+                listBlock.innerHTML = `<div class="text-center py-10 text-slate-400"><i data-lucide="message-square" class="w-10 h-10 mx-auto mb-4 opacity-20"></i><p class="font-medium text-sm">Nenhuma oferta registrada. Seja o primeiro!</p></div>`;
+            } else {
+                listBlock.innerHTML = '<ul class="space-y-4">' + camp.contributors.map(c => {
+                    const letter = c.name.charAt(0).toUpperCase();
+                    const valBadge = isFinance 
+                        ? `<span class="font-black text-sm text-presb-green bg-presb-green/10 px-4 py-2 rounded-xl border border-presb-green/20">${window.formatCurrency(c.amount)}</span>`
+                        : `<span class="font-bold text-sm text-yellow-700 bg-yellow-50 px-4 py-2 rounded-xl border border-yellow-200">${c.quantity}x ${c.itemName}</span>`;
+                    return `
+                        <li class="p-5 bg-slate-50 rounded-[1.5rem] flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-slate-100 hover:border-presb-gold/30 transition-colors">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-full flex items-center justify-center font-black text-lg bg-white text-presb-green border-2 border-slate-200 shadow-sm">${letter}</div>
+                                <span class="font-bold text-base text-slate-700">${c.name}</span>
+                            </div>
+                            <div class="text-center sm:text-right">${valBadge}</div>
+                        </li>
+                    `;
+                }).join('') + '</ul>';
+            }
+            
+            document.getElementById('contrib-subtitle').innerText = isFinance ? "Registre aqui sua oferta após fazer o PIX, para controle da equipe." : "Assuma um item da lista e contribua com a comunhão!";
+            window.toggleContribForm(false);
+            
+            // Build Dynamic Form
+            const dynFields = document.getElementById('contrib-dynamic-fields');
+            if (isFinance) {
+                if(camp.mode === 'fixed') {
+                    dynFields.innerHTML = `
+                        <div class="flex items-center justify-between mb-4"><span class="text-xs font-bold text-white">Valor da Cota:</span> <span class="text-sm font-black text-presb-gold">${window.formatCurrency(camp.quotaValue)}</span></div>
+                        <label class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Quantas cotas?</label>
+                        <input required id="c-quota-qty" type="number" min="1" value="1" oninput="document.getElementById('c-quota-total').innerText = window.formatCurrency(this.value * ${camp.quotaValue})" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none focus:ring-4 focus:ring-presb-gold/50 text-sm mb-2">
+                        <div class="text-right text-xs font-bold text-white/80">Total: <span id="c-quota-total" class="text-presb-gold font-black">${window.formatCurrency(camp.quotaValue)}</span></div>
+                    `;
+                } else {
+                    dynFields.innerHTML = `<div><label class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Valor Ofertado (R$)</label><input required id="c-amount" type="number" step="0.01" min="0.01" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none focus:ring-4 focus:ring-presb-gold/50 text-sm"></div>`;
+                }
+            } else {
+                if(camp.mode === 'fixed') {
+                    const options = camp.itemsNeeded.filter(i => i.pledged < i.needed).map(i => `<option value="${i.id}">${i.name} (Faltam ${i.needed - i.pledged})</option>`).join('');
+                    if(options) {
+                        dynFields.innerHTML = `
+                            <div class="mb-4"><label class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">O que vai levar?</label><select required id="c-item-select" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none">${options}</select></div>
+                            <div><label class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Quantidade</label><input required id="c-item-qty" type="number" min="1" value="1" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none text-sm"></div>
+                        `;
+                    } else {
+                        dynFields.innerHTML = `<div class="text-center text-presb-gold font-bold text-sm bg-presb-dark p-4 rounded-xl">Todos os itens já foram preenchidos! Obrigado!</div>`;
+                    }
+                } else {
+                    dynFields.innerHTML = `<div><label class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">O que vai levar?</label><input required id="c-item-name" type="text" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none focus:ring-4 focus:ring-presb-gold/50 text-sm"></div>`;
+                }
+            }
+            lucide.createIcons();
+        }
+
+        window.toggleContribForm = function(show) {
+            document.getElementById('contrib-init').classList.toggle('hidden', show);
+            document.getElementById('contrib-form').classList.toggle('hidden', !show);
+            if(show) document.getElementById('contrib-name').value = '';
+        };
+
+        window.submitContribution = function(e) {
+            e.preventDefault();
+            const camp = selectedCampaign;
+            let payload = { id: Date.now(), name: document.getElementById('contrib-name').value };
+            
+            if (camp.type === 'finance') {
+                if(camp.mode === 'fixed') {
+                    payload.amount = camp.quotaValue * parseInt(document.getElementById('c-quota-qty').value);
+                } else {
+                    payload.amount = parseFloat(document.getElementById('c-amount').value);
+                }
+                camp.raised += payload.amount;
+            } else {
+                if (camp.mode === 'fixed') {
+                    const itemSelect = document.getElementById('c-item-select');
+                    if(!itemSelect) return;
+                    const itemId = itemSelect.value;
+                    const qty = parseInt(document.getElementById('c-item-qty').value);
+                    const item = camp.itemsNeeded.find(i => i.id === itemId);
+                    payload.itemName = item.name;
+                    payload.quantity = qty;
+                    item.pledged += qty;
+                } else {
+                    payload.itemName = document.getElementById('c-item-name').value;
+                    payload.quantity = 1; 
+                }
+            }
+            
+            camp.contributors.push(payload);
+            saveStateToFirebase(); // Salva oferta
+            renderDetail(); 
+        };
+
+        window.copyPix = function(text) {
+            const textArea = document.createElement("textarea"); textArea.value = text; document.body.appendChild(textArea); textArea.select();
+            try { document.execCommand('copy'); } catch (err) { console.error('Erro ao copiar', err); }
+            document.body.removeChild(textArea);
+            
+            const btn = document.getElementById('btn-copy-pix');
+            if(btn) {
+                btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Copiado`;
+                btn.classList.replace('bg-slate-800', 'bg-emerald-600');
+                lucide.createIcons();
+                setTimeout(() => {
+                    btn.innerHTML = `<i data-lucide="copy" class="w-4 h-4"></i> Copiar Chave`;
+                    btn.classList.replace('bg-emerald-600', 'bg-slate-800');
+                    lucide.createIcons();
+                }, 2000);
+            }
+        };
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal IPCVT - Central de Gestão</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Fontes Institucionais -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700;900&family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'presb-green': '#1B4332',
+                        'presb-gold': '#D4AF37',
+                        'presb-dark': '#0d2119',
+                        'presb-blue': '#1e3a8a', /* Azul Escuro Institucional */
+                        'presb-wine': '#881337', /* Vinho/Bordô Institucional */
+                    },
+                    fontFamily: {
+                        'serif': ['Merriweather', 'serif'],
+                        'sans': ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .fade-in { animation: fadeIn 0.6s ease-out forwards; opacity: 0; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+        
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(20px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        /* Efeito de brilho no hover dos cards */
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(27, 67, 50, 0.1), 0 8px 10px -6px rgba(27, 67, 50, 0.1);
+            border-color: #D4AF37;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 min-h-screen flex flex-col selection:bg-presb-gold selection:text-presb-green">
+
+    <!-- Cabeçalho Principal -->
+    <header class="bg-presb-green border-b-8 border-presb-dark pt-16 pb-20 px-6 shadow-2xl relative overflow-hidden shrink-0">
+        <!-- Textura de fundo -->
+        <div class="absolute -bottom-20 -right-10 opacity-[0.03] pointer-events-none">
+            <i class="ph-fill ph-church text-[350px] text-white"></i>
+        </div>
+        
+        <div class="max-w-5xl mx-auto relative z-10 text-center">
+            <div class="bg-presb-gold/20 w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center mx-auto mb-6 text-presb-gold text-4xl md:text-5xl shadow-inner border border-presb-gold/30">
+                <i class="ph-fill ph-intersect"></i>
+            </div>
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-2 font-serif tracking-tight drop-shadow-md">
+                Núcleo <span class="text-presb-gold">IPCVT</span>
+            </h1>
+            <p class="text-presb-gold font-bold uppercase tracking-[0.2em] md:tracking-[0.3em] text-xs md:text-sm mb-2">
+                Igreja Presbiteriana Central em Vilar dos Telles
+            </p>
+            <p class="text-slate-300 font-medium tracking-widest text-[10px] md:text-xs uppercase opacity-80">
+                Central Integrada de Liderança
+            </p>
+        </div>
+    </header>
+
+    <!-- Área de Cards (Aplicativos lado a lado) -->
+    <main class="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 -mt-10 pb-16 relative z-20">
+        
+        <!-- Grade responsiva: 1 coluna no celular pequeno, 2 colunas no tablet/desktop -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8">
+            
+            <!-- CARD 1: ESCALA DO LOUVOR (Azul Institucional) -->
+            <a href="https://escala-louvor-public.web.app" target="_blank" class="card-hover bg-white rounded-[2rem] p-6 sm:p-8 border-2 border-slate-100 shadow-xl flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-6 group fade-in delay-1 relative overflow-hidden h-full">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-presb-blue/10 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-150"></div>
+                <div class="bg-slate-50 w-20 h-20 shrink-0 rounded-2xl flex items-center justify-center text-presb-blue border border-slate-100 shadow-sm group-hover:bg-presb-blue group-hover:text-white transition-colors z-10">
+                    <i class="ph-fill ph-playlist text-4xl"></i>
+                </div>
+                <div class="z-10 flex flex-col h-full justify-center">
+                    <h2 class="text-xl font-bold text-slate-800 font-serif mb-2 group-hover:text-presb-blue transition-colors">Escala do Louvor</h2>
+                    <p class="text-xs font-medium text-slate-500 leading-relaxed mb-4 flex-1">Aplicativo original para consulta de cifras, letras e repertórios aprovados.</p>
+                    <span class="text-[9px] font-black uppercase tracking-widest text-presb-blue flex items-center justify-center sm:justify-start gap-1"><i class="ph-bold ph-arrow-square-out"></i> App Externo</span>
+                </div>
+            </a>
+
+            <!-- CARD 2: ESCALA GERAL (Verde Presbiteriano) -->
+            <a href="escala_geral.html" class="card-hover bg-white rounded-[2rem] p-6 sm:p-8 border-2 border-slate-100 shadow-xl flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-6 group fade-in delay-2 relative overflow-hidden h-full">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-presb-green/5 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-150"></div>
+                <div class="bg-slate-50 w-20 h-20 shrink-0 rounded-2xl flex items-center justify-center text-presb-green border border-slate-100 shadow-sm group-hover:bg-presb-green group-hover:text-white transition-colors z-10">
+                    <i class="ph-fill ph-calendar-check text-4xl"></i>
+                </div>
+                <div class="z-10 flex flex-col h-full justify-center">
+                    <h2 class="text-xl font-bold text-slate-800 font-serif mb-2 group-hover:text-presb-green transition-colors">Escala Geral</h2>
+                    <p class="text-xs font-medium text-slate-500 leading-relaxed mb-4 flex-1">Gestão completa de domingos, substituições e estatísticas da equipe.</p>
+                    <span class="text-[9px] font-black uppercase tracking-widest text-presb-green flex items-center justify-center sm:justify-start gap-1"><i class="ph-bold ph-lock-key"></i> Requer Senha</span>
+                </div>
+            </a>
+
+            <!-- CARD 3: VOTAÇÃO DE MÚSICAS (Dourado com Pódio) -->
+            <a href="votacao.html" class="card-hover bg-white rounded-[2rem] p-6 sm:p-8 border-2 border-slate-100 shadow-xl flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-6 group fade-in delay-3 relative overflow-hidden h-full">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-presb-gold/10 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-150"></div>
+                <div class="bg-slate-50 w-20 h-20 shrink-0 rounded-2xl flex items-center justify-center text-presb-gold border border-slate-100 shadow-sm group-hover:bg-presb-gold group-hover:text-white transition-colors z-10">
+                    <i class="ph-fill ph-steps text-4xl"></i>
+                </div>
+                <div class="z-10 flex flex-col h-full justify-center">
+                    <h2 class="text-xl font-bold text-slate-800 font-serif mb-2 group-hover:text-presb-gold transition-colors">Votação das Músicas</h2>
+                    <p class="text-xs font-medium text-slate-500 leading-relaxed mb-4 flex-1">Sugestões e assembleia participativa para renovação do repertório.</p>
+                    <span class="text-[9px] font-black uppercase tracking-widest text-presb-gold flex items-center justify-center sm:justify-start gap-1"><i class="ph-bold ph-brain"></i> Análise IA Ativa</span>
+                </div>
+            </a>
+
+            <!-- CARD 4: VAQUINHAS (Vinho/Bordô) -->
+            <a href="vaquinhas.html" class="card-hover bg-white rounded-[2rem] p-6 sm:p-8 border-2 border-slate-100 shadow-xl flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-6 group fade-in delay-4 relative overflow-hidden h-full">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-presb-wine/5 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-150"></div>
+                <div class="bg-slate-50 w-20 h-20 shrink-0 rounded-2xl flex items-center justify-center text-presb-wine border border-slate-100 shadow-sm group-hover:bg-presb-wine group-hover:text-white transition-colors z-10">
+                    <i class="ph-fill ph-piggy-bank text-4xl"></i>
+                </div>
+                <div class="z-10 flex flex-col h-full justify-center">
+                    <h2 class="text-xl font-bold text-slate-800 font-serif mb-2 group-hover:text-presb-wine transition-colors">Vaquinhas</h2>
+                    <p class="text-xs font-medium text-slate-500 leading-relaxed mb-4 flex-1">Controle transparente de arrecadações e investimentos do ministério.</p>
+                    <span class="text-[9px] font-black uppercase tracking-widest text-presb-wine flex items-center justify-center sm:justify-start gap-1"><i class="ph-bold ph-wrench"></i> Em Construção</span>
+                </div>
+            </a>
+
+        </div>
+    </main>
+
+    <!-- Rodapé -->
+    <footer class="bg-white border-t border-slate-200 py-8 mt-auto shrink-0">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <i class="ph-fill ph-leaf text-presb-green text-2xl mb-3 inline-block"></i>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Igreja Presbiteriana Central em Vilar dos Telles</p>
+            <p class="text-xs font-medium text-slate-500">Núcleo de Louvor, Mídia e Técnica</p>
+            <p class="text-[9px] font-bold text-slate-300 mt-6 uppercase tracking-widest">Versão 2.0 • 2026</p>
+        </div>
+    </footer>
+
+</body>
+</html>
+
+
+
+
+```

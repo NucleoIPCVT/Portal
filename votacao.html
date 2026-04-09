@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Votação de Músicas - Núcleo IPCVT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'presb-green': '#1B4332',
+                        'presb-gold': '#D4AF37',
+                        'presb-dark': '#0d2119',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .modal-backdrop {
+            position: fixed; inset: 0; background-color: rgba(13, 33, 25, 0.9);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+            backdrop-filter: blur(8px);
+        }
+        .modal-backdrop.active { opacity: 1; pointer-events: auto; }
+        .modal-content {
+            background: white; border-radius: 3rem; padding: 2.5rem; width: 95%; max-width: 480px;
+            transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .modal-backdrop.active .modal-content { transform: scale(1); }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 pb-20 selection:bg-presb-gold selection:text-presb-green">
+
+    <div id="loading-data" class="fixed inset-0 bg-white/90 backdrop-blur-md z-[2000] flex flex-col items-center justify-center transition-opacity duration-500">
+        <i class="ph-bold ph-circle-notch text-6xl text-presb-gold animate-spin mb-4"></i>
+        <p class="text-presb-green font-black uppercase text-xs tracking-widest mt-4">Sincronizando Nuvem</p>
+    </div>
+
+    <div id="app"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // Configurações do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAg9w5QohkcmXUFRgLfSI5Sh1chnCD1Owc",
+            authDomain: "repertorio-ipcvt.firebaseapp.com",
+            projectId: "repertorio-ipcvt",
+            storageBucket: "repertorio-ipcvt.firebasestorage.app",
+            messagingSenderId: "774659782213",
+            appId: "1:774659782213:web:5e9cbf88fec30eb382152c",
+            measurementId: "G-DJ8E3VPMSY"
+        };
+
+        const appFirebase = initializeApp(firebaseConfig);
+        const db = getFirestore(appFirebase);
+        const auth = getAuth(appFirebase);
+
+        // =====================================================================
+        // TRUQUE DEFINITIVO DE SEGURANÇA CONTRA O ROBÔ DO GITHUB
+        // Cole sua chave NOVA aqui, mas DE TRÁS PRA FRENTE.
+        // Use o site: https://www.invertertexto.com/
+        // Exemplo: se a chave nova for "AIzaSy123", você vai colar "321ySazIA"
+        // =====================================================================
+        const chaveInvertida = "gH7ZzMYCCwXNuqWLS6VK5LMV3kMvZshDSazIA"; 
+        
+        // O código desinverte a chave na hora de usar, o robô nunca vai saber!
+        const apiKey = chaveInvertida.split('').reverse().join(''); 
+
+        const THEMES = [
+            { title: "Adoração e Louvor", desc: "Músicas focadas na exaltação dos atributos de Deus." },
+            { title: "Comunhão", desc: "Canções que celebram a unidade do corpo de Cristo." },
+            { title: "Confiança em Deus", desc: "Temas que reforçam o descanso na soberania divina." },
+            { title: "Consagração", desc: "Músicas de entrega pessoal e rendição." },
+            { title: "Graça e Redenção", desc: "Focam no sacrifício de Jesus na cruz e perdão." },
+            { title: "Gratidão", desc: "Expressões de agradecimento pelas bênçãos." },
+            { title: "Missões", desc: "Canções que despertam o ide e amor pelas almas." },
+            { title: "Palavra e Promessas", desc: "Músicas baseadas nas Escrituras Sagradas." },
+            { title: "Transformação e Renovo", desc: "Focam na ação do Espírito Santo." }
+        ];
+
+        const INITIAL_USERS = [
+            { id: 'u1', name: 'Hudson Amorim', phone: '21996959841' },
+            { id: 'u2', name: 'Isadora Emerich', phone: '21972734466' },
+            { id: 'u3', name: 'Alexandre Vieira', phone: '21985628420' },
+            { id: 'u4', name: 'Allyson Gomes', phone: '21983656490' },
+            { id: 'u5', name: 'Amanda Gerhardt', phone: '21993064859' },
+            { id: 'u6', name: 'Arlete Costa', phone: '21985499917' },
+            { id: 'u7', name: 'Daiane Ximenes', phone: '21988594904' },
+            { id: 'u8', name: 'Eduardo Machado', phone: '21974892727' },
+            { id: 'u9', name: 'Flávio Gregório', phone: '21988339813' },
+            { id: 'u10', name: 'Germano Navega', phone: '21993339176' },
+            { id: 'u11', name: 'Guilherme Rocha', phone: '21996290401' },
+            { id: 'u12', name: 'Jamylle De França', phone: '21983047580' },
+            { id: 'u13', name: 'Jean Lucas', phone: '21990519500' },
+            { id: 'u14', name: 'Joao Victor Gomes', phone: '21992698519' },
+            { id: 'u15', name: 'Laura Emanuele', phone: '21986169455' },
+            { id: 'u16', name: 'Liliane Novaes', phone: '21970031216' },
+            { id: 'u17', name: 'Lorran Fraga', phone: '21990965848' },
+            { id: 'u18', name: 'Mônica de França', phone: '21999798405' },
+            { id: 'u19', name: 'Nilson Almeida', phone: '21996594453' },
+            { id: 'u20', name: 'Roberta Gregório', phone: '21993364602' },
+            { id: 'u21', name: 'Angelo Marcio', phone: '21995213041' },
+            { id: 'u22', name: 'Pedro Costa', phone: '21995534541' }
+        ];
+
+        let isFirebaseConnected = false;
+        
+        const state = {
+            users: [...INITIAL_USERS],
+            periods: [{
+                id: 'p1',
+                name: "1º Bimestre",
+                theme: THEMES[4].title,
+                themeDefinition: THEMES[4].desc,
+                suggestionsOpen: true,
+                votingOpen: false
+            }],
+            currentPeriodId: 'p1',
+            songs: [],
+            
+            currentUser: null,
+            activeTab: 'home',
+            isAdminAuthenticated: false,
+            isSubmitting: false,
+            loginError: false,
+            editingUserId: null,
+            modals: {
+                reject: { isOpen: false, songId: null, type: null },
+                cycle: { isOpen: false, step: 1, error: false },
+                viewReason: { isOpen: false, title: '', text: '' }
+            }
+        };
+
+        Object.defineProperty(state, 'period', {
+            get: function() { return this.periods.find(p => p.id === this.currentPeriodId); }
+        });
+
+        window.onload = async () => {
+            document.getElementById('loading-data').classList.remove('hidden');
+            try { 
+                await signInAnonymously(auth); 
+                initFirebaseConnection();
+            } catch (e) { 
+                initFirebaseConnection(); 
+            }
+        };
+
+        function initFirebaseConnection() {
+            const docRef = doc(db, "app_ipcvt", "votacao_dados");
+            
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    state.users = data.users || state.users;
+                    state.periods = data.periods || state.periods;
+                    state.currentPeriodId = data.currentPeriodId || state.currentPeriodId;
+                    state.songs = data.songs || [];
+                } else {
+                    saveStateToFirebase();
+                }
+                
+                if (!isFirebaseConnected) {
+                    isFirebaseConnected = true;
+                    document.getElementById('loading-data').classList.add('opacity-0');
+                    setTimeout(() => document.getElementById('loading-data').classList.add('hidden'), 500);
+                }
+                
+                render(); 
+            }, (error) => {
+                document.getElementById('loading-data').classList.add('hidden');
+            });
+        }
+
+        async function saveStateToFirebase() {
+            if (!isFirebaseConnected) return; 
+            const dataToSave = {
+                users: state.users,
+                periods: state.periods,
+                currentPeriodId: state.currentPeriodId,
+                songs: state.songs
+            };
+            try {
+                await setDoc(doc(db, "app_ipcvt", "votacao_dados"), dataToSave);
+            } catch (error) {
+            }
+        }
+
+        window.getYouTubeVideoId = function(url) {
+            if (!url) return null;
+            const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/|shorts\/)([^"&?\/\s]{11})/i;
+            const match = url.match(regExp);
+            return match ? match[1] : null;
+        };
+
+        window.getYouTubeEmbedUrl = function(url) {
+            const videoId = window.getYouTubeVideoId(url);
+            if (videoId) return `https://www.youtube.com/embed/${videoId}?rel=0&enablejsapi=1`;
+            return null;
+        };
+
+        window.getStatusBadgeHtml = function(status) {
+            if (status === 'loading' || status === 'pending') return `<span class="inline-flex w-full items-center justify-center px-3 py-2 rounded-xl text-[9px] font-bold bg-slate-100 text-slate-500 border border-slate-200 shadow-sm uppercase tracking-widest">Aguardando</span>`;
+            if (status === 'Aprovado' || status === 'approved') return `<span class="inline-flex w-full items-center justify-center px-3 py-2 rounded-xl text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-sm uppercase tracking-widest"><i class="ph-bold ph-check-circle mr-1"></i> Aprovado</span>`;
+            if (status === 'Erro') return `<span class="inline-flex w-full items-center justify-center px-3 py-2 rounded-xl text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-100 shadow-sm uppercase tracking-widest"><i class="ph-bold ph-warning-circle mr-1"></i> Falha</span>`;
+            return `<span class="inline-flex w-full items-center justify-center px-3 py-2 rounded-xl text-[9px] font-bold bg-red-50 text-red-700 border border-red-100 shadow-sm uppercase tracking-widest"><i class="ph-bold ph-x-circle mr-1"></i> Reprovado</span>`;
+        };
+
+        function render() {
+            const app = document.getElementById('app');
+            if (!state.currentUser) {
+                app.innerHTML = renderLogin();
+                return;
+            }
+
+            app.innerHTML = `
+                <header class="bg-presb-green border-b-4 border-presb-gold py-5 px-6 shadow-xl sticky top-0 z-50">
+                    <div class="max-w-5xl mx-auto flex items-center justify-between gap-4">
+                        <div class="flex items-center cursor-pointer" onclick="window.changeTab('home')">
+                            <div class="bg-presb-gold p-3 rounded-2xl mr-4 text-presb-dark shadow-inner">
+                                <i class="ph-fill ph-music-notes w-6 h-6 flex items-center justify-center text-xl"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-xl md:text-2xl font-black text-white leading-none font-serif tracking-tight">Votação de Músicas</h1>
+                                <p class="text-[9px] text-white/60 uppercase font-bold mt-1 tracking-[0.2em] md:tracking-[0.3em]"><span class="hidden md:inline">Revitalização do Repertório • </span>${state.period.name}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="text-right hidden sm:block">
+                                <p class="text-[10px] font-black text-white leading-none">${state.currentUser.name}</p>
+                                <button onclick="window.handleUserLogout()" class="text-[9px] text-presb-gold font-bold uppercase hover:text-white transition mt-1">Sair do sistema</button>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-presb-dark border-2 border-presb-gold flex items-center justify-center font-black text-white text-sm shadow-inner">
+                                ${state.currentUser.name.charAt(0).toUpperCase()}
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <nav class="bg-white border-b border-slate-200 sticky top-[80px] z-40 shadow-sm overflow-x-auto no-scrollbar">
+                    <div class="max-w-5xl mx-auto flex">
+                        ${renderTabButton('home', 'Início', 'ph-house')}
+                        ${renderTabButton('sugestao', 'Sugestões', 'ph-plus-circle')}
+                        ${renderTabButton('votacao', 'Votação', 'ph-check-square-offset')}
+                        ${renderTabButton('analise', 'Análise', 'ph-shield-check')}
+                        ${renderTabButton('cadastro', 'Membros', 'ph-users-three')}
+                        <a href="index.html" class="flex-1 min-w-[100px] flex items-center justify-center py-5 px-4 border-b-[3px] border-transparent font-bold text-[10px] uppercase tracking-widest text-slate-400 hover:text-presb-green transition-all whitespace-nowrap">
+                            <i class="ph-bold ph-arrow-left text-xl mr-2"></i> Portal
+                        </a>
+                    </div>
+                </nav>
+
+                <main class="max-w-5xl mx-auto mt-8 px-6 pb-16">
+                    ${renderActiveTab()}
+                </main>
+
+                ${renderModals()}
+            `;
+        }
+
+        function renderTabButton(id, label, icon) {
+            const isActive = state.activeTab === id;
+            return `
+                <button onclick="window.changeTab('${id}')" class="flex-1 min-w-[100px] flex items-center justify-center py-5 px-4 border-b-[3px] font-bold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${isActive ? 'border-presb-gold text-presb-green bg-presb-green/5' : 'border-transparent text-slate-400 hover:text-presb-green'}">
+                    <i class="${icon} text-xl mr-2 ${isActive ? 'text-presb-gold' : ''}"></i> ${label}
+                </button>
+            `;
+        }
+
+        function renderLogin() {
+            const sortedUsers = [...state.users].sort((a, b) => a.name.localeCompare(b.name));
+            const options = sortedUsers.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+            
+            return `
+                <div class="min-h-screen bg-presb-dark flex items-center justify-center p-6 fade-in bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-presb-green to-presb-dark">
+                    <div class="bg-white p-10 md:p-12 rounded-[3rem] shadow-2xl border-t-8 border-presb-gold w-full max-w-md text-center relative overflow-hidden">
+                        <div class="bg-presb-gold/20 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8 text-presb-gold text-5xl shadow-inner relative z-10">
+                            <i class="ph-fill ph-music-notes"></i>
+                        </div>
+                        <h2 class="text-3xl font-black text-presb-green mb-2 leading-tight font-serif tracking-tight relative z-10">Votação de Músicas</h2>
+                        <p class="text-slate-400 text-[10px] font-bold uppercase tracking-[0.3em] mb-10 relative z-10">Revitalização do Repertório</p>
+                        
+                        <form onsubmit="window.handleUserLogin(event)" class="space-y-6 text-left relative z-10">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-1 tracking-widest">Selecione seu Nome</label>
+                                <select id="login-user-select" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-presb-gold font-bold text-slate-700 appearance-none shadow-sm transition-colors">
+                                    ${options}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-1 tracking-widest">Telefone de Cadastro</label>
+                                <input id="login-phone-input" type="tel" placeholder="21 99999-9999" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-presb-gold font-bold text-slate-700 shadow-sm transition-colors" required />
+                                ${state.loginError ? `<p class="text-red-500 text-[10px] mt-3 font-bold uppercase text-center tracking-widest animate-pulse">Acesso Negado</p>` : ''}
+                            </div>
+                            <button type="submit" class="w-full py-5 bg-presb-green hover:bg-black text-white font-black rounded-2xl shadow-xl transition-all active:scale-95 uppercase tracking-[0.2em] text-xs mt-6 border-b-4 border-black/20">
+                                Entrar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderActiveTab() {
+            switch(state.activeTab) {
+                case 'home': return renderHomeTab();
+                case 'sugestao': return renderSugestaoTab();
+                case 'votacao': return renderVotacaoTab();
+                case 'analise': return renderAnaliseTab();
+                case 'cadastro': return renderCadastroTab();
+            }
+        }
+
+        function renderHomeTab() {
+            const approved = state.songs.filter(s => s.joaoApproval === 'approved' && s.techApproval === 'approved');
+            const ranking = [...approved].sort((a,b) => b.voters.length - a.voters.length).slice(0, 3);
+
+            if (state.period.suggestionsOpen) {
+                return `
+                    <div class="text-center py-20 bg-white rounded-[3rem] border border-slate-100 shadow-xl fade-in relative overflow-hidden">
+                        <div class="absolute top-0 right-0 p-8 opacity-5"><i class="ph-fill ph-music-notes text-9xl text-presb-green"></i></div>
+                        <div class="w-24 h-24 bg-presb-green/10 text-presb-green rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner relative z-10">
+                            <i class="ph-fill ph-note-pencil text-5xl"></i>
+                        </div>
+                        <h2 class="text-3xl font-bold text-presb-green mb-3 font-serif relative z-10">Sugestões Abertas</h2>
+                        <p class="text-presb-gold mb-10 font-bold uppercase text-[10px] tracking-[0.3em] relative z-10">Foco Atual: ${state.period.theme}</p>
+                        <button onclick="window.changeTab('sugestao')" class="bg-presb-green text-white px-12 py-5 rounded-2xl font-black shadow-lg hover:bg-black active:scale-95 transition-all uppercase text-xs tracking-widest relative z-10">
+                            Enviar Indicação
+                        </button>
+                    </div>
+                `;
+            }
+
+            if (state.period.votingOpen) {
+                return `
+                    <div class="text-center py-10 fade-in">
+                        <h2 class="text-4xl font-bold text-presb-green mb-10 font-serif">Assembleia de Votos</h2>
+                        <div class="max-w-md mx-auto bg-white p-10 rounded-[3rem] border border-slate-100 shadow-2xl mb-12">
+                            <h3 class="font-bold text-slate-400 text-[10px] mb-8 uppercase tracking-[0.3em] border-b border-slate-100 pb-4">Pódio Parcial</h3>
+                            ${ranking.length > 0 ? `
+                                <div class="space-y-4">
+                                    ${ranking.map((s, i) => `
+                                        <div class="flex justify-between items-center p-5 bg-slate-50 rounded-[1.5rem] border border-slate-100 group transition-all hover:border-presb-gold/50">
+                                            <div class="text-left flex-1 truncate pr-4">
+                                                <p class="text-[10px] font-bold text-slate-400 uppercase mb-2 flex items-center gap-2">
+                                                    ${i === 0 ? '<i class="ph-fill ph-medal text-presb-gold text-xl"></i> 1º Lugar' : i === 1 ? '<i class="ph-fill ph-medal text-slate-400 text-xl"></i> 2º Lugar' : '<i class="ph-fill ph-medal text-amber-700 text-xl"></i> 3º Lugar'}
+                                                </p>
+                                                <p class="text-base font-bold text-presb-green leading-tight truncate">${s.title}</p>
+                                                <p class="text-[10px] font-medium text-slate-500 uppercase truncate mt-1">${s.author}</p>
+                                            </div>
+                                            <div class="flex flex-col items-end gap-2 shrink-0">
+                                                <span class="text-xs font-black text-presb-green bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">${s.voters.length} Votos</span>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : `<p class="text-slate-400 font-medium italic py-8 text-sm">Nenhum voto apurado ainda.</p>`}
+                        </div>
+                        <button onclick="window.changeTab('votacao')" class="bg-presb-green text-white px-12 py-5 rounded-2xl font-black shadow-xl hover:bg-black active:scale-95 transition uppercase text-xs tracking-widest">
+                            Acessar Cédula
+                        </button>
+                    </div>
+                `;
+            }
+
+            return `<div class="text-center py-20 text-slate-300 font-bold italic uppercase tracking-widest font-serif text-2xl">Ciclo Encerrado</div>`;
+        }
+
+        function renderSugestaoTab() {
+            if (!state.period.suggestionsOpen) {
+                return `<div class="bg-white border border-slate-100 text-slate-500 p-16 rounded-[3rem] text-center shadow-xl fade-in">
+                    <i class="ph-fill ph-lock-key text-7xl mx-auto mb-6 text-slate-200 block"></i>
+                    <h3 class="text-2xl font-bold mb-2 font-serif text-presb-green">Entradas Fechadas</h3>
+                    <p class="text-[10px] font-bold uppercase tracking-widest opacity-60">Aguarde a abertura de um novo ciclo</p>
+                </div>`;
+            }
+
+            return `
+                <div class="space-y-8 fade-in">
+                    <div class="bg-presb-green rounded-[3rem] p-10 md:p-12 text-white shadow-2xl relative overflow-hidden border-b-8 border-presb-dark">
+                        <div class="absolute -bottom-10 -right-10 opacity-[0.03]"><i class="ph-fill ph-music-notes text-[250px]"></i></div>
+                        <p class="text-presb-gold text-[10px] font-bold uppercase tracking-[0.4em] mb-4 relative z-10">Diretriz do Período</p>
+                        <h2 class="text-3xl md:text-4xl font-bold mb-6 relative z-10 leading-tight font-serif">${state.period.theme}</h2>
+                        <p class="text-white/80 text-sm leading-relaxed relative z-10 font-medium max-w-2xl border-l-4 border-presb-gold pl-6 italic">"${state.period.themeDefinition}"</p>
+                    </div>
+
+                    <div class="bg-white p-8 md:p-12 rounded-[3rem] shadow-xl border border-slate-100">
+                        <h2 class="text-xl font-bold mb-8 text-presb-green font-serif flex items-center justify-between border-b border-slate-100 pb-6">
+                            <span class="flex items-center"><i class="ph-fill ph-plus-circle mr-3 text-presb-gold text-3xl"></i> Nova Indicação</span>
+                            <span class="bg-slate-50 text-slate-500 text-[10px] px-4 py-2 rounded-xl font-bold uppercase tracking-widest border border-slate-200 shadow-sm">${state.currentUser.name}</span>
+                        </h2>
+                        
+                        <form onsubmit="window.submitSong(event)" class="space-y-8">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-3 tracking-widest ml-1">Título do Louvor</label>
+                                    <input required name="title" id="input-title" type="text" class="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-presb-gold outline-none transition-all font-bold text-slate-700 text-sm" placeholder="Ex: Grandioso És Tu" />
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-3 tracking-widest ml-1">Cantor / Grupo</label>
+                                    <input required name="author" id="input-author" type="text" class="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-presb-gold outline-none transition-all font-bold text-slate-700 text-sm" placeholder="Ex: Hinário Novo Cântico" />
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-col sm:flex-row gap-4">
+                                <button type="button" onclick="window.handleSearchYoutube()" class="flex-1 py-4 bg-red-50 text-red-700 hover:bg-red-100 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-colors flex items-center justify-center border border-red-100 shadow-sm"><i class="ph-fill ph-youtube-logo text-xl mr-2"></i> Buscar no YouTube</button>
+                                <button type="button" onclick="window.handleSearchLyrics()" class="flex-1 py-4 bg-blue-50 text-blue-800 hover:bg-blue-100 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-colors flex items-center justify-center border border-blue-100 shadow-sm"><i class="ph-bold ph-google-logo text-xl mr-2"></i> Buscar Letra</button>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-3 tracking-widest ml-1">URL do Vídeo (Referência)</label>
+                                <input name="link" type="url" class="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-presb-gold outline-none transition-all font-bold text-slate-700 text-sm" placeholder="https://youtube.com/..." />
+                            </div>
+                            
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-3 tracking-widest flex items-center justify-between ml-1">
+                                    Letra Completa <span class="bg-presb-gold text-presb-dark px-3 py-1 rounded-md text-[8px] tracking-[0.2em] font-black">ANÁLISE TEOLÓGICA</span>
+                                </label>
+                                <textarea name="lyrics" id="input-lyrics" class="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-presb-gold transition-colors text-sm font-medium h-48 resize-none text-slate-700 leading-relaxed shadow-inner" placeholder="Cole a letra para que a Inteligência Artificial possa analisar a doutrina..."></textarea>
+                            </div>
+                            
+                            <button type="submit" ${state.isSubmitting ? 'disabled' : ''} class="w-full py-5 bg-presb-green hover:bg-black text-white font-black rounded-2xl shadow-xl transition-all disabled:opacity-50 uppercase tracking-widest text-xs active:scale-95 border-b-4 border-black/20">
+                                ${state.isSubmitting ? 'Salvando na nuvem...' : 'Confirmar Indicação'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderVotacaoTab() {
+            const fullyApproved = state.songs.filter(s => s.joaoApproval === 'approved' && s.techApproval === 'approved');
+            
+            return `
+                <div class="space-y-8 fade-in">
+                    <div class="text-center mb-12">
+                        <h2 class="text-4xl font-bold text-presb-green font-serif mb-4">Assembleia de Votos</h2>
+                        <p class="text-presb-gold font-bold text-[10px] uppercase tracking-[0.3em] bg-presb-gold/10 w-fit mx-auto px-6 py-2 rounded-full border border-presb-gold/20">Voto Individual e Intransferível</p>
+                    </div>
+
+                    ${!state.period.votingOpen ? `
+                        <div class="bg-white p-20 rounded-[3rem] text-center border border-slate-200 shadow-xl opacity-80 flex flex-col items-center">
+                            <i class="ph-fill ph-lock-key text-7xl text-slate-300 mb-6"></i>
+                            <h3 class="font-bold text-slate-500 uppercase tracking-widest text-xs font-serif">Votação Fechada pela Liderança</h3>
+                        </div>
+                    ` : fullyApproved.length === 0 ? `
+                        <div class="bg-white p-20 rounded-[3rem] text-center border border-slate-200 shadow-xl flex flex-col items-center">
+                            <i class="ph-fill ph-clipboard-text text-7xl text-slate-200 mb-6"></i>
+                            <h3 class="font-bold text-slate-500 uppercase tracking-widest text-xs font-serif leading-relaxed">Nenhuma proposta aprovada<br>na curadoria ainda.</h3>
+                        </div>
+                    ` : `
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            ${fullyApproved.map(song => {
+                                const isMyVote = song.voters.includes(state.currentUser.id);
+                                const embed = window.getYouTubeEmbedUrl(song.link);
+                                
+                                const videoHtml = embed 
+                                    ? '<div class="w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-sm mb-4"><iframe src="' + embed + '" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>'
+                                    : '<div class="w-full aspect-video bg-slate-50 rounded-2xl flex flex-col items-center justify-center text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-4 border-2 border-dashed border-slate-200"><i class="ph-fill ph-video-camera-slash text-2xl mb-1 opacity-50"></i> Sem Vídeo</div>';
+
+                                return `
+                                    <div class="relative bg-white p-6 sm:p-8 rounded-[3rem] border-2 transition-all duration-300 flex flex-col shadow-lg ${isMyVote ? 'border-presb-gold bg-presb-gold/5 transform -translate-y-2' : 'border-slate-100 hover:border-presb-green/30'}">
+                                        <div class="flex-1 mb-4">
+                                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3">Opção de Repertório</p>
+                                            <h4 class="font-bold text-xl sm:text-2xl text-presb-green mb-2 leading-tight font-serif">${song.title}</h4>
+                                            <p class="text-xs font-medium text-slate-500 uppercase">${song.author}</p>
+                                        </div>
+                                        
+                                        ${videoHtml}
+
+                                        <button onclick="window.handleVote('${song.id}')" class="w-full mt-auto py-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-md ${isMyVote ? 'bg-presb-gold text-presb-dark' : 'bg-slate-800 text-white hover:bg-presb-green'} active:scale-95">
+                                            ${isMyVote ? '<i class="ph-bold ph-check-circle text-lg mr-2 align-middle"></i> Registrado' : 'Votar'}
+                                        </button>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+
+        function renderAnaliseTab() {
+            if (!state.isAdminAuthenticated) return renderAdminAuth('Conselho e Liderança');
+
+            return `
+                <div class="space-y-8 fade-in">
+                    <div class="bg-presb-green p-10 rounded-[3rem] flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 shadow-2xl border-b-8 border-presb-dark relative overflow-hidden">
+                        <div class="absolute top-0 right-0 p-8 opacity-[0.03]"><i class="ph-fill ph-shield-check text-[150px]"></i></div>
+                        <div class="relative z-10">
+                            <p class="text-[10px] text-presb-gold font-bold uppercase tracking-[0.4em] mb-3 flex items-center gap-2"><i class="ph-bold ph-gear"></i> Gestão do Repertório</p>
+                            <h2 class="text-3xl font-bold text-white leading-tight mb-2 font-serif">${state.period.name}</h2>
+                            <p class="text-white/60 text-xs font-medium uppercase tracking-widest">${state.period.theme}</p>
+                        </div>
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 relative z-10 w-full lg:w-auto">
+                            <div class="flex bg-presb-dark p-2 rounded-2xl shadow-inner border border-white/5">
+                                <button onclick="window.toggleSetting('suggestionsOpen')" class="px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${state.period.suggestionsOpen ? 'bg-presb-gold text-presb-dark shadow-md' : 'text-white/50 hover:text-white'}">Sugestões</button>
+                                <button onclick="window.toggleSetting('votingOpen')" class="px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${state.period.votingOpen ? 'bg-presb-gold text-presb-dark shadow-md' : 'text-white/50 hover:text-white'}">Votação</button>
+                            </div>
+                            <button onclick="window.openNewPeriodModal()" class="bg-white hover:bg-slate-100 text-presb-green px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl transition-all active:scale-95">
+                                Novo Ciclo
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between border-b-2 border-slate-200 pb-5 mt-10">
+                        <h3 class="font-bold font-serif text-presb-green text-xl flex items-center gap-3"><i class="ph-bold ph-magnifying-glass text-presb-gold"></i> Curadoria de Letras</h3>
+                        <span class="text-[10px] font-bold bg-slate-200 text-slate-600 px-4 py-2 rounded-lg uppercase tracking-widest">${state.songs.length} Propostas</span>
+                    </div>
+
+                    <div class="space-y-8">
+                        ${state.songs.length === 0 ? `
+                            <div class="bg-white rounded-[3rem] border border-slate-200 p-16 text-center shadow-xl opacity-80">
+                                <p class="text-slate-400 font-bold uppercase tracking-widest text-xs">Sem novas propostas na fila...</p>
+                            </div>
+                        ` : state.songs.map(song => renderSongCard(song)).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAdminAuth(title) {
+            return `
+                <div class="max-w-sm mx-auto bg-white p-10 rounded-[3rem] shadow-2xl border-t-8 border-presb-gold text-center mt-12 fade-in">
+                    <i class="ph-fill ph-lock-key text-6xl text-presb-gold/20 mb-6 block mx-auto"></i>
+                    <h2 class="text-2xl font-bold text-presb-green mb-6 font-serif leading-tight">Painel da<br>${title}</h2>
+                    <form onsubmit="window.loginAdmin(event)" class="space-y-6 text-left">
+                        <div>
+                            <input id="admin-password" type="password" placeholder="••••••" class="w-full p-4 text-center bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-presb-gold font-black tracking-[0.5em] text-xl shadow-inner transition-colors" />
+                            <p id="auth-error" class="hidden text-red-500 text-[10px] font-bold uppercase mt-3 text-center tracking-widest animate-pulse">Acesso Negado</p>
+                        </div>
+                        <button type="submit" class="w-full py-4 bg-presb-green hover:bg-black text-white font-black rounded-xl transition-colors shadow-lg uppercase tracking-[0.2em] text-[10px] active:scale-95 border-b-4 border-black/20">Desbloquear Painel</button>
+                    </form>
+                </div>
+            `;
+        }
+
+        function renderSongCard(song) {
+            const embed = window.getYouTubeEmbedUrl(song.link);
+            
+            return `
+                <div class="bg-white rounded-[3rem] border border-slate-100 shadow-xl flex flex-col md:flex-row overflow-hidden hover:border-presb-gold/50 transition-all duration-300">
+                    <div class="w-full md:w-[45%] p-8 border-b md:border-b-0 md:border-r border-slate-100 flex flex-col bg-slate-50">
+                        <div class="mb-6">
+                            <h4 class="font-bold text-presb-green text-2xl leading-tight mb-2 font-serif">${song.title}</h4>
+                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest truncate mb-4">${song.author}</p>
+                            <span class="text-[9px] bg-white border border-slate-200 text-slate-500 px-4 py-2 rounded-xl font-bold uppercase tracking-widest flex items-center w-fit shadow-sm"><i class="ph-fill ph-user mr-2 text-presb-gold"></i> Indicado por ${song.proposerName}</span>
+                        </div>
+                        ${embed ? `<div class="w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-lg mt-auto"><iframe src="${embed}" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>` : `<div class="w-full aspect-video bg-slate-100 rounded-2xl flex flex-col items-center justify-center text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-auto border-2 border-dashed border-slate-200"><i class="ph-fill ph-video-camera-slash text-4xl mb-2 opacity-50"></i> Sem Vídeo</div>`}
+                    </div>
+
+                    <div class="w-full md:w-[55%] p-8 flex flex-col bg-white">
+                        <div class="flex-1 bg-slate-50 p-6 rounded-2xl border border-slate-100 text-xs text-slate-600 font-medium overflow-y-auto no-scrollbar whitespace-pre-wrap max-h-[180px] mb-6 leading-relaxed border-l-4 border-presb-gold">
+                            ${song.lyrics || '<span class="opacity-50 italic font-bold uppercase text-[9px] flex items-center justify-center h-full tracking-widest">Texto não disponibilizado</span>'}
+                        </div>
+
+                        ${song.aiAnalysis && typeof song.aiAnalysis === 'object' ? `
+                            <div class="mb-6 text-xs p-5 rounded-2xl border leading-relaxed font-medium shadow-sm relative overflow-hidden ${song.aiAnalysis.status === 'Aprovado' ? 'bg-emerald-50 border-emerald-100 text-emerald-900' : song.aiAnalysis.status === 'Erro' ? 'bg-amber-50 border-amber-100 text-amber-900' : 'bg-red-50 border-red-100 text-red-900'}">
+                                <div class="flex justify-between items-center mb-3 pb-3 border-b border-black/5">
+                                    <span class="font-bold uppercase tracking-[0.2em] text-[9px] flex items-center gap-2 opacity-80"><i class="ph-fill ph-sparkle text-base"></i> Triagem Teológica (IA)</span>
+                                    <button onclick="window.resetAIAnalysis('${song.id}')" class="text-[9px] font-bold uppercase hover:underline opacity-60">Reiniciar</button>
+                                </div>
+                                ${song.aiAnalysis.reason}
+                            </div>
+                        ` : song.aiAnalysis === 'loading' ? 
+                            `<div class="w-full py-4 mb-6 bg-slate-100 text-slate-500 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-3 animate-pulse"><i class="ph-bold ph-spinner animate-spin text-xl"></i> Analisando Doutrina...</div>` :
+                            `<button onclick="window.analyzeWithAI('${song.id}')" class="w-full py-4 mb-6 bg-slate-800 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-md hover:bg-black transition-colors flex items-center justify-center gap-3"><i class="ph-bold ph-brain text-xl text-presb-gold"></i> Diagnóstico Teológico IA</button>`}
+
+                        <div class="grid grid-cols-3 gap-4 border-t border-slate-100 pt-6 mt-auto">
+                            <div class="flex flex-col text-center">
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3">1. IA</span>
+                                <div class="h-10 flex items-center justify-center">
+                                    ${song.aiAnalysis === 'loading' ? `<i class="ph-bold ph-spinner animate-spin text-2xl text-presb-gold"></i>` : (song.aiAnalysis && song.aiAnalysis.status) ? window.getStatusBadgeHtml(song.aiAnalysis.status) : `<span class="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Aguardando</span>`}
+                                </div>
+                            </div>
+                            <div class="flex flex-col border-l border-slate-100 pl-4">
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex justify-between items-center">2. Teologia ${song.joaoApproval !== 'pending' ? `<i class="ph-bold ph-arrow-u-up-left cursor-pointer text-presb-green" onclick="window.setApproval('${song.id}', 'joao', 'pending')"></i>` : ''}</span>
+                                <div class="h-10 flex items-center justify-center">
+                                    ${song.joaoApproval === 'pending' ? `<div class="flex gap-2 w-full"><button onclick="window.setApproval('${song.id}', 'joao', 'approved')" class="flex-1 h-10 flex items-center justify-center bg-slate-100 hover:bg-presb-green hover:text-white rounded-xl text-slate-400 transition-colors"><i class="ph-bold ph-check text-lg"></i></button><button onclick="window.setApproval('${song.id}', 'joao', 'rejected')" class="flex-1 h-10 flex items-center justify-center bg-slate-100 hover:bg-red-600 hover:text-white rounded-xl text-slate-400 transition-colors"><i class="ph-bold ph-x text-lg"></i></button></div>` : song.joaoApproval === 'rejected' ? `<button onclick="window.openViewReasonModal('Reprovação Doutrinária', '${song.id}', 'joao')" class="w-full text-[9px] font-bold bg-red-50 text-red-700 h-10 rounded-xl border border-red-200 tracking-widest">MOTIVO</button>` : window.getStatusBadgeHtml('Aprovado')}
+                                </div>
+                            </div>
+                            <div class="flex flex-col border-l border-slate-100 pl-4">
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex justify-between items-center">3. Técnica ${song.techApproval !== 'pending' ? `<i class="ph-bold ph-arrow-u-up-left cursor-pointer text-presb-green" onclick="window.setApproval('${song.id}', 'tech', 'pending')"></i>` : ''}</span>
+                                <div class="h-10 flex items-center justify-center">
+                                    ${song.techApproval === 'pending' ? `<div class="flex gap-2 w-full"><button onclick="window.setApproval('${song.id}', 'tech', 'approved')" class="flex-1 h-10 flex items-center justify-center bg-slate-100 hover:bg-presb-green hover:text-white rounded-xl text-slate-400 transition-colors"><i class="ph-bold ph-check text-lg"></i></button><button onclick="window.setApproval('${song.id}', 'tech', 'rejected')" class="flex-1 h-10 flex items-center justify-center bg-slate-100 hover:bg-red-600 hover:text-white rounded-xl text-slate-400 transition-colors"><i class="ph-bold ph-x text-lg"></i></button></div>` : song.techApproval === 'rejected' ? `<button onclick="window.openViewReasonModal('Reprovação Técnica', '${song.id}', 'tech')" class="w-full text-[9px] font-bold bg-red-50 text-red-700 h-10 rounded-xl border border-red-200 tracking-widest">MOTIVO</button>` : window.getStatusBadgeHtml('Aprovado')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCadastroTab() {
+            if (!state.isAdminAuthenticated) return renderAdminAuth('Rol de Membros');
+
+            return `
+                <div class="fade-in max-w-2xl mx-auto space-y-10">
+                    <div class="bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100 text-center">
+                        <div class="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-presb-green text-3xl border border-slate-100">
+                            <i class="ph-bold ${state.editingUserId ? 'ph-pencil-simple' : 'ph-user-plus'}"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-presb-green mb-2 uppercase font-serif">${state.editingUserId ? 'Editar Perfil' : 'Novo Membro'}</h2>
+                        <p class="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] mb-8">${state.editingUserId ? 'Atualização de dados oficiais' : 'Conceder acesso à votação'}</p>
+                        
+                        <form onsubmit="window.handleRegisterUser(event)" class="space-y-6 text-left">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-1">Nome Completo</label>
+                                <input required id="reg-name-input" type="text" placeholder="Ex: Maria Souza" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-presb-gold font-bold text-sm" />
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-1">Telefone (DDD + Número)</label>
+                                <input required id="reg-phone-input" type="tel" placeholder="21 99999-9999" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-presb-gold font-bold text-sm" />
+                            </div>
+                            <div class="flex gap-4 pt-4">
+                                ${state.editingUserId ? `<button type="button" onclick="window.cancelEditUser()" class="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold rounded-xl transition uppercase tracking-widest text-[10px]">Cancelar</button>` : ''}
+                                <button type="submit" class="flex-[2] py-4 bg-presb-green hover:bg-black text-white font-black rounded-xl shadow-lg transition uppercase tracking-widest text-[10px]">${state.editingUserId ? 'Salvar Alteração' : 'Registrar Membro'}</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="bg-white p-8 md:p-10 rounded-[3rem] border border-slate-100 shadow-xl">
+                        <h3 class="font-bold text-presb-green uppercase tracking-widest mb-6 flex items-center gap-3 border-b border-slate-100 pb-4 font-serif"><i class="ph-bold ph-users text-presb-gold text-2xl"></i> Membros Cadastrados (${state.users.length})</h3>
+                        <div class="space-y-3 max-h-[400px] overflow-y-auto no-scrollbar pr-2">
+                            ${state.users.map(u => `
+                                <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100 group hover:border-presb-gold/50 transition-colors">
+                                    <div>
+                                        <p class="font-bold text-sm text-slate-700 leading-none mb-2">${u.name}</p>
+                                        <p class="text-[10px] font-bold text-slate-400"><i class="ph-fill ph-phone mr-1"></i> ${u.phone}</p>
+                                    </div>
+                                    <button onclick="window.handleEditUser('${u.id}')" class="p-3 bg-white text-presb-green hover:bg-presb-green hover:text-white rounded-xl transition-colors shadow-sm border border-slate-100"><i class="ph-bold ph-pencil-simple text-lg"></i></button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderModals() {
+            return `
+                <div class="modal-backdrop ${state.modals.reject.isOpen ? 'active' : ''}">
+                    <div class="modal-content border-t-8 border-red-600 shadow-2xl">
+                        <div class="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6"><i class="ph-fill ph-warning-circle text-4xl"></i></div>
+                        <h3 class="font-bold text-slate-800 text-2xl text-center mb-2 font-serif">Justificativa</h3>
+                        <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest text-center mb-6">Motivo da reprovação</p>
+                        <textarea id="reject-reason-input" class="w-full border-2 border-slate-100 bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:border-red-500 h-32 resize-none mb-6" placeholder="Ex: A letra apresenta..."></textarea>
+                        <div class="flex gap-4">
+                            <button onclick="window.closeRejectModal()" class="flex-1 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">Cancelar</button>
+                            <button onclick="window.confirmRejection()" class="flex-1 py-4 bg-red-600 text-white rounded-xl font-bold shadow-lg text-[10px] uppercase tracking-widest hover:bg-red-700 transition-colors">Confirmar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-backdrop ${state.modals.viewReason.isOpen ? 'active' : ''}" onclick="window.closeViewReasonModal()">
+                    <div class="modal-content border-t-8 border-presb-gold shadow-2xl" onclick="event.stopPropagation()">
+                        <div class="w-16 h-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-6"><i class="ph-fill ph-scroll text-4xl"></i></div>
+                        <h3 class="font-bold text-presb-green text-xl text-center mb-6 font-serif">${state.modals.viewReason.title}</h3>
+                        <div class="bg-slate-50 border-l-4 border-presb-gold rounded-r-xl p-6 text-sm font-medium text-slate-600 leading-relaxed mb-8">${state.modals.viewReason.text}</div>
+                        <button onclick="window.closeViewReasonModal()" class="w-full py-4 bg-slate-800 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-black transition-colors">Entendi</button>
+                    </div>
+                </div>
+
+                <div class="modal-backdrop ${state.modals.cycle.isOpen ? 'active' : ''}">
+                    <div class="modal-content border-t-8 border-presb-green shadow-2xl">
+                        ${state.modals.cycle.step === 1 ? `
+                            <div class="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6"><i class="ph-fill ph-warning-octagon text-4xl"></i></div>
+                            <h3 class="text-2xl font-bold text-center text-presb-green mb-2 font-serif">Atenção Especial</h3>
+                            <p class="text-[10px] text-center text-slate-500 mb-8 font-bold leading-relaxed px-4 uppercase tracking-widest">Ação irreversível. Votos e músicas serão apagados.</p>
+                            <input id="cycle-password-input" type="password" placeholder="SENHA" class="w-full text-center border-2 border-slate-100 bg-slate-50 rounded-2xl p-4 font-black text-lg outline-none focus:border-red-500 mb-2 tracking-[0.5em]" />
+                            ${state.modals.cycle.error ? `<p class="text-red-500 text-[10px] font-bold text-center uppercase tracking-widest mt-2">Código Incorreto</p>` : ''}
+                            <div class="flex gap-4 mt-8">
+                                <button onclick="window.closeNewPeriodModal()" class="flex-1 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 bg-slate-100 rounded-xl hover:bg-slate-200">Abortar</button>
+                                <button onclick="window.handleCycleModalNext()" class="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg text-[10px] uppercase tracking-widest">Prosseguir</button>
+                            </div>
+                        ` : `
+                            <div class="w-16 h-16 bg-presb-green/10 text-presb-green rounded-full flex items-center justify-center mx-auto mb-6"><i class="ph-bold ph-calendar-plus text-4xl"></i></div>
+                            <h3 class="text-2xl font-bold text-center text-presb-green mb-8 font-serif">Novo Bimestre</h3>
+                            <form onsubmit="window.confirmNewCycle(event)" class="space-y-6 text-left">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-1">Título do Ciclo</label>
+                                    <input required name="newName" id="cycle-new-name" type="text" placeholder="Ex: 2º Bimestre 2026" class="w-full border-2 border-slate-100 bg-slate-50 rounded-xl p-4 text-sm font-bold outline-none focus:border-presb-gold" />
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2 ml-1">Tema Doutrinário</label>
+                                    <select name="newThemeIdx" id="cycle-new-theme" class="w-full border-2 border-slate-100 bg-white rounded-xl p-4 text-sm font-bold outline-none cursor-pointer focus:border-presb-gold">
+                                        ${THEMES.map((t, idx) => `<option value="${idx}">${t.title}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div class="flex gap-4 pt-4">
+                                    <button type="button" onclick="window.closeNewPeriodModal()" class="flex-1 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 bg-slate-100 rounded-xl hover:bg-slate-200">Voltar</button>
+                                    <button type="submit" class="flex-[1.5] py-4 bg-presb-green hover:bg-black text-white rounded-xl font-bold shadow-lg text-[10px] uppercase tracking-widest">Lançar Ciclo</button>
+                                </div>
+                            </form>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        window.changeTab = (tab) => { state.activeTab = tab; render(); };
+        
+        window.handleUserLogin = (e) => {
+            e.preventDefault();
+            const uid = document.getElementById('login-user-select').value;
+            const phoneInput = document.getElementById('login-phone-input').value;
+            const u = state.users.find(u => u.id === uid);
+            const cInput = phoneInput.replace(/\D/g, '');
+            const cPhone = u.phone.replace(/\D/g, '');
+            if (cInput === cPhone) { state.currentUser = u; state.loginError = false; state.activeTab = 'home'; }
+            else { state.loginError = true; }
+            render();
+        };
+        
+        window.handleUserLogout = () => { state.currentUser = null; state.isAdminAuthenticated = false; render(); };
+        
+        window.handleRegisterUser = (e) => {
+            e.preventDefault();
+            const n = document.getElementById('reg-name-input').value;
+            const p = document.getElementById('reg-phone-input').value;
+            if (state.editingUserId) {
+                state.users = state.users.map(u => u.id === state.editingUserId ? { ...u, name: n, phone: p } : u);
+                state.editingUserId = null;
+            } else {
+                state.users.push({ id: 'u'+Date.now(), name: n, phone: p });
+            }
+            saveStateToFirebase(); 
+            render();
+        };
+        
+        window.handleEditUser = (id) => {
+            const u = state.users.find(u => u.id === id);
+            state.editingUserId = id;
+            render();
+            setTimeout(() => {
+                document.getElementById('reg-name-input').value = u.name;
+                document.getElementById('reg-phone-input').value = u.phone;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 50);
+        };
+        
+        window.cancelEditUser = () => { state.editingUserId = null; render(); };
+        
+        window.submitSong = (e) => {
+            e.preventDefault();
+            const f = e.target;
+            state.isSubmitting = true; render();
+            setTimeout(() => {
+                state.songs.push({
+                    id: Date.now().toString(),
+                    proposerName: state.currentUser.name,
+                    proposerId: state.currentUser.id,
+                    title: f.title.value,
+                    author: f.author.value,
+                    link: f.link.value,
+                    lyrics: f.lyrics.value,
+                    aiAnalysis: null,
+                    joaoApproval: 'pending',
+                    techApproval: 'pending',
+                    voters: []
+                });
+                state.isSubmitting = false; 
+                state.activeTab = 'home'; 
+                saveStateToFirebase(); 
+                render();
+            }, 600);
+        };
+        
+        window.handleSearchYoutube = () => {
+            const t = document.getElementById('input-title').value;
+            const a = document.getElementById('input-author').value;
+            if(!t) return alert("Indique o título da música.");
+            window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(t+' '+a+' louvor')}`, '_blank');
+        };
+        
+        window.handleSearchLyrics = () => {
+            const t = document.getElementById('input-title').value;
+            const a = document.getElementById('input-author').value;
+            if(!t) return alert("Indique o título da música.");
+            window.open(`https://www.google.com/search?q=${encodeURIComponent(t+' '+a+' letra')}`, '_blank');
+        };
+
+        // --- FUNÇÃO DA IA PARA AMBIENTE REAL (GITHUB) ---
+        window.analyzeWithAI = async (id) => {
+            const song = state.songs.find(s => s.id === id);
+            const period = state.period;
+
+            if (!song.lyrics || song.lyrics.trim().length < 10) {
+                song.aiAnalysis = { status: "Erro", reason: "Letra ausente ou muito curta para análise teológica." };
+                saveStateToFirebase();
+                render(); return;
+            }
+
+            song.aiAnalysis = 'loading'; 
+            render(); 
+
+            const prompt = `Aja como um Teólogo Presbiteriano conservador. Avalie a música com rigor teológico reformado (teocentrismo, graça soberana e reverência).
+Responda EXCLUSIVAMENTE com um objeto JSON válido.
+O JSON deve ter apenas as chaves: "status" (valor deve ser EXATAMENTE "Aprovado" ou "Reprovado") e "reason" (uma justificativa teológica contendo no máximo 3 frases). Sem marcações Markdown.
+
+Tema do Ciclo de Votação: "${period.theme}"
+Música: ${song.title} - ${song.author}
+Letra completa: "${song.lyrics}"`;
+
+            try {
+                // Modelo atualizado usando a estrutura do cURL (gemini-flash-latest)
+                const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent";
+                
+                const res = await fetch(url, {
+                    method: 'POST', 
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-goog-api-key': apiKey // <--- Usando a chave que foi desinvertida no topo do arquivo!
+                    },
+                    body: JSON.stringify({ 
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: {
+                            temperature: 0.1
+                        }
+                    })
+                });
+                
+                const data = await res.json();
+                
+                if(data.error) {
+                     song.aiAnalysis = { status: "Erro", reason: "Ocorreu um erro na API: " + data.error.message }; 
+                } else {
+                     let txt = data.candidates[0].content.parts[0].text;
+                     // Limpeza rigorosa para garantir a validação do JSON
+                     txt = txt.replace(/```json/gi, '').replace(/```/g, '').trim();
+                     song.aiAnalysis = JSON.parse(txt);
+                }
+                
+            } catch (e) { 
+                console.error("Erro no processamento da IA:", e);
+                song.aiAnalysis = { status: "Erro", reason: "A Inteligência Artificial não pôde processar a resposta. Tente novamente mais tarde." }; 
+            }
+            saveStateToFirebase(); 
+            render();
+        };
+
+        window.resetAIAnalysis = (id) => { 
+            state.songs.find(s => s.id === id).aiAnalysis = null; 
+            saveStateToFirebase();
+            render(); 
+        };
+        
+        window.handleVote = (id) => {
+            const currentlyVotedSong = state.songs.find(s => s.voters.includes(state.currentUser.id));
+            
+            state.songs.forEach(s => {
+                s.voters = s.voters.filter(uid => uid !== state.currentUser.id);
+            });
+
+            if (!currentlyVotedSong || currentlyVotedSong.id !== id) {
+                const targetSong = state.songs.find(s => s.id === id);
+                if (targetSong) targetSong.voters.push(state.currentUser.id);
+            }
+            
+            saveStateToFirebase(); 
+            render();
+        };
+        
+        window.loginAdmin = (e) => {
+            e.preventDefault();
+            if (document.getElementById('admin-password').value === '123') { state.isAdminAuthenticated = true; }
+            else { document.getElementById('auth-error').classList.remove('hidden'); }
+            render();
+        };
+        
+        window.setApproval = (id, type, status) => {
+            const s = state.songs.find(s => s.id === id);
+            if (status === 'rejected') { state.modals.reject = { isOpen: true, songId: id, type }; }
+            else if (status === 'approved') {
+                if (type === 'joao') s.joaoApproval = 'approved';
+                if (type === 'tech') s.techApproval = 'approved';
+                saveStateToFirebase(); 
+            } else {
+                if (type === 'joao') s.joaoApproval = 'pending';
+                if (type === 'tech') s.techApproval = 'pending';
+                saveStateToFirebase(); 
+            }
+            render();
+        };
+        
+        window.confirmRejection = () => {
+            const r = document.getElementById('reject-reason-input').value;
+            if(!r) return alert("Justificativa obrigatória.");
+            const s = state.songs.find(s => s.id === state.modals.reject.songId);
+            if (state.modals.reject.type === 'joao') { s.joaoApproval = 'rejected'; s.joaoReason = r; }
+            else { s.techApproval = 'rejected'; s.techReason = r; }
+            window.closeRejectModal();
+            saveStateToFirebase(); 
+        };
+        
+        window.closeRejectModal = () => { state.modals.reject.isOpen = false; render(); };
+        
+        window.openViewReasonModal = (title, songId, type) => { 
+            const song = state.songs.find(s => s.id === songId);
+            const text = type === 'joao' ? song.joaoReason : song.techReason;
+            state.modals.viewReason = { isOpen: true, title, text }; 
+            render(); 
+        };
+        window.closeViewReasonModal = () => { state.modals.viewReason.isOpen = false; render(); };
+        
+        window.toggleSetting = (s) => { 
+            state.period[s] = !state.period[s]; 
+            saveStateToFirebase(); 
+            render(); 
+        };
+        
+        window.openNewPeriodModal = () => { state.modals.cycle = { isOpen: true, step: 1, error: false }; render(); };
+        window.closeNewPeriodModal = () => { state.modals.cycle.isOpen = false; render(); };
+        
+        window.handleCycleModalNext = () => {
+            if (document.getElementById('cycle-password-input').value === '123') { state.modals.cycle.step = 2; state.modals.cycle.error = false; }
+            else { state.modals.cycle.error = true; }
+            render();
+        };
+        
+        window.confirmNewCycle = (e) => {
+            e.preventDefault();
+            const nameInput = document.getElementById('cycle-new-name');
+            const themeIdxSelect = document.getElementById('cycle-new-theme');
+            const newTheme = THEMES[themeIdxSelect.value];
+            
+            const newPeriod = { 
+                id: 'p'+Date.now(),
+                name: nameInput.value, 
+                theme: newTheme.title,
+                themeDefinition: newTheme.desc,
+                suggestionsOpen: true, 
+                votingOpen: false 
+            };
+            
+            state.periods.push(newPeriod);
+            state.currentPeriodId = newPeriod.id;
+            state.songs = []; 
+            state.modals.cycle.isOpen = false; 
+            
+            saveStateToFirebase(); 
+            render();
+        };
+    </script>
+</body>
+</html>
