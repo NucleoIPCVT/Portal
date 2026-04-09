@@ -138,7 +138,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-[1rem] md:rounded-[2rem] shadow-xl border-2 border-white overflow-hidden flex-1 flex flex-col min-h-0 min-w-0 w-full relative">
+                <div class="bg-slate-100 rounded-[1rem] md:rounded-[2rem] shadow-xl border-2 border-white overflow-hidden flex-1 flex flex-col min-h-0 min-w-0 w-full relative">
                     <div class="table-container overflow-auto flex-1 min-h-0 w-full relative outline-none bg-slate-100 touch-pan-x touch-pan-y">
                         <table class="w-full text-left whitespace-nowrap border-collapse relative">
                             <thead id="escala-table-head"></thead>
@@ -180,21 +180,25 @@
                                 <label class="block text-[9px] md:text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Substituto (+)</label>
                                 <select id="sub-substituto" required class="w-full bg-transparent text-emerald-800 font-bold outline-none text-xs md:text-sm"></select>
                             </div>
+                            <div>
+                                <label class="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Motivo / Observação (Opcional)</label>
+                                <input type="text" id="sub-obs" placeholder="Ex: Doença, viagem..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 md:px-4 py-2.5 md:py-3 outline-none focus:ring-2 focus:ring-presb-gold/50 text-xs md:text-sm font-medium text-slate-700">
+                            </div>
                             <button type="submit" id="btn-salvar-sub" class="w-full bg-presb-green hover:bg-black text-white px-4 py-3 md:py-4 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-colors mt-2 shadow-lg active:scale-95">
                                 Gravar Registro
                             </button>
                         </form>
                     </div>
 
-                    <div class="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-xl border-2 border-white lg:col-span-2 overflow-hidden flex flex-col">
-                        <div class="p-4 md:p-6 border-b-2 border-white bg-slate-100">
+                    <div class="bg-slate-100 rounded-[1.5rem] md:rounded-[2rem] shadow-xl border-2 border-white lg:col-span-2 overflow-hidden flex flex-col">
+                        <div class="p-4 md:p-6 border-b-2 border-white bg-slate-200">
                             <h3 class="font-serif font-bold text-presb-green text-sm md:text-base">Histórico</h3>
                         </div>
                         <div class="overflow-x-auto flex-1 bg-slate-50">
                             <table class="w-full text-left whitespace-nowrap border-collapse">
                                 <thead>
                                     <tr class="bg-slate-200 text-slate-600 text-[9px] md:text-[10px] font-bold uppercase tracking-widest">
-                                        <th class="p-3 md:p-5 border-2 border-white">Data/Turno</th><th class="p-3 md:p-5 border-2 border-white">Função</th><th class="p-3 md:p-5 text-red-600 border-2 border-white">Faltou</th><th class="p-3 md:p-5 text-emerald-700 border-2 border-white">Substituiu</th><th class="p-3 md:p-5 border-2 border-white"></th>
+                                        <th class="p-3 md:p-5 border-2 border-white">Data/Turno</th><th class="p-3 md:p-5 border-2 border-white">Função</th><th class="p-3 md:p-5 text-red-600 border-2 border-white">Faltou</th><th class="p-3 md:p-5 text-emerald-700 border-2 border-white">Substituiu</th><th class="p-3 md:p-5 border-2 border-white">Motivo</th><th class="p-3 md:p-5 border-2 border-white"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="substituicoes-table-body" class="text-[10px] md:text-xs font-medium text-slate-700"></tbody>
@@ -204,7 +208,7 @@
                 </div>
             </section>
 
-            <!-- ESTATÍSTICAS (NOVO LAYOUT INTERATIVO E COM SCROLL) -->
+            <!-- ESTATÍSTICAS -->
             <section id="sec-estatisticas" class="tab-content hidden animate-fade-in flex-1 flex flex-col min-h-0 min-w-0 w-full h-full">
                 <!-- Cabeçalho com Busca -->
                 <div class="mb-4 md:mb-6 shrink-0 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-3 md:gap-6 px-1">
@@ -219,8 +223,8 @@
                     </div>
                 </div>
 
-                <!-- Tabela de Estatísticas com Scroll Próprio, Barra de Progresso, Fontes Menores e Ordenação -->
-                <div class="bg-white rounded-[1rem] md:rounded-[2rem] shadow-xl border-2 border-white overflow-hidden flex-1 flex flex-col min-h-0 min-w-0 w-full relative">
+                <!-- Tabela de Estatísticas -->
+                <div class="bg-slate-100 rounded-[1rem] md:rounded-[2rem] shadow-xl border-2 border-white overflow-hidden flex-1 flex flex-col min-h-0 min-w-0 w-full relative">
                     <div class="table-container overflow-auto flex-1 min-h-0 w-full relative outline-none bg-slate-50 touch-pan-x touch-pan-y">
                         <table class="w-full text-left whitespace-nowrap border-collapse relative">
                             <thead class="sticky top-0 z-[60] shadow-sm" id="estatisticas-table-head">
@@ -482,8 +486,9 @@
                 closeAuthModal(); 
                 updateAuthUI();
                 
-                // Redireciona de forma inteligente: Se for tab switch, vai; senão, recarrega a tabela atual editável.
+                // Redirecionamento instantâneo
                 if (pendingAction === 'switch_tab') proceedSwitchTab(pendingTab);
+                else if (pendingAction === 'edit_escala') renderEscalas(); 
                 else refreshCurrentTab(); 
                 
                 showToast("Acesso Liberado");
@@ -550,7 +555,7 @@
         }
 
         // ==========================================
-        // RENDERIZAÇÃO: ESCALAS (AGORA COM BORDAS BRANCAS)
+        // RENDERIZAÇÃO: ESCALAS (AGORA COM BORDAS BRANCAS E CONTRASTE)
         // ==========================================
         function renderEscalas() {
             const thead = document.getElementById('escala-table-head');
@@ -577,7 +582,8 @@
             }
 
             filteredSchedules.forEach((esc, index) => {
-                const rowBg = index % 2 === 0 ? 'bg-slate-50' : 'bg-slate-100';
+                // Escurecemos os backgrounds para a grade branca brilhar
+                const rowBg = index % 2 === 0 ? 'bg-slate-100' : 'bg-slate-200/50';
                 const tr = document.createElement('tr');
                 tr.className = `${rowBg} hover:bg-presb-gold/10 transition-colors`;
                 
@@ -606,7 +612,7 @@
                         let options = `<option value="">- Livre -</option>`;
                         if(appState.members[role]) appState.members[role].sort().forEach(m => options += `<option value="${m}" ${m === currentPerson ? 'selected' : ''}>${m}</option>`);
                         
-                        let selectClass = 'select-inline text-slate-400 font-medium';
+                        let selectClass = 'select-inline text-slate-500 font-medium';
                         if (currentPerson) selectClass = (personDepts[currentPerson] && personDepts[currentPerson].size > 1) ? 'select-inline duplicated' : 'select-inline filled';
                         cellContent = `<select id="sel-${esc.date}-${role.replace(/\s+/g, '-').replace(/\./g, '')}" onchange="updateAssignment('${esc.date}', '${role}', this.value)" class="${selectClass}">${options}</select>`;
                     } else {
@@ -614,7 +620,7 @@
                             const isDuplicated = personDepts[currentPerson] && personDepts[currentPerson].size > 1;
                             cellContent = `<span class="${isDuplicated ? 'text-red-600 font-black' : 'text-presb-green font-bold'} text-[10px] md:text-xs px-1 md:px-2 block truncate">${currentPerson}</span>`;
                         } else {
-                            cellContent = `<span class="text-slate-300 text-[9px] md:text-[10px] italic px-1 md:px-2 font-bold uppercase tracking-widest">- Livre -</span>`;
+                            cellContent = `<span class="text-slate-400/50 text-[9px] md:text-[10px] italic px-1 md:px-2 font-bold uppercase tracking-widest">- Livre -</span>`;
                         }
                     }
                     
@@ -741,21 +747,25 @@
             const tbody = document.getElementById('substituicoes-table-body');
             const subsArray = [...(appState.substitutions || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-            if(subsArray.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400 border-2 border-white">Vazio</td></tr>`; return; }
+            if(subsArray.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400 border-2 border-white">Vazio</td></tr>`; return; }
 
-            tbody.innerHTML = subsArray.map((sub, index) => `
-                <tr class="${index % 2 === 0 ? 'bg-slate-50' : 'bg-slate-100'}">
+            tbody.innerHTML = subsArray.map((sub, index) => {
+                const rowBg = index % 2 === 0 ? 'bg-slate-100' : 'bg-slate-200/50';
+                return `
+                <tr class="${rowBg}">
                     <td class="p-3 md:p-5 font-bold text-slate-800 border-2 border-white">${formatDateBR(sub.date)} <span class="block text-[9px] text-slate-400">${sub.turno || 'Ambos'}</span></td>
                     <td class="p-3 md:p-5 font-medium border-2 border-white">${sub.role}</td>
                     <td class="p-3 md:p-5 text-red-600 font-bold border-2 border-white">(-) ${sub.absent}</td>
                     <td class="p-3 md:p-5 text-emerald-700 font-bold border-2 border-white">(+) ${sub.substitute}</td>
+                    <td class="p-3 md:p-5 text-slate-500 font-medium text-[10px] md:text-xs border-2 border-white max-w-[120px] md:max-w-[180px] truncate" title="${sub.obs || '-'}">${sub.obs || '-'}</td>
                     <td class="p-3 md:p-5 text-center border-2 border-white"><button onclick="deleteSubstituicao('${sub.id}')" class="text-red-400 hover:text-red-600"><i class="ph-fill ph-trash text-lg"></i></button></td>
                 </tr>
-            `).join('');
+                `
+            }).join('');
         }
 
         // ==========================================
-        // ESTATÍSTICAS (COM ORDENAÇÃO INTERATIVA E GRADES BRANCAS)
+        // ESTATÍSTICAS (COM ORDENAÇÃO INTERATIVA, MENOR FONTE E GRADES BRANCAS)
         // ==========================================
         function handleSort(column) {
             if (statsSort.column === column) {
@@ -812,28 +822,28 @@
             // Renderiza o Cabeçalho Dinâmico
             const thead = document.getElementById('estatisticas-table-head');
             const getIcon = (col) => {
-                if (statsSort.column !== col) return `<i class="ph-bold ph-caret-up text-transparent group-hover:text-slate-300"></i>`;
+                if (statsSort.column !== col) return `<i class="ph-bold ph-caret-up text-transparent group-hover:text-slate-400"></i>`;
                 return statsSort.direction === 'asc' ? `<i class="ph-bold ph-caret-up text-presb-green"></i>` : `<i class="ph-bold ph-caret-down text-presb-green"></i>`;
             };
 
             thead.innerHTML = `
-                <tr class="bg-slate-200 text-slate-600 text-[8px] md:text-[10px] font-bold uppercase tracking-widest">
+                <tr class="bg-slate-200 text-slate-600 text-[7px] md:text-[9px] font-bold uppercase tracking-widest">
                     <th class="p-2 md:p-4 sticky top-0 left-0 bg-slate-200 z-[70] border-2 border-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] cursor-pointer hover:bg-slate-300 transition-colors group" onclick="handleSort('nome')">
                         <div class="flex items-center justify-between">Integrante ${getIcon('nome')}</div>
                     </th>
-                    <th class="p-1 md:p-2 text-center border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" title="Domingos Escalados" onclick="handleSort('esperado')">
+                    <th class="px-1 py-2 md:px-2 md:py-4 text-center border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" title="Domingos Escalados" onclick="handleSort('esperado')">
                         <div class="flex items-center justify-center gap-1">Escalado ${getIcon('esperado')}</div>
                     </th>
-                    <th class="p-1 md:p-2 text-center text-red-600 border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" title="Faltas Registradas" onclick="handleSort('faltas')">
+                    <th class="px-1 py-2 md:px-2 md:py-4 text-center text-red-600 border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" title="Faltas Registradas" onclick="handleSort('faltas')">
                         <div class="flex items-center justify-center gap-1">Faltas ${getIcon('faltas')}</div>
                     </th>
-                    <th class="p-1 md:p-2 text-center text-emerald-700 border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" title="Substituições Extra" onclick="handleSort('extras')">
+                    <th class="px-1 py-2 md:px-2 md:py-4 text-center text-emerald-700 border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" title="Substituições Extra" onclick="handleSort('extras')">
                         <div class="flex items-center justify-center gap-1">Extra ${getIcon('extras')}</div>
                     </th>
-                    <th class="p-1 md:p-2 text-center font-black border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" title="Total de Participações Reais" onclick="handleSort('totalReal')">
+                    <th class="px-1 py-2 md:px-2 md:py-4 text-center font-black border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" title="Total de Participações Reais" onclick="handleSort('totalReal')">
                         <div class="flex items-center justify-center gap-1">Real ${getIcon('totalReal')}</div>
                     </th>
-                    <th class="p-2 md:p-4 text-right w-full md:w-48 border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" onclick="handleSort('percentual')">
+                    <th class="p-2 md:p-4 text-right w-full min-w-[90px] md:min-w-[140px] border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" onclick="handleSort('percentual')">
                         <div class="flex items-center justify-end gap-1">Desempenho ${getIcon('percentual')}</div>
                     </th>
                 </tr>
@@ -847,19 +857,19 @@
             }
 
             tbody.innerHTML = stats.map((st, index) => {
-                const rowBg = index % 2 === 0 ? 'bg-slate-50' : 'bg-slate-100';
+                const rowBg = index % 2 === 0 ? 'bg-slate-100' : 'bg-slate-200/50';
                 let barColor = st.percentual < 50 ? 'bg-red-500' : (st.percentual < 80 ? 'bg-amber-400' : 'bg-emerald-500');
                 let badgeClass = st.percentual < 50 ? 'text-red-700 bg-red-50 border-red-200' : (st.percentual < 80 ? 'text-amber-700 bg-amber-50 border-amber-200' : 'text-emerald-700 bg-emerald-50 border-emerald-200');
                 
                 return `
                     <tr class="${rowBg} hover:bg-presb-gold/10 transition-colors">
                         <td class="p-2 md:p-4 font-black text-presb-green sticky left-0 z-[40] ${rowBg} border-2 border-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">${st.nome}</td>
-                        <td class="p-1 md:p-2 text-center font-bold text-slate-500 text-[10px] md:text-xs border-2 border-white">${st.esperado}</td>
-                        <td class="p-1 md:p-2 text-center font-bold ${st.faltas > 0 ? 'text-red-600' : 'text-slate-300'} text-[10px] md:text-xs border-2 border-white">${st.faltas > 0 ? '-'+st.faltas : 0}</td>
-                        <td class="p-1 md:p-2 text-center font-bold ${st.extras > 0 ? 'text-emerald-700' : 'text-slate-300'} text-[10px] md:text-xs border-2 border-white">${st.extras > 0 ? '+'+st.extras : 0}</td>
-                        <td class="p-1 md:p-2 text-center font-black text-xs md:text-sm border-2 border-white">${st.totalReal}</td>
+                        <td class="px-1 py-2 md:px-2 md:py-4 text-center font-bold text-slate-500 text-[9px] md:text-xs border-2 border-white">${st.esperado}</td>
+                        <td class="px-1 py-2 md:px-2 md:py-4 text-center font-bold ${st.faltas > 0 ? 'text-red-600' : 'text-slate-400'} text-[9px] md:text-xs border-2 border-white">${st.faltas > 0 ? '-'+st.faltas : 0}</td>
+                        <td class="px-1 py-2 md:px-2 md:py-4 text-center font-bold ${st.extras > 0 ? 'text-emerald-700' : 'text-slate-400'} text-[9px] md:text-xs border-2 border-white">${st.extras > 0 ? '+'+st.extras : 0}</td>
+                        <td class="px-1 py-2 md:px-2 md:py-4 text-center font-black text-[10px] md:text-sm border-2 border-white">${st.totalReal}</td>
                         <td class="p-2 md:p-4 border-2 border-white">
-                            <div class="flex flex-col items-end gap-1 md:gap-2 w-full min-w-[80px] md:min-w-[120px]">
+                            <div class="flex flex-col items-end gap-1 md:gap-2 w-full">
                                 <span class="px-2 py-1 rounded-md border text-[9px] md:text-[10px] font-black tracking-widest ${badgeClass}">${st.percentual}%</span>
                                 <div class="w-full bg-slate-200 rounded-full h-1 md:h-2 overflow-hidden shadow-inner">
                                     <div class="${barColor} h-full rounded-full transition-all duration-1000 ease-out" style="width: ${Math.min(st.percentual, 100)}%"></div>
