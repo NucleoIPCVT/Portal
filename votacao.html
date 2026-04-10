@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -75,13 +76,8 @@
 
         // =====================================================================
         // TRUQUE DEFINITIVO DE SEGURANÇA CONTRA O ROBÔ DO GITHUB
-        // Cole sua chave NOVA aqui, mas DE TRÁS PRA FRENTE.
-        // Use o site: https://www.invertertexto.com/
-        // Exemplo: se a chave nova for "AIzaSy123", você vai colar "321ySazIA"
         // =====================================================================
         const chaveInvertida = "gH7ZzMYCCwXNuqWLS6VK5LMV3kMvZshDSazIA"; 
-        
-        // O código desinverte a chave na hora de usar, o robô nunca vai saber!
         const apiKey = chaveInvertida.split('').reverse().join(''); 
 
         const THEMES = [
@@ -431,9 +427,9 @@
                             
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 uppercase mb-3 tracking-widest flex items-center justify-between ml-1">
-                                    Letra Completa <span class="bg-presb-gold text-presb-dark px-3 py-1 rounded-md text-[8px] tracking-[0.2em] font-black">ANÁLISE TEOLÓGICA</span>
+                                    Letra Completa <span class="bg-red-100 text-red-700 px-3 py-1 rounded-md text-[8px] tracking-[0.2em] font-black border border-red-200">OBRIGATÓRIO</span>
                                 </label>
-                                <textarea name="lyrics" id="input-lyrics" class="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-presb-gold transition-colors text-sm font-medium h-48 resize-none text-slate-700 leading-relaxed shadow-inner" placeholder="Cole a letra para que a Inteligência Artificial possa analisar a doutrina..."></textarea>
+                                <textarea required minlength="15" name="lyrics" id="input-lyrics" class="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-presb-gold transition-colors text-sm font-medium h-48 resize-none text-slate-700 leading-relaxed shadow-inner" placeholder="Cole a letra inteira da música aqui. Ela é necessária para que a Inteligência Artificial possa fazer a triagem teológica..."></textarea>
                             </div>
                             
                             <button type="submit" ${state.isSubmitting ? 'disabled' : ''} class="w-full py-5 bg-presb-green hover:bg-black text-white font-black rounded-2xl shadow-xl transition-all disabled:opacity-50 uppercase tracking-widest text-xs active:scale-95 border-b-4 border-black/20">
@@ -758,9 +754,36 @@
         
         window.cancelEditUser = () => { state.editingUserId = null; render(); };
         
+        // =========================================================
+        // TRAVA DE SEGURANÇA DA LETRA - NÃO PERMITE ENVIAR VAZIO
+        // =========================================================
         window.submitSong = (e) => {
             e.preventDefault();
             const f = e.target;
+            
+            const lyricsInput = f.lyrics;
+            const lyricsText = lyricsInput.value.trim();
+            
+            // VERIFICA SE O TEXTO TEM MENOS DE 15 CARACTERES
+            if (lyricsText.length < 15) {
+                // Alerta na tela do navegador
+                alert("⚠️ ATENÇÃO: A letra da música é OBRIGATÓRIA!\n\nPor favor, cole a letra completa para que a Inteligência Artificial possa fazer a análise teológica.");
+                
+                // Destaca a caixa em vermelho para chamar atenção
+                lyricsInput.classList.remove('border-slate-100', 'bg-slate-50', 'focus:border-presb-gold');
+                lyricsInput.classList.add('border-red-500', 'bg-red-50');
+                
+                // Move o cursor direto para a caixa de letra
+                lyricsInput.focus();
+                
+                // Interrompe o salvamento
+                return; 
+            }
+
+            // Se passou da validação, volta a caixa pra cor normal e salva na nuvem
+            lyricsInput.classList.remove('border-red-500', 'bg-red-50');
+            lyricsInput.classList.add('border-slate-100', 'bg-slate-50', 'focus:border-presb-gold');
+
             state.isSubmitting = true; render();
             setTimeout(() => {
                 state.songs.push({
@@ -770,7 +793,7 @@
                     title: f.title.value,
                     author: f.author.value,
                     link: f.link.value,
-                    lyrics: f.lyrics.value,
+                    lyrics: lyricsText, // Usa o texto limpo
                     aiAnalysis: null,
                     joaoApproval: 'pending',
                     techApproval: 'pending',
@@ -827,7 +850,7 @@ Letra completa: "${song.lyrics}"`;
                     method: 'POST', 
                     headers: { 
                         'Content-Type': 'application/json',
-                        'X-goog-api-key': apiKey // <--- Usando a chave que foi desinvertida no topo do arquivo!
+                        'X-goog-api-key': apiKey
                     },
                     body: JSON.stringify({ 
                         contents: [{ parts: [{ text: prompt }] }],
