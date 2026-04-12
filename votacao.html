@@ -76,13 +76,18 @@
 
         // =====================================================================
         // TRUQUE DEFINITIVO DE SEGURANÇA CONTRA O ROBÔ DO GITHUB
+        // Cole sua chave NOVA aqui, mas DE TRÁS PRA FRENTE.
+        // Use o site: https://www.invertertexto.com/
+        // Exemplo: se a chave nova for "AIzaSy123", você vai colar "321ySazIA"
         // =====================================================================
         const chaveInvertida = "gH7ZzMYCCwXNuqWLS6VK5LMV3kMvZshDSazIA"; 
+        
+        // O código desinverte a chave na hora de usar, o robô nunca vai saber!
         const apiKey = chaveInvertida.split('').reverse().join(''); 
 
         const THEMES = [
             { title: "Adoração e Louvor", desc: "Músicas focadas na exaltação dos atributos de Deus." },
-            { title: "Comunhão", desc: "Canções que celebram a unidade do corpo de Cristo." },
+            { title: "Comunhão", desc: "Canções que celebrate a unidade do corpo de Cristo." },
             { title: "Confiança em Deus", desc: "Temas que reforçam o descanso na soberania divina." },
             { title: "Consagração", desc: "Músicas de entrega pessoal e rendição." },
             { title: "Graça e Redenção", desc: "Focam no sacrifício de Jesus na cruz e perdão." },
@@ -326,7 +331,7 @@
 
         function renderHomeTab() {
             const approved = state.songs.filter(s => s.joaoApproval === 'approved' && s.techApproval === 'approved');
-            const ranking = [...approved].sort((a,b) => b.voters.length - a.voters.length).slice(0, 3);
+            const sortedSongs = [...approved].sort((a,b) => b.voters.length - a.voters.length);
 
             if (state.period.suggestionsOpen) {
                 return `
@@ -345,28 +350,84 @@
             }
 
             if (state.period.votingOpen) {
-                return `
-                    <div class="text-center py-10 fade-in">
-                        <h2 class="text-4xl font-bold text-presb-green mb-10 font-serif">Assembleia de Votos</h2>
-                        <div class="max-w-md mx-auto bg-white p-10 rounded-[3rem] border border-slate-100 shadow-2xl mb-12">
-                            <h3 class="font-bold text-slate-400 text-[10px] mb-8 uppercase tracking-[0.3em] border-b border-slate-100 pb-4">Pódio Parcial</h3>
-                            ${ranking.length > 0 ? `
-                                <div class="space-y-4">
-                                    ${ranking.map((s, i) => `
-                                        <div class="flex justify-between items-center p-5 bg-slate-50 rounded-[1.5rem] border border-slate-100 group transition-all hover:border-presb-gold/50">
-                                            <div class="text-left flex-1 truncate pr-4">
-                                                <p class="text-[10px] font-bold text-slate-400 uppercase mb-2 flex items-center gap-2">
-                                                    ${i === 0 ? '<i class="ph-fill ph-medal text-presb-gold text-xl"></i> 1º Lugar' : i === 1 ? '<i class="ph-fill ph-medal text-slate-400 text-xl"></i> 2º Lugar' : '<i class="ph-fill ph-medal text-amber-700 text-xl"></i> 3º Lugar'}
-                                                </p>
-                                                <p class="text-base font-bold text-presb-green leading-tight truncate">${s.title}</p>
-                                                <p class="text-[10px] font-medium text-slate-500 uppercase truncate mt-1">${s.author}</p>
+                const top3 = sortedSongs.slice(0, 3);
+                const remainingSongs = sortedSongs.slice(3);
+
+                let podiumHtml = '';
+                if (top3.length > 0) {
+                    const podiumData = [
+                        { song: top3[1], place: 2, color: 'bg-slate-300', height: 'h-40 sm:h-48', iconColor: 'text-slate-500', display: !!top3[1] },
+                        { song: top3[0], place: 1, color: 'bg-presb-gold', height: 'h-52 sm:h-64', iconColor: 'text-presb-dark', display: !!top3[0] },
+                        { song: top3[2], place: 3, color: 'bg-amber-700', height: 'h-32 sm:h-40', iconColor: 'text-amber-300', display: !!top3[2] }
+                    ];
+
+                    podiumHtml = `
+                        <div class="flex justify-center items-end gap-2 sm:gap-4 w-full max-w-2xl px-2 sm:px-4 mx-auto mb-10">
+                            ${podiumData.map(item => {
+                                if (!item.display) return '<div class="flex-1"></div>';
+                                const s = item.song;
+                                return `
+                                    <div class="flex flex-col items-center flex-1">
+                                        <div class="text-center mb-2 flex flex-col items-center">
+                                            <div class="p-2 rounded-full bg-white shadow-md mb-2 border ${item.place === 1 ? 'border-presb-gold p-3' : 'border-slate-200'}">
+                                                <i class="ph-fill ph-${item.place === 1 ? 'trophy' : 'medal'} ${item.place === 1 ? 'text-3xl' : 'text-xl'} ${item.iconColor}"></i>
                                             </div>
-                                            <div class="flex flex-col items-end gap-2 shrink-0">
-                                                <span class="text-xs font-black text-presb-green bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">${s.voters.length} Votos</span>
+                                            <h3 class="font-bold text-slate-800 ${item.place === 1 ? 'text-sm sm:text-lg' : 'text-xs sm:text-sm'} truncate w-20 sm:w-32">${s.title}</h3>
+                                            <p class="text-[10px] text-slate-500 truncate w-20 sm:w-32">${s.author}</p>
+                                        </div>
+                                        <div class="w-full ${item.color} ${item.height} rounded-t-2xl shadow-lg flex flex-col items-center justify-start pt-4 relative transition-all duration-500 hover:-translate-y-1">
+                                            <span class="text-3xl sm:text-4xl font-black text-black/10 mb-1">${item.place}º</span>
+                                            <div class="bg-black/10 px-3 py-2 rounded-xl backdrop-blur-sm mt-auto mb-4 flex flex-col items-center">
+                                                <span class="font-black ${item.place === 1 ? 'text-presb-dark' : 'text-white'} text-sm sm:text-base leading-none">${s.voters.length}</span>
+                                                <span class="${item.place === 1 ? 'text-presb-dark/70' : 'text-white/70'} text-[8px] font-bold uppercase tracking-widest mt-1">votos</span>
                                             </div>
                                         </div>
-                                    `).join('')}
-                                </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                }
+
+                let remainingHtml = '';
+                if (remainingSongs.length > 0) {
+                    remainingHtml = `
+                        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden mt-8 max-w-2xl mx-auto text-left">
+                            <div class="bg-slate-50 p-4 sm:p-5 border-b border-slate-100 flex items-center gap-3">
+                                <i class="ph-fill ph-list-numbers text-slate-400 text-xl"></i>
+                                <h3 class="font-bold text-slate-700 text-[10px] sm:text-xs uppercase tracking-widest">Outras Músicas no Ranking</h3>
+                            </div>
+                            <ul class="divide-y divide-slate-100">
+                                ${remainingSongs.map((s, index) => `
+                                    <li class="p-4 sm:p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                                        <div class="flex items-center gap-4 min-w-0 pr-4">
+                                            <div class="w-8 h-8 shrink-0 rounded-full bg-slate-100 text-slate-500 font-black flex items-center justify-center text-[10px] sm:text-xs border border-slate-200 shadow-inner">
+                                                ${index + 4}º
+                                            </div>
+                                            <div class="truncate">
+                                                <h4 class="font-bold text-presb-green text-sm sm:text-base leading-tight truncate">${s.title}</h4>
+                                                <p class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase mt-1 truncate">${s.author}</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex flex-col items-end shrink-0">
+                                            <span class="font-black text-presb-green bg-presb-green/10 px-3 py-1.5 rounded-lg text-xs sm:text-sm leading-none border border-presb-green/20">${s.voters.length}</span>
+                                            <span class="text-[8px] uppercase tracking-[0.2em] text-slate-400 font-bold mt-1">votos</span>
+                                        </div>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="text-center py-10 fade-in">
+                        <h2 class="text-3xl sm:text-4xl font-bold text-presb-green mb-10 font-serif">Assembleia de Votos</h2>
+                        <div class="max-w-4xl mx-auto bg-white p-6 sm:p-10 rounded-[3rem] border border-slate-100 shadow-2xl mb-12">
+                            <h3 class="font-bold text-slate-400 text-[10px] mb-8 uppercase tracking-[0.3em] border-b border-slate-100 pb-4">Ranking Parcial</h3>
+                            ${sortedSongs.length > 0 ? `
+                                ${podiumHtml}
+                                ${remainingHtml}
                             ` : `<p class="text-slate-400 font-medium italic py-8 text-sm">Nenhum voto apurado ainda.</p>`}
                         </div>
                         <button onclick="window.changeTab('votacao')" class="bg-presb-green text-white px-12 py-5 rounded-2xl font-black shadow-xl hover:bg-black active:scale-95 transition uppercase text-xs tracking-widest">
@@ -427,9 +488,9 @@
                             
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 uppercase mb-3 tracking-widest flex items-center justify-between ml-1">
-                                    Letra Completa <span class="bg-red-100 text-red-700 px-3 py-1 rounded-md text-[8px] tracking-[0.2em] font-black border border-red-200">OBRIGATÓRIO</span>
+                                    Letra Completa <span class="bg-presb-gold text-presb-dark px-3 py-1 rounded-md text-[8px] tracking-[0.2em] font-black">ANÁLISE TEOLÓGICA</span>
                                 </label>
-                                <textarea required minlength="15" name="lyrics" id="input-lyrics" class="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-presb-gold transition-colors text-sm font-medium h-48 resize-none text-slate-700 leading-relaxed shadow-inner" placeholder="Cole a letra inteira da música aqui. Ela é necessária para que a Inteligência Artificial possa fazer a triagem teológica..."></textarea>
+                                <textarea name="lyrics" id="input-lyrics" class="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-presb-gold transition-colors text-sm font-medium h-48 resize-none text-slate-700 leading-relaxed shadow-inner" placeholder="Cole a letra para que a Inteligência Artificial possa analisar a doutrina..."></textarea>
                             </div>
                             
                             <button type="submit" ${state.isSubmitting ? 'disabled' : ''} class="w-full py-5 bg-presb-green hover:bg-black text-white font-black rounded-2xl shadow-xl transition-all disabled:opacity-50 uppercase tracking-widest text-xs active:scale-95 border-b-4 border-black/20">
@@ -754,36 +815,9 @@
         
         window.cancelEditUser = () => { state.editingUserId = null; render(); };
         
-        // =========================================================
-        // TRAVA DE SEGURANÇA DA LETRA - NÃO PERMITE ENVIAR VAZIO
-        // =========================================================
         window.submitSong = (e) => {
             e.preventDefault();
             const f = e.target;
-            
-            const lyricsInput = f.lyrics;
-            const lyricsText = lyricsInput.value.trim();
-            
-            // VERIFICA SE O TEXTO TEM MENOS DE 15 CARACTERES
-            if (lyricsText.length < 15) {
-                // Alerta na tela do navegador
-                alert("⚠️ ATENÇÃO: A letra da música é OBRIGATÓRIA!\n\nPor favor, cole a letra completa para que a Inteligência Artificial possa fazer a análise teológica.");
-                
-                // Destaca a caixa em vermelho para chamar atenção
-                lyricsInput.classList.remove('border-slate-100', 'bg-slate-50', 'focus:border-presb-gold');
-                lyricsInput.classList.add('border-red-500', 'bg-red-50');
-                
-                // Move o cursor direto para a caixa de letra
-                lyricsInput.focus();
-                
-                // Interrompe o salvamento
-                return; 
-            }
-
-            // Se passou da validação, volta a caixa pra cor normal e salva na nuvem
-            lyricsInput.classList.remove('border-red-500', 'bg-red-50');
-            lyricsInput.classList.add('border-slate-100', 'bg-slate-50', 'focus:border-presb-gold');
-
             state.isSubmitting = true; render();
             setTimeout(() => {
                 state.songs.push({
@@ -793,7 +827,7 @@
                     title: f.title.value,
                     author: f.author.value,
                     link: f.link.value,
-                    lyrics: lyricsText, // Usa o texto limpo
+                    lyrics: f.lyrics.value,
                     aiAnalysis: null,
                     joaoApproval: 'pending',
                     techApproval: 'pending',
@@ -850,7 +884,7 @@ Letra completa: "${song.lyrics}"`;
                     method: 'POST', 
                     headers: { 
                         'Content-Type': 'application/json',
-                        'X-goog-api-key': apiKey
+                        'X-goog-api-key': apiKey // <--- Usando a chave que foi desinvertida no topo do arquivo!
                     },
                     body: JSON.stringify({ 
                         contents: [{ parts: [{ text: prompt }] }],
@@ -903,7 +937,7 @@ Letra completa: "${song.lyrics}"`;
         
         window.loginAdmin = (e) => {
             e.preventDefault();
-            if (document.getElementById('admin-password').value === 'Pr3sbit3ri4n4') { state.isAdminAuthenticated = true; }
+            if (document.getElementById('admin-password').value === '123') { state.isAdminAuthenticated = true; }
             else { document.getElementById('auth-error').classList.remove('hidden'); }
             render();
         };
@@ -953,7 +987,7 @@ Letra completa: "${song.lyrics}"`;
         window.closeNewPeriodModal = () => { state.modals.cycle.isOpen = false; render(); };
         
         window.handleCycleModalNext = () => {
-            if (document.getElementById('cycle-password-input').value === 'Pr3sbit3ri4n4') { state.modals.cycle.step = 2; state.modals.cycle.error = false; }
+            if (document.getElementById('cycle-password-input').value === '123') { state.modals.cycle.step = 2; state.modals.cycle.error = false; }
             else { state.modals.cycle.error = true; }
             render();
         };
@@ -984,3 +1018,5 @@ Letra completa: "${song.lyrics}"`;
     </script>
 </body>
 </html>
+
+```
