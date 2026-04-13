@@ -34,11 +34,9 @@
 </head>
 <body class="bg-slate-50 text-gray-800 font-sans min-h-screen flex flex-col">
 
-    <!-- Header -->
     <header class="bg-presby text-white shadow-md z-10 relative">
         <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center">
             <div class="flex items-center gap-3">
-                <!-- Nova logo de Repertório -->
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15V6"/><path d="M18.5 18a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/><path d="M12 12H3"/><path d="M16 6H3"/><path d="M12 18H3"/></svg>
                 <div>
                     <h1 class="text-2xl font-bold tracking-tight">Revisão de Repertório</h1>
@@ -46,14 +44,12 @@
                 </div>
             </div>
             
-            <!-- Abas de Navegação -->
             <nav class="mt-4 sm:mt-0 flex gap-4 items-center">
                 <div id="nav-tabs" class="flex gap-2 bg-presby-dark/50 p-1.5 rounded-lg border border-presby-dark">
                     <button onclick="setTab('cadastro')" id="tab-cadastro" class="px-5 py-2 rounded-md transition-all duration-200 text-sm font-semibold">Cadastrar Músicas</button>
                     <button onclick="setTab('analise')" id="tab-analise" class="px-5 py-2 rounded-md transition-all duration-200 text-sm font-semibold">Análise e Votação</button>
                 </div>
                 
-                <!-- Área do Usuário Logado -->
                 <div id="user-info" class="hidden flex-col items-end">
                     <span id="logged-user-name" class="text-sm font-bold text-white"></span>
                     <button onclick="logout()" class="text-xs text-presby-light hover:text-white transition-colors underline">Trocar usuário</button>
@@ -62,12 +58,9 @@
         </div>
     </header>
 
-    <!-- Main Content -->
     <main id="app-content" class="flex-grow max-w-[1400px] mx-auto px-4 py-6 w-full fade-in flex flex-col min-h-0">
-        <!-- O conteúdo será injetado aqui via JavaScript -->
-    </main>
+        </main>
 
-    <!-- Importando o Banco de Dados Local -->
     <script src="banco_dados.js"></script>
 
     <script>
@@ -381,13 +374,16 @@
                     const isLastMember = index === membros.length - 1; // Verifica se é o último membro (Líder/Pastor)
                     const isMe = m.nome === state.currentUser; // Verifica se este card pertence a quem está logado
                     
+                    // Hudson pode votar por todo mundo
+                    const canVote = isMe || state.currentUser === 'Hudson';
+                    
                     let isApprovedBtn = '';
                     let isRejectedBtn = '';
-                    let btnAttrs = isMe ? '' : 'disabled';
-                    let hoverClass = isMe ? 'cursor-pointer hover:scale-105' : 'opacity-40 cursor-not-allowed';
+                    let btnAttrs = canVote ? '' : 'disabled';
+                    let hoverClass = canVote ? 'cursor-pointer hover:scale-105' : 'opacity-40 cursor-not-allowed';
 
-                    // Formatação condicional: só colore ativamente se for o próprio usuário, senão deixa fosco
-                    if (isMe) {
+                    // Formatação condicional: só colore ativamente se puder votar, senão deixa fosco
+                    if (canVote) {
                         isApprovedBtn = vote === true ? 'bg-green-500 text-white shadow-inner border-green-600' : 'bg-white text-gray-400 hover:bg-green-50 border-gray-200';
                         isRejectedBtn = vote === false ? 'bg-red-500 text-white shadow-inner border-red-600' : 'bg-white text-gray-400 hover:bg-red-50 border-gray-200';
                     } else {
@@ -398,7 +394,7 @@
                     if (isLastMember) {
                         // Card especial para o líder / voto decisivo
                         return `
-                            <div class="flex flex-col p-3 bg-amber-50 rounded-xl border-2 ${isMe ? 'border-amber-400' : 'border-amber-200 opacity-80'} shadow-sm mt-5 relative transition-all">
+                            <div class="flex flex-col p-3 bg-amber-50 rounded-xl border-2 ${canVote ? 'border-amber-400' : 'border-amber-200 opacity-80'} shadow-sm mt-5 relative transition-all">
                                 <div class="absolute -top-3 left-3 bg-amber-400 text-amber-950 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-sm border border-amber-500">
                                     ⭐ Voto Pastoral (Peso ${m.peso})
                                 </div>
@@ -416,7 +412,7 @@
                     } else {
                         // Card normal para os demais membros
                         return `
-                            <div class="flex items-center justify-between p-2.5 bg-white rounded-lg border ${isMe ? 'border-presby-light ring-1 ring-presby/20' : 'border-gray-100'} shadow-sm mb-2 transition-all">
+                            <div class="flex items-center justify-between p-2.5 bg-white rounded-lg border ${canVote ? 'border-presby-light ring-1 ring-presby/20' : 'border-gray-100'} shadow-sm mb-2 transition-all">
                                 <div class="flex flex-col">
                                     <span class="font-bold text-sm ${isMe ? 'text-presby-dark' : 'text-gray-800'}">${m.nome} ${isMe ? '(Você)' : ''}</span>
                                     <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Peso: ${m.peso}</span>
@@ -435,14 +431,12 @@
                 rightPanelHTML = `
                     <div class="flex flex-col h-full gap-4">
                         
-                        <!-- Banner de Decisão Final -->
                         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 xl:p-5 flex flex-col relative overflow-visible">
                             <div class="absolute top-0 left-0 w-full h-1 bg-gray-200 rounded-t-2xl"></div>
                             
                             <div class="flex justify-between items-start mb-2">
                                 <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest flex-grow text-center ${isAdmin ? 'ml-4' : ''}">Decisão Final</h3>
                                 
-                                <!-- Menu de Admin (Apenas Pastor) -->
                                 ${isAdmin ? `
                                 <div class="relative">
                                     <button onclick="document.getElementById('manual-menu-dropdown').classList.toggle('hidden')" class="text-gray-400 hover:text-gray-700 p-1 -mt-1 -mr-1 rounded-full hover:bg-gray-100 transition-colors" title="Opções Administrativas">
@@ -474,7 +468,6 @@
                             </div>
                         </div>
 
-                        <!-- Votos Individuais -->
                         <div class="bg-slate-100 rounded-2xl border border-gray-200 p-4 flex-grow overflow-y-auto custom-scrollbar flex flex-col">
                             <div class="flex justify-between items-end mb-4 px-1">
                                 <h3 class="text-sm font-bold text-gray-700 uppercase">Votos da Equipe</h3>
@@ -505,7 +498,6 @@
                 centralHTML = `
                     <div class="flex flex-col h-full bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                         
-                        <!-- Cabeçalho da Música -->
                         <div class="bg-slate-800 text-white p-6 relative flex-shrink-0">
                             <div class="absolute top-0 right-0 p-4 opacity-10">
                                 <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13M9 18c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg>
@@ -515,10 +507,8 @@
                             ${badgeMotivo}
                         </div>
 
-                        <!-- Scrollable Content -->
                         <div class="p-6 flex-grow overflow-y-auto custom-scrollbar flex flex-col gap-8 bg-slate-50">
                             
-                            <!-- Letra -->
                             <div>
                                 <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Letra da Música</h3>
                                 <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
@@ -545,7 +535,6 @@
 
             return `
                 <div class="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:h-[calc(100vh-130px)]">
-                    <!-- Coluna 1: Sidebar -->
                     <div class="lg:col-span-3 bg-slate-100 rounded-2xl p-4 border border-gray-200 flex flex-col gap-4 shadow-inner h-[400px] lg:h-full min-h-0">
                         <div class="flex-grow overflow-y-auto custom-scrollbar pr-1">
                             <h2 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-4 px-1">Repertório (${state.songs.length})</h2>
@@ -557,12 +546,10 @@
                         </button>
                     </div>
 
-                    <!-- Coluna 2: Centro (Apenas Letra) -->
                     <div class="lg:col-span-6 flex flex-col h-[600px] lg:h-full min-h-0">
                         ${centralHTML}
                     </div>
 
-                    <!-- Coluna 3: Direita (Votação) -->
                     <div class="lg:col-span-3 flex flex-col gap-4 h-auto lg:h-full min-h-0">
                         ${rightPanelHTML}
                     </div>
@@ -663,8 +650,8 @@
         }
 
         function castVote(membroNome, vote) {
-            // Trava de Segurança: Só permite votar no nome logado
-            if (membroNome !== state.currentUser) {
+            // Trava de Segurança: Só permite votar no nome logado (exceto Hudson, que tem acesso livre a todos os botões)
+            if (membroNome !== state.currentUser && state.currentUser !== 'Hudson') {
                 return; 
             }
 
