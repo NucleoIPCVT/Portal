@@ -571,21 +571,31 @@
             const sidebarHTML = state.songs.map(song => {
                 const isSelected = song.id === state.selectedSongId;
                 const { isApproved, totalVotos } = calculateFinalVerdict(song);
+                
                 let badgeClass = "bg-gray-100 text-gray-500 border-gray-200";
                 let statusIcon = "";
+                
                 if (song.manualVerdict === 'approved' || (song.manualVerdict === null && isApproved && totalVotos > 0)) {
                     badgeClass = "bg-green-50 text-green-700 border-green-200"; statusIcon = "✓";
                 } else if (song.manualVerdict === 'rejected' || (song.manualVerdict === null && !isApproved && totalVotos > 0)) {
                     badgeClass = "bg-red-50 text-red-700 border-red-200"; statusIcon = "✕";
                 }
+
+                // NOVO: Verifica se o usuário atual já votou e cria a etiqueta caso não tenha votado
+                const hasVoted = state.currentUser && song.votes.hasOwnProperty(state.currentUser);
+                const needsVoteBadge = (state.currentUser && !hasVoted) 
+                    ? `<span class="mt-1.5 inline-block px-1.5 py-0.5 bg-amber-100 text-amber-700 border border-amber-200 text-[8px] font-black rounded uppercase tracking-widest shadow-sm">Falta seu voto</span>` 
+                    : '';
+
                 return `
                     <div onclick="window.selectSong('${song.id}')" class="cursor-pointer p-3.5 rounded-xl border-2 mb-2 transition-all ${isSelected ? 'bg-white border-presby shadow-sm' : 'bg-transparent border-transparent hover:bg-white hover:border-gray-200'}">
-                        <div class="flex justify-between items-center">
-                            <div class="truncate pr-2">
+                        <div class="flex justify-between items-start">
+                            <div class="truncate pr-2 flex-grow">
                                 <p class="font-bold text-gray-800 text-sm truncate">${song.title}</p>
                                 <p class="text-xs text-gray-500 truncate mt-0.5">${song.artist}</p>
+                                ${needsVoteBadge}
                             </div>
-                            ${statusIcon ? `<span class="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full border ${badgeClass} text-xs font-black">${statusIcon}</span>` : ''}
+                            ${statusIcon ? `<span class="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full border ${badgeClass} text-xs font-black mt-0.5">${statusIcon}</span>` : ''}
                         </div>
                     </div>
                 `;
