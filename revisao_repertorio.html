@@ -69,24 +69,23 @@
     <!-- Script Principal como Módulo (Habilita Firebase) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ==========================================
-        // ⚠️ INSERIR SUAS CREDENCIAIS DO FIREBASE AQUI
+        // CONFIGURAÇÃO DO FIREBASE DO NÚCLEO IPCVT
         // ==========================================
-        const isCanvas = typeof __firebase_config !== 'undefined';
-        const firebaseConfig = isCanvas ? JSON.parse(__firebase_config) : {
-        
-          apiKey: "AIzaSyAg9w5QohkcmXUFRgLfSI5Sh1chnCD1Owc",
-          authDomain: "repertorio-ipcvt.firebaseapp.com",
-          projectId: "repertorio-ipcvt",
-          storageBucket: "repertorio-ipcvt.firebasestorage.app",
-          messagingSenderId: "774659782213",
-          appId: "1:774659782213:web:5e9cbf88fec30eb382152c",
-          measurementId: "G-DJ8E3VPMSY"
+        const firebaseConfig = {
+            apiKey: "AIzaSyAg9w5QohkcmXUFRgLfSI5Sh1chnCD1Owc",
+            authDomain: "repertorio-ipcvt.firebaseapp.com",
+            projectId: "repertorio-ipcvt",
+            storageBucket: "repertorio-ipcvt.firebasestorage.app",
+            messagingSenderId: "774659782213",
+            appId: "1:774659782213:web:5e9cbf88fec30eb382152c",
+            measurementId: "G-DJ8E3VPMSY"
         };
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'ipcvt-repertorio';
+        
+        const pathAppId = 'repertorio-ipcvt'; // ID usado para criar as pastas no banco de dados
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -142,14 +141,12 @@
         // Inicializa a autenticação com o Firebase
         const initAuth = async () => {
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                // Fazemos o login anônimo direto ignorando qualquer token de outro ambiente,
+                // para conectar corretamente no banco de dados configurado acima.
+                await signInAnonymously(auth);
             } catch (e) {
                 console.error("Erro na autenticação:", e);
-                alert("Erro ao conectar no banco de dados. Verifique suas credenciais do Firebase no código.");
+                alert("Erro ao conectar no banco de dados. Verifique as permissões do Firebase.");
             }
         };
 
@@ -165,20 +162,20 @@
         // Configura escuta em tempo real no Firebase
         function setupListeners() {
             // Músicas Cadastradas via Interface
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'custom_songs'), snap => {
+            onSnapshot(collection(db, 'artifacts', pathAppId, 'public', 'data', 'custom_songs'), snap => {
                 customSongsData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 updateDerivedState();
             }, err => console.error(err));
 
             // Votos Registrados
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'votes'), snap => {
+            onSnapshot(collection(db, 'artifacts', pathAppId, 'public', 'data', 'votes'), snap => {
                 votesData = {};
                 snap.docs.forEach(doc => { votesData[doc.id] = doc.data(); });
                 updateDerivedState();
             }, err => console.error(err));
 
             // Músicas Deletadas
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'deleted_songs'), snap => {
+            onSnapshot(collection(db, 'artifacts', pathAppId, 'public', 'data', 'deleted_songs'), snap => {
                 deletedSongsData = {};
                 snap.docs.forEach(doc => { deletedSongsData[doc.id] = true; });
                 updateDerivedState();
@@ -257,7 +254,7 @@
             const newSong = { title, artist, motivo: reason, lyrics };
 
             // Salva no Firebase
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'custom_songs', newSongId);
+            const docRef = doc(db, 'artifacts', pathAppId, 'public', 'data', 'custom_songs', newSongId);
             await setDoc(docRef, newSong);
 
             document.getElementById('song-title').value = '';
@@ -279,9 +276,9 @@
             if (!firebaseUser) return;
             if (confirm('Tem certeza que deseja excluir esta música para toda a equipe?')) {
                 // Remove dos registros de custom song ou marca o original como deletado
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'deleted_songs', id), { deleted: true });
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'custom_songs', id));
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'votes', id));
+                await setDoc(doc(db, 'artifacts', pathAppId, 'public', 'data', 'deleted_songs', id), { deleted: true });
+                await deleteDoc(doc(db, 'artifacts', pathAppId, 'public', 'data', 'custom_songs', id));
+                await deleteDoc(doc(db, 'artifacts', pathAppId, 'public', 'data', 'votes', id));
                 if (state.selectedSongId === id) state.selectedSongId = null;
             }
         };
@@ -305,7 +302,7 @@
                 newVotes[membroNome] = vote;
             }
 
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'votes', song.id);
+            const docRef = doc(db, 'artifacts', pathAppId, 'public', 'data', 'votes', song.id);
             await setDoc(docRef, { votes: newVotes, manualVerdict: null }, { merge: true });
         };
 
@@ -314,7 +311,7 @@
             const songId = state.selectedSongId;
             if (!songId) return;
 
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'votes', songId);
+            const docRef = doc(db, 'artifacts', pathAppId, 'public', 'data', 'votes', songId);
             await setDoc(docRef, { manualVerdict: status }, { merge: true });
         };
 
@@ -324,7 +321,7 @@
             if (!songId) return;
 
             if(confirm(`Tem certeza que deseja apagar TODOS os votos de todo mundo para esta música?`)) {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'votes', songId);
+                const docRef = doc(db, 'artifacts', pathAppId, 'public', 'data', 'votes', songId);
                 await deleteDoc(docRef);
             }
         };
