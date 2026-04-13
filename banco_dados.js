@@ -2701,28 +2701,78 @@ Brasil, desperta e levanta
 A tua luz já vem brilhar`
     },
     {
-        titulo: "Promessa",
+        titulo: "Promessas",
         artista: "Renascer Praise",
         motivo: "centralidade no ser humano",
-        letra: `Tudo o que Deus prometeu, Ele vai cumprir
-A promessa não falha, não vai cair ao chão
-Ainda que demore, espere no Senhor
-Pois a Sua palavra é verdadeira e fiel
+        letra: `Parece mesmo que este dia nunca vai chegar
+Parece mesmo que Suas promessas eu não vou viver
+Possuir a terra onde há honra, leite e mel
+Com meus filhos ao redor
+Ver Suas bênçãos sobre os meus
 
-A promessa não pode falhar
-A promessa não pode morrer
-Deus é fiel para cumprir
-Tudo o que prometeu
+Parece mesmo que este dia nunca vai chegar
+Parece mesmo que Suas promessas eu não vou viver
+Possuir a terra onde há honra, leite e mel
+Com meus filhos ao redor
+Ver Suas bênçãos sobre os meus
 
-Eu vou viver as promessas de Deus
-Eu vou viver os milagres do Senhor
-Não vou desistir, vou continuar
-Pois a promessa não vai falhar
+Aquele que começou a boa obra em minha vida
+É fiel
+Ele é fiel
+Não descansará
+Não desistirá
+Enquanto não houver terminado
 
-Ele é fiel, Ele é fiel
-Para cumprir o que prometeu
-Ele é o mesmo ontem, hoje e será
-Para todo o sempre, a promessa se cumprirá`
+Não vivo do que vejo
+Mas vivo do que creio
+Sim, Ele é fiel
+Sim, Jesus é fiel
+
+Eu não morrerei
+Antes viverei
+Todo bem do Senhor
+Aqui na Terra e no céu
+
+Olhando para Ele, eu entro em Seu altar
+Sentindo Seu Espírito queimando o coração
+Pai das luzes que não muda
+Continua a me dizer
+Que esta terra é minha
+E que nela eu vou viver
+
+Aquele que começou a boa obra em minha vida
+É fiel
+Ele é fiel
+Não descansará
+Não desistirá
+Enquanto não houver terminado
+
+Não vivo do que vejo
+Mas vivo do que creio
+Sim, Ele é fiel
+Sim, Jesus é fiel
+
+Eu não morrerei
+Antes viverei
+Todo bem do Senhor
+Aqui na Terra e no céu
+
+Aquele que começou a boa obra em minha vida
+É fiel
+Ele é fiel
+Não descansará
+Não desistirá
+Enquanto não houver terminado
+
+Não vivo do que vejo
+Mas vivo do que creio
+Sim, Ele é fiel
+Sim, Jesus é fiel
+
+Eu não morrerei
+Antes viverei
+Todo o bem do Senhor
+Aqui na Terra e no céu`
     },
     {
         titulo: "Que Ele Cresça",
