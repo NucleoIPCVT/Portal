@@ -2860,27 +2860,60 @@ Me chame de Seu filho, e me dê o Seu perdão?`
         artista: "Aline Barros",
         motivo: "Letra apelativa (centralidade do ser humano)",
         letra: `Toma-me, rendido estou
-Aos Teus pés, aos Teus pés
-Com tudo o que sou, venho a Ti
-Rendido estou, rendido estou
+Aos pés da cruz me encontrei
+O que tenho Te entrego, oh Deus
+Vem limpar as minhas mãos
+Purificar meu coração
+Que eu ande em tudo que Tu tens pra mim
 
-Me esvazio de mim mesmo
-Para me encher de Ti
-Que a Tua vontade se cumpra em mim
-Rendido estou, rendido estou
+Oh, oh, oh, oh
+Eis-me aqui, rendido estou
+Oh, oh, oh, oh
+Eu sou Teu, e Tu és meu, Jesus
 
-Usa-me, Senhor, como quiseres
-A minha vida é Tua
-Faz de mim um instrumento
-Nas Tuas mãos, meu Salvador
+Meus momentos e os dias meus
+Meu respirar e meu viver
+Que sejam todos pra Ti, oh Deus
 
-Eu me rendo a Ti
-Aos Teus pés me prostro
-Leva-me mais perto
-Do Teu coração, Senhor
+Oh, oh, oh, oh
+Eis-me aqui, rendido estou
+Oh, oh, oh, oh
+Eu sou Teu, e Tu és meu
 
-Toma-me, rendido estou
-Aos Teus pés, aos Teus pés`
+Oh, oh, oh, oh
+Eis-me aqui, rendido estou
+Oh, oh, oh, oh
+Eu sou Teu, e Tu és meu
+
+Minha vida dou a Ti, Senhor
+Rendido a Ti estou
+E pra sempre cantarei
+Faz em mim o Teu querer
+
+Minha vida dou a Ti, Senhor
+Rendido a Ti estou
+E pra sempre cantarei
+Faz em mim o Teu querer
+
+Oh, oh, oh, oh
+Eis-me aqui, rendido estou
+Oh, oh, oh, oh
+Eu sou Teu, e Tu és meu
+
+Oh, oh, oh, oh
+Eis-me aqui, rendido estou
+Oh, oh, oh, oh
+Eu sou Teu, e Tu és meu
+
+Minha vida dou a Ti, Senhor
+Rendido a Ti estou
+E pra sempre cantarei
+Faz em mim o Teu querer
+
+Minha vida dou a Ti, Senhor
+Rendido a Ti estou
+E pra sempre cantarei
+Faz em mim o Teu querer`
     },
     {
         titulo: "Ser Conhecido de Deus",
