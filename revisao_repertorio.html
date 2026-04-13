@@ -64,7 +64,7 @@
         </div>
     </main>
 
-    <script src="banco_dados.js"></script>
+    <script src="./banco_dados.js"></script>
 
     <!-- Script Principal como Módulo (Habilita Firebase) -->
     <script type="module">
@@ -117,8 +117,8 @@
         }
 
         // 1. Lê o banco local de partida IMEDIATAMENTE
-        if (typeof window.bancoDeMusicas !== 'undefined' && Array.isArray(window.bancoDeMusicas)) {
-            fileSongs = window.bancoDeMusicas.map((song) => ({
+        if (typeof bancoDeMusicas !== 'undefined' && Array.isArray(bancoDeMusicas)) {
+            fileSongs = bancoDeMusicas.map((song) => ({
                 id: generateId(song.titulo, song.artista || 'Desconhecido'),
                 title: song.titulo,
                 artist: song.artista || 'Desconhecido',
@@ -345,7 +345,7 @@
 
             let content = "// === BANCO DE DADOS LOCAL DA COMISSÃO IPCVT ===\n";
             content += "// Este arquivo foi atualizado pela comissão via Firebase.\n\n";
-            content += "const bancoDeMusicas = [\n";
+            content += "var bancoDeMusicas = [\n";
             state.songs.forEach((song, i) => {
                 content += "    {\n";
                 content += `        titulo: "${song.title}",\n`;
