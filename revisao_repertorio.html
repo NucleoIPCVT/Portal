@@ -485,6 +485,14 @@
             const btnCadastro = document.getElementById('tab-cadastro');
             const btnAnalise = document.getElementById('tab-analise');
 
+            // --- Salvar posições de rolagem antes de atualizar a tela ---
+            const sidebar = document.getElementById('sidebar-list');
+            const scrollPosAnalise = sidebar ? sidebar.scrollTop : 0;
+            
+            const cadastroList = document.getElementById('cadastro-list');
+            const scrollPosCadastro = cadastroList ? cadastroList.scrollTop : 0;
+            // ------------------------------------------------------------
+
             if (!state.currentUser) {
                 navTabs.style.display = 'none';
                 userInfo.style.display = 'none';
@@ -509,12 +517,20 @@
                 btnAnalise.classList.add('text-white', 'hover:bg-white/10');
                 btnAnalise.classList.remove('bg-white', 'text-presby-dark', 'shadow-sm');
                 document.getElementById('app-content').innerHTML = getCadastroHTML();
+                
+                // Restaura a rolagem
+                const newCadastroList = document.getElementById('cadastro-list');
+                if (newCadastroList) newCadastroList.scrollTop = scrollPosCadastro;
             } else {
                 btnAnalise.classList.add('bg-white', 'text-presby-dark', 'shadow-sm');
                 btnAnalise.classList.remove('text-white', 'hover:bg-white/10');
                 btnCadastro.classList.add('text-white', 'hover:bg-white/10');
                 btnCadastro.classList.remove('bg-white', 'text-presby-dark', 'shadow-sm');
                 document.getElementById('app-content').innerHTML = getAnaliseHTML();
+                
+                // Restaura a rolagem
+                const newSidebar = document.getElementById('sidebar-list');
+                if (newSidebar) newSidebar.scrollTop = scrollPosAnalise;
             }
         }
 
@@ -557,7 +573,7 @@
                             <h2 class="text-xl font-bold text-gray-800">Sincronizado</h2>
                             <span class="bg-white text-presby font-bold px-3 py-1 rounded-full text-sm shadow-sm border border-gray-200">${state.songs.length}</span>
                         </div>
-                        <div class="overflow-y-auto custom-scrollbar pr-2 flex-grow">${listHTML}</div>
+                        <div id="cadastro-list" class="overflow-y-auto custom-scrollbar pr-2 flex-grow">${listHTML}</div>
                     </div>
                 </div>
             `;
@@ -581,7 +597,7 @@
                     badgeClass = "bg-red-50 text-red-700 border-red-200"; statusIcon = "✕";
                 }
 
-                // NOVO: Verifica se o usuário atual já votou e cria a etiqueta caso não tenha votado
+                // Verifica se o usuário atual já votou e cria a etiqueta caso não tenha votado
                 const hasVoted = state.currentUser && song.votes.hasOwnProperty(state.currentUser);
                 const needsVoteBadge = (state.currentUser && !hasVoted) 
                     ? `<span class="mt-1.5 inline-block px-1.5 py-0.5 bg-amber-100 text-amber-700 border border-amber-200 text-[8px] font-black rounded uppercase tracking-widest shadow-sm">Falta seu voto</span>` 
@@ -717,7 +733,8 @@
                             <p class="text-slate-300 font-medium text-lg relative z-10">${selectedSong.artist}</p>
                             ${badgeMotivo}
                         </div>
-                        <div class="p-6 flex-grow overflow-y-auto custom-scrollbar flex flex-col gap-8 bg-slate-50">
+                        <!-- ID ADICIONADO AQUI -->
+                        <div id="content-song-lyrics" class="p-6 flex-grow overflow-y-auto custom-scrollbar flex flex-col gap-8 bg-slate-50">
                             <div>
                                 <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Letra da Música</h3>
                                 <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
@@ -735,7 +752,7 @@
             return `
                 <div class="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:h-[calc(100vh-130px)]">
                     <div class="lg:col-span-3 bg-slate-100 rounded-2xl p-4 border border-gray-200 flex flex-col gap-4 shadow-inner h-[400px] lg:h-full min-h-0">
-                        <div class="flex-grow overflow-y-auto custom-scrollbar pr-1">
+                        <div id="sidebar-list" class="flex-grow overflow-y-auto custom-scrollbar pr-1">
                             <h2 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-4 px-1">Repertório (${state.songs.length})</h2>
                             ${sidebarHTML}
                         </div>
