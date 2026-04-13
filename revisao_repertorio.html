@@ -60,7 +60,7 @@
 
     <main id="app-content" class="flex-grow max-w-[1400px] mx-auto px-4 py-6 w-full fade-in flex flex-col min-h-0">
         <div class="flex h-full items-center justify-center">
-            <div class="animate-pulse text-presby font-bold">Conectando ao banco de dados...</div>
+            <div class="animate-pulse text-presby font-bold">Carregando sistema...</div>
         </div>
     </main>
 
@@ -110,22 +110,13 @@
         let votesData = {};
         let deletedSongsData = {};
 
-        let loggedInUser = localStorage.getItem('ipcvt_logged_user');
-
-        let state = {
-            tab: 'analise',
-            songs: [],
-            selectedSongId: null,
-            currentUser: loggedInUser
-        };
-
         // Gera um ID estável independente da ordem no arquivo
         function generateId(title, artist) {
             let str = (title + artist).toLowerCase().replace(/\s+/g, '-').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9-]/g, '');
             return 'song-' + str;
         }
 
-        // Lê o banco local de partida
+        // 1. Lê o banco local de partida IMEDIATAMENTE
         if (typeof window.bancoDeMusicas !== 'undefined' && Array.isArray(window.bancoDeMusicas)) {
             fileSongs = window.bancoDeMusicas.map((song) => ({
                 id: generateId(song.titulo, song.artista || 'Desconhecido'),
@@ -138,15 +129,25 @@
             }));
         }
 
-        // Inicializa a autenticação com o Firebase
+        let loggedInUser = localStorage.getItem('ipcvt_logged_user');
+
+        let state = {
+            tab: 'analise',
+            songs: [...fileSongs], // Carrega o banco_dados.js instantaneamente
+            selectedSongId: fileSongs.length > 0 ? fileSongs[0].id : null,
+            currentUser: loggedInUser
+        };
+
+        // Renderiza a interface imediatamente, sem esperar a nuvem
+        render();
+
+        // 2. Inicializa a autenticação com o Firebase (Background)
         const initAuth = async () => {
             try {
-                // Fazemos o login anônimo direto ignorando qualquer token de outro ambiente,
-                // para conectar corretamente no banco de dados configurado acima.
+                // Login anônimo direto
                 await signInAnonymously(auth);
             } catch (e) {
-                console.error("Erro na autenticação:", e);
-                alert("Erro ao conectar no banco de dados. Verifique as permissões do Firebase.");
+                console.warn("Aviso: Conexão com Firebase falhou. O sistema funcionará offline.", e);
             }
         };
 
@@ -165,32 +166,36 @@
             onSnapshot(collection(db, 'artifacts', pathAppId, 'public', 'data', 'custom_songs'), snap => {
                 customSongsData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 updateDerivedState();
-            }, err => console.error(err));
+            }, err => console.warn("Aviso Firebase Custom Songs:", err));
 
             // Votos Registrados
             onSnapshot(collection(db, 'artifacts', pathAppId, 'public', 'data', 'votes'), snap => {
                 votesData = {};
                 snap.docs.forEach(doc => { votesData[doc.id] = doc.data(); });
                 updateDerivedState();
-            }, err => console.error(err));
+            }, err => console.warn("Aviso Firebase Votos:", err));
 
             // Músicas Deletadas
             onSnapshot(collection(db, 'artifacts', pathAppId, 'public', 'data', 'deleted_songs'), snap => {
                 deletedSongsData = {};
                 snap.docs.forEach(doc => { deletedSongsData[doc.id] = true; });
                 updateDerivedState();
-            }, err => console.error(err));
+            }, err => console.warn("Aviso Firebase Deletados:", err));
         }
 
         // Mescla banco_dados.js com as novidades da nuvem
         function updateDerivedState() {
             const baseMap = new Map();
+            // 1. Coloca as músicas do arquivo local
             fileSongs.forEach(song => baseMap.set(song.id, song));
+            // 2. Sobrescreve/adiciona músicas que vieram da nuvem
             customSongsData.forEach(song => baseMap.set(song.id, song));
 
             const baseList = Array.from(baseMap.values());
+            // 3. Remove as que foram deletadas pela nuvem
             const filtered = baseList.filter(song => !deletedSongsData[song.id]);
             
+            // 4. Aplica os votos da nuvem
             state.songs = filtered.map(song => {
                 const vData = votesData[song.id] || { votes: {}, manualVerdict: null };
                 return {
@@ -243,7 +248,10 @@
 
         window.handleAddSong = async function(e) {
             e.preventDefault();
-            if (!firebaseUser) return;
+            if (!firebaseUser) {
+                alert("Aguarde a conexão com o banco de dados antes de cadastrar.");
+                return;
+            }
 
             const title = document.getElementById('song-title').value;
             const artist = document.getElementById('song-artist').value || 'Desconhecido';
@@ -290,7 +298,10 @@
 
         window.castVote = async function(membroNome, vote) {
             if (membroNome !== state.currentUser && state.currentUser !== 'Hudson') return; 
-            if (!firebaseUser) return;
+            if (!firebaseUser) {
+                alert("Você está offline. Aguarde a sincronização com o banco de dados para registrar o voto.");
+                return;
+            }
 
             const song = state.songs.find(s => s.id === state.selectedSongId);
             if (!song) return;
@@ -326,7 +337,6 @@
             }
         };
 
-        // Exportação do banco_dados.js mantém a lógica baseada na Array consolidada
         window.exportarBancoDeDados = function() {
             if (state.songs.length === 0) {
                 alert("Nenhuma música para salvar no banco de dados.");
