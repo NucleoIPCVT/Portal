@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revisão de Repertório - IPCVT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        presby: {
+                            light: '#2a7c4f',
+                            DEFAULT: '#005a32', // Verde Presbiteriano Clássico
+                            dark: '#003d22',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Estilos adicionais para scrollbar e transições */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body class="bg-slate-50 text-gray-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-presby text-white shadow-md z-10 relative">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center">
+            <div class="flex items-center gap-3">
+                <!-- Nova logo de Repertório -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15V6"/><path d="M18.5 18a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/><path d="M12 12H3"/><path d="M16 6H3"/><path d="M12 18H3"/></svg>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight">Comissão de Louvor</h1>
+                    <p class="text-sm text-presby-light opacity-90 font-medium">Núcleio IPCVT</p>
+                </div>
+            </div>
+            
+            <!-- Abas de Navegação -->
+            <nav class="mt-4 sm:mt-0 flex gap-4 items-center">
+                <div id="nav-tabs" class="flex gap-2 bg-presby-dark/50 p-1.5 rounded-lg border border-presby-dark">
+                    <button onclick="setTab('cadastro')" id="tab-cadastro" class="px-5 py-2 rounded-md transition-all duration-200 text-sm font-semibold">Cadastrar Músicas</button>
+                    <button onclick="setTab('analise')" id="tab-analise" class="px-5 py-2 rounded-md transition-all duration-200 text-sm font-semibold">Análise e Votação</button>
+                </div>
+                
+                <!-- Área do Usuário Logado -->
+                <div id="user-info" class="hidden flex-col items-end">
+                    <span id="logged-user-name" class="text-sm font-bold text-white"></span>
+                    <button onclick="logout()" class="text-xs text-presby-light hover:text-white transition-colors underline">Trocar usuário</button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="app-content" class="flex-grow max-w-[1400px] mx-auto px-4 py-6 w-full fade-in flex flex-col min-h-0">
+        <!-- O conteúdo será injetado aqui via JavaScript -->
+    </main>
+
+    <!-- Importando o Banco de Dados Local -->
+    <script src="banco_dados.js"></script>
+
+    <script>
+        // === CONFIGURAÇÃO DE MEMBROS E PESOS ===
+        const membros = [
+            { nome: 'Daiane', peso: 1 },
+            { nome: 'Flávio', peso: 1 },
+            { nome: 'Guilherme', peso: 1 },
+            { nome: 'Hudson', peso: 1 },
+            { nome: 'João', peso: 1 },
+            { nome: 'Liliane', peso: 1 },
+            { nome: 'Lucas', peso: 1 },
+            { nome: 'Pastor Eduardo', peso: 2 } 
+        ];
+        
+        // === ESTADO DO APLICATIVO ===
+        
+        // 1. Carrega as músicas do arquivo banco_dados.js
+        let fileSongs = [];
+        if (typeof bancoDeMusicas !== 'undefined' && Array.isArray(bancoDeMusicas)) {
+            fileSongs = bancoDeMusicas.map((song, index) => ({
+                id: 'file-' + index,
+                title: song.titulo,
+                artist: song.artista || 'Desconhecido',
+                motivo: song.motivo || '', 
+                lyrics: song.letra,
+                votes: {},
+                manualVerdict: null
+            }));
+        }
+
+        // 2. Carrega músicas adicionadas pelo navegador (LocalStorage)
+        let savedLocalSongs = JSON.parse(localStorage.getItem('ipcvt_novas_musicas') || '[]');
+
+        // 3. Junta tudo na inicialização
+        let initialSongs = [...fileSongs, ...savedLocalSongs];
+
+        // 4. RECUPERA A SESSÃO DE VOTAÇÃO E LOGIN
+        let savedSession = JSON.parse(localStorage.getItem('ipcvt_sessao_votacao') || '{}');
+        initialSongs.forEach(song => {
+            if (savedSession[song.id]) {
+                song.votes = savedSession[song.id].votes || {};
+                song.manualVerdict = savedSession[song.id].manualVerdict || null;
+            }
+        });
+
+        let loggedInUser = localStorage.getItem('ipcvt_logged_user');
+
+        let state = {
+            tab: initialSongs.length > 0 ? 'analise' : 'cadastro',
+            songs: initialSongs,
+            selectedSongId: null,
+            currentUser: loggedInUser
+        };
+
+        // Função para salvar a sessão de votação na memória
+        function saveSessionData() {
+            let sessionData = {};
+            state.songs.forEach(song => {
+                sessionData[song.id] = {
+                    votes: song.votes,
+                    manualVerdict: song.manualVerdict
+                };
+            });
+            localStorage.setItem('ipcvt_sessao_votacao', JSON.stringify(sessionData));
+        }
+
+        // === FUNÇÕES DE LOGIN / AUTENTICAÇÃO ===
+        function handleLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('login-user').value;
+            const pass = document.getElementById('login-password').value;
+            
+            if (pass === 'Pr3sbit3ri4n4') {
+                state.currentUser = user;
+                localStorage.setItem('ipcvt_logged_user', user);
+                render();
+            } else {
+                alert('Senha incorreta! Acesso negado.');
+                document.getElementById('login-password').value = '';
+            }
+        }
+
+        function logout() {
+            if(confirm("Deseja sair do seu usuário?")) {
+                state.currentUser = null;
+                localStorage.removeItem('ipcvt_logged_user');
+                render();
+            }
+        }
+
+        function getLoginHTML() {
+            const options = membros.map(m => `<option value="${m.nome}">${m.nome}</option>`).join('');
+            return `
+                <div class="max-w-md mx-auto mt-12 w-full bg-white p-8 rounded-2xl shadow-lg border border-gray-200 fade-in">
+                    <div class="text-center mb-8">
+                        <div class="bg-presby/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-presby">
+                            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                        </div>
+                        <h2 class="text-3xl font-black text-gray-800">Acesso Restrito</h2>
+                        <p class="text-sm text-gray-500 mt-2">Identifique-se para liberar o seu painel de votação.</p>
+                    </div>
+                    <form onsubmit="handleLogin(event)" class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1.5">Membro da Comissão</label>
+                            <select id="login-user" required class="w-full px-4 py-3 bg-slate-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-presby/50 transition-all font-bold text-gray-700 text-lg">
+                                <option value="" disabled selected>Selecione seu nome...</option>
+                                ${options}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1.5">Senha de Acesso</label>
+                            <input type="password" id="login-password" placeholder="••••••••••••" required class="w-full px-4 py-3 bg-slate-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-presby/50 transition-all font-bold text-lg text-center tracking-widest">
+                        </div>
+                        <button type="submit" class="w-full bg-presby hover:bg-presby-dark text-white font-bold py-4 px-4 rounded-xl transition-all shadow-md mt-4 text-lg">
+                            Entrar no Sistema
+                        </button>
+                    </form>
+                </div>
+            `;
+        }
+
+        // === FUNÇÕES DE RENDERIZAÇÃO ===
+        function render() {
+            const navTabs = document.getElementById('nav-tabs');
+            const userInfo = document.getElementById('user-info');
+            const userNameSpan = document.getElementById('logged-user-name');
+            const btnCadastro = document.getElementById('tab-cadastro');
+            const btnAnalise = document.getElementById('tab-analise');
+
+            // Se não estiver logado, esconde as abas do menu e exibe a tela de login
+            if (!state.currentUser) {
+                navTabs.style.display = 'none';
+                userInfo.style.display = 'none';
+                document.getElementById('app-content').innerHTML = getLoginHTML();
+                return;
+            }
+
+            // Se estiver logado, mostra o menu e o nome do usuário
+            navTabs.style.display = 'flex';
+            userInfo.style.display = 'flex';
+            userNameSpan.textContent = `Olá, ${state.currentUser}`;
+
+            // Controle de Acesso: Apenas Hudson vê a aba de Cadastro
+            if (state.currentUser === 'Hudson') {
+                btnCadastro.style.display = 'block';
+            } else {
+                btnCadastro.style.display = 'none';
+                // Força o usuário para a tela de análise se ele não for o Hudson
+                if (state.tab === 'cadastro') {
+                    state.tab = 'analise';
+                }
+            }
+
+            // Atualiza visualização das abas ativas
+            if (state.tab === 'cadastro') {
+                btnCadastro.classList.add('bg-white', 'text-presby-dark', 'shadow-sm');
+                btnCadastro.classList.remove('text-white', 'hover:bg-white/10');
+                btnAnalise.classList.add('text-white', 'hover:bg-white/10');
+                btnAnalise.classList.remove('bg-white', 'text-presby-dark', 'shadow-sm');
+                
+                document.getElementById('app-content').innerHTML = getCadastroHTML();
+            } else {
+                btnAnalise.classList.add('bg-white', 'text-presby-dark', 'shadow-sm');
+                btnAnalise.classList.remove('text-white', 'hover:bg-white/10');
+                btnCadastro.classList.add('text-white', 'hover:bg-white/10');
+                btnCadastro.classList.remove('bg-white', 'text-presby-dark', 'shadow-sm');
+                
+                document.getElementById('app-content').innerHTML = getAnaliseHTML();
+            }
+        }
+
+        // View: Cadastro (Apenas Hudson)
+        function getCadastroHTML() {
+            const listHTML = state.songs.length === 0 
+                ? '<div class="text-center py-10"><p class="text-gray-400 italic">Nenhuma música cadastrada ainda.</p></div>'
+                : state.songs.map(song => `
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-start mb-3 hover:border-presby-light transition-colors">
+                        <div class="pr-2">
+                            <p class="font-bold text-gray-800">${song.title}</p>
+                            <p class="text-sm text-gray-500">${song.artist}</p>
+                            ${song.motivo ? `<p class="text-xs text-red-500 mt-1 line-clamp-1">Motivo: ${song.motivo}</p>` : ''}
+                        </div>
+                        <button onclick="deleteSong('${song.id}')" class="text-red-400 hover:text-red-600 p-2 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex-shrink-0" title="Excluir Música">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                `).join('');
+
+            return `
+                <div class="flex flex-col lg:grid lg:grid-cols-3 gap-8 lg:h-[calc(100vh-130px)]">
+                    <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-200 p-8 flex flex-col overflow-y-auto custom-scrollbar min-h-0">
+                        <div class="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4 flex-shrink-0">
+                            <div class="bg-presby/10 p-2 rounded-lg text-presby">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            </div>
+                            <h2 class="text-2xl font-bold text-gray-800">Adicionar Nova Música</h2>
+                        </div>
+                        <form onsubmit="handleAddSong(event)" class="space-y-5">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-1.5">Título da Música</label>
+                                    <input type="text" id="song-title" required class="w-full px-4 py-3 bg-slate-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-presby/50 focus:border-presby transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-1.5">Artista / Ministério</label>
+                                    <input type="text" id="song-artist" class="w-full px-4 py-3 bg-slate-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-presby/50 focus:border-presby transition-all">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1.5">Motivo da Sugestão de Exclusão (Opcional)</label>
+                                <input type="text" id="song-reason" placeholder="Ex: Antropocêntrica, não condiz com a denominação..." class="w-full px-4 py-3 bg-slate-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-presby/50 focus:border-presby transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1.5">Letra Completa</label>
+                                <textarea id="song-lyrics" required rows="10" class="w-full px-4 py-3 bg-slate-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-presby/50 focus:border-presby transition-all custom-scrollbar"></textarea>
+                            </div>
+                            <button type="submit" class="w-full bg-presby hover:bg-presby-dark text-white font-bold py-3.5 px-4 rounded-xl transition-colors shadow-sm flex justify-center items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                Adicionar à Lista Atual
+                            </button>
+                        </form>
+                    </div>
+                    <div class="bg-slate-100 rounded-2xl p-6 border border-gray-200 flex flex-col shadow-inner h-[400px] lg:h-full min-h-0">
+                        <div class="flex justify-between items-center mb-6 flex-shrink-0">
+                            <h2 class="text-xl font-bold text-gray-800">Repertório</h2>
+                            <div class="flex gap-2 items-center">
+                                <span class="bg-white text-presby font-bold px-3 py-1 rounded-full text-sm shadow-sm border border-gray-200">${state.songs.length}</span>
+                                <button onclick="exportarBancoDeDados()" class="bg-gray-800 hover:bg-gray-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors shadow-sm" title="Baixar banco_dados.js para substituir o antigo">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                    Salvar .js
+                                </button>
+                            </div>
+                        </div>
+                        <div class="overflow-y-auto custom-scrollbar pr-2 flex-grow">
+                            ${listHTML}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // View: Análise
+        function getAnaliseHTML() {
+            if (state.songs.length === 0) {
+                return `
+                    <div class="flex flex-col items-center justify-center h-full max-h-[600px] bg-white rounded-2xl shadow-sm border border-gray-200 p-10">
+                        <div class="bg-gray-50 p-6 rounded-full mb-4">
+                            <svg class="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg>
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-700">Nenhuma música no banco de dados</h2>
+                        <p class="text-gray-500 mt-2">Peça ao Hudson para cadastrar o repertório.</p>
+                    </div>`;
+            }
+
+            // --- COLUNA 1: SIDEBAR MÚSICAS ---
+            const sidebarHTML = state.songs.map(song => {
+                const isSelected = song.id === state.selectedSongId;
+                const { isApproved, totalVotos } = calculateFinalVerdict(song);
+                
+                let badgeClass = "bg-gray-100 text-gray-500 border-gray-200";
+                let statusIcon = "";
+                
+                if (song.manualVerdict === 'approved' || (song.manualVerdict === null && isApproved && totalVotos > 0)) {
+                    badgeClass = "bg-green-50 text-green-700 border-green-200";
+                    statusIcon = "✓";
+                } else if (song.manualVerdict === 'rejected' || (song.manualVerdict === null && !isApproved && totalVotos > 0)) {
+                    badgeClass = "bg-red-50 text-red-700 border-red-200";
+                    statusIcon = "✕";
+                }
+
+                return `
+                    <div onclick="selectSong('${song.id}')" class="cursor-pointer p-3.5 rounded-xl border-2 mb-2 transition-all ${isSelected ? 'bg-white border-presby shadow-sm' : 'bg-transparent border-transparent hover:bg-white hover:border-gray-200'}">
+                        <div class="flex justify-between items-center">
+                            <div class="truncate pr-2">
+                                <p class="font-bold text-gray-800 text-sm truncate">${song.title}</p>
+                                <p class="text-xs text-gray-500 truncate mt-0.5">${song.artist}</p>
+                            </div>
+                            ${statusIcon ? `<span class="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full border ${badgeClass} text-xs font-black">${statusIcon}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const selectedSong = state.songs.find(s => s.id === state.selectedSongId);
+            let centralHTML = '';
+            let rightPanelHTML = '';
+
+            if (selectedSong) {
+                // Cálculo de Votos e Pontos
+                const { pontosAprovacao, pontosReprovacao, isApproved, totalVotos } = calculateFinalVerdict(selectedSong);
+                
+                // Veredito Final (Calculado vs Manual)
+                let finalStatusText = 'Aguardando Avaliação';
+                let finalStatusColor = 'text-gray-500 bg-gray-100 border-gray-200';
+                
+                if (selectedSong.manualVerdict === 'approved') {
+                    finalStatusText = 'APROVAÇÃO FORÇADA';
+                    finalStatusColor = 'text-white bg-green-600 border-green-700 shadow-md';
+                } else if (selectedSong.manualVerdict === 'rejected') {
+                    finalStatusText = 'REPROVAÇÃO FORÇADA';
+                    finalStatusColor = 'text-white bg-red-600 border-red-700 shadow-md';
+                } else if (totalVotos > 0) {
+                    finalStatusText = isApproved ? 'APROVADA' : 'REPROVADA';
+                    finalStatusColor = isApproved ? 'text-green-800 bg-green-100 border-green-200' : 'text-red-800 bg-red-100 border-red-200';
+                }
+
+                // --- COLUNA 3: PAINEL DE VOTAÇÃO ---
+                const votesHTML = membros.map((m, index) => {
+                    const vote = selectedSong.votes[m.nome];
+                    const isLastMember = index === membros.length - 1; // Verifica se é o último membro (Líder/Pastor)
+                    const isMe = m.nome === state.currentUser; // Verifica se este card pertence a quem está logado
+                    
+                    let isApprovedBtn = '';
+                    let isRejectedBtn = '';
+                    let btnAttrs = isMe ? '' : 'disabled';
+                    let hoverClass = isMe ? 'cursor-pointer hover:scale-105' : 'opacity-40 cursor-not-allowed';
+
+                    // Formatação condicional: só colore ativamente se for o próprio usuário, senão deixa fosco
+                    if (isMe) {
+                        isApprovedBtn = vote === true ? 'bg-green-500 text-white shadow-inner border-green-600' : 'bg-white text-gray-400 hover:bg-green-50 border-gray-200';
+                        isRejectedBtn = vote === false ? 'bg-red-500 text-white shadow-inner border-red-600' : 'bg-white text-gray-400 hover:bg-red-50 border-gray-200';
+                    } else {
+                        isApprovedBtn = vote === true ? 'bg-green-500 text-white border-green-600' : 'bg-gray-100 text-gray-300 border-gray-200';
+                        isRejectedBtn = vote === false ? 'bg-red-500 text-white border-red-600' : 'bg-gray-100 text-gray-300 border-gray-200';
+                    }
+                    
+                    if (isLastMember) {
+                        // Card especial para o líder / voto decisivo
+                        return `
+                            <div class="flex flex-col p-3 bg-amber-50 rounded-xl border-2 ${isMe ? 'border-amber-400' : 'border-amber-200 opacity-80'} shadow-sm mt-5 relative transition-all">
+                                <div class="absolute -top-3 left-3 bg-amber-400 text-amber-950 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-sm border border-amber-500">
+                                    ⭐ Voto Pastoral (Peso ${m.peso})
+                                </div>
+                                <div class="flex items-center justify-between mt-2">
+                                    <div class="flex flex-col">
+                                        <span class="font-black text-sm text-amber-900">${m.nome} ${isMe ? '(Você)' : ''}</span>
+                                    </div>
+                                    <div class="flex gap-1 bg-amber-100/50 p-1 rounded-md border border-amber-200">
+                                        <button ${btnAttrs} onclick="castVote('${m.nome}', true)" class="px-4 py-2 rounded text-sm font-black transition-all border ${isApprovedBtn} ${hoverClass}" title="Aprovar">✓</button>
+                                        <button ${btnAttrs} onclick="castVote('${m.nome}', false)" class="px-4 py-2 rounded text-sm font-black transition-all border ${isRejectedBtn} ${hoverClass}" title="Reprovar">✕</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // Card normal para os demais membros
+                        return `
+                            <div class="flex items-center justify-between p-2.5 bg-white rounded-lg border ${isMe ? 'border-presby-light ring-1 ring-presby/20' : 'border-gray-100'} shadow-sm mb-2 transition-all">
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-sm ${isMe ? 'text-presby-dark' : 'text-gray-800'}">${m.nome} ${isMe ? '(Você)' : ''}</span>
+                                    <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Peso: ${m.peso}</span>
+                                </div>
+                                <div class="flex gap-1 bg-gray-100 p-1 rounded-md">
+                                    <button ${btnAttrs} onclick="castVote('${m.nome}', true)" class="px-3 py-1.5 rounded text-sm font-bold transition-all border ${isApprovedBtn} ${hoverClass}" title="Aprovar">✓</button>
+                                    <button ${btnAttrs} onclick="castVote('${m.nome}', false)" class="px-3 py-1.5 rounded text-sm font-bold transition-all border ${isRejectedBtn} ${hoverClass}" title="Reprovar">✕</button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }).join('');
+
+                const isAdmin = state.currentUser === 'Pastor Eduardo';
+
+                rightPanelHTML = `
+                    <div class="flex flex-col h-full gap-4">
+                        
+                        <!-- Banner de Decisão Final -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 xl:p-5 flex flex-col relative overflow-visible">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-gray-200 rounded-t-2xl"></div>
+                            
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest flex-grow text-center ${isAdmin ? 'ml-4' : ''}">Decisão Final</h3>
+                                
+                                <!-- Menu de Admin (Apenas Pastor) -->
+                                ${isAdmin ? `
+                                <div class="relative">
+                                    <button onclick="document.getElementById('manual-menu-dropdown').classList.toggle('hidden')" class="text-gray-400 hover:text-gray-700 p-1 -mt-1 -mr-1 rounded-full hover:bg-gray-100 transition-colors" title="Opções Administrativas">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="currentColor" viewBox="0 0 256 256"><path d="M140,128a12,12,0,1,1-12-12A12,12,0,0,1,140,128ZM128,72a12,12,0,1,0-12-12A12,12,0,0,0,128,72Zm0,112a12,12,0,1,0-12-12A12,12,0,0,0,128,184Z"></path></svg>
+                                    </button>
+                                    
+                                    <div id="manual-menu-dropdown" class="hidden absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden">
+                                        <button onclick="setManualVerdict('approved')" class="w-full text-left px-4 py-3 text-xs font-bold text-green-700 hover:bg-green-50 transition-colors">
+                                            👍 Forçar Aprovação
+                                        </button>
+                                        <button onclick="setManualVerdict('rejected')" class="w-full text-left px-4 py-3 text-xs font-bold text-red-700 hover:bg-red-50 transition-colors border-t border-gray-50">
+                                            👎 Forçar Reprovação
+                                        </button>
+                                        ${selectedSong.manualVerdict ? `
+                                        <button onclick="setManualVerdict(null)" class="w-full text-left px-4 py-3 text-xs font-bold text-blue-700 hover:bg-blue-50 transition-colors border-t border-gray-50">
+                                            ↺ Desfazer Forçar
+                                        </button>
+                                        ` : ''}
+                                        <button onclick="resetVotes()" class="w-full text-left px-4 py-3 text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors border-t border-gray-200">
+                                            🧹 Zerar Todos os Votos
+                                        </button>
+                                    </div>
+                                </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="text-center py-4 rounded-xl border-2 font-black text-lg tracking-wide transition-colors ${finalStatusColor}">
+                                ${finalStatusText}
+                            </div>
+                        </div>
+
+                        <!-- Votos Individuais -->
+                        <div class="bg-slate-100 rounded-2xl border border-gray-200 p-4 flex-grow overflow-y-auto custom-scrollbar flex flex-col">
+                            <div class="flex justify-between items-end mb-4 px-1">
+                                <h3 class="text-sm font-bold text-gray-700 uppercase">Votos da Equipe</h3>
+                                <div class="text-right">
+                                    <div class="text-xs font-bold text-gray-400 uppercase mb-0.5">Placar (Pontos)</div>
+                                    <div class="flex gap-2 text-sm font-black">
+                                        <span class="text-green-600">${pontosAprovacao}</span>
+                                        <span class="text-gray-300">x</span>
+                                        <span class="text-red-600">${pontosReprovacao}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex-grow">
+                                ${votesHTML}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // --- COLUNA 2: CENTRO (Apenas a Letra) ---
+                const badgeMotivo = selectedSong.motivo 
+                    ? `<div class="mt-4 inline-block bg-red-500/20 border border-red-500/30 text-red-200 px-4 py-2 rounded-lg text-sm font-semibold shadow-sm relative z-10">
+                           <span class="font-bold text-white">Sugerida para exclusão por:</span> ${selectedSong.motivo}
+                       </div>` 
+                    : '';
+
+                centralHTML = `
+                    <div class="flex flex-col h-full bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                        
+                        <!-- Cabeçalho da Música -->
+                        <div class="bg-slate-800 text-white p-6 relative flex-shrink-0">
+                            <div class="absolute top-0 right-0 p-4 opacity-10">
+                                <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13M9 18c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg>
+                            </div>
+                            <h2 class="text-3xl font-black mb-1 relative z-10">${selectedSong.title}</h2>
+                            <p class="text-slate-300 font-medium text-lg relative z-10">${selectedSong.artist}</p>
+                            ${badgeMotivo}
+                        </div>
+
+                        <!-- Scrollable Content -->
+                        <div class="p-6 flex-grow overflow-y-auto custom-scrollbar flex flex-col gap-8 bg-slate-50">
+                            
+                            <!-- Letra -->
+                            <div>
+                                <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Letra da Música</h3>
+                                <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                                    <pre class="font-sans whitespace-pre-wrap text-gray-800 leading-loose text-sm">${selectedSong.lyrics}</pre>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                `;
+            } else {
+                centralHTML = `
+                    <div class="h-full flex items-center justify-center bg-white rounded-2xl shadow-sm border border-gray-200 p-6 text-gray-400">
+                        <div class="text-center">
+                            <svg class="w-12 h-12 mx-auto text-gray-200 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+                            <p>Selecione uma música na lista para analisá-la.</p>
+                        </div>
+                    </div>
+                `;
+                rightPanelHTML = `
+                    <div class="h-full bg-slate-100 rounded-2xl border border-gray-200"></div>
+                `;
+            }
+
+            return `
+                <div class="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:h-[calc(100vh-130px)]">
+                    <!-- Coluna 1: Sidebar -->
+                    <div class="lg:col-span-3 bg-slate-100 rounded-2xl p-4 border border-gray-200 flex flex-col gap-4 shadow-inner h-[400px] lg:h-full min-h-0">
+                        <div class="flex-grow overflow-y-auto custom-scrollbar pr-1">
+                            <h2 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-4 px-1">Repertório (${state.songs.length})</h2>
+                            ${sidebarHTML}
+                        </div>
+                        <button id="btn-export-pdf" onclick="exportGeneralPDF()" class="w-full py-3 bg-gray-800 text-white rounded-xl hover:bg-gray-700 flex justify-center items-center gap-2 text-sm font-bold transition-colors shadow-md">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Relatório em PDF
+                        </button>
+                    </div>
+
+                    <!-- Coluna 2: Centro (Apenas Letra) -->
+                    <div class="lg:col-span-6 flex flex-col h-[600px] lg:h-full min-h-0">
+                        ${centralHTML}
+                    </div>
+
+                    <!-- Coluna 3: Direita (Votação) -->
+                    <div class="lg:col-span-3 flex flex-col gap-4 h-auto lg:h-full min-h-0">
+                        ${rightPanelHTML}
+                    </div>
+                </div>
+            `;
+        }
+
+        // === LÓGICA DE NEGÓCIO ===
+        function setTab(tabName) {
+            // Trava extra de segurança: Se tentar ir para cadastro sem ser o Hudson, ignora
+            if (tabName === 'cadastro' && state.currentUser !== 'Hudson') {
+                return;
+            }
+            
+            state.tab = tabName;
+            if (tabName === 'analise' && state.songs.length > 0 && !state.selectedSongId) {
+                selectSong(state.songs[0].id);
+                return;
+            }
+            render();
+        }
+
+        function handleAddSong(e) {
+            e.preventDefault();
+            const title = document.getElementById('song-title').value;
+            const artist = document.getElementById('song-artist').value || 'Desconhecido';
+            const reason = document.getElementById('song-reason').value || '';
+            const lyrics = document.getElementById('song-lyrics').value;
+
+            const newSong = {
+                id: 'local-' + Date.now().toString(),
+                title,
+                artist,
+                motivo: reason,
+                lyrics,
+                votes: {},
+                manualVerdict: null
+            };
+
+            state.songs.push(newSong);
+
+            // Salva as músicas adicionadas via tela no LocalStorage
+            let savedLocalSongs = JSON.parse(localStorage.getItem('ipcvt_novas_musicas') || '[]');
+            savedLocalSongs.push(newSong);
+            localStorage.setItem('ipcvt_novas_musicas', JSON.stringify(savedLocalSongs));
+
+            // Limpa o form
+            document.getElementById('song-title').value = '';
+            document.getElementById('song-artist').value = '';
+            document.getElementById('song-reason').value = '';
+            document.getElementById('song-lyrics').value = '';
+            
+            render();
+            
+            // Feedback visual rápido
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '✓ Adicionada com sucesso!';
+            btn.classList.add('bg-green-600');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove('bg-green-600');
+                
+                setTimeout(() => {
+                    const wantsToSave = confirm("Música adicionada à sessão!\n\n⚠️ Como o sistema roda no seu navegador por segurança, não podemos sobrescrever o arquivo 'banco_dados.js' silenciosamente.\n\nDeseja baixar o arquivo atualizado agora para você substituir o antigo na sua pasta?");
+                    if (wantsToSave) {
+                        exportarBancoDeDados();
+                    }
+                }, 100);
+            }, 1500);
+        }
+
+        function deleteSong(id) {
+            if (confirm('Tem certeza que deseja remover esta música do repertório?')) {
+                state.songs = state.songs.filter(s => s.id !== id);
+                if (state.selectedSongId === id) state.selectedSongId = null;
+                
+                // Remove do localStorage também, se for uma música local
+                let savedLocalSongs = JSON.parse(localStorage.getItem('ipcvt_novas_musicas') || '[]');
+                savedLocalSongs = savedLocalSongs.filter(s => s.id !== id);
+                localStorage.setItem('ipcvt_novas_musicas', JSON.stringify(savedLocalSongs));
+
+                // Limpa do cache de sessão
+                let sessionData = JSON.parse(localStorage.getItem('ipcvt_sessao_votacao') || '{}');
+                if (sessionData[id]) {
+                    delete sessionData[id];
+                    localStorage.setItem('ipcvt_sessao_votacao', JSON.stringify(sessionData));
+                }
+
+                render();
+            }
+        }
+
+        function selectSong(id) {
+            state.selectedSongId = id;
+            render(); 
+        }
+
+        function castVote(membroNome, vote) {
+            // Trava de Segurança: Só permite votar no nome logado
+            if (membroNome !== state.currentUser) {
+                return; 
+            }
+
+            const song = state.songs.find(s => s.id === state.selectedSongId);
+            if (song) {
+                if (song.votes[membroNome] === vote) {
+                    delete song.votes[membroNome]; // Remove voto se clicar novamente
+                } else {
+                    song.votes[membroNome] = vote;
+                }
+                
+                // Ao dar um voto normal, desativa a decisão manual forçada se ela existir
+                if (song.manualVerdict) {
+                    song.manualVerdict = null;
+                }
+                
+                saveSessionData();
+                render();
+            }
+        }
+
+        function setManualVerdict(status) {
+            // Segurança adicional: apenas Pastor pode forçar
+            if (state.currentUser !== 'Pastor Eduardo') return;
+
+            const song = state.songs.find(s => s.id === state.selectedSongId);
+            if (song) {
+                song.manualVerdict = status;
+                
+                // Oculta o menu ao selecionar
+                const dropdown = document.getElementById('manual-menu-dropdown');
+                if(dropdown) dropdown.classList.add('hidden');
+                
+                saveSessionData();
+                render();
+            }
+        }
+
+        function resetVotes() {
+            // Segurança adicional: apenas Pastor pode resetar tudo
+            if (state.currentUser !== 'Pastor Eduardo') return;
+
+            const song = state.songs.find(s => s.id === state.selectedSongId);
+            if (song) {
+                if(confirm(`Tem certeza que deseja limpar TODOS os votos de "${song.title}"?`)) {
+                    song.votes = {};
+                    song.manualVerdict = null;
+                    
+                    const dropdown = document.getElementById('manual-menu-dropdown');
+                    if(dropdown) dropdown.classList.add('hidden');
+
+                    saveSessionData();
+                    render();
+                }
+            }
+        }
+
+        function calculateFinalVerdict(song) {
+            let pontosAprovacao = 0;
+            let pontosReprovacao = 0;
+            let votosContados = 0;
+
+            membros.forEach(m => {
+                const voto = song.votes[m.nome];
+                if (voto === true) {
+                    pontosAprovacao += m.peso;
+                    votosContados++;
+                } else if (voto === false) {
+                    pontosReprovacao += m.peso;
+                    votosContados++;
+                }
+            });
+
+            // A aprovação por pontos ocorre se pontos de aprovação > reprovação
+            const isApproved = pontosAprovacao > pontosReprovacao;
+
+            return { 
+                pontosAprovacao, 
+                pontosReprovacao, 
+                isApproved, 
+                totalVotos: votosContados 
+            };
+        }
+
+        function exportarBancoDeDados() {
+            if (state.songs.length === 0) {
+                alert("Nenhuma música para salvar no banco de dados.");
+                return;
+            }
+
+            let content = "// === BANCO DE DADOS LOCAL DA COMISSÃO IPCVT ===\n";
+            content += "// Este arquivo foi atualizado via interface.\n\n";
+            content += "const bancoDeMusicas = [\n";
+            state.songs.forEach((song, i) => {
+                content += "    {\n";
+                content += `        titulo: "${song.title}",\n`;
+                content += `        artista: "${song.artist}",\n`;
+                if (song.motivo) {
+                    const safeMotivo = song.motivo.replace(/"/g, '\\"');
+                    content += `        motivo: "${safeMotivo}",\n`;
+                }
+                // Escapando crases para não quebrar o código javascript
+                const safeLyrics = song.lyrics.replace(/`/g, '\\`');
+                content += `        letra: \`${safeLyrics}\`\n`;
+                content += "    }" + (i < state.songs.length - 1 ? "," : "") + "\n";
+            });
+            content += "];\n";
+
+            const blob = new Blob([content], { type: "text/javascript;charset=utf-8" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "banco_dados.js";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            // Depois que o arquivo JS é gerado, as músicas locais não precisam mais ficar no cache
+            localStorage.removeItem('ipcvt_novas_musicas');
+            alert('Arquivo banco_dados.js gerado!\n\nPor favor, salve-o substituindo o antigo na sua pasta local.');
+        }
+
+        function exportGeneralPDF() {
+            if (state.songs.length === 0) {
+                alert("Nenhuma música cadastrada para gerar o relatório.");
+                return;
+            }
+
+            const tempDiv = document.createElement('div');
+            tempDiv.style.padding = '20px';
+            tempDiv.style.fontFamily = 'Helvetica, Arial, sans-serif';
+            tempDiv.style.color = '#1f2937';
+
+            let tableRows = state.songs.map((song) => {
+                const { pontosAprovacao, pontosReprovacao, isApproved, totalVotos } = calculateFinalVerdict(song);
+                
+                let statusText = 'Pendente';
+                let statusColor = '#6b7280'; // gray
+
+                if (song.manualVerdict === 'approved') {
+                    statusText = 'Aprovada (Forçada)';
+                    statusColor = '#16a34a'; // green
+                } else if (song.manualVerdict === 'rejected') {
+                    statusText = 'Reprovada (Forçada)';
+                    statusColor = '#dc2626'; // red
+                } else if (totalVotos > 0) {
+                    statusText = isApproved ? 'Aprovada' : 'Reprovada';
+                    statusColor = isApproved ? '#16a34a' : '#dc2626';
+                }
+
+                return `
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 8px 4px; font-size: 12px; font-weight: bold; width: 35%;">${song.title}</td>
+                        <td style="padding: 8px 4px; font-size: 11px; color: #4b5563; width: 25%;">${song.artist}</td>
+                        <td style="padding: 8px 4px; font-size: 12px; text-align: center; color: #16a34a; width: 10%;">${pontosAprovacao}</td>
+                        <td style="padding: 8px 4px; font-size: 12px; text-align: center; color: #dc2626; width: 10%;">${pontosReprovacao}</td>
+                        <td style="padding: 8px 4px; font-size: 11px; font-weight: bold; color: ${statusColor}; width: 20%;">${statusText}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            tempDiv.innerHTML = `
+                <div style="border-bottom: 2px solid #005a32; padding-bottom: 10px; margin-bottom: 20px;">
+                    <h1 style="color: #005a32; margin: 0 0 5px 0; font-size: 18px;">Relatório de Repertório - IPCVT</h1>
+                    <p style="margin: 0; color: #6b7280; font-size: 11px;">Data da Reunião: ${new Date().toLocaleDateString('pt-BR')}</p>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="background-color: #f3f4f6; border-bottom: 2px solid #d1d5db;">
+                            <th style="padding: 8px 4px; font-size: 11px; color: #374151; text-transform: uppercase;">Música</th>
+                            <th style="padding: 8px 4px; font-size: 11px; color: #374151; text-transform: uppercase;">Autor</th>
+                            <th style="padding: 8px 4px; font-size: 11px; text-align: center; color: #374151; text-transform: uppercase;">A Favor</th>
+                            <th style="padding: 8px 4px; font-size: 11px; text-align: center; color: #374151; text-transform: uppercase;">Contra</th>
+                            <th style="padding: 8px 4px; font-size: 11px; color: #374151; text-transform: uppercase;">Veredito</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+            `;
+
+            const opt = {
+                margin:       15,
+                filename:     `Relatorio_Repertorio_IPCVT_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            const btn = document.getElementById('btn-export-pdf');
+            if (btn) {
+                const originalText = btn.innerHTML;
+                btn.innerHTML = 'Gerando PDF...';
+                html2pdf().set(opt).from(tempDiv).save().then(() => {
+                    btn.innerHTML = originalText;
+                });
+            } else {
+                html2pdf().set(opt).from(tempDiv).save();
+            }
+        }
+
+        // Inicializa
+        render();
+    </script>
+</body>
+</html>
