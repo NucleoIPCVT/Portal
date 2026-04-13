@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -73,17 +72,6 @@
         const appFirebase = initializeApp(firebaseConfig);
         const db = getFirestore(appFirebase);
         const auth = getAuth(appFirebase);
-
-        // =====================================================================
-        // TRUQUE DEFINITIVO DE SEGURANÇA CONTRA O ROBÔ DO GITHUB
-        // Cole sua chave NOVA aqui, mas DE TRÁS PRA FRENTE.
-        // Use o site: https://www.invertertexto.com/
-        // Exemplo: se a chave nova for "AIzaSy123", você vai colar "321ySazIA"
-        // =====================================================================
-        const chaveInvertida = "gH7ZzMYCCwXNuqWLS6VK5LMV3kMvZshDSazIA"; 
-        
-        // O código desinverte a chave na hora de usar, o robô nunca vai saber!
-        const apiKey = chaveInvertida.split('').reverse().join(''); 
 
         const THEMES = [
             { title: "Adoração e Louvor", desc: "Músicas focadas na exaltação dos atributos de Deus." },
@@ -487,10 +475,8 @@
                             </div>
                             
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-3 tracking-widest flex items-center justify-between ml-1">
-                                    Letra Completa <span class="bg-presb-gold text-presb-dark px-3 py-1 rounded-md text-[8px] tracking-[0.2em] font-black">ANÁLISE TEOLÓGICA</span>
-                                </label>
-                                <textarea name="lyrics" id="input-lyrics" class="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-presb-gold transition-colors text-sm font-medium h-48 resize-none text-slate-700 leading-relaxed shadow-inner" placeholder="Cole a letra para que a Inteligência Artificial possa analisar a doutrina..."></textarea>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-3 tracking-widest ml-1">Letra Completa</label>
+                                <textarea required name="lyrics" id="input-lyrics" class="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-presb-gold transition-colors text-sm font-medium h-48 resize-none text-slate-700 leading-relaxed shadow-inner" placeholder="Cole a letra completa da música aqui..."></textarea>
                             </div>
                             
                             <button type="submit" ${state.isSubmitting ? 'disabled' : ''} class="w-full py-5 bg-presb-green hover:bg-black text-white font-black rounded-2xl shadow-xl transition-all disabled:opacity-50 uppercase tracking-widest text-xs active:scale-95 border-b-4 border-black/20">
@@ -578,7 +564,7 @@
                     </div>
 
                     <div class="flex items-center justify-between border-b-2 border-slate-200 pb-5 mt-10">
-                        <h3 class="font-bold font-serif text-presb-green text-xl flex items-center gap-3"><i class="ph-bold ph-magnifying-glass text-presb-gold"></i> Curadoria de Letras</h3>
+                        <h3 class="font-bold font-serif text-presb-green text-xl flex items-center gap-3"><i class="ph-bold ph-magnifying-glass text-presb-gold"></i> Curadoria de Seleção</h3>
                         <span class="text-[10px] font-bold bg-slate-200 text-slate-600 px-4 py-2 rounded-lg uppercase tracking-widest">${state.songs.length} Propostas</span>
                     </div>
 
@@ -624,39 +610,35 @@
                     </div>
 
                     <div class="w-full md:w-[55%] p-8 flex flex-col bg-white">
-                        <div class="flex-1 bg-slate-50 p-6 rounded-2xl border border-slate-100 text-xs text-slate-600 font-medium overflow-y-auto no-scrollbar whitespace-pre-wrap max-h-[180px] mb-6 leading-relaxed border-l-4 border-presb-gold">
-                            ${song.lyrics || '<span class="opacity-50 italic font-bold uppercase text-[9px] flex items-center justify-center h-full tracking-widest">Texto não disponibilizado</span>'}
+                        <h4 class="font-bold text-presb-green text-sm uppercase tracking-widest mb-4 border-b border-slate-100 pb-4 flex items-center gap-2">
+                            <i class="ph-fill ph-text-aa text-presb-gold text-xl"></i> Letra da Música
+                        </h4>
+                        
+                        <div class="flex-1 bg-slate-50 p-6 rounded-2xl border border-slate-100 text-xs text-slate-600 font-medium overflow-y-auto no-scrollbar whitespace-pre-wrap max-h-[180px] mb-8 leading-relaxed border-l-4 border-presb-gold shadow-inner">
+                            ${song.lyrics || '<span class="opacity-50 italic font-bold uppercase text-[9px] flex items-center justify-center h-full tracking-widest">Letra não disponibilizada</span>'}
                         </div>
 
-                        ${song.aiAnalysis && typeof song.aiAnalysis === 'object' ? `
-                            <div class="mb-6 text-xs p-5 rounded-2xl border leading-relaxed font-medium shadow-sm relative overflow-hidden ${song.aiAnalysis.status === 'Aprovado' ? 'bg-emerald-50 border-emerald-100 text-emerald-900' : song.aiAnalysis.status === 'Erro' ? 'bg-amber-50 border-amber-100 text-amber-900' : 'bg-red-50 border-red-100 text-red-900'}">
-                                <div class="flex justify-between items-center mb-3 pb-3 border-b border-black/5">
-                                    <span class="font-bold uppercase tracking-[0.2em] text-[9px] flex items-center gap-2 opacity-80"><i class="ph-fill ph-sparkle text-base"></i> Triagem Teológica (IA)</span>
-                                    <button onclick="window.resetAIAnalysis('${song.id}')" class="text-[9px] font-bold uppercase hover:underline opacity-60">Reiniciar</button>
-                                </div>
-                                ${song.aiAnalysis.reason}
-                            </div>
-                        ` : song.aiAnalysis === 'loading' ? 
-                            `<div class="w-full py-4 mb-6 bg-slate-100 text-slate-500 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-3 animate-pulse"><i class="ph-bold ph-spinner animate-spin text-xl"></i> Analisando Doutrina...</div>` :
-                            `<button onclick="window.analyzeWithAI('${song.id}')" class="w-full py-4 mb-6 bg-slate-800 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-md hover:bg-black transition-colors flex items-center justify-center gap-3"><i class="ph-bold ph-brain text-xl text-presb-gold"></i> Diagnóstico Teológico IA</button>`}
-
-                        <div class="grid grid-cols-3 gap-4 border-t border-slate-100 pt-6 mt-auto">
+                        <h4 class="font-bold text-presb-green text-sm uppercase tracking-widest mb-4 text-center border-b border-slate-100 pb-4 flex items-center justify-center gap-2 mt-auto">
+                            <i class="ph-fill ph-shield-check text-presb-gold text-xl"></i> Aprovação da Liderança
+                        </h4>
+                        
+                        <div class="grid grid-cols-2 gap-6 w-full">
                             <div class="flex flex-col text-center">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3">1. IA</span>
-                                <div class="h-10 flex items-center justify-center">
-                                    ${song.aiAnalysis === 'loading' ? `<i class="ph-bold ph-spinner animate-spin text-2xl text-presb-gold"></i>` : (song.aiAnalysis && song.aiAnalysis.status) ? window.getStatusBadgeHtml(song.aiAnalysis.status) : `<span class="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Aguardando</span>`}
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 flex justify-between items-center">
+                                    1. Teologia 
+                                    ${song.joaoApproval !== 'pending' ? `<i class="ph-bold ph-arrow-u-up-left cursor-pointer text-presb-green hover:scale-110 transition-transform" onclick="window.setApproval('${song.id}', 'joao', 'pending')"></i>` : ''}
+                                </span>
+                                <div class="h-12 flex items-center justify-center">
+                                    ${song.joaoApproval === 'pending' ? `<div class="flex gap-2 w-full"><button onclick="window.setApproval('${song.id}', 'joao', 'approved')" class="flex-1 h-12 flex items-center justify-center bg-slate-100 hover:bg-presb-green hover:text-white rounded-xl text-slate-400 transition-colors shadow-sm active:scale-95"><i class="ph-bold ph-check text-xl"></i></button><button onclick="window.setApproval('${song.id}', 'joao', 'rejected')" class="flex-1 h-12 flex items-center justify-center bg-slate-100 hover:bg-red-600 hover:text-white rounded-xl text-slate-400 transition-colors shadow-sm active:scale-95"><i class="ph-bold ph-x text-xl"></i></button></div>` : song.joaoApproval === 'rejected' ? `<button onclick="window.openViewReasonModal('Reprovação Doutrinária', '${song.id}', 'joao')" class="w-full text-[10px] font-bold bg-red-50 text-red-700 h-12 rounded-xl border border-red-200 tracking-widest shadow-sm hover:bg-red-100 transition-colors">Ver Motivo</button>` : window.getStatusBadgeHtml('Aprovado')}
                                 </div>
                             </div>
-                            <div class="flex flex-col border-l border-slate-100 pl-4">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex justify-between items-center">2. Teologia ${song.joaoApproval !== 'pending' ? `<i class="ph-bold ph-arrow-u-up-left cursor-pointer text-presb-green" onclick="window.setApproval('${song.id}', 'joao', 'pending')"></i>` : ''}</span>
-                                <div class="h-10 flex items-center justify-center">
-                                    ${song.joaoApproval === 'pending' ? `<div class="flex gap-2 w-full"><button onclick="window.setApproval('${song.id}', 'joao', 'approved')" class="flex-1 h-10 flex items-center justify-center bg-slate-100 hover:bg-presb-green hover:text-white rounded-xl text-slate-400 transition-colors"><i class="ph-bold ph-check text-lg"></i></button><button onclick="window.setApproval('${song.id}', 'joao', 'rejected')" class="flex-1 h-10 flex items-center justify-center bg-slate-100 hover:bg-red-600 hover:text-white rounded-xl text-slate-400 transition-colors"><i class="ph-bold ph-x text-lg"></i></button></div>` : song.joaoApproval === 'rejected' ? `<button onclick="window.openViewReasonModal('Reprovação Doutrinária', '${song.id}', 'joao')" class="w-full text-[9px] font-bold bg-red-50 text-red-700 h-10 rounded-xl border border-red-200 tracking-widest">MOTIVO</button>` : window.getStatusBadgeHtml('Aprovado')}
-                                </div>
-                            </div>
-                            <div class="flex flex-col border-l border-slate-100 pl-4">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex justify-between items-center">3. Técnica ${song.techApproval !== 'pending' ? `<i class="ph-bold ph-arrow-u-up-left cursor-pointer text-presb-green" onclick="window.setApproval('${song.id}', 'tech', 'pending')"></i>` : ''}</span>
-                                <div class="h-10 flex items-center justify-center">
-                                    ${song.techApproval === 'pending' ? `<div class="flex gap-2 w-full"><button onclick="window.setApproval('${song.id}', 'tech', 'approved')" class="flex-1 h-10 flex items-center justify-center bg-slate-100 hover:bg-presb-green hover:text-white rounded-xl text-slate-400 transition-colors"><i class="ph-bold ph-check text-lg"></i></button><button onclick="window.setApproval('${song.id}', 'tech', 'rejected')" class="flex-1 h-10 flex items-center justify-center bg-slate-100 hover:bg-red-600 hover:text-white rounded-xl text-slate-400 transition-colors"><i class="ph-bold ph-x text-lg"></i></button></div>` : song.techApproval === 'rejected' ? `<button onclick="window.openViewReasonModal('Reprovação Técnica', '${song.id}', 'tech')" class="w-full text-[9px] font-bold bg-red-50 text-red-700 h-10 rounded-xl border border-red-200 tracking-widest">MOTIVO</button>` : window.getStatusBadgeHtml('Aprovado')}
+                            <div class="flex flex-col border-l border-slate-100 pl-6 text-center">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 flex justify-between items-center">
+                                    2. Técnica 
+                                    ${song.techApproval !== 'pending' ? `<i class="ph-bold ph-arrow-u-up-left cursor-pointer text-presb-green hover:scale-110 transition-transform" onclick="window.setApproval('${song.id}', 'tech', 'pending')"></i>` : ''}
+                                </span>
+                                <div class="h-12 flex items-center justify-center">
+                                    ${song.techApproval === 'pending' ? `<div class="flex gap-2 w-full"><button onclick="window.setApproval('${song.id}', 'tech', 'approved')" class="flex-1 h-12 flex items-center justify-center bg-slate-100 hover:bg-presb-green hover:text-white rounded-xl text-slate-400 transition-colors shadow-sm active:scale-95"><i class="ph-bold ph-check text-xl"></i></button><button onclick="window.setApproval('${song.id}', 'tech', 'rejected')" class="flex-1 h-12 flex items-center justify-center bg-slate-100 hover:bg-red-600 hover:text-white rounded-xl text-slate-400 transition-colors shadow-sm active:scale-95"><i class="ph-bold ph-x text-xl"></i></button></div>` : song.techApproval === 'rejected' ? `<button onclick="window.openViewReasonModal('Reprovação Técnica', '${song.id}', 'tech')" class="w-full text-[10px] font-bold bg-red-50 text-red-700 h-12 rounded-xl border border-red-200 tracking-widest shadow-sm hover:bg-red-100 transition-colors">Ver Motivo</button>` : window.getStatusBadgeHtml('Aprovado')}
                                 </div>
                             </div>
                         </div>
@@ -718,7 +700,7 @@
                         <div class="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6"><i class="ph-fill ph-warning-circle text-4xl"></i></div>
                         <h3 class="font-bold text-slate-800 text-2xl text-center mb-2 font-serif">Justificativa</h3>
                         <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest text-center mb-6">Motivo da reprovação</p>
-                        <textarea id="reject-reason-input" class="w-full border-2 border-slate-100 bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:border-red-500 h-32 resize-none mb-6" placeholder="Ex: A letra apresenta..."></textarea>
+                        <textarea id="reject-reason-input" class="w-full border-2 border-slate-100 bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:border-red-500 h-32 resize-none mb-6" placeholder="Ex: A letra não se alinha ao tema do culto..."></textarea>
                         <div class="flex gap-4">
                             <button onclick="window.closeRejectModal()" class="flex-1 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">Cancelar</button>
                             <button onclick="window.confirmRejection()" class="flex-1 py-4 bg-red-600 text-white rounded-xl font-bold shadow-lg text-[10px] uppercase tracking-widest hover:bg-red-700 transition-colors">Confirmar</button>
@@ -828,7 +810,6 @@
                     author: f.author.value,
                     link: f.link.value,
                     lyrics: f.lyrics.value,
-                    aiAnalysis: null,
                     joaoApproval: 'pending',
                     techApproval: 'pending',
                     voters: []
@@ -852,71 +833,6 @@
             const a = document.getElementById('input-author').value;
             if(!t) return alert("Indique o título da música.");
             window.open(`https://www.google.com/search?q=${encodeURIComponent(t+' '+a+' letra')}`, '_blank');
-        };
-
-        // --- FUNÇÃO DA IA PARA AMBIENTE REAL (GITHUB) ---
-        window.analyzeWithAI = async (id) => {
-            const song = state.songs.find(s => s.id === id);
-            const period = state.period;
-
-            if (!song.lyrics || song.lyrics.trim().length < 10) {
-                song.aiAnalysis = { status: "Erro", reason: "Letra ausente ou muito curta para análise teológica." };
-                saveStateToFirebase();
-                render(); return;
-            }
-
-            song.aiAnalysis = 'loading'; 
-            render(); 
-
-            const prompt = `Aja como um Teólogo Presbiteriano conservador. Avalie a música com rigor teológico reformado (teocentrismo, graça soberana e reverência).
-Responda EXCLUSIVAMENTE com um objeto JSON válido.
-O JSON deve ter apenas as chaves: "status" (valor deve ser EXATAMENTE "Aprovado" ou "Reprovado") e "reason" (uma justificativa teológica contendo no máximo 3 frases). Sem marcações Markdown.
-
-Tema do Ciclo de Votação: "${period.theme}"
-Música: ${song.title} - ${song.author}
-Letra completa: "${song.lyrics}"`;
-
-            try {
-                // Modelo atualizado usando a estrutura do cURL (gemini-flash-latest)
-                const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent";
-                
-                const res = await fetch(url, {
-                    method: 'POST', 
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-goog-api-key': apiKey // <--- Usando a chave que foi desinvertida no topo do arquivo!
-                    },
-                    body: JSON.stringify({ 
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: {
-                            temperature: 0.1
-                        }
-                    })
-                });
-                
-                const data = await res.json();
-                
-                if(data.error) {
-                     song.aiAnalysis = { status: "Erro", reason: "Ocorreu um erro na API: " + data.error.message }; 
-                } else {
-                     let txt = data.candidates[0].content.parts[0].text;
-                     // Limpeza rigorosa para garantir a validação do JSON
-                     txt = txt.replace(/```json/gi, '').replace(/```/g, '').trim();
-                     song.aiAnalysis = JSON.parse(txt);
-                }
-                
-            } catch (e) { 
-                console.error("Erro no processamento da IA:", e);
-                song.aiAnalysis = { status: "Erro", reason: "A Inteligência Artificial não pôde processar a resposta. Tente novamente mais tarde." }; 
-            }
-            saveStateToFirebase(); 
-            render();
-        };
-
-        window.resetAIAnalysis = (id) => { 
-            state.songs.find(s => s.id === id).aiAnalysis = null; 
-            saveStateToFirebase();
-            render(); 
         };
         
         window.handleVote = (id) => {
@@ -1018,5 +934,3 @@ Letra completa: "${song.lyrics}"`;
     </script>
 </body>
 </html>
-
-```
