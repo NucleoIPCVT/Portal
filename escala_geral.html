@@ -2,11 +2,13 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestão de Escala - Núcleo IPCVT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+    <script src="escala-excel.js"></script>
     <!-- Bibliotecas para Exportação PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
@@ -14,7 +16,7 @@
     <!-- Fontes Institucionais -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Merriweather:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <script>
         tailwind.config = {
@@ -56,16 +58,20 @@
         .fade-in { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
+    <link rel="stylesheet" href="portal-ui.css">
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans h-[100dvh] overflow-hidden">
+<body class="scale-page bg-slate-50 text-slate-800 font-sans h-[100dvh] overflow-hidden">
 
+    <header class="scale-topbar"><button id="navigation-toggle" aria-controls="scale-navigation" aria-expanded="false" onclick="toggleScaleNavigation()"><i class="ph ph-list" aria-hidden="true"></i><span>Menu</span></button><a href="index.html"><img src="logo-nucleo.svg" alt="">Núcleo <span>IPCVT</span></a><span class="topbar-caption">Escalas e gestão</span></header>
+    <button id="navigation-backdrop" hidden aria-label="Fechar menu" onclick="toggleScaleNavigation(false)"></button>
     <div id="app-layout" class="h-full flex flex-col md:flex-row w-full overflow-hidden">
         
         <!-- Sidebar -->
-        <nav class="bg-presb-green text-white w-full md:w-64 shrink-0 shadow-2xl md:h-full z-20 border-b md:border-r border-black/20 flex flex-col justify-between">
+        <nav id="scale-navigation" aria-label="Navegação da escala" class="bg-presb-green text-white w-full md:w-64 shrink-0 shadow-2xl md:h-full z-20 border-b md:border-r border-black/20 flex flex-col justify-between">
+            <a href="index.html" class="scale-home"><i class="ph ph-arrow-left" aria-hidden="true"></i> Voltar ao Portal</a>
             <div class="hidden md:block">
                 <div class="p-8 text-center border-b border-white/5">
-                    <i class="ph-fill ph-calendar-check text-5xl text-presb-gold mb-4 inline-block"></i>
+                    <img src="logo-nucleo.svg" alt="" class="scale-logo">
                     <h1 class="text-xl font-bold font-serif uppercase tracking-tight">Núcleo<span class="text-presb-gold">IPCVT</span></h1>
                     <p class="text-[9px] text-white/40 mt-1 uppercase tracking-[0.3em] font-bold">Escalas e Gestão</p>
                 </div>
@@ -99,9 +105,11 @@
                     </button>
                 </li>
             </ul>
+            <div class="menu-admin-actions"> <button id="btn-toggle-edit" onclick="requestAuth('edit_escala')"><i class="ph ph-lock-key-open"></i><span>Modo administrador</span></button>
+ <div id="excel-actions" class="hidden toolbar-excel"><button onclick="exportScheduleExcel()"><i class="ph ph-download-simple"></i> Baixar base</button><button onclick="document.getElementById('excel-file').click()"><i class="ph ph-upload-simple"></i> Importar base</button></div></div>
             <div id="admin-logout-container" class="hidden p-3 md:p-6 border-t border-white/5 mt-auto shrink-0">
                 <button onclick="logoutAdmin()" class="w-full text-white/40 hover:text-white text-[9px] md:text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-colors">
-                    <i class="ph ph-sign-out text-lg"></i> Sair da Edição
+                    <i class="ph ph-sign-out text-lg"></i> Sair do modo administrador
                 </button>
             </div>
         </nav>
@@ -118,26 +126,27 @@
             <section id="sec-escalas" class="tab-content block animate-fade-in flex-1 flex flex-col min-h-0 min-w-0 w-full h-full">
                 <div class="mb-4 md:mb-6 shrink-0 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-3 md:gap-6 px-1">
                     <div>
-                        <h2 class="text-2xl md:text-4xl font-bold text-presb-green font-serif tracking-tight">Escala de Domingos</h2>
+                        <h2 class="text-2xl md:text-4xl font-bold text-presb-green font-serif tracking-tight">Escala Geral</h2>
                         <p class="text-slate-500 text-[10px] md:text-xs mt-1 md:mt-2 font-medium uppercase tracking-widest italic" id="escala-subtitle">Modo de visualização.</p>
                     </div>
                     
-                    <div class="flex flex-col sm:flex-row gap-2 md:gap-3 w-full lg:w-auto">
-                        <select id="filtro-mes" onchange="renderEscalas()" class="bg-white border-2 border-slate-200 text-slate-700 rounded-xl px-3 md:px-4 py-2 md:py-3 text-[10px] md:text-xs font-bold uppercase tracking-widest shadow-sm outline-none focus:border-presb-gold">
+                </div>
+<div class="schedule-toolbar">
+ <div class="toolbar-group toolbar-filters" role="group" aria-label="Filtrar escala">
+ <select aria-label="Ano da escala" id="filtro-ano" onchange="renderEscalas()"><option value="2026">2026</option><option value="2027">2027</option></select>
+ <select aria-label="Filtrar escala por mês" id="filtro-mes" onchange="renderEscalas()" class="bg-white border-2 border-slate-200 text-slate-700 rounded-xl px-3 md:px-4 py-2 md:py-3 text-[10px] md:text-xs font-bold uppercase tracking-widest shadow-sm outline-none focus:border-presb-gold">
                             <option value="">Ano Inteiro</option>
                             <option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option><option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option><option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
                         </select>
-                        <div class="flex gap-2">
-                            <button onclick="exportarPDF()" class="flex-1 sm:flex-none bg-slate-800 hover:bg-slate-900 text-white px-3 md:px-5 py-2 md:py-3 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-md transition-all active:scale-95">
-                                <i class="ph-bold ph-file-pdf text-lg"></i> <span class="hidden md:inline">Exportar</span>
-                            </button>
-                            <button id="btn-toggle-edit" onclick="requestAuth('edit_escala')" class="flex-[2] sm:flex-none bg-presb-gold hover:bg-yellow-600 text-presb-dark px-3 md:px-5 py-2 md:py-3 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95">
-                                <i class="ph-bold ph-lock-key-open text-lg"></i> Habilitar Edição
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
+ <select aria-label="Equipe ou subgrupo" id="filtro-equipe" onchange="renderEscalas()"><option value="">Todas as equipes</option><option>Louvor</option><option>Mídia</option><option>Técnica</option><optgroup label="Subgrupos"><option>Litúrgico</option><option>Vocal</option><option>Instrumental</option><option>Som</option><option>Projeção</option><option>Transmissão</option></optgroup></select>
+ <input aria-label="Buscar pessoa" id="filtro-pessoa" type="search" placeholder="Buscar pessoa" oninput="renderEscalas()">
+ <button aria-label="Limpar filtros" title="Limpar filtros" onclick="clearScheduleFilters()"><i class="ph ph-funnel-x"></i></button>
+ </div><div class="toolbar-group toolbar-actions" role="group" aria-label="Exportação e edição">
+ <button title="Exportar PDF completo do ano" onclick="exportarPDF()"><i class="ph ph-file-pdf"></i><span>PDF</span></button>
+ <input id="excel-file" type="file" accept=".xlsx" hidden onchange="importScheduleExcel(this)">
+ </div>
+</div>
+                <p class="scale-hint">Deslize a tabela para ver todas as funções. Nomes em vermelho indicam atuação em mais de uma equipe no mesmo domingo.</p>
                 <div class="bg-slate-100 rounded-[1rem] md:rounded-[2rem] shadow-xl border-2 border-white overflow-hidden flex-1 flex flex-col min-h-0 min-w-0 w-full relative">
                     <div class="table-container overflow-auto flex-1 min-h-0 w-full relative outline-none bg-slate-100 touch-pan-x touch-pan-y">
                         <table class="w-full text-left whitespace-nowrap border-collapse relative">
@@ -319,6 +328,8 @@
         <span id="toast-message" class="text-[9px] md:text-[10px] font-bold uppercase tracking-widest">Sucesso</span>
     </div>
 
+    <dialog id="excel-year-dialog" class="excel-preview"><h3>Baixar base da escala</h3><p>Escolha o ano. A base inclui todos os domingos, com os preenchimentos já salvos.</p><label for="excel-download-year">Ano</label><select id="excel-download-year"><option value="2026">2026</option><option value="2027">2027</option></select><div><button onclick="document.getElementById('excel-year-dialog').close()">Cancelar</button><button id="excel-download-confirm" onclick="downloadScheduleYear()">Baixar .xlsx</button></div></dialog>
+    <dialog id="excel-preview" class="excel-preview"><h3 id="excel-preview-title"></h3><p>Células vazias deixam a função livre. Apenas as datas e funções da planilha serão atualizadas.</p><ul id="excel-changes"></ul><div><button onclick="document.getElementById('excel-preview').close()">Cancelar</button><button id="excel-apply">Aplicar e salvar</button></div></dialog>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -356,16 +367,25 @@
         let selectedSubs = [];
 
         const COLUMNS_ORDER = [
-            "Seleção de Repertório", "Soprano", "Contralto", "Tenor", 
+            "Litúrgico", "Soprano", "Contralto", "Tenor", 
             "Violão", "Guitarra", "Baixo", "Bateria", "Piano", "Violino",
-            "Transmissão", "Op. Câmera", "Fotografia", "Op. Som", "Projeção"
+            "Op. Som", "Projeção", "Transmissão", "Fotografia"
         ];
 
+        const ROLE_GROUPS = {
+            'Litúrgico': ['Litúrgico'],
+            'Vocal': ['Soprano', 'Contralto', 'Tenor'],
+            'Instrumental': ['Violão', 'Guitarra', 'Baixo', 'Bateria', 'Piano', 'Violino'],
+            'Som': ['Op. Som'],
+            'Projeção': ['Projeção'],
+            'Transmissão': ['Transmissão', 'Fotografia']
+        };
+
         const DEPARTMENTS = {
-            "Seleção de Repertório": "Louvor", "Soprano": "Louvor", "Contralto": "Louvor", "Tenor": "Louvor",
+            "Litúrgico": "Louvor", "Soprano": "Louvor", "Contralto": "Louvor", "Tenor": "Louvor",
             "Violão": "Louvor", "Guitarra": "Louvor", "Baixo": "Louvor", "Bateria": "Louvor", "Piano": "Louvor", "Violino": "Louvor",
             "Transmissão": "Mídia", "Op. Câmera": "Mídia", "Fotografia": "Mídia",
-            "Op. Som": "Técnica", "Projeção": "Técnica"
+            "Op. Som": "Louvor", "Projeção": "Técnica"
         };
 
         const DEPT_COLORS = {
@@ -379,9 +399,27 @@
         // ==========================================
         // INICIALIZAÇÃO E FIREBASE
         // ==========================================
+        function ensureScheduleYear(data, year) {
+            data.schedules ||= [];
+            const existing = new Set(data.schedules.map(s => s.date));
+            let changed = false;
+            const date = new Date(Date.UTC(year, 0, 1));
+            while (date.getUTCDay() !== 0) date.setUTCDate(date.getUTCDate() + 1);
+            while (date.getUTCFullYear() === year) {
+                const iso = date.toISOString().slice(0,10);
+                if (!existing.has(iso)) {
+                    data.schedules.push({date:iso, dom:Math.ceil(date.getUTCDate()/7) + 'º', assignments:{}});
+                    changed = true;
+                }
+                date.setUTCDate(date.getUTCDate() + 7);
+            }
+            data.schedules.sort((a,b) => a.date.localeCompare(b.date));
+            return changed;
+        }
         function normalizeData(data) {
             let needsSave = false;
             const keyMap = {
+                "Seleção de Repertório": "Litúrgico",
                 "TRANSMISSÃO": "Transmissão",
                 "OP. CÂMERA": "Op. Câmera",
                 "FOTOGRAFIA": "Fotografia"
@@ -422,6 +460,7 @@
                 });
             }
 
+            if (ensureScheduleYear(data, 2027)) needsSave = true;
             return { normalizedData: data, needsSave };
         }
 
@@ -507,6 +546,7 @@
             }
 
             appState.schedules = sundays;
+            ensureScheduleYear(appState, 2027);
             appState.substitutions = [];
             appState.members = {
                 "Soprano": ["Jamylle", "Laura", "Mônica", "Arlete"], "Contralto": ["Liliane", "Daiane", "Roberta", "Amanda"],
@@ -515,7 +555,7 @@
                 "Bateria": ["Jean Lucas", "Flávio", "Pedro"], "Piano": ["Hudson"], "Violino": ["Isadora"],
                 "Transmissão": ["Erick", "Lucas", "Kauã", "Samuel"], "Op. Câmera": ["Lucas", "Manuella", "Mariana"],
                 "Fotografia": ["Mariana", "Arlete", "Manuela", "Gabi", "Victor"],
-                "Op. Som": [], "Projeção": [], "Seleção de Repertório": ["João Victor", "Liliane"]
+                "Op. Som": [], "Projeção": [], "Litúrgico": ["João Victor", "Liliane"]
             };
         }
 
@@ -544,11 +584,12 @@
             e.preventDefault();
             if (document.getElementById('auth-password').value === APP_PASSWORD) {
                 isAdmin = true; sessionStorage.setItem('isAdmin', 'true');
+                const action = pendingAction, target = pendingTab;
                 closeAuthModal(); 
                 updateAuthUI();
                 
-                if (pendingAction === 'switch_tab') proceedSwitchTab(pendingTab);
-                else if (pendingAction === 'edit_escala') renderEscalas(); 
+                if (action === 'switch_tab') proceedSwitchTab(target);
+                else if (action === 'edit_escala') renderEscalas(); 
                 else refreshCurrentTab(); 
                 
                 showToast("Acesso Liberado");
@@ -564,6 +605,7 @@
         }
 
         function updateAuthUI() {
+            document.getElementById("excel-actions").classList.toggle("hidden", !isAdmin);
             const btnEdit = document.getElementById('btn-toggle-edit');
             const logoutContainer = document.getElementById('admin-logout-container');
             const subtitle = document.getElementById('escala-subtitle');
@@ -575,7 +617,7 @@
 
             if (isAdmin) {
                 btnEdit.classList.add('hidden'); logoutContainer.classList.remove('hidden');
-                subtitle.innerText = "Modo EDIÇÃO. Salvo automaticamente.";
+                subtitle.innerText = "Modo administrador · alterações salvas automaticamente.";
                 subtitle.classList.replace('text-slate-500', 'text-presb-gold');
             } else {
                 btnEdit.classList.remove('hidden'); logoutContainer.classList.add('hidden');
@@ -584,12 +626,22 @@
             }
         }
 
+        function toggleScaleNavigation(force) {
+            const open = typeof force === 'boolean' ? force : !document.body.classList.contains('navigation-open');
+            document.body.classList.toggle('navigation-open', open);
+            document.getElementById('navigation-toggle').setAttribute('aria-expanded', String(open));
+            document.getElementById('navigation-backdrop').hidden = !open;
+            if (!open && document.getElementById('scale-navigation').contains(document.activeElement)) document.getElementById('navigation-toggle').focus();
+        }
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') toggleScaleNavigation(false); });
+        window.toggleScaleNavigation = toggleScaleNavigation;
         function attemptSwitchTab(tabId) {
             if (tabId !== 'escalas' && !isAdmin) requestAuth('switch_tab', tabId);
             else proceedSwitchTab(tabId);
         }
 
         function proceedSwitchTab(tabId) {
+            toggleScaleNavigation(false);
             activeTab = tabId;
             document.querySelectorAll('.tab-content').forEach(el => { el.classList.add('hidden'); el.classList.remove('flex'); });
             document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -617,34 +669,69 @@
         // ==========================================
         // RENDERIZAÇÃO: ESCALAS 
         // ==========================================
+
+        function getVisibleRoles() {
+            const team = document.getElementById('filtro-equipe').value;
+            return COLUMNS_ORDER.filter(role => !team || DEPARTMENTS[role] === team || ROLE_GROUPS[team]?.includes(role));
+        }
+        function searchKey(value) {
+            return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+        }
+        function getTodayDate() {
+            const parts = new Intl.DateTimeFormat('en-CA', {timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+            const value = type => parts.find(p => p.type === type).value;
+            return value('year') + '-' + value('month') + '-' + value('day');
+        }
+        function getNextSundayDate() {
+            const year = document.getElementById('filtro-ano').value;
+            return appState.schedules.map(s => s.date).filter(date => date.startsWith(year + '-') && date >= getTodayDate()).sort()[0];
+        }
+        function getFilteredSchedules() {
+            const year = document.getElementById('filtro-ano').value;
+            const month = document.getElementById('filtro-mes').value;
+            const person = searchKey(document.getElementById('filtro-pessoa').value);
+            const roles = getVisibleRoles();
+            return appState.schedules.filter(s => s.date.startsWith(year + '-') && s.date >= getTodayDate() && (!month || s.date.split('-')[1] === month) &&
+                (!person || roles.some(role => searchKey(s.assignments[role]).includes(person))));
+        }
+        function clearScheduleFilters() {
+            ['filtro-mes', 'filtro-equipe', 'filtro-pessoa'].forEach(id => document.getElementById(id).value = '');
+            renderEscalas();
+        }
         function renderEscalas() {
             const thead = document.getElementById('escala-table-head');
             
-            let thHTML = `<tr class="text-slate-600 bg-slate-200 shadow-md">
-                            <th class="p-2 md:p-4 font-black sticky top-0 left-0 bg-slate-200 z-[60] w-[65px] min-w-[65px] md:w-[112px] md:min-w-[112px] border-2 border-white text-center md:text-left shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-[9px] md:text-[10px] uppercase tracking-widest">Data</th>
-                            <th class="p-1 md:p-4 font-black sticky top-0 left-[65px] md:left-[112px] bg-slate-200 z-[60] w-[35px] min-w-[35px] md:w-[64px] md:min-w-[64px] border-2 border-white text-center shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-[9px] md:text-[10px] uppercase tracking-widest">Dom</th>`;
-            COLUMNS_ORDER.forEach(col => {
-                const dept = DEPARTMENTS[col];
-                thHTML += `<th class="p-2 md:p-4 font-black sticky top-0 z-[50] min-w-[110px] md:min-w-[160px] border-2 border-white text-[10px] md:text-[13px] ${DEPT_COLORS[dept].header}">${col}</th>`;
+            const roles = getVisibleRoles();
+            let thHTML = '<tr class="group-head"><th rowspan="2" class="date-head" scope="col">Data</th><th rowspan="2" class="sunday-head" scope="col">Dom.</th>';
+            Object.entries(ROLE_GROUPS).forEach(([group, members]) => {
+                const visible = members.filter(role => roles.includes(role));
+                if (visible.length) thHTML += '<th scope="colgroup" colspan="' + visible.length + '">' + group + '</th>';
             });
-            thHTML += `</tr>`;
+            thHTML += '</tr><tr class="role-head">';
+            roles.forEach(role => {
+                const label = role === 'Op. Som' ? 'Operador' : role === 'Litúrgico' ? 'Responsável' : role;
+                thHTML += '<th scope="col">' + label + '</th>';
+            });
+            thHTML += '</tr>';
             thead.innerHTML = thHTML;
 
             const tbody = document.getElementById('escala-table-body');
             tbody.innerHTML = '';
 
             const selectedMonth = document.getElementById('filtro-mes')?.value;
-            let filteredSchedules = appState.schedules;
-            if (selectedMonth) filteredSchedules = appState.schedules.filter(s => s.date.split('-')[1] === selectedMonth);
+            let filteredSchedules = getFilteredSchedules();
+
 
             if(filteredSchedules.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${COLUMNS_ORDER.length + 2}" class="p-10 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">Nenhum domingo encontrado</td></tr>`; return;
+                tbody.innerHTML = `<tr><td colspan="${getVisibleRoles().length + 2}" class="p-10 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">Nenhum domingo atual ou futuro encontrado para estes filtros.</td></tr>`; return;
             }
 
             filteredSchedules.forEach((esc, index) => {
                 const rowBg = index % 2 === 0 ? 'bg-slate-100' : 'bg-slate-200/50';
                 const tr = document.createElement('tr');
-                tr.className = `${rowBg} hover:bg-presb-gold/10 transition-colors`;
+                tr.dataset.date = esc.date;
+                tr.className = `${rowBg} hover:bg-presb-gold/10 transition-colors ${esc.date === getNextSundayDate() ? "next-sunday" : ""}`;
+                if (esc.date === getNextSundayDate()) tr.setAttribute("aria-label", "Próximo domingo");
                 
                 let rowHTML = `
                     <td class="p-1 md:p-4 font-bold sticky left-0 z-[40] border-2 border-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] ${rowBg} text-slate-700 text-[10px] md:text-sm text-center md:text-left">
@@ -657,11 +744,11 @@
                 `;
 
                 const personDepts = {};
-                Object.entries(esc.assignments).forEach(([role, name]) => {
+                Object.entries(esc.assignments).filter(([role]) => COLUMNS_ORDER.includes(role)).forEach(([role, name]) => {
                     if(name) { if(!personDepts[name]) personDepts[name] = new Set(); personDepts[name].add(DEPARTMENTS[role] || "Outros"); }
                 });
 
-                COLUMNS_ORDER.forEach(role => {
+                getVisibleRoles().forEach(role => {
                     const currentPerson = esc.assignments[role] || "";
                     const dept = DEPARTMENTS[role];
                     const bgCellClass = index % 2 === 0 ? DEPT_COLORS[dept].cellAlt1 : DEPT_COLORS[dept].cellAlt2;
@@ -693,6 +780,7 @@
 
         function updateAssignment(dateStr, role, newValue) {
             const schedule = appState.schedules.find(s => s.date === dateStr);
+            if(!isAdmin) return;
             if(schedule) {
                 newValue ? schedule.assignments[role] = newValue : delete schedule.assignments[role];
                 saveStateToFirebase(); renderEscalas(); 
@@ -720,10 +808,10 @@
                 const doc = new jsPDF({ orientation: 'landscape', format: 'a4' });
                 const selectMes = document.getElementById('filtro-mes');
                 const selectedMonthValue = selectMes.value;
-                const mesNome = selectedMonthValue ? selectMes.options[selectMes.selectedIndex].text : "Ano Inteiro";
+                const year = document.getElementById("filtro-ano").value;
+                const mesNome = year + " · Ano Inteiro";
                 
-                let filteredSchedules = appState.schedules;
-                if (selectedMonthValue) filteredSchedules = appState.schedules.filter(s => s.date.split('-')[1] === selectedMonthValue);
+                let filteredSchedules = appState.schedules.filter(s => s.date.startsWith(year + "-")).sort((a, b) => a.date.localeCompare(b.date));
 
                 if (filteredSchedules.length === 0) { showToast("Nenhum dado", true); return; }
 
@@ -732,8 +820,9 @@
                 doc.setFontSize(9); doc.setTextColor(100, 100, 100);
                 doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 14, 26);
 
-                const columns = ["Data", "Dom", ...COLUMNS_ORDER];
-                const rows = filteredSchedules.map(esc => [formatDateBR(esc.date), esc.dom, ...COLUMNS_ORDER.map(role => esc.assignments[role] || '-')]);
+                const visibleRoles = COLUMNS_ORDER;
+                const columns = ["Data", "Dom", ...visibleRoles];
+                const rows = filteredSchedules.map(esc => [formatDateBR(esc.date), esc.dom, ...visibleRoles.map(role => esc.assignments[role] || '-')]);
 
                 doc.autoTable({
                     startY: 32, head: [columns], body: rows, theme: 'grid',
@@ -973,12 +1062,12 @@
             uniqueMembers.forEach(nome => {
                 let esperado = 0;
                 appState.schedules.forEach(esc => Object.entries(esc.assignments).forEach(([role, membro]) => {
-                    if (role !== "Seleção de Repertório" && membro === nome) esperado += (DEPARTMENTS[role] === "Mídia") ? 1 : 2;
+                    if (role !== "Litúrgico" && membro === nome) esperado += (DEPARTMENTS[role] === "Mídia") ? 1 : 2;
                 }));
 
                 let faltas = 0, extras = 0;
                 subsArray.forEach(sub => {
-                    if (sub.role === "Seleção de Repertório") return;
+                    if (sub.role === "Litúrgico") return;
                     let peso = (sub.turno === 'Manhã' || sub.turno === 'Noite' || DEPARTMENTS[sub.role] === "Mídia") ? 1 : 2;
                     if (sub.absent === nome) faltas += peso;
                     if (sub.substitute === nome) extras += peso;
@@ -1137,6 +1226,48 @@
         window.handleSort = handleSort; window.handleSortSubs = handleSortSubs;
         window.toggleSubSelection = toggleSubSelection; window.toggleAllSubs = toggleAllSubs; window.deleteSelectedSubs = deleteSelectedSubs;
 
+        window.clearScheduleFilters = clearScheduleFilters;
+        window.exportScheduleExcel = () => {
+            if (!isAdmin) return;
+            document.getElementById('excel-download-year').value = document.getElementById('filtro-ano').value;
+            document.getElementById('excel-year-dialog').showModal();
+        };
+        window.downloadScheduleYear = async () => {
+            if (!isAdmin) return;
+            const button = document.getElementById('excel-download-confirm'); button.disabled = true;
+            try {
+                await IPCVTExcel.download(appState, COLUMNS_ORDER, Number(document.getElementById('excel-download-year').value));
+                document.getElementById('excel-year-dialog').close();
+            } catch (e) { showToast(e.message, true); }
+            finally { button.disabled = false; }
+        };
+        window.importScheduleExcel = async input => {
+            if (!isAdmin || !input.files[0]) return;
+            try {
+                const changes = await IPCVTExcel.read(input.files[0], appState, COLUMNS_ORDER);
+                if (!changes.length) return showToast('A planilha não contém alterações.');
+                const preview = document.getElementById('excel-preview');
+                const list = document.getElementById('excel-changes'); list.replaceChildren();
+                changes.forEach(change => {
+                    const li = document.createElement('li');
+                    li.textContent = formatDateBR(change.date) + ' · ' + change.role + ': ' + (change.before || 'Livre') + ' → ' + (change.after || 'Livre');
+                    list.appendChild(li);
+                });
+                document.getElementById('excel-preview-title').textContent = changes.length + ' alterações em ' + [...new Set(changes.map(c => c.date.slice(0,4)))].join(' e ');
+                preview.showModal();
+                document.getElementById('excel-apply').onclick = async () => {
+                    if (!isAdmin) return;
+                    const button = document.getElementById('excel-apply'); button.disabled = true;
+                    try {
+                        const candidate = IPCVTExcel.apply(appState, changes);
+                        await setDoc(doc(db, "app_ipcvt", "escala_geral_dados"), candidate);
+                        appState = candidate; document.getElementById("filtro-ano").value = changes[0].date.slice(0,4); renderEscalas(); preview.close(); showToast('Planilha aplicada e salva.');
+                    } catch(e) { showToast(e.message || 'Não foi possível salvar a planilha.', true); }
+                    finally { button.disabled = false; }
+                };
+            } catch(e) { showToast(e.message, true); }
+            finally { input.value = ''; }
+        };
         window.onload = startApp;
     </script>
 </body>
