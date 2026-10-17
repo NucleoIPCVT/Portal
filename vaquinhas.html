@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="campaign-document">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interas Comunidade - Núcleo IPCVT</title>
+    <title>Vaquinhas · Núcleo IPCVT</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=Merriweather:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <script>
         tailwind.config = {
@@ -37,8 +37,10 @@
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 4px; }
     </style>
+    <link rel="stylesheet" href="portal-ui.css">
+    <link rel="stylesheet" href="vaquinhas-ui.css">
 </head>
-<body class="min-h-screen bg-slate-50 font-sans text-slate-800 selection:bg-presb-gold selection:text-presb-green">
+<body class="campaign-page min-h-screen font-sans selection:bg-presb-gold selection:text-presb-green">
 
     <!-- Loading Screen -->
     <div id="loading-data" class="fixed inset-0 bg-white/90 backdrop-blur-md z-[2000] flex flex-col items-center justify-center transition-opacity duration-500">
@@ -46,47 +48,20 @@
         <p class="text-presb-green font-black uppercase text-xs tracking-widest">Sincronizando Projetos</p>
     </div>
 
-    <!-- Header -->
-    <header class="bg-presb-green text-white shadow-xl sticky top-0 z-40 border-b-4 border-presb-gold">
-        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-            <div class="flex items-center gap-4 cursor-pointer group" onclick="window.switchView('list')">
-                <div class="bg-presb-gold p-2.5 rounded-xl text-presb-dark group-hover:scale-110 transition-transform shadow-inner">
-                    <i data-lucide="piggy-bank" class="w-7 h-7 stroke-[2.5px]"></i>
-                </div>
-                <div class="flex flex-col">
-                    <h1 class="text-2xl font-black font-serif uppercase tracking-tight leading-none">Interas <span class="text-presb-gold">IPCVT</span></h1>
-                    <span class="text-[9px] text-white/60 tracking-[0.4em] font-bold uppercase mt-1">Comunidade Viva</span>
-                </div>
-            </div>
-            
-            <nav class="hidden md:flex gap-8 text-[10px] font-bold text-white/70 uppercase tracking-widest">
-                <button onclick="window.switchView('list')" id="nav-btn-list" class="hover:text-presb-gold transition-colors py-7 border-b-4 border-transparent">
-                    Início
-                </button>
-                <button onclick="window.requireAuth('create')" id="nav-btn-form" class="hover:text-presb-gold transition-colors py-7 flex items-center gap-2 border-b-4 border-transparent">
-                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Nova Arrecadação
-                </button>
-                <a href="index.html" class="hover:text-presb-gold transition-colors py-7 flex items-center gap-2 ml-4 pl-8 border-l border-white/20">
-                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Portal
-                </a>
-            </nav>
-        </div>
-    </header>
-
+    <header class="campaign-header"><div class="campaign-header-inner"><a href="index.html" class="campaign-brand"><img src="logo-vaquinhas.svg" alt="">Núcleo <span>IPCVT</span></a><nav aria-label="Navegação"><button id="nav-btn-list" onclick="window.switchView('list')">Vaquinhas</button><button id="nav-btn-form" onclick="window.requireAuth('create')"><i data-lucide="plus" aria-hidden="true"></i><span>Nova arrecadação</span></button><a href="index.html" aria-label="Voltar ao Portal"><i data-lucide="arrow-left" aria-hidden="true"></i><span>Portal</span></a></nav></div></header>
     <main class="max-w-7xl mx-auto px-6 py-12 relative">
         
         <!-- ================= LISTA ================= -->
         <div id="view-list" class="space-y-8 fade-in hidden">
+            <p class="campaign-eyebrow">NÚCLEO IPCVT · PROJETOS DA COMUNIDADE</p>
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
                 <div>
-                    <h2 class="text-3xl md:text-4xl font-bold text-presb-green font-serif tracking-tight">Projetos Ativos</h2>
-                    <p class="text-slate-500 text-xs mt-2 font-medium uppercase tracking-widest italic">Participe e abençoe nossa comunidade</p>
+                    <h2 class="text-3xl md:text-4xl font-bold text-presb-green font-serif tracking-tight">Vaquinhas</h2>
+                    <p class="text-slate-500 text-xs mt-2 font-medium uppercase tracking-widest italic">Acompanhe as arrecadações e participe dos projetos da comunidade.</p>
                 </div>
-                <button onclick="window.requireAuth('create')" class="flex items-center gap-2 bg-presb-green hover:bg-black text-white px-6 py-3 rounded-2xl font-bold uppercase tracking-widest text-[10px] transition-all w-full sm:w-auto justify-center shadow-lg active:scale-95">
-                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                    <span>Nova Intera</span>
-                </button>
+
             </div>
+            <div class="campaign-toolbar" role="search"><label><i data-lucide="search" aria-hidden="true"></i><input id="campaign-search" type="search" aria-label="Buscar arrecadação" placeholder="Buscar arrecadação" oninput="window.renderCampaignList()"></label><select id="campaign-type-filter" aria-label="Tipo de arrecadação" onchange="window.renderCampaignList()"><option value="">Todos os tipos</option><option value="finance">Financeiras</option><option value="item">Itens e alimentos</option></select></div>
             <div id="campaigns-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
         </div>
 
@@ -97,17 +72,17 @@
             </button>
             
             <h2 id="form-title" class="text-3xl font-bold font-serif text-presb-green mb-8 border-b border-slate-100 pb-6">
-                Cadastrar Nova Intera
+                Cadastrar Nova Arrecadação
             </h2>
             
             <form id="campaign-form" onsubmit="window.handleFormSubmit(event)" class="space-y-6">
                 <div class="space-y-5">
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Título da Intera</label>
+                        <label for="input-title" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Título da Arrecadação</label>
                         <input required id="input-title" type="text" placeholder="Ex: Piquenique, Reforma..." class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-presb-gold/50 outline-none transition-all font-bold text-slate-700">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Descrição</label>
+                        <label for="input-desc" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Descrição</label>
                         <textarea required id="input-desc" rows="3" placeholder="Explique o motivo, data, local..." class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-presb-gold/50 outline-none transition-all font-medium text-slate-600 resize-none"></textarea>
                     </div>
                 </div>
@@ -133,11 +108,12 @@
                     </div>
 
                     <div class="pt-2">
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Modo de Oferta</label>
+                        <label for="input-mode" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Modalidade da arrecadação</label>
                         <select id="input-mode" onchange="window.handleModeChange()" class="w-full px-5 py-4 border border-slate-200 rounded-2xl outline-none bg-white focus:ring-2 focus:ring-presb-gold/50 font-medium disabled:opacity-50">
                             <option value="open">Valor Livre</option>
-                            <option value="fixed">Cotas Fixas</option>
+                            <option value="fixed">Cotas Fixas</option><option value="person">Por pessoa</option>
                         </select>
+                        <p id="person-mode-hint" class="hidden">Valor individual por participante, sem meta total. A lista e os pagamentos ficam no controle com senha.</p>
                     </div>
                 </div>
                 
@@ -145,12 +121,12 @@
                 <div id="section-finance" class="space-y-5 border-l-4 border-presb-green pl-6 mt-8">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Meta Total (R$)</label>
-                            <input id="input-goal" type="number" min="1" step="0.01" placeholder="Ex: 1000.00" class="w-full px-5 py-4 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-presb-gold/50 font-bold">
+                            <label for="input-goal" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Meta Total (R$)</label>
+                        <input id="input-goal" type="number" min="1" step="0.01" placeholder="Ex: 1000.00" class="w-full px-5 py-4 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-presb-gold/50 font-bold">
                         </div>
                         <div id="wrap-quota-value" class="hidden">
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Valor da Cota (R$)</label>
-                            <input id="input-quota" type="number" min="1" step="0.01" placeholder="Ex: 50.00" class="w-full px-5 py-4 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-presb-gold/50 font-bold">
+                            <label for="input-quota" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Valor da Cota (R$)</label>
+                        <input id="input-quota" type="number" min="1" step="0.01" placeholder="Ex: 50.00" class="w-full px-5 py-4 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-presb-gold/50 font-bold">
                         </div>
                     </div>
                     
@@ -158,12 +134,12 @@
                         <h4 class="font-bold text-presb-green flex items-center gap-2 mb-4"><i data-lucide="qr-code" class="w-4 h-4"></i> Dados (PIX)</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Chave PIX</label>
-                                <input id="input-pixkey" type="text" placeholder="Sua chave Pix" class="w-full px-4 py-3 text-sm border border-slate-300 rounded-xl outline-none focus:border-presb-green font-medium">
+                                <label for="input-pixkey" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Chave PIX</label>
+                        <input id="input-pixkey" type="text" placeholder="Sua chave Pix" class="w-full px-4 py-3 text-sm border border-slate-300 rounded-xl outline-none focus:border-presb-green font-medium">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Nome do Titular</label>
-                                <input id="input-pixname" type="text" placeholder="Nome na conta" class="w-full px-4 py-3 text-sm border border-slate-300 rounded-xl outline-none focus:border-presb-green font-medium">
+                                <label for="input-pixname" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Nome do Titular</label>
+                        <input id="input-pixname" type="text" placeholder="Nome na conta" class="w-full px-4 py-3 text-sm border border-slate-300 rounded-xl outline-none focus:border-presb-green font-medium">
                             </div>
                         </div>
                     </div>
@@ -184,7 +160,7 @@
 
                 <div class="pt-8 border-t border-slate-100 mt-8">
                     <button type="submit" id="btn-form-submit" class="w-full bg-presb-green hover:bg-black text-white font-black py-5 px-4 rounded-[1.5rem] transition-all shadow-xl active:scale-95 text-xs uppercase tracking-widest">
-                        Publicar Intera
+                        Publicar Arrecadação
                     </button>
                 </div>
             </form>
@@ -207,7 +183,7 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-2 space-y-8">
+                <div class="detail-information lg:col-span-2 space-y-8">
                     <div class="bg-white p-8 md:p-10 rounded-[3rem] shadow-xl border border-slate-100 relative overflow-hidden">
                         <div class="absolute top-0 right-0 p-8 opacity-5">
                             <i data-lucide="piggy-bank" class="w-32 h-32 text-presb-green"></i>
@@ -231,7 +207,7 @@
                 </div>
 
                 <div class="lg:col-span-1">
-                    <div class="bg-presb-green p-8 rounded-[3rem] shadow-2xl text-white sticky top-28 border-t-8 border-presb-gold">
+                    <div class="contribution-panel bg-presb-green p-8 rounded-[3rem] shadow-2xl text-white sticky top-28 border-t-8 border-presb-gold">
                         <h3 class="text-2xl font-bold font-serif mb-3 flex items-center gap-3">
                             Fazer Parte <i data-lucide="heart-handshake" class="w-6 h-6 text-presb-gold"></i>
                         </h3>
@@ -245,8 +221,8 @@
 
                         <form id="contrib-form" onsubmit="window.submitContribution(event)" class="space-y-6 bg-white/5 p-6 rounded-[2rem] border border-white/10 hidden fade-in">
                             <div>
-                                <label class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Seu Nome / Família</label>
-                                <input required id="contrib-name" type="text" placeholder="Ex: Família Silva" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none focus:ring-4 focus:ring-presb-gold/50 text-sm">
+                                <label for="contrib-name" class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Seu Nome / Família</label>
+                        <input required id="contrib-name" type="text" placeholder="Ex: Família Silva" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none focus:ring-4 focus:ring-presb-gold/50 text-sm">
                             </div>
 
                             <div id="contrib-dynamic-fields"></div>
@@ -276,9 +252,9 @@
                 </button>
             </div>
             <form onsubmit="window.handleAuthSubmit(event)" class="p-8 text-center">
-                <p class="text-slate-500 text-xs mb-8 font-medium leading-relaxed">Insira a senha de gestão para autorizar a ação.</p>
+                <p id="auth-description" class="text-slate-500 text-xs mb-8 font-medium leading-relaxed">Insira a senha de gestão para autorizar a ação.</p>
                 <div class="mb-6">
-                    <input type="password" id="auth-password" placeholder="••••••" class="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-presb-gold focus:ring-4 focus:ring-presb-gold/20 transition-all font-black tracking-[0.5em] text-center text-xl shadow-inner">
+                    <input type="password" id="auth-password" required autocomplete="off" placeholder="••••••" class="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-presb-gold focus:ring-4 focus:ring-presb-gold/20 transition-all font-black tracking-[0.5em] text-center text-xl shadow-inner">
                     <p id="auth-error" class="text-red-500 text-[10px] mt-3 font-bold uppercase tracking-widest hidden animate-pulse">Senha incorreta</p>
                 </div>
                 <button type="submit" class="w-full bg-presb-green hover:bg-black text-white font-black py-4 rounded-2xl transition-colors text-[10px] uppercase tracking-[0.2em] shadow-lg">
@@ -289,9 +265,12 @@
     </div>
 
     <!-- CÓDIGO DO FIREBASE E LÓGICA -->
+    <dialog id="visibility-dialog" class="visibility-dialog"><h2>Quem poderá acessar?</h2><p>Privada: o cartão aparece como Arrecadação Oculta e a senha libera o controle de participantes.</p><div><button onclick="window.chooseVisibility('public')">Pública</button><button onclick="window.chooseVisibility('private')">Privada</button><button onclick="document.getElementById('visibility-dialog').close()">Cancelar</button></div></dialog>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+    <script src="arrecadacoes.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, getDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -307,6 +286,24 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
+        IPCVTLedger.configure({
+            onOpen: () => { ['list','form','detail'].forEach(v=>document.getElementById('view-'+v).classList.add('hidden')); currentView='ledger'; window.scrollTo(0,0); },
+            onClose: () => window.switchView('list'),
+            remove: (id, version) => removeCampaignRecord(id, version),
+            reauthenticateRemoval: person => new Promise(resolve => {
+                if (participantRemovalAuth) participantRemovalAuth(false);
+                participantRemovalAuth=resolve;
+                window.requireAuth('delete-participant');
+                document.getElementById('auth-description').textContent='Para excluir o cadastro de '+person.name+' e seus pagamentos, digite a senha novamente. Esta ação não pode ser desfeita.';
+            }),
+            load: async id => { const snap = await getDoc(doc(db, 'app_ipcvt', 'controle_intera_' + id)); return snap.exists() ? snap.data() : {people:[],version:0}; },
+            save: async (id, candidate, version) => runTransaction(db, async transaction => {
+                const ref = doc(db, 'app_ipcvt', 'controle_intera_' + id);
+                const snap = await transaction.get(ref);
+                if ((snap.exists() ? snap.data().version || 0 : 0) !== version) throw Error('O controle foi atualizado em outro acesso. Feche e abra novamente antes de salvar.');
+                transaction.set(ref, {...candidate,version:version+1});
+            })
+        });
 
         // Estado do Banco de Dados
         let campaigns = [];
@@ -315,7 +312,9 @@
         // Controle de Tela
         let currentView = 'list'; 
         let selectedCampaign = null; 
-        let pendingAction = null; 
+        let pendingAction = null;
+        let participantRemovalAuth = null;
+        let selectedVisibility = 'public'; 
         let formItemsNeeded = [];
         let editingCampaignId = null; // Controle do modo de Edição
 
@@ -357,6 +356,7 @@
 
         // Navegação e Views
         window.switchView = function(viewName) {
+            IPCVTLedger.hide();
             ['list', 'form', 'detail'].forEach(v => document.getElementById(`view-${v}`).classList.add('hidden'));
             ['list', 'form'].forEach(v => {
                 document.getElementById(`nav-btn-${v}`).classList.replace('border-presb-gold', 'border-transparent');
@@ -378,8 +378,8 @@
                 if (!editingCampaignId) {
                     formItemsNeeded = [];
                     document.getElementById('campaign-form').reset();
-                    document.getElementById('form-title').innerText = "Cadastrar Nova Intera";
-                    document.getElementById('btn-form-submit').innerText = "Publicar Intera";
+                    document.getElementById('form-title').innerText = "Cadastrar Nova Arrecadação";
+                    document.getElementById('btn-form-submit').innerText = "Publicar Arrecadação";
                     
                     // Libera as opções de formato de arrecadação
                     document.getElementById('type-mode-section').classList.remove('opacity-50', 'pointer-events-none');
@@ -389,11 +389,14 @@
                 document.getElementById('view-detail').classList.remove('hidden');
                 renderDetail();
             }
+            document.querySelectorAll('.campaign-header nav button').forEach(button => button.setAttribute('aria-current', button.id === 'nav-btn-' + viewName ? 'page' : 'false'));
             lucide.createIcons();
         };
 
         window.requireAuth = function(action) {
             pendingAction = action;
+            document.getElementById('auth-description').textContent='Insira a senha de gestão para autorizar a ação.';
+            document.querySelector('#auth-modal button[type=submit]').textContent=action==='delete-participant' ? 'Excluir cadastro' : 'Acessar';
             const modal = document.getElementById('auth-modal');
             const input = document.getElementById('auth-password');
             document.getElementById('auth-error').classList.add('hidden');
@@ -402,18 +405,32 @@
             setTimeout(() => input.focus(), 100);
         };
 
-        window.closeAuthModal = function() { document.getElementById('auth-modal').classList.add('hidden'); };
+        window.closeAuthModal = function() {
+            document.getElementById('auth-modal').classList.add('hidden');
+            document.getElementById('auth-password').value='';
+            pendingAction=null;
+            if (participantRemovalAuth) { const resolve=participantRemovalAuth; participantRemovalAuth=null; resolve(false); }
+        };
+        document.addEventListener('keydown', event => {
+            if (event.key==='Escape' && !document.getElementById('auth-modal').classList.contains('hidden')) window.closeAuthModal();
+        });
 
         window.handleAuthSubmit = function(e) {
             e.preventDefault();
             if (document.getElementById('auth-password').value === 'Pr3sbit3ri4n4') {
+                const action=pendingAction;
+                const removalAuth=participantRemovalAuth;
+                participantRemovalAuth=null;
                 window.closeAuthModal();
-                if (pendingAction === 'create') { 
+                if (action==='delete-participant') { removalAuth?.(true); return; }
+                if (action === 'create') { 
                     editingCampaignId = null; // Garante que é criação
-                    window.switchView('form'); 
-                } else if (pendingAction === 'edit') {
+                    document.getElementById('visibility-dialog').showModal();
+                } else if (action === 'edit') {
                     window.openEditForm();
-                } else if (pendingAction === 'delete') { 
+                } else if (action === 'open-private' || action === 'ledger') {
+                    IPCVTLedger.open(selectedCampaign.id, selectedCampaign.title, Math.round((selectedCampaign.quotaValue || 0)*100), selectedCampaign.description);
+                } else if (action === 'delete') { 
                     window.deleteCampaign(selectedCampaign.id); 
                 }
             } else { 
@@ -421,9 +438,16 @@
             }
         };
 
+        window.chooseVisibility = visibility => {
+            selectedVisibility = visibility;
+            document.getElementById('visibility-dialog').close();
+            window.switchView('form');
+            if (visibility === 'private') { document.getElementById('input-mode').value = 'person'; window.handleModeChange(); }
+        };
         // Lógica do Form
         window.openEditForm = function() {
             editingCampaignId = selectedCampaign.id;
+            selectedVisibility = selectedCampaign.visibility || "public";
             
             // Popula as informações básicas
             document.getElementById('input-title').value = selectedCampaign.title;
@@ -447,7 +471,7 @@
                 document.getElementById('input-goal').value = selectedCampaign.goal || '';
                 document.getElementById('input-pixkey').value = selectedCampaign.pixKey || '';
                 document.getElementById('input-pixname').value = selectedCampaign.pixName || '';
-                if (selectedCampaign.mode === 'fixed') {
+                if (selectedCampaign.mode === 'fixed' || selectedCampaign.mode === 'person') {
                     document.getElementById('input-quota').value = selectedCampaign.quotaValue || '';
                 }
             } else if (selectedCampaign.type === 'item' && selectedCampaign.mode === 'fixed') {
@@ -466,10 +490,10 @@
             const type = document.querySelector('input[name="type"]:checked')?.value || 'finance';
             const modeSelect = document.getElementById('input-mode');
             
-            // Só recria as opções se o TIPO (Dinheiro/Item) mudar e não for edição
-            if (!editingCampaignId) {
+            // Atualiza as modalidades disponíveis para o formato selecionado.
+            {
                 modeSelect.innerHTML = type === 'finance' 
-                    ? `<option value="open">Valor Livre</option><option value="fixed">Cotas Fixas</option>` 
+                    ? `<option value="open">Valor livre</option><option value="fixed">Cotas fixas</option><option value="person">Por pessoa</option>` 
                     : `<option value="open">Oferta Livre</option><option value="fixed">Lista Pré-definida</option>`;
             }
             
@@ -483,11 +507,16 @@
             const type = document.querySelector('input[name="type"]:checked')?.value || 'finance';
             const mode = document.getElementById('input-mode').value;
             
+            document.getElementById('input-mode').classList.remove('hidden');
+            document.getElementById('person-mode-hint').classList.toggle('hidden',type!=='finance'||mode!=='person');
             document.getElementById('section-finance').classList.toggle('hidden', type !== 'finance');
-            document.getElementById('wrap-quota-value').classList.toggle('hidden', !(type === 'finance' && mode === 'fixed'));
+            document.getElementById('wrap-quota-value').classList.toggle('hidden', !(type === 'finance' && (mode === 'fixed' || mode === 'person')));
             document.getElementById('section-items').classList.toggle('hidden', !(type === 'item' && mode === 'fixed'));
             
-            if(type === 'finance') { document.getElementById('input-goal').required = true; } 
+            document.getElementById('input-goal').parentElement.classList.toggle('hidden', type === 'finance' && mode === 'person');
+            document.querySelector('label[for="input-quota"]').textContent = mode === 'person' ? 'Valor por pessoa (R$)' : 'Valor da cota (R$)';
+            document.getElementById('input-quota').required = type === 'finance' && (mode === 'fixed' || mode === 'person');
+            if(type === 'finance' && mode !== 'person') { document.getElementById('input-goal').required = true; } 
             else { document.getElementById('input-goal').required = false; }
         };
 
@@ -531,10 +560,10 @@
 
             // Captura os dados com base no tipo
             if (type === 'finance') {
-                campData.goal = parseFloat(document.getElementById('input-goal').value);
+                campData.goal = mode === 'person' ? null : parseFloat(document.getElementById('input-goal').value);
                 campData.pixKey = document.getElementById('input-pixkey').value;
                 campData.pixName = document.getElementById('input-pixname').value;
-                if(mode === 'fixed') campData.quotaValue = parseFloat(document.getElementById('input-quota').value);
+                if(mode === 'fixed' || mode === 'person') campData.quotaValue = parseFloat(document.getElementById('input-quota').value);
             } else if (type === 'item' && mode === 'fixed') {
                 if(formItemsNeeded.length === 0) return alert("Adicione itens à lista!");
                 campData.itemsNeeded = [...formItemsNeeded];
@@ -551,6 +580,7 @@
                 campData.id = Date.now();
                 campData.type = type;
                 campData.mode = mode;
+                campData.visibility = selectedVisibility;
                 campData.contributors = [];
                 if (type === 'finance') campData.raised = 0;
                 
@@ -569,65 +599,88 @@
             }
         };
 
-        window.deleteCampaign = function(id) {
-            campaigns = campaigns.filter(c => c.id !== id);
-            saveStateToFirebase();
-            window.switchView('list');
+        async function removeCampaignRecord(id, expectedVersion) {
+            if (!isFirebaseConnected) throw Error('Aguarde a conexão com o banco antes de excluir.');
+            await runTransaction(db, async transaction => {
+                const campaignRef=doc(db,'app_ipcvt','interas_dados');
+                const ledgerRef=doc(db,'app_ipcvt','controle_intera_'+id);
+                const campaignSnap=await transaction.get(campaignRef);
+                const ledgerSnap=await transaction.get(ledgerRef);
+                const version=ledgerSnap.exists() ? ledgerSnap.data().version || 0 : 0;
+                if (expectedVersion !== undefined && version !== expectedVersion) throw Error('Os pagamentos foram atualizados em outro acesso. Reabra o controle antes de excluir.');
+                if (campaignSnap.exists()) {
+                    const stored=campaignSnap.data();
+                    transaction.set(campaignRef,{...stored,campaigns:(stored.campaigns || []).filter(c=>String(c.id)!==String(id))});
+                }
+                transaction.delete(ledgerRef);
+            });
+            campaigns=campaigns.filter(c=>String(c.id)!==String(id));
+            if (selectedCampaign && String(selectedCampaign.id)===String(id)) selectedCampaign=null;
+        }
+        window.deleteCampaign = async function(id) {
+            try { await removeCampaignRecord(id); window.switchView('list'); }
+            catch(e) { alert('Não foi possível excluir: '+e.message); }
         };
 
         // Renders
+        function filterCampaigns(items, query, type) {
+            const normalize = text => String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+            const term = normalize(query);
+            return items.filter(c => (!type || c.type === type) && (!term || normalize(c.title + ' ' + c.description).includes(term)));
+        }
+        window.renderCampaignList = () => renderList();
         function renderList() {
-            const grid = document.getElementById('campaigns-grid');
-            if(campaigns.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center py-20 text-slate-400 font-bold italic">Nenhum projeto ativo no momento.</div>`;
-                return;
+            const grid=document.getElementById('campaigns-grid'); grid.replaceChildren();
+            const filtered=filterCampaigns(campaigns,document.getElementById('campaign-search').value,document.getElementById('campaign-type-filter').value);
+            if (!filtered.length) {
+                const empty=document.createElement('div');empty.className='campaign-empty';
+                const title=document.createElement('h3');title.textContent=campaigns.length?'Nenhuma arrecadação encontrada':'Ainda não há arrecadações';
+                const text=document.createElement('p');text.textContent=campaigns.length?'Tente outro nome ou selecione todos os tipos.':'Use Nova arrecadação para cadastrar o primeiro projeto.';
+                empty.append(title,text);grid.append(empty);return;
             }
-            grid.innerHTML = '';
-            campaigns.slice().reverse().forEach(camp => {
-                const isFinance = camp.type === 'finance';
-                const progress = isFinance ? Math.min((camp.raised / camp.goal) * 100, 100) : 0;
-                
-                const card = document.createElement('div');
-                card.className = "bg-white border-t-8 border-t-presb-gold rounded-[2rem] shadow-xl border border-slate-100 hover:shadow-2xl hover:border-presb-gold transition-all cursor-pointer overflow-hidden flex flex-col group relative";
-                card.onclick = () => { selectedCampaign = camp; window.switchView('detail'); };
-
-                card.innerHTML = `
-                    <div class="absolute top-6 right-6 transition-colors opacity-10 group-hover:opacity-30 text-presb-green">
-                        <i data-lucide="${isFinance ? 'wallet' : 'coffee'}" class="w-12 h-12"></i>
-                    </div>
-                    <div class="p-8 flex-grow flex flex-col">
-                        <div class="mb-4 pr-10">
-                            <h3 class="text-xl font-bold font-serif text-presb-green leading-tight mb-3 tracking-tight">${camp.title}</h3>
-                            <span class="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-bold px-3 py-1.5 rounded-lg border ${isFinance ? 'bg-presb-green/10 text-presb-green border-presb-green/20' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}">
-                                ${isFinance ? 'Financeira' : 'Itens / Comida'}
-                            </span>
-                        </div>
-                        <p class="text-slate-500 text-sm mb-8 line-clamp-3 flex-grow font-medium leading-relaxed">${camp.description}</p>
-                        <div class="space-y-4 mt-auto border-t border-slate-100 pt-6">
-                            ${isFinance ? `
-                                <div class="flex justify-between text-xs font-bold mb-2">
-                                    <span class="font-black text-presb-green">${window.formatCurrency(camp.raised)}</span>
-                                    <span class="text-slate-400">Meta: ${window.formatCurrency(camp.goal)}</span>
-                                </div>
-                                <div class="w-full bg-slate-100 rounded-full h-2.5 shadow-inner">
-                                    <div class="h-2.5 rounded-full ${progress >= 100 ? 'bg-emerald-500' : 'bg-presb-gold'}" style="width: ${progress}%"></div>
-                                </div>
-                            ` : `
-                                <div class="flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                    <i data-lucide="gift" class="w-4 h-4 text-presb-gold"></i>
-                                    <span>${camp.contributors.length > 0 ? `<strong class="text-slate-700">${camp.contributors.length}</strong> participações` : 'Seja o primeiro a participar!'}</span>
-                                </div>
-                            `}
-                        </div>
-                    </div>
-                `;
-                grid.appendChild(card);
+            filtered.slice().reverse().forEach(camp=>{
+                const privateCard=camp.visibility==='private',isFinance=camp.type==='finance',perPerson=camp.mode==='person';
+                const card=document.createElement('button');card.type='button';card.className='campaign-card'+(privateCard?' private-campaign-card':'');
+                card.setAttribute('aria-label','Abrir '+camp.title+(privateCard?' · acesso com senha':''));
+                const top=document.createElement('div');top.className='campaign-card-top';
+                const icon=document.createElement('i');icon.setAttribute('data-lucide',privateCard?'lock-keyhole':isFinance?'wallet':'gift');icon.setAttribute('aria-hidden','true');
+                const kind=document.createElement('span');kind.textContent=privateCard?'Arrecadação oculta':perPerson?'Por pessoa':isFinance?'Financeira':'Itens e alimentos';
+                const arrow=document.createElement('i');arrow.setAttribute('data-lucide','arrow-up-right');arrow.setAttribute('aria-hidden','true');arrow.className='campaign-card-arrow';top.append(icon,kind,arrow);
+                const title=document.createElement('h3');title.textContent=camp.title;
+                const description=document.createElement('p');description.className='campaign-card-description';description.textContent=camp.description;
+                const bottom=document.createElement('div');bottom.className='campaign-card-bottom';
+                if(privateCard) {
+                    const tag=document.createElement('span');tag.className='private-campaign-tag';tag.textContent='Acesso com senha';bottom.append(tag);
+                } else if(isFinance && !perPerson) {
+                    const line=document.createElement('div');line.className='campaign-card-values';const raised=document.createElement('strong');raised.textContent=window.formatCurrency(camp.raised);
+                    const goal=document.createElement('span');goal.textContent='de '+window.formatCurrency(camp.goal);line.append(raised,goal);bottom.append(line);
+                    const progress=Number(camp.goal)>0?Math.max(0,Math.min(100,(Number(camp.raised)||0)/Number(camp.goal)*100)):0;
+                    const track=document.createElement('div');track.className='campaign-progress';track.setAttribute('role','progressbar');track.setAttribute('aria-label','Arrecadação em relação à meta');track.setAttribute('aria-valuenow',Math.round(progress));track.setAttribute('aria-valuemin','0');track.setAttribute('aria-valuemax','100');
+                    const fill=document.createElement('span');fill.style.width=progress+'%';track.append(fill);bottom.append(track);
+                } else {
+                    const line=document.createElement('span');line.className='campaign-card-note';
+                    line.textContent=perPerson?window.formatCurrency(camp.quotaValue)+' por pessoa':((camp.contributors||[]).length? (camp.contributors||[]).length+' participações':'Seja o primeiro a participar');bottom.append(line);
+                }
+                card.append(top,title,description,bottom);
+                card.onclick=()=>{selectedCampaign=camp;if(privateCard)window.requireAuth('open-private');else window.switchView('detail')};grid.append(card);
             });
             lucide.createIcons();
         }
 
         function renderDetail() {
+            if (selectedCampaign?.visibility === "private") { window.switchView("list"); return; }
             const camp = selectedCampaign; const isFinance = camp.type === 'finance';
+            if (camp.mode === 'person') {
+                document.getElementById('detail-title').textContent=camp.title;
+                document.getElementById('detail-desc').textContent=camp.description;
+                document.getElementById('detail-tags').textContent='Por pessoa';
+                document.getElementById('detail-finance-progress').textContent=window.formatCurrency(camp.quotaValue)+' por pessoa · sem meta total';
+                ['detail-items-needed','detail-pix-block','detail-contributors-list'].forEach(id=>document.getElementById(id).replaceChildren());
+                const button=document.createElement('button');button.textContent='Controle de participantes (senha)';button.onclick=()=>window.requireAuth('ledger');document.getElementById('detail-contributors-list').append(button);
+                document.getElementById('contrib-init').parentElement.hidden=true;
+                return;
+            }
+            document.getElementById('contrib-init').parentElement.hidden=false;
             document.getElementById('detail-tags').innerHTML = `
                 <span class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm ${isFinance ? 'bg-presb-green text-white' : 'bg-presb-gold text-presb-dark'}">
                     <i data-lucide="${isFinance ? 'wallet' : 'coffee'}" class="w-4 h-4"></i> ${isFinance ? 'Financeira' : 'Itens/Comida'}
@@ -735,26 +788,30 @@
                 if(camp.mode === 'fixed') {
                     dynFields.innerHTML = `
                         <div class="flex items-center justify-between mb-4"><span class="text-xs font-bold text-white">Valor da Cota:</span> <span class="text-sm font-black text-presb-gold">${window.formatCurrency(camp.quotaValue)}</span></div>
-                        <label class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Quantas cotas?</label>
+                        <label for="c-quota-qty" class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Quantas cotas?</label>
                         <input required id="c-quota-qty" type="number" min="1" value="1" oninput="document.getElementById('c-quota-total').innerText = window.formatCurrency(this.value * ${camp.quotaValue})" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none focus:ring-4 focus:ring-presb-gold/50 text-sm mb-2">
                         <div class="text-right text-xs font-bold text-white/80">Total: <span id="c-quota-total" class="text-presb-gold font-black">${window.formatCurrency(camp.quotaValue)}</span></div>
                     `;
                 } else {
-                    dynFields.innerHTML = `<div><label class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Valor Ofertado (R$)</label><input required id="c-amount" type="number" step="0.01" min="0.01" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none focus:ring-4 focus:ring-presb-gold/50 text-sm"></div>`;
+                    dynFields.innerHTML = `<div><label for="c-amount" class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Valor Ofertado (R$)</label>
+                        <input required id="c-amount" type="number" step="0.01" min="0.01" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none focus:ring-4 focus:ring-presb-gold/50 text-sm"></div>`;
                 }
             } else {
                 if(camp.mode === 'fixed') {
                     const options = camp.itemsNeeded.filter(i => i.pledged < i.needed).map(i => `<option value="${i.id}">${i.name} (Faltam ${i.needed - i.pledged})</option>`).join('');
                     if(options) {
                         dynFields.innerHTML = `
-                            <div class="mb-4"><label class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">O que vai levar?</label><select required id="c-item-select" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none">${options}</select></div>
-                            <div><label class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Quantidade</label><input required id="c-item-qty" type="number" min="1" value="1" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none text-sm"></div>
+                            <div class="mb-4"><label for="c-item-select" class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">O que vai levar?</label>
+                        <select required id="c-item-select" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none">${options}</select></div>
+                            <div><label for="c-item-qty" class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Quantidade</label>
+                        <input required id="c-item-qty" type="number" min="1" value="1" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none text-sm"></div>
                         `;
                     } else {
                         dynFields.innerHTML = `<div class="text-center text-presb-gold font-bold text-sm bg-presb-dark p-4 rounded-xl">Todos os itens já foram preenchidos! Obrigado!</div>`;
                     }
                 } else {
-                    dynFields.innerHTML = `<div><label class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">O que vai levar?</label><input required id="c-item-name" type="text" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none focus:ring-4 focus:ring-presb-gold/50 text-sm"></div>`;
+                    dynFields.innerHTML = `<div><label for="c-item-name" class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">O que vai levar?</label>
+                        <input required id="c-item-name" type="text" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none focus:ring-4 focus:ring-presb-gold/50 text-sm"></div>`;
                 }
             }
             lucide.createIcons();
