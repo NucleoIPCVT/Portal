@@ -55,7 +55,7 @@ function resetParticipantForm() {
  el('ledger-add').reset();
  input.value = input.defaultValue;
  el('ledger-paid').value = '0';
- el('ledger-price-hint').textContent = 'Valor padrão: ' + money(defaultPrice) + '. Edite para aplicar desconto.';
+ el('ledger-price-hint').textContent = 'Valor padrão: ' + money(defaultPrice) + '.';
 }
 function participantGroups(people, query='', status='') {
  const term=key(query);
