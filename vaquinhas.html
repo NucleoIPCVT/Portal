@@ -267,7 +267,10 @@
     <!-- CÓDIGO DO FIREBASE E LÓGICA -->
     <dialog id="visibility-dialog" class="visibility-dialog"><h2>Quem poderá acessar?</h2><p>Privada: o cartão aparece como Arrecadação Oculta e a senha libera o controle de participantes.</p><div><button onclick="window.chooseVisibility('public')">Pública</button><button onclick="window.chooseVisibility('private')">Privada</button><button onclick="document.getElementById('visibility-dialog').close()">Cancelar</button></div></dialog>
     <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <script src="arrecadacoes.js"></script>
+    <script src="arrecadacoes-relatorios.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, setDoc, onSnapshot, getDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";

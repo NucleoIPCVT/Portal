@@ -5,18 +5,26 @@ const money=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).
 function cents(v){const n=Number(v);if(!Number.isFinite(n)||n<0||n>10000000)throw Error('Informe um valor válido, maior ou igual a zero.');return Math.round(n*100)}
 function totals(p){const paid=p.payments.reduce((sum,x)=>sum+x.amount,0);return {paid,due:Math.max(0,p.expected-paid),credit:Math.max(0,paid-p.expected)}}
 function merge(people,rows){const seen=new Set(),existing=new Set(people.map(p=>key(p.name)));const added=[];let skipped=0;for(const row of rows){const name=String(row.name||'').trim();if(!name||name.length>120)throw Error('Informe um nome com até 120 caracteres.');const k=key(name);if(seen.has(k))throw Error('Nome repetido na planilha: '+name);seen.add(k);const expected=cents(row.expected),paid=cents(row.paid||0);if(paid>expected)throw Error('O valor pago não pode ultrapassar o devido: '+name);if(existing.has(k)){skipped++;continue}added.push({id:crypto.randomUUID(),name,expected,payments:paid?[{id:crypto.randomUUID(),amount:paid,date:new Date().toISOString(),note:'Pagamento inicial'}]:[]})}return {added,skipped}}
-let api,data,id,dialog,busy=false,pending=[],defaultPrice=0;
+let api,data,id,dialog,busy=false,pending=[],defaultPrice=0,reportDialog,reporting=false;
 const el=id=>document.getElementById(id);
 function message(t){el('ledger-message').textContent=t}
 function initialize(){if(dialog)return;dialog=document.createElement('section');dialog.id='ledger-dialog';dialog.hidden=true;dialog.innerHTML=
 '<header><div><small>ACESSO ADMINISTRATIVO</small><h2 id="ledger-title"></h2></div><div class="ledger-header-actions"><button id="ledger-delete-request" type="button">Excluir</button><button id="ledger-close" aria-label="Voltar às arrecadações"><span class="ledger-back-full">Voltar às arrecadações</span><span class="ledger-back-short" aria-hidden="true">Voltar</span></button></div></header>'+ 
 '<section id="ledger-delete-confirmation" hidden role="alert"><h3>Excluir arrecadação?</h3><p>A arrecadação e seus registros de participantes e pagamentos serão apagados. Esta ação não pode ser desfeita.</p><div><button id="ledger-delete-cancel" type="button">Cancelar</button><button id="ledger-delete-confirm" type="button">Excluir definitivamente</button></div></section>'+
-'<details class="ledger-description-block"><summary>Sobre esta arrecadação</summary><p id="ledger-description">Controle de participantes e pagamentos. Estes lançamentos são separados das ofertas públicas.</p></details><div id="ledger-totals" class="ledger-totals"></div>'+ 
-'<div class="ledger-tools"><input id="ledger-search" type="search" aria-label="Buscar participante" placeholder="Buscar participante"><select id="ledger-status" aria-label="Filtrar pagamento"><option value="">Todos</option><option value="pending">Com pendência</option><option value="paid">Quitados</option></select><details class="ledger-excel-tools"><summary>Excel</summary><div><button id="ledger-template">Baixar modelo</button><button id="ledger-import">Importar lista</button></div></details><input id="ledger-file" type="file" accept=".xlsx" hidden></div>'+ 
+'<details class="ledger-description-block"><summary>Sobre esta arrecadação</summary><p id="ledger-description">Controle de participantes e pagamentos. Estes lançamentos são separados das ofertas públicas.</p><div id="ledger-dashboard"><div id="ledger-totals" class="ledger-totals"></div><div id="ledger-comparison" class="ledger-comparison" role="img"><div class="ledger-comparison-track"><span id="ledger-received-fill"></span><span id="ledger-pending-fill"></span></div><p id="ledger-comparison-caption"></p></div><div id="ledger-counts" class="ledger-counts"></div><p id="ledger-dashboard-note"></p></div></details>'+ 
+'<div class="ledger-tools"><input id="ledger-search" type="search" aria-label="Buscar participante" placeholder="Buscar participante"><select id="ledger-status" aria-label="Filtrar pagamento"><option value="">Todos</option><option value="pending">Com pendência</option><option value="paid">Quitados</option></select><details class="ledger-excel-tools"><summary>Excel</summary><div><button id="ledger-template">Baixar modelo</button><button id="ledger-import">Importar lista</button></div></details><button id="ledger-report" type="button">Relatório</button><input id="ledger-file" type="file" accept=".xlsx" hidden></div>'+ 
 '<details id="ledger-add-section"><summary>Cadastrar participante</summary><form id="ledger-add"><label>Nome<input id="ledger-name" maxlength="120" required></label><label>Valor devido (R$)<input id="ledger-expected" type="number" min="0" step="0.01" required><small id="ledger-price-hint"></small></label><label>Já pago (R$)<input id="ledger-paid" type="number" min="0" step="0.01" value="0" required></label><button>Adicionar</button></form></details>'+ 
 '<section id="ledger-preview" hidden><h3>Revisar importação</h3><p id="ledger-preview-text"></p><ul id="ledger-preview-list"></ul><button id="ledger-cancel-import">Cancelar</button><button id="ledger-apply-import">Confirmar inclusão</button></section>'+ 
 '<p id="ledger-message" role="status"></p><div class="ledger-table-wrap"><table role="table" aria-label="Participantes e pagamentos"><thead role="rowgroup"><tr role="row"><th scope="col">Participante</th><th scope="col">Devido</th><th scope="col">Pago</th><th scope="col">Falta</th><th scope="col">Pagamento</th></tr></thead><tbody id="ledger-rows" role="rowgroup"></tbody></table></div>';
-document.querySelector('main').appendChild(dialog);el('ledger-close').onclick=()=>{if(busy)return;hide();api.onClose?.()};dialog.addEventListener('close',()=>{data=null;id=null;pending=[];el('ledger-rows').replaceChildren();el('ledger-preview').hidden=true});dialog.addEventListener('cancel',e=>{if(busy)e.preventDefault()});el('ledger-search').oninput=render;el('ledger-status').onchange=render;
+document.querySelector('main').appendChild(dialog);
+reportDialog=document.createElement('dialog');reportDialog.id='ledger-report-dialog';reportDialog.setAttribute('aria-labelledby','ledger-report-title');
+reportDialog.innerHTML='<h2 id="ledger-report-title">Baixar relatório</h2><p>Todos os participantes serão incluídos, mesmo com filtros ativos. A lista será agrupada em Quitados, Parciais e Pendentes.</p><div class="ledger-report-options"><button id="ledger-report-pdf" type="button">PDF</button><button id="ledger-report-excel" type="button">Excel (.xlsx)</button></div><p id="ledger-report-message" role="status"></p><button id="ledger-report-cancel" type="button">Cancelar</button>';
+document.body.appendChild(reportDialog);
+el('ledger-report').onclick=()=>{if(busy||!data)return;el('ledger-report-message').textContent='';reportDialog.showModal()};
+el('ledger-report-cancel').onclick=()=>{if(!reporting)reportDialog.close()};
+reportDialog.addEventListener('cancel',event=>{if(reporting)event.preventDefault()});
+el('ledger-report-pdf').onclick=()=>downloadReport('pdf');el('ledger-report-excel').onclick=()=>downloadReport('xlsx');
+el('ledger-close').onclick=()=>{if(busy)return;hide();api.onClose?.()};dialog.addEventListener('close',()=>{data=null;id=null;pending=[];el('ledger-rows').replaceChildren();el('ledger-preview').hidden=true});dialog.addEventListener('cancel',e=>{if(busy)e.preventDefault()});el('ledger-search').oninput=render;el('ledger-status').onchange=render;
 el('ledger-add').onsubmit=async e=>{e.preventDefault();try{const result=merge(data.people,[{name:el('ledger-name').value,expected:el('ledger-expected').value,paid:el('ledger-paid').value}]);if(result.skipped)throw Error('Esse nome já está cadastrado. Registre o pagamento na linha existente.');await persist([...data.people,...result.added]);resetParticipantForm()}catch(e){message(e.message)}};
 el('ledger-delete-request').onclick=()=>{if(busy)return;el('ledger-delete-confirmation').hidden=false;el('ledger-delete-cancel').focus()};
 el('ledger-delete-cancel').onclick=()=>{el('ledger-delete-confirmation').hidden=true;el('ledger-delete-request').focus()};
@@ -55,7 +63,7 @@ function resetParticipantForm() {
  el('ledger-add').reset();
  input.value = input.defaultValue;
  el('ledger-paid').value = '0';
- el('ledger-price-hint').textContent = 'Valor padrão: ' + money(defaultPrice) + '.';
+ el('ledger-price-hint').textContent = 'Valor padrão: ' + money(defaultPrice) + '. Edite para aplicar desconto.';
 }
 function participantGroups(people, query='', status='') {
  const term=key(query);
@@ -75,15 +83,26 @@ function adjustExpected(people, participantId, value) {
 }
 function render() {
  if(!data)return;
- let expected=0,paid=0,due=0;
- data.people.forEach(p=>{const t=totals(p);expected+=p.expected;paid+=t.paid;due+=t.due});
+ const report=root.IPCVTLedgerReports.buildReport(data.people,el('ledger-title').textContent);
  const metrics=el('ledger-totals');metrics.replaceChildren();
- for(const [label,value] of [['Previsto',expected],['Recebido',paid],['Pendente',due]]) {
+ for(const [label,value] of [['Previsto',report.expected],['Recebido',report.received],['Pendente',report.pending]]) {
   const item=document.createElement('div');item.className='ledger-metric';
   const caption=document.createElement('span');caption.textContent=label;
   const amount=document.createElement('strong');amount.textContent=money(value);
   item.append(caption,amount);metrics.append(item);
  }
+ const receivedPercent=report.expected ? (report.received-report.credit)/report.expected*100 : 0;
+ const pendingPercent=report.expected ? report.pending/report.expected*100 : 0;
+ el('ledger-received-fill').style.width=receivedPercent+'%';el('ledger-pending-fill').style.width=pendingPercent+'%';
+ el('ledger-comparison').setAttribute('aria-label','Previsto: '+money(report.expected)+'. Recebido: '+money(report.received)+'. Pendente: '+money(report.pending)+'.');
+ el('ledger-comparison-caption').textContent=report.expected ? receivedPercent.toFixed(1).replace('.',',')+'% recebido · '+pendingPercent.toFixed(1).replace('.',',')+'% pendente' : 'Nenhum valor previsto.';
+ const counts=el('ledger-counts');counts.replaceChildren();
+ for(const group of report.groups) {
+  const item=document.createElement('div'),label=document.createElement('span'),number=document.createElement('strong');
+  label.textContent=group.label==='Parciais' ? 'Pagantes parciais' : group.label;
+  number.textContent=group.people.length;item.append(number,label);counts.append(item);
+ }
+ el('ledger-dashboard-note').textContent=report.count+' pessoas cadastradas.'+(report.credit?' Recebimentos incluem '+money(report.credit)+' de crédito acima do valor devido.':'');
  const body=el('ledger-rows');body.replaceChildren();
  const groups=participantGroups(data.people,el('ledger-search').value,el('ledger-status').value);
  let count=0;
@@ -139,8 +158,19 @@ function render() {
   const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=5;td.textContent='Nenhum participante encontrado.';tr.append(td);body.append(tr);
  }
 }
+async function downloadReport(format) {
+ if(reporting||busy||!data)return;
+ reporting=true;reportDialog.querySelectorAll('button').forEach(button=>button.disabled=true);
+ el('ledger-report-message').textContent='Preparando relatório…';
+ try {
+  const report=root.IPCVTLedgerReports.buildReport(structuredClone(data.people),el('ledger-title').textContent);
+  await root.IPCVTLedgerReports.download(report,format);
+  reportDialog.close();message('Relatório preparado para download.');
+ } catch(e) { el('ledger-report-message').textContent=e.message || 'Não foi possível gerar o relatório.'; }
+ finally { reporting=false;reportDialog.querySelectorAll('button').forEach(button=>button.disabled=false); }
+}
 async function template(){try{if(!root.ExcelJS)throw Error('A biblioteca Excel não carregou. Atualize a página e verifique a conexão.');const wb=new ExcelJS.Workbook(),ws=wb.addWorksheet('Participantes');ws.addRow(['Nome','Valor devido','Valor pago']);ws.getRow(1).font={bold:true,color:{argb:'FFFFFFFF'}};ws.getRow(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF173F35'}};ws.getColumn(1).width=36;[2,3].forEach(c=>{ws.getColumn(c).width=20;ws.getColumn(c).numFmt='"R$" #,##0.00'});const guide=wb.addWorksheet('Instruções');['Preencha Participantes a partir da linha 2. Valores em reais, sem fórmulas.','Nome é obrigatório. Valor devido vazio usa o preço por pessoa do evento. Valor pago é opcional.','Nomes já existentes são ignorados: pagamentos e valores existentes são preservados.','Registre pagamentos posteriores no portal. Use nomes completos para distinguir pessoas.'].forEach(t=>guide.addRow([t]));guide.getColumn(1).width=110;const url=URL.createObjectURL(new Blob([await wb.xlsx.writeBuffer()],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})),a=document.createElement('a');a.href=url;a.download='Modelo_Participantes.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}catch(e){message(e.message)}}
 async function importFile(){try{const file=el('ledger-file').files[0];if(!file)return;if(!root.ExcelJS)throw Error('A biblioteca Excel não carregou.');if(!/\.xlsx$/i.test(file.name)||file.size>5*1024*1024)throw Error('Use um arquivo .xlsx de até 5 MB.');const wb=new ExcelJS.Workbook();await wb.xlsx.load(await file.arrayBuffer());const ws=wb.getWorksheet('Participantes');if(!ws||ws.rowCount>2001)throw Error('Use o modelo Participantes, com até 2.000 pessoas.');['Nome','Valor devido','Valor pago'].forEach((h,i)=>{if(ws.getCell(1,i+1).text.trim()!==h)throw Error('Cabeçalho inválido. Baixe o modelo.')});const rows=[];for(let n=2;n<=ws.rowCount;n++){const cells=[1,2,3].map(c=>ws.getCell(n,c));if(cells.every(c=>c.value==null||c.value===''))continue;if(cells.some(c=>c.type===ExcelJS.ValueType.Formula))throw Error('Remova as fórmulas na linha '+n);rows.push({name:cells[0].text,expected:cells[1].value==null||cells[1].value==='' ? defaultPrice/100 : cells[1].value,paid:cells[2].value||0})}const result=merge(data.people,rows);pending=result.added;el('ledger-preview-text').textContent=pending.length+' novas pessoas · '+result.skipped+' nomes existentes preservados.';const list=el('ledger-preview-list');list.replaceChildren();pending.forEach(p=>{const li=document.createElement('li');li.textContent=p.name+' · devido '+money(p.expected)+' · pago '+money(totals(p).paid);list.append(li)});el('ledger-preview').hidden=!pending.length;message(pending.length?'Revise a lista antes de confirmar.':'Nenhuma pessoa nova para incluir.')}catch(e){message(e.message)}finally{el('ledger-file').value=''}}
-function hide(){if(!dialog||busy)return;dialog.hidden=true;data=null;id=null;pending=[];el('ledger-rows').replaceChildren();el('ledger-preview').hidden=true;el('ledger-delete-confirmation').hidden=true}
+function hide(){if(!dialog||busy||reporting)return;if(reportDialog?.open)reportDialog.close();dialog.hidden=true;data=null;id=null;pending=[];el('ledger-rows').replaceChildren();el('ledger-preview').hidden=true;el('ledger-delete-confirmation').hidden=true}
 root.IPCVTLedger={hide,configure:options=>api=options,open:async(campaignId,title,price=0,description='')=>{initialize();try{const loaded=await api.load(campaignId);id=campaignId;data=loaded;defaultPrice=cents(Number(price)/100);resetParticipantForm();el('ledger-delete-confirmation').hidden=true;el('ledger-add-section').open=false;dialog.querySelector('.ledger-excel-tools').open=false;dialog.querySelector('.ledger-description-block').open=false;el('ledger-title').textContent=title;el('ledger-search').value='';el('ledger-status').value='';message('');render();el('ledger-description').textContent=description || 'Controle de participantes e pagamentos. Acesso reservado.';api.onOpen?.();dialog.hidden=false}catch(e){alert('Não foi possível abrir o controle: '+e.message)}},merge,totals,cents,participantGroups,adjustExpected};
 })(typeof window==='undefined'?globalThis:window);

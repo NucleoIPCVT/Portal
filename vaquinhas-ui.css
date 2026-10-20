@@ -347,4 +347,37 @@ body.campaign-page {
 
 }
 @media (max-width:380px) { .campaign-header nav #nav-btn-form span { display: none; } }
+
+/* O painel fica dentro de Sobre, sem aumentar a abertura da lista. */
+#ledger-dialog #ledger-dashboard { padding:15px 0 4px; }
+#ledger-dialog #ledger-dashboard .ledger-totals { margin:0 0 15px; padding-bottom:15px; }
+#ledger-dialog #ledger-dashboard .ledger-metric strong { font-size:22px; }
+#ledger-dialog .ledger-comparison-track { display:flex; overflow:hidden; height:9px; border-radius:2px; background:#102f25; }
+#ledger-received-fill { background:#d0b77c; }
+#ledger-pending-fill { background:#86a585; }
+#ledger-dialog #ledger-comparison-caption { margin:7px 0 15px; color:#c6d4bc; font-size:11px; }
+#ledger-dialog .ledger-counts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+#ledger-dialog .ledger-counts > div { display:flex; align-items:center; gap:8px; padding:10px; border:1px solid #81967355; border-radius:4px; }
+#ledger-dialog .ledger-counts strong { font-size:23px; font-weight:500; color:#e5d2a3; }
+#ledger-dialog .ledger-counts span { color:#d2ddc7; font-size:11px; line-height:1.5; }
+#ledger-dialog #ledger-dashboard-note { color:#becdb4; font-size:10px; line-height:1.7; margin:12px 0 0; }
+.campaign-page #ledger-report-dialog { width:420px; max-width:calc(100% - 32px); padding:24px; background:#f2ecd8; color:#193d30; border:1px solid #bbaa76; border-radius:5px; }
+#ledger-report-dialog::backdrop { background:#071c15cc; }
+#ledger-report-dialog h2 { font:600 22px/1.4 Inter,Arial,sans-serif; letter-spacing:-.025em; }
+#ledger-report-dialog p { color:#53604c; font-size:12px; line-height:1.8; margin:12px 0 18px; }
+#ledger-report-dialog .ledger-report-options { display:flex; gap:8px; }
+#ledger-report-dialog button { flex:1; padding:11px 15px; background:#234b37; color:#fff5dc; border:1px solid #234b37; border-radius:4px; font-size:12px; }
+#ledger-report-dialog #ledger-report-cancel { margin-top:8px; width:100%; color:#53604c; background:transparent; border-color:#c8bc96; }
+#ledger-report-dialog #ledger-report-message:empty { display:none; }
+@media(max-width:767px) {
+ #ledger-dialog .ledger-tools { grid-template-columns:minmax(0,1fr) auto auto; }
+ #ledger-dialog .ledger-tools #ledger-search { grid-column:1/-1; }
+ #ledger-dialog #ledger-report { min-height:40px; }
+ #ledger-dialog #ledger-dashboard .ledger-metric strong { font-size:clamp(13px,3.5vw,17px); }
+ #ledger-dialog .ledger-counts { gap:6px; }
+ #ledger-dialog .ledger-counts > div { display:block; padding:8px; }
+ #ledger-dialog .ledger-counts strong { display:block; font-size:20px; }
+ #ledger-dialog .ledger-counts span { display:block; font-size:10px; }
+}
+
 @media (prefers-reduced-motion:reduce) { .campaign-page *, .campaign-page *::before, .campaign-page *::after { animation: none !important; transition: none !important; } }
