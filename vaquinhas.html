@@ -185,6 +185,9 @@
                     <button type="submit" id="btn-form-submit" class="w-full bg-presb-green hover:bg-black text-white font-black py-5 px-4 rounded-[1.5rem] transition-all shadow-xl active:scale-95 text-xs uppercase tracking-widest">
                         Publicar Arrecadação
                     </button>
+                    <button type="button" id="btn-delete-campaign-form" onclick="window.deleteEditingCampaign()" class="hidden w-full mt-4 border-2 border-red-200 text-red-700 hover:bg-red-50 font-bold py-4 px-4 rounded-[1.5rem] transition-colors text-xs uppercase tracking-widest">
+                        Excluir esta vaquinha
+                    </button>
                 </div>
             </form>
         </div>
@@ -613,6 +616,7 @@
                 document.getElementById('view-form').classList.remove('hidden');
                 document.getElementById('nav-btn-form').classList.replace('border-transparent', 'border-presb-gold');
                 document.getElementById('nav-btn-form').classList.add('text-presb-gold');
+                document.getElementById('btn-delete-campaign-form').classList.toggle('hidden', !editingCampaignId || !manager);
                 
                 // Se NÃO for modo de edição, reseta o formulário
                 if (!editingCampaignId) {
@@ -878,8 +882,21 @@
             if (selectedCampaign && String(selectedCampaign.id)===String(id)) selectedCampaign=null;
         }
         window.deleteCampaign = async function(id) {
-            try { await removeCampaignRecord(id); window.switchView('list'); }
-            catch(e) { alert('Não foi possível excluir: '+e.message); }
+            if (!manager) return window.requireAuth('delete');
+            const campaign = privateCampaigns.find(item => String(item.id) === String(id));
+            if (!campaign) return alert('A vaquinha não foi encontrada. Atualize a página.');
+            const confirmText = `Excluir definitivamente a vaquinha “${campaign.title}”?\n\nA arrecadação e o controle de participantes e pagamentos serão removidos. Esta ação não pode ser desfeita.`;
+            if (!window.confirm(confirmText)) return;
+            try {
+                await removeCampaignRecord(id);
+                editingCampaignId = null;
+                document.getElementById('btn-delete-campaign-form').classList.add('hidden');
+                window.switchView('list');
+            } catch(e) { alert('Não foi possível excluir: '+e.message); }
+        };
+        window.deleteEditingCampaign = () => {
+            if (!editingCampaignId || !manager) return;
+            return window.deleteCampaign(editingCampaignId);
         };
 
         // Renders
