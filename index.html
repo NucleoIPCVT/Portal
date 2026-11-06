@@ -34,7 +34,22 @@
 
       <nav class="portal-grid" aria-label="Aplicativos do Núcleo">
         <a class="portal-card portal-card-louvor" href="https://escala-louvor-public.web.app" target="_blank" rel="noopener noreferrer">
-          <div class="portal-icon portal-icon-app"><img src="escala-louvor-logo.webp" alt="Ícone do aplicativo Escala do Louvor"></div>
+          <div class="portal-icon portal-icon-app" aria-hidden="true">
+            <svg viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <mask id="louvor-note-cutout">
+                  <rect width="96" height="96" fill="white"/>
+                  <rect x="17" y="43" width="62" height="3.5" fill="black"/>
+                  <path d="M47 53L64 49V65M47 53V69" stroke="black" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+                  <ellipse cx="40" cy="70" rx="8.5" ry="6" transform="rotate(-25 40 70)" fill="black"/>
+                  <ellipse cx="57" cy="65" rx="8.5" ry="6" transform="rotate(-25 57 65)" fill="black"/>
+                </mask>
+              </defs>
+              <rect x="17" y="27" width="62" height="56" rx="12" fill="white" mask="url(#louvor-note-cutout)"/>
+              <rect x="29" y="15" width="11" height="26" rx="5.5" fill="white"/>
+              <rect x="56" y="15" width="11" height="26" rx="5.5" fill="white"/>
+            </svg>
+          </div>
           <div>
             <h2>Escala do Louvor</h2>
             <p>Acesse cifras, letras e os repertórios aprovados para os cultos.</p>
@@ -63,7 +78,7 @@
           <i class="ph ph-arrow-up-right arrow" aria-hidden="true"></i>
         </a>
 
-        <div class="portal-card portal-card-comissao secondary portal-card-disabled" aria-disabled="true" aria-label="Comissão: painel em preparação">
+        <div class="portal-card portal-card-comissao portal-card-disabled" aria-disabled="true" aria-label="Comissão: painel em preparação">
           <div class="portal-icon"><img src="logo-comissao.svg" alt="" aria-hidden="true"></div>
           <div>
             <h2>Comissão</h2>
