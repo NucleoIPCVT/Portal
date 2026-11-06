@@ -110,7 +110,7 @@ onAuthStateChanged(auth, async (user) => {
   const currentSequence = ++sessionSequence
   clearListeners()
   if (!user) {
-    showGate('Entre com uma conta Google autorizada.')
+    showGate('')
     return
   }
   showGate('Conferindo a permissão deste e-mail...')
