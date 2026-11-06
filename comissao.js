@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'
 import {
   getAuth, GoogleAuthProvider, onAuthStateChanged,
-  signInWithPopup, signOut, setPersistence, browserSessionPersistence
+  signInWithPopup, signOut, setPersistence, browserLocalPersistence
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'
 import {
   getFirestore, collection, doc, onSnapshot,
@@ -94,7 +94,7 @@ ui['google-login'].addEventListener('click', async () => {
   ui['google-login'].disabled = true
   ui['auth-feedback'].textContent = 'Abrindo o Google...'
   try {
-    await setPersistence(auth, browserSessionPersistence)
+    await setPersistence(auth, browserLocalPersistence)
     await signInWithPopup(auth, provider)
   } catch (error) {
     showGate(authErrorMessage(error))
