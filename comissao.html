@@ -25,16 +25,19 @@
           <img class="commission-logo" src="logo-comissao.svg" alt="">
           <p class="eyebrow">Núcleo IPCVT</p>
           <h1 id="access-title">Acesso à Comissão</h1>
-          <p class="lead">Digite a senha de acesso da Comissão para abrir as ferramentas.</p>
-          <form id="access-form" novalidate>
-            <label for="access-password">Senha de acesso</label>
-            <div class="password-row">
-              <input id="access-password" name="password" type="password" autocomplete="current-password" required placeholder="Digite a senha">
-              <button type="button" id="toggle-password" class="toggle-password" aria-label="Mostrar senha" aria-pressed="false"><i class="ph ph-eye" aria-hidden="true"></i></button>
-            </div>
-            <p id="access-error" class="access-error" role="alert" aria-live="polite"></p>
-            <button id="access-submit" class="primary-button" type="submit">Entrar na Comissão <i class="ph ph-arrow-right" aria-hidden="true"></i></button>
-          </form>
+          <p class="lead">Entre com sua conta Google. O painel só será liberado para os e-mails autorizados pela Comissão.</p>
+          <button id="google-login" class="google-button" type="button">
+            <svg aria-hidden="true" viewBox="0 0 48 48" width="21" height="21"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.28 5.48-4.83 7.18l7.73 6C44.36 38.03 46.98 31.88 46.98 24.55z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.28-3.14.75-4.59l-7.98-6.2C.92 16.46 0 20.12 0 24s.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.91-5.79l-7.73-6c-2.14 1.44-4.89 2.29-8.18 2.29-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+            Entrar com Google
+          </button>
+          <p id="auth-feedback" class="access-error" role="status" aria-live="polite">Verificando sua sessão...</p>
+          <div id="access-pending" class="pending-access" hidden>
+            <i class="ph ph-lock-key" aria-hidden="true"></i>
+            <p>Seu e-mail ainda não foi liberado.</p>
+            <strong id="pending-email"></strong>
+            <span>Peça à coordenação para autorizar essa conta.</span>
+            <button id="switch-account" class="secondary-button" type="button">Usar outra conta</button>
+          </div>
         </div>
       </section>
 
@@ -45,7 +48,10 @@
             <h1 id="dashboard-title">Comissão <em>IPCVT.</em></h1>
             <p class="lead">Planejamento, organização das equipes e acompanhamento do trabalho do Núcleo.</p>
           </div>
-          <button id="logout-button" type="button" class="exit-button"><i class="ph ph-sign-out" aria-hidden="true"></i> Sair</button>
+          <div class="session-controls">
+            <span id="member-email" class="member-email"></span>
+            <button id="logout-button" type="button" class="exit-button"><i class="ph ph-sign-out" aria-hidden="true"></i> Sair</button>
+          </div>
         </div>
 
         <div class="tool-grid" aria-label="Ferramentas da Comissão">
@@ -66,6 +72,33 @@
             <i class="ph ph-arrow-up-right tool-arrow" aria-hidden="true"></i>
           </a>
         </div>
+
+        <section id="access-admin" class="admin-section" hidden aria-labelledby="access-admin-title">
+          <div class="admin-heading">
+            <div>
+              <p class="eyebrow">Administração</p>
+              <h2 id="access-admin-title">Gerenciar acessos</h2>
+              <p>Autorize ou suspenda o acesso de pessoas pelo e-mail da conta Google delas.</p>
+            </div>
+          </div>
+          <form id="member-form" class="member-form">
+            <label>Gmail ou e-mail da conta Google
+              <input id="new-member-email" type="email" placeholder="nome@gmail.com" required autocomplete="off">
+            </label>
+            <label>Nome
+              <input id="new-member-name" type="text" placeholder="Nome da pessoa" required maxlength="80">
+            </label>
+            <label>Permissão
+              <select id="new-member-role">
+                <option value="membro">Membro</option>
+                <option value="admin">Administrador</option>
+              </select>
+            </label>
+            <button class="primary-button" type="submit">Autorizar e-mail</button>
+          </form>
+          <p id="member-feedback" class="member-feedback" role="status" aria-live="polite"></p>
+          <div id="member-list" class="member-list" aria-label="E-mails cadastrados"></div>
+        </section>
       </section>
     </main>
 
