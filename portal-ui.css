@@ -53,7 +53,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .portal-card-disabled span i { vertical-align: middle; margin-right: 3px; }
 .portal-card.portal-card-disabled:hover { transform: none; border-color: #aebf9b26; background: #19392e; }
 .portal-card.portal-card-comissao { background: #20242a; border-color: #7b858d77; color: #fff; }
-.portal-card.portal-card-comissao:hover { background: #20242a; border-color: #7b858d77; }
+.portal-card.portal-card-comissao:hover { background: #2b3138; border-color: #c7d1d9aa; }
 .portal-card-comissao .portal-icon { width: 66px; height: 50px; }
 .portal-card-comissao .portal-icon img { width: 66px; height: 50px; display: block; object-fit: contain; }
 .portal-card-comissao h2, .portal-card-comissao p, .portal-card-comissao span, .portal-card-comissao .arrow { color: #fff; }

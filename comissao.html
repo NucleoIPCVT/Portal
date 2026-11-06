@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#22272b">
+    <meta name="robots" content="noindex,nofollow">
+    <title>Comissão · Núcleo IPCVT</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="comissao.css">
+    <script src="comissao.js" type="module"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="back-link" href="index.html"><i class="ph ph-arrow-left" aria-hidden="true"></i> Portal IPCVT</a>
+      <span class="topbar-label">Área da Comissão</span>
+    </header>
+
+    <main>
+      <section id="access-gate" class="access-wrap" aria-labelledby="access-title">
+        <div class="access-card">
+          <img class="commission-logo" src="logo-comissao.svg" alt="">
+          <p class="eyebrow">Núcleo IPCVT</p>
+          <h1 id="access-title">Acesso à Comissão</h1>
+          <p class="lead">Digite a senha de acesso da Comissão para abrir as ferramentas.</p>
+          <form id="access-form" novalidate>
+            <label for="access-password">Senha de acesso</label>
+            <div class="password-row">
+              <input id="access-password" name="password" type="password" autocomplete="current-password" required placeholder="Digite a senha">
+              <button type="button" id="toggle-password" class="toggle-password" aria-label="Mostrar senha" aria-pressed="false"><i class="ph ph-eye" aria-hidden="true"></i></button>
+            </div>
+            <p id="access-error" class="access-error" role="alert" aria-live="polite"></p>
+            <button id="access-submit" class="primary-button" type="submit">Entrar na Comissão <i class="ph ph-arrow-right" aria-hidden="true"></i></button>
+          </form>
+        </div>
+      </section>
+
+      <section id="commission-panel" class="dashboard" hidden aria-labelledby="dashboard-title">
+        <div class="dashboard-header">
+          <div>
+            <p class="eyebrow">Central de ferramentas</p>
+            <h1 id="dashboard-title">Comissão <em>IPCVT.</em></h1>
+            <p class="lead">Planejamento, organização das equipes e acompanhamento do trabalho do Núcleo.</p>
+          </div>
+          <button id="logout-button" type="button" class="exit-button"><i class="ph ph-sign-out" aria-hidden="true"></i> Sair</button>
+        </div>
+
+        <div class="tool-grid" aria-label="Ferramentas da Comissão">
+          <div class="tool-card tool-card-planner" aria-disabled="true">
+            <div class="tool-icon"><i class="ph ph-kanban" aria-hidden="true"></i></div>
+            <div class="tool-number">01 · Próxima etapa</div>
+            <h2>Planner</h2>
+            <p>Demandas, responsáveis, projetos e calendário da igreja em uma única ferramenta.</p>
+            <span class="status status-soon"><i class="ph ph-clock" aria-hidden="true"></i> Em preparação</span>
+          </div>
+
+          <a class="tool-card" href="https://nucleo-ipcvt-planner.vercel.app/" target="_blank" rel="noopener noreferrer">
+            <div class="tool-icon"><i class="ph ph-users-three" aria-hidden="true"></i></div>
+            <div class="tool-number">02 · Organização de equipes</div>
+            <h2>Planejamento Tático</h2>
+            <p>Organize os times, distribua funções e faça movimentações entre integrantes.</p>
+            <span class="status"><i class="ph ph-arrow-square-out" aria-hidden="true"></i> Abrir ferramenta</span>
+            <i class="ph ph-arrow-up-right tool-arrow" aria-hidden="true"></i>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer>Comissão do Núcleo · Igreja Presbiteriana Central em Vilar dos Telles</footer>
+  </body>
+</html>
