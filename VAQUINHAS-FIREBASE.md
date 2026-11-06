@@ -15,8 +15,10 @@ antes de substituí-lo.
    Essa etapa é indispensável para proteger os documentos antigos e os novos.
 4. Testar em uma janela anônima: a lista pública abre; leitura direta de
    `app_ipcvt/interas_dados` e de `interas_contribuicoes` é negada.
-5. Dentro de Vaquinhas, o administrador da Comissão cadastra os e-mails dos
-   outros gestores. Cada pessoa faz login no Google com sua própria conta.
+5. Dentro da **Comissão > Administrar autorizações**, Hudson cadastra os
+   e-mails dos gestores de cada ferramenta. Cada pessoa usa sua conta Google.
+   O cadastro de Escala Geral e Planejamento Tático fica preparado, mas essas
+   duas ferramentas só o aplicarão quando a autenticação delas for integrada.
 
 O WhatsApp é informado em cada vaquinha financeira. O botão abre uma conversa
 com a mensagem pronta; o contribuinte precisa anexar o arquivo manualmente.
@@ -49,6 +51,10 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/comissao_acessos/$(emailGoogle())).data.perfil == 'admin';
     }
 
+    function donoAutorizacoes() {
+      return comissaoAdmin() && emailGoogle() == 'hudsonamorim08@gmail.com';
+    }
+
     function gestorVaquinhas() {
       return googleLogin() && (
         (emailGoogle() == 'hudsonamorim08@gmail.com' && comissaoAdmin())
@@ -61,12 +67,14 @@ service cloud.firestore {
 
     match /comissao_acessos/{email} {
       allow get: if googleLogin()
-        && (email == emailGoogle() || comissaoAdmin());
-      allow list: if comissaoAdmin();
-      allow create, update: if comissaoAdmin()
+        && (email == emailGoogle() || donoAutorizacoes());
+      allow list: if donoAutorizacoes();
+      allow create, update: if donoAutorizacoes()
         && request.resource.data.email == email
         && request.resource.data.nome is string
         && request.resource.data.perfil in ['membro', 'admin']
+        && (email == 'hudsonamorim08@gmail.com'
+          || request.resource.data.perfil == 'membro')
         && request.resource.data.ativo is bool
         && request.resource.data.keys().hasOnly([
           'email', 'nome', 'perfil', 'ativo', 'atualizadoEm', 'atualizadoPor'
@@ -76,13 +84,41 @@ service cloud.firestore {
 
     match /vaquinhas_acessos/{email} {
       allow get: if googleLogin()
-        && (email == emailGoogle() || comissaoAdmin());
-      allow list: if comissaoAdmin();
-      allow create, update: if comissaoAdmin()
+        && (email == emailGoogle() || donoAutorizacoes());
+      allow list: if donoAutorizacoes();
+      allow create, update: if donoAutorizacoes()
         && request.resource.data.email == email
         && request.resource.data.ativo is bool
         && request.resource.data.keys().hasOnly([
           'email', 'ativo', 'atualizadoPor', 'atualizadoEm'
+        ]);
+      allow delete: if false;
+    }
+
+    match /escala_geral_acessos/{email} {
+      allow get: if googleLogin()
+        && (email == emailGoogle() || donoAutorizacoes());
+      allow list: if donoAutorizacoes();
+      allow create, update: if donoAutorizacoes()
+        && request.resource.data.email == email
+        && request.resource.data.nome is string
+        && request.resource.data.ativo is bool
+        && request.resource.data.keys().hasOnly([
+          'email', 'nome', 'ativo', 'atualizadoPor', 'atualizadoEm'
+        ]);
+      allow delete: if false;
+    }
+
+    match /tatico_acessos/{email} {
+      allow get: if googleLogin()
+        && (email == emailGoogle() || donoAutorizacoes());
+      allow list: if donoAutorizacoes();
+      allow create, update: if donoAutorizacoes()
+        && request.resource.data.email == email
+        && request.resource.data.nome is string
+        && request.resource.data.ativo is bool
+        && request.resource.data.keys().hasOnly([
+          'email', 'nome', 'ativo', 'atualizadoPor', 'atualizadoEm'
         ]);
       allow delete: if false;
     }
@@ -150,6 +186,8 @@ service cloud.firestore {
         && colecao != 'app_ipcvt'
         && colecao != 'comissao_acessos'
         && colecao != 'vaquinhas_acessos'
+        && colecao != 'escala_geral_acessos'
+        && colecao != 'tatico_acessos'
         && colecao != 'interas_contribuicoes'
         && colecao != 'comissao_planner';
     }
@@ -166,4 +204,5 @@ service cloud.firestore {
 - Gestor: ✓ atualiza total e contador; ✕ mantém total inalterado.
 - Private: cartão não revela título nem descrição e exige gestor autenticado.
 - Legado: vaquinhas e pagamentos antigos continuam íntegros.
-- Cadastro de gestores: só administrador da Comissão consegue autorizar e-mail.
+- Cadastro de gestores: só `hudsonamorim08@gmail.com`, como administrador
+  da Comissão, consegue autorizar e-mail para qualquer ferramenta.
