@@ -294,7 +294,7 @@
     <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-    <script src="arrecadacoes.js"></script>
+    <script src="arrecadacoes.js?v=20261106-gestao"></script>
     <script src="arrecadacoes-relatorios.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -341,11 +341,9 @@
                     const updated = structuredClone(current.campaigns || []);
                     const campaign = updated.find(c => String(c.id) === String(id));
                     if (campaign?.mode === 'person') {
-                        const totalCents = candidate.people.reduce((sum, person) =>
-                            sum + (person.payments || []).reduce((n, payment) => n + Number(payment.amount || 0), 0), 0);
-                        campaign.raised = totalCents / 100;
-                        campaign.ledgerPaidCount = candidate.people.filter(person =>
-                            (person.payments || []).some(payment => Number(payment.amount) > 0)).length;
+                        const summary = personLedgerSummary(candidate.people);
+                        campaign.raised = summary.raised;
+                        campaign.ledgerPaidCount = summary.ledgerPaidCount;
                         transaction.set(adminDocRef, {...current, campaigns: updated});
                         transaction.set(publicDocRef, {campaigns: projectPublicCampaigns(updated)});
                     }
@@ -368,11 +366,13 @@
         let adminLoaded = false;
         let authSequence = 0;
         let isFirebaseConnected = false;
+        const reconciledPersonCampaigns = new Set();
         
         // Controle de Tela
         let currentView = 'list'; 
         let selectedCampaign = null; 
         let pendingAction = null;
+        let openingLedgerId = null;
         let participantRemovalAuth = null;
         let formItemsNeeded = [];
         let editingCampaignId = null; // Controle do modo de Edição
@@ -385,6 +385,45 @@
         const approvedCount = camp => new Set(approvedContributions(camp)
             .map(c => String(c.name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase())
             .filter(Boolean)).size;
+
+        // O resumo deve refletir os pagamentos existentes, inclusive os lançados antes
+        // de a arrecadação ganhar campos de total e quantidade de pagantes.
+        function personLedgerSummary(people = []) {
+            const paidByPerson = people.map(person => (person.payments || []).reduce(
+                (total, payment) => total + (Number(payment.amount) || 0), 0));
+            return {
+                raised: paidByPerson.reduce((total, paid) => total + paid, 0) / 100,
+                ledgerPaidCount: paidByPerson.filter(paid => paid > 0).length
+            };
+        }
+
+        async function reconcilePersonCampaign(id) {
+            if (!manager) return;
+            try {
+                await runTransaction(db, async transaction => {
+                    const ledgerRef = doc(db, 'app_ipcvt', 'controle_intera_' + id);
+                    const [ledgerSnap, campaignSnap] = await Promise.all([
+                        transaction.get(ledgerRef), transaction.get(adminDocRef)
+                    ]);
+                    if (!ledgerSnap.exists() || !campaignSnap.exists()) return;
+                    const people = ledgerSnap.data().people;
+                    if (!Array.isArray(people) || people.length === 0) return;
+                    const stored = campaignSnap.data();
+                    const index = (stored.campaigns || []).findIndex(c => String(c.id) === String(id));
+                    const campaign = stored.campaigns?.[index];
+                    if (campaign?.mode !== 'person') return;
+                    const summary = personLedgerSummary(people);
+                    if (Number(campaign.raised || 0) === summary.raised &&
+                        Number(campaign.ledgerPaidCount || 0) === summary.ledgerPaidCount) return;
+                    const updated = structuredClone(stored.campaigns);
+                    Object.assign(updated[index], summary);
+                    transaction.set(adminDocRef, {...stored, campaigns: updated});
+                    transaction.set(publicDocRef, {campaigns: projectPublicCampaigns(updated)});
+                });
+            } catch (error) {
+                console.error('Não foi possível atualizar o resumo da arrecadação:', id, error);
+            }
+        }
 
         // O documento público jamais recebe nomes, comprovantes ou valores individuais.
         function projectPublicCampaigns(source) {
@@ -408,7 +447,9 @@
             if (currentView === 'list') renderList();
             if (currentView === 'detail' && selectedCampaign) {
                 selectedCampaign = campaigns.find(c => String(c.id) === String(selectedCampaign.id));
-                if (selectedCampaign) renderDetail(); else window.switchView('list');
+                if (selectedCampaign?.mode === 'person' && manager) void window.requireAuth('ledger');
+                else if (selectedCampaign) renderDetail();
+                else window.switchView('list');
             }
             if (currentView === 'ledger' && !manager) window.switchView('list');
         }
@@ -433,11 +474,23 @@
             stopAdminData?.();
             stopPendingData?.();
             adminLoaded = false;
+            reconciledPersonCampaigns.clear();
             stopAdminData = onSnapshot(adminDocRef, snap => {
                 privateCampaigns = snap.exists() ? snap.data().campaigns || [] : [];
                 adminLoaded = true;
                 refreshVisibleCampaigns();
-                syncPublicProjection();
+                const summariesToReconcile = [];
+                privateCampaigns.filter(c => c.mode === 'person').forEach(c => {
+                    const id = String(c.id);
+                    if (reconciledPersonCampaigns.has(id)) return;
+                    reconciledPersonCampaigns.add(id);
+                    summariesToReconcile.push(reconcilePersonCampaign(id));
+                });
+                if (summariesToReconcile.length) {
+                    void Promise.all(summariesToReconcile).then(() => syncPublicProjection());
+                } else {
+                    void syncPublicProjection();
+                }
                 if (pendingAction && manager) {
                     const action = pendingAction;
                     window.closeAuthModal(true);
@@ -583,6 +636,20 @@
             lucide.createIcons();
         };
 
+        // Uma arrecadação "por pessoa" abre a gestão diretamente para gestores.
+        async function openPersonLedger(camp) {
+            if (!camp || !manager) return;
+            const id = String(camp.id);
+            if (openingLedgerId === id) return;
+            openingLedgerId = id;
+            try {
+                await IPCVTLedger.open(camp.id, camp.title,
+                    Math.round((camp.quotaValue || 0) * 100), camp.description);
+            } finally {
+                openingLedgerId = null;
+            }
+        }
+
         async function performAuthorizedAction(action) {
             if (!manager) return;
             if (action === 'create') {
@@ -595,11 +662,11 @@
                 if (!privateCampaign) return;
                 selectedCampaign = privateCampaign;
                 if (privateCampaign.mode === 'person') {
-                    return IPCVTLedger.open(privateCampaign.id, privateCampaign.title, Math.round((privateCampaign.quotaValue || 0) * 100), privateCampaign.description);
+                    return openPersonLedger(privateCampaign);
                 }
                 window.switchView('detail');
             } else if (action === 'ledger') {
-                IPCVTLedger.open(selectedCampaign.id, selectedCampaign.title, Math.round((selectedCampaign.quotaValue || 0) * 100), selectedCampaign.description);
+                return openPersonLedger(selectedCampaign);
             } else if (action === 'delete') {
                 await window.deleteCampaign(selectedCampaign.id);
             } else if (action === 'delete-participant') {
@@ -804,7 +871,8 @@
             if (editingCampaignId) {
                 selectedCampaign = campaigns.find(c => c.id === editingCampaignId);
                 editingCampaignId = null;
-                window.switchView('detail');
+                if (selectedCampaign?.mode === 'person') await window.requireAuth('ledger');
+                else window.switchView('detail');
             } else {
                 window.switchView('list');
             }
@@ -900,44 +968,13 @@
             lucide.createIcons();
         }
 
-        async function loadPersonContributions(camp) {
-            const root = document.getElementById('detail-contributors-list');
-            root.textContent = 'Carregando participantes...';
-            try {
-                const snap = await getDoc(doc(db, 'app_ipcvt', 'controle_intera_' + camp.id));
-                if (!manager || currentView !== 'detail' || String(selectedCampaign?.id) !== String(camp.id)) return;
-                const people = snap.exists() ? snap.data().people || [] : [];
-                root.replaceChildren();
-                const list = document.createElement('div');
-                list.className = 'space-y-3';
-                for (const person of people) {
-                    const paidCents = (person.payments || []).reduce((total, payment) => total + Number(payment.amount || 0), 0);
-                    const row = document.createElement('div');
-                    row.className = 'flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 py-3';
-                    const name = document.createElement('strong'); name.className = 'text-sm text-slate-700';
-                    name.textContent = person.name;
-                    const paid = document.createElement('span'); paid.className = 'text-sm text-presb-green font-semibold';
-                    paid.textContent = window.formatCurrency(paidCents / 100) + ' pago · ' + window.formatCurrency(Math.max(0, Number(person.expected || 0) - paidCents) / 100) + ' pendente';
-                    row.append(name, paid); list.append(row);
-                }
-                if (people.length) root.append(list);
-                else root.textContent = 'Ainda não há participantes cadastrados.';
-                const manage = document.createElement('button');
-                manage.type = 'button'; manage.textContent = 'Gerenciar pagamentos';
-                manage.className = 'mt-5 text-xs font-bold text-presb-green underline underline-offset-4';
-                manage.onclick = () => window.requireAuth('ledger');
-                root.append(manage);
-            } catch (error) {
-                if (manager && currentView === 'detail' && String(selectedCampaign?.id) === String(camp.id)) {
-                    root.textContent = 'Não foi possível carregar os registros. Verifique sua permissão.';
-                }
-                console.error('Falha ao consultar participantes:', error);
-            }
-        }
-
         function renderDetail() {
             if (selectedCampaign?.visibility === 'private' && !manager) { window.requireAuth('open-private'); return; }
             const camp = selectedCampaign; const isFinance = camp.type === 'finance';
+            if (manager && camp.mode === 'person') {
+                void window.requireAuth('ledger');
+                return;
+            }
             document.getElementById('detail-contributors-section').classList.toggle('hidden', !manager);
             document.getElementById('admin-contributions-section').classList.toggle('hidden', !manager);
             document.getElementById('contributor-list-title').textContent = manager ? 'Registros de contribuições' : 'Resumo de contribuições';
@@ -947,7 +984,6 @@
                 document.getElementById('detail-tags').textContent='Por pessoa';
                 document.getElementById('detail-finance-progress').textContent=window.formatCurrency(camp.quotaValue)+' por pessoa · '+Number(camp.contributorCount ?? camp.ledgerPaidCount ?? 0)+' pagantes · '+window.formatCurrency(camp.raised)+' recebido';
                 ['detail-items-needed','detail-pix-block','detail-contributors-list'].forEach(id=>document.getElementById(id).replaceChildren());
-                if (manager) loadPersonContributions(camp);
                 document.getElementById('contrib-init').parentElement.hidden=true;
                 renderPendingContributions();
                 return;
