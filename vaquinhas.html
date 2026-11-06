@@ -62,16 +62,6 @@
 
             </div>
             <div class="campaign-toolbar" role="search"><label><i data-lucide="search" aria-hidden="true"></i><input id="campaign-search" type="search" aria-label="Buscar arrecadação" placeholder="Buscar arrecadação" oninput="window.renderCampaignList()"></label><select id="campaign-type-filter" aria-label="Tipo de arrecadação" onchange="window.renderCampaignList()"><option value="">Todos os tipos</option><option value="finance">Financeiras</option><option value="item">Itens e alimentos</option></select></div>
-            <div id="vaquinhas-admin-access" class="hidden bg-white border border-slate-200 p-5 rounded-2xl shadow-sm">
-                <h3 class="font-bold text-presb-green mb-3">Autorizar gestores de vaquinhas</h3>
-                <form id="vaquinhas-access-form" class="flex flex-col sm:flex-row gap-2" onsubmit="window.authorizeVaquinhasUser(event)">
-                    <input id="vaquinhas-access-email" type="email" placeholder="E-mail Google" required class="flex-1 border rounded-xl p-3 text-sm">
-                    <button type="submit" class="bg-presb-green text-white rounded-xl px-5 py-3 text-sm font-bold">Autorizar</button>
-                </form>
-                <p class="text-xs text-slate-500 mt-2">Somente administradores da Comissão podem cadastrar outros gestores.</p>
-                <p id="vaquinhas-access-feedback" class="text-xs mt-2" role="status"></p>
-                <div id="vaquinhas-access-users" class="mt-4 space-y-2"></div>
-            </div>
             <div id="campaigns-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
         </div>
 
@@ -222,9 +212,7 @@
                         <div id="detail-items-needed" class="relative z-10"></div>
                     </div>
 
-                    <div id="detail-pix-block"></div>
-
-                    <div class="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-100">
+                    <div id="detail-contributors-section" class="hidden bg-white p-8 rounded-[3rem] shadow-xl border border-slate-100">
                         <h3 class="text-xl font-bold font-serif text-presb-green mb-8 flex items-center gap-3 pb-6 border-b border-slate-100">
                             <i data-lucide="users" class="w-6 h-6 text-presb-gold"></i> <span id="contributor-list-title">Contribuições</span>
                         </h3>
@@ -256,6 +244,7 @@
                             </div>
 
                             <div id="contrib-dynamic-fields"></div>
+                            <div id="detail-pix-block"></div>
 
                             <div class="pt-6 flex flex-col gap-3">
                                 <button type="submit" class="w-full bg-presb-gold hover:bg-yellow-500 text-presb-dark font-black py-4 px-4 rounded-xl transition-all shadow-md text-[10px] uppercase tracking-widest">
@@ -373,7 +362,6 @@
         let managerEmail = '';
         let stopAdminData = null;
         let stopPendingData = null;
-        let stopAccessList = null;
         let stopOwnGrant = null;
         let pendingContributions = [];
         let publicLoaded = false;
@@ -429,37 +417,8 @@
             const button = document.getElementById('vaquinhas-session-button');
             button.textContent = manager ? 'Sair' : 'Entrar';
             button.setAttribute('aria-label', manager ? 'Sair da gestão' : 'Entrar com Google');
-            document.getElementById('vaquinhas-admin-access').classList.toggle('hidden', !commissionAdmin);
             document.getElementById('admin-contributions-section').classList.toggle('hidden', !manager || currentView !== 'detail');
             refreshVisibleCampaigns();
-        }
-
-        function startAccessList() {
-            stopAccessList?.();
-            stopAccessList = onSnapshot(collection(db, 'vaquinhas_acessos'), snap => {
-                const root = document.getElementById('vaquinhas-access-users');
-                root.replaceChildren();
-                snap.docs.sort((a, b) => a.id.localeCompare(b.id)).forEach(entry => {
-                    const row = document.createElement('div');
-                    row.className = 'flex flex-wrap justify-between items-center gap-3 rounded-xl bg-slate-50 p-3';
-                    const email = document.createElement('span');
-                    email.className = 'text-xs font-medium text-slate-700 break-all';
-                    email.textContent = entry.id;
-                    const toggle = document.createElement('button');
-                    const active = entry.data().ativo === true;
-                    toggle.type = 'button';
-                    toggle.className = 'rounded-lg px-3 py-2 text-xs font-bold ' + (active ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700');
-                    toggle.textContent = active ? 'Suspender' : 'Reativar';
-                    toggle.onclick = async () => {
-                        toggle.disabled = true;
-                        try {
-                            await updateDoc(entry.ref, {ativo: !active, atualizadoPor: managerEmail, atualizadoEm: serverTimestamp()});
-                        } catch { alert('Não foi possível alterar o acesso.'); }
-                        finally { toggle.disabled = false; }
-                    };
-                    row.append(email, toggle); root.append(row);
-                });
-            }, error => console.error('Não foi possível listar gestores:', error));
         }
 
         async function syncPublicProjection() {
@@ -493,9 +452,9 @@
 
         onAuthStateChanged(auth, async user => {
             const sequence = ++authSequence;
-            stopAdminData?.(); stopPendingData?.(); stopAccessList?.(); stopOwnGrant?.();
+            stopAdminData?.(); stopPendingData?.(); stopOwnGrant?.();
             stopAdminData = null; stopPendingData = null;
-            stopAccessList = null; stopOwnGrant = null;
+            stopOwnGrant = null;
             manager = false; commissionAdmin = false; managerEmail = '';
             privateCampaigns = []; pendingContributions = []; adminLoaded = false;
             if (!user || !user.email || !user.emailVerified) {
@@ -518,7 +477,6 @@
                 manager = (grant.exists() && grant.data().ativo === true) || (commissionAdmin && email === 'hudsonamorim08@gmail.com');
                 managerEmail = email;
                 if (manager) startManagerData();
-                if (commissionAdmin) startAccessList();
                 stopOwnGrant = onSnapshot(doc(db, 'vaquinhas_acessos', email), record => {
                     if (sequence !== authSequence) return;
                     const allowed = record.exists() && record.data().ativo === true;
@@ -550,18 +508,6 @@
                 updateManagerUI();
             }
         });
-
-        window.authorizeVaquinhasUser = async event => {
-            event.preventDefault();
-            if (!commissionAdmin) return;
-            const email = document.getElementById('vaquinhas-access-email').value.trim().toLowerCase();
-            const feedback = document.getElementById('vaquinhas-access-feedback');
-            try {
-                await setDoc(doc(db, 'vaquinhas_acessos', email), {email, ativo: true, atualizadoPor: managerEmail, atualizadoEm: serverTimestamp()}, {merge: true});
-                feedback.textContent = `${email} autorizado para gerir vaquinhas.`;
-                document.getElementById('vaquinhas-access-email').value = '';
-            } catch (error) { feedback.textContent = 'Não foi possível autorizar. Verifique as regras do Firebase.'; }
-        };
 
         // Inicializa Banco
         window.onload = async () => {
@@ -946,9 +892,45 @@
             lucide.createIcons();
         }
 
+        async function loadPersonContributions(camp) {
+            const root = document.getElementById('detail-contributors-list');
+            root.textContent = 'Carregando participantes...';
+            try {
+                const snap = await getDoc(doc(db, 'app_ipcvt', 'controle_intera_' + camp.id));
+                if (!manager || currentView !== 'detail' || String(selectedCampaign?.id) !== String(camp.id)) return;
+                const people = snap.exists() ? snap.data().people || [] : [];
+                root.replaceChildren();
+                const list = document.createElement('div');
+                list.className = 'space-y-3';
+                for (const person of people) {
+                    const paidCents = (person.payments || []).reduce((total, payment) => total + Number(payment.amount || 0), 0);
+                    const row = document.createElement('div');
+                    row.className = 'flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 py-3';
+                    const name = document.createElement('strong'); name.className = 'text-sm text-slate-700';
+                    name.textContent = person.name;
+                    const paid = document.createElement('span'); paid.className = 'text-sm text-presb-green font-semibold';
+                    paid.textContent = window.formatCurrency(paidCents / 100) + ' pago · ' + window.formatCurrency(Math.max(0, Number(person.expected || 0) - paidCents) / 100) + ' pendente';
+                    row.append(name, paid); list.append(row);
+                }
+                if (people.length) root.append(list);
+                else root.textContent = 'Ainda não há participantes cadastrados.';
+                const manage = document.createElement('button');
+                manage.type = 'button'; manage.textContent = 'Gerenciar pagamentos';
+                manage.className = 'mt-5 text-xs font-bold text-presb-green underline underline-offset-4';
+                manage.onclick = () => window.requireAuth('ledger');
+                root.append(manage);
+            } catch (error) {
+                if (manager && currentView === 'detail' && String(selectedCampaign?.id) === String(camp.id)) {
+                    root.textContent = 'Não foi possível carregar os registros. Verifique sua permissão.';
+                }
+                console.error('Falha ao consultar participantes:', error);
+            }
+        }
+
         function renderDetail() {
             if (selectedCampaign?.visibility === 'private' && !manager) { window.requireAuth('open-private'); return; }
             const camp = selectedCampaign; const isFinance = camp.type === 'finance';
+            document.getElementById('detail-contributors-section').classList.toggle('hidden', !manager);
             document.getElementById('admin-contributions-section').classList.toggle('hidden', !manager);
             document.getElementById('contributor-list-title').textContent = manager ? 'Registros de contribuições' : 'Resumo de contribuições';
             if (camp.mode === 'person') {
@@ -957,7 +939,7 @@
                 document.getElementById('detail-tags').textContent='Por pessoa';
                 document.getElementById('detail-finance-progress').textContent=window.formatCurrency(camp.quotaValue)+' por pessoa · '+Number(camp.contributorCount ?? camp.ledgerPaidCount ?? 0)+' pagantes · '+window.formatCurrency(camp.raised)+' recebido';
                 ['detail-items-needed','detail-pix-block','detail-contributors-list'].forEach(id=>document.getElementById(id).replaceChildren());
-                const button=document.createElement('button');button.textContent='Controle de participantes (gestão)';button.onclick=()=>window.requireAuth('ledger');document.getElementById('detail-contributors-list').append(button);
+                if (manager) loadPersonContributions(camp);
                 document.getElementById('contrib-init').parentElement.hidden=true;
                 renderPendingContributions();
                 return;
@@ -1024,21 +1006,11 @@
             pixBlock.innerHTML = '';
             if (isFinance && camp.pixKey) {
                 pixBlock.innerHTML = `
-                    <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl flex flex-col sm:flex-row items-center gap-6 relative overflow-hidden mb-8 group">
-                        <div class="absolute top-0 right-0 w-32 h-32 bg-presb-green opacity-5 rounded-bl-full -z-10 group-hover:scale-110 transition-transform"></div>
-                        <div class="p-5 rounded-2xl bg-slate-50 text-presb-green shadow-inner border border-slate-200 flex-shrink-0">
-                            <i data-lucide="qr-code" class="w-10 h-10"></i>
-                        </div>
-                        <div class="flex-grow text-center sm:text-left z-10 w-full">
-                            <h4 class="text-lg font-bold font-serif text-presb-green mb-1">Dados para PIX</h4>
-                            <p class="text-slate-500 text-xs mb-5 font-medium">Favorecido: <strong class="text-slate-700">${escapeHtml(camp.pixName)}</strong></p>
-                            <div class="flex flex-col sm:flex-row items-stretch sm:items-center max-w-lg bg-slate-50 border-2 border-slate-200 rounded-xl overflow-hidden focus-within:border-presb-gold transition-colors mx-auto sm:mx-0">
-                                <div class="px-5 py-4 text-slate-600 font-mono text-sm font-bold flex-grow truncate text-center sm:text-left">${escapeHtml(camp.pixKey)}</div>
-                                <button id="btn-copy-pix" class="px-6 py-4 font-bold text-[10px] uppercase tracking-widest transition-colors flex items-center justify-center gap-2 bg-slate-800 text-white hover:bg-black">
-                                    <i data-lucide="copy" class="w-4 h-4"></i> Copiar Chave
-                                </button>
-                            </div>
-                        </div>
+                    <div class="bg-white text-presb-green p-4 rounded-xl border border-presb-gold/50 shadow-md">
+                        <h4 class="font-bold text-sm mb-2 flex items-center gap-2"><i data-lucide="qr-code" class="w-4 h-4"></i> Pague com PIX</h4>
+                        <p class="text-slate-600 text-xs mb-2">Favorecido: <strong>${escapeHtml(camp.pixName)}</strong></p>
+                        <p class="text-slate-700 font-mono text-xs break-all bg-slate-50 p-3 rounded-lg border">${escapeHtml(camp.pixKey)}</p>
+                        <button type="button" id="btn-copy-pix" class="w-full mt-3 px-4 py-3 bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2"><i data-lucide="copy" class="w-4 h-4"></i> Copiar chave PIX</button>
                     </div>
                 `;
                 document.getElementById('btn-copy-pix').onclick = () => window.copyPix(camp.pixKey);
@@ -1069,7 +1041,7 @@
             }
             renderPendingContributions();
             
-            document.getElementById('contrib-subtitle').innerText = isFinance ? "Registre aqui sua oferta após fazer o PIX, para controle da equipe." : "Assuma um item da lista e contribua com a comunhão!";
+            document.getElementById('contrib-subtitle').innerText = isFinance ? "Registre sua oferta e veja os dados para o PIX." : "Assuma um item da lista e contribua com a comunhão!";
             window.toggleContribForm(false);
             
             // Build Dynamic Form
