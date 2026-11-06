@@ -48,7 +48,7 @@
         <p class="text-presb-green font-black uppercase text-xs tracking-widest">Sincronizando Projetos</p>
     </div>
 
-    <header class="campaign-header"><div class="campaign-header-inner"><a href="index.html" class="campaign-brand"><img src="logo-vaquinhas.svg" alt="">Núcleo <span>IPCVT</span></a><nav aria-label="Navegação"><button id="nav-btn-list" onclick="window.switchView('list')">Vaquinhas</button><button id="nav-btn-form" onclick="window.requireAuth('create')"><i data-lucide="plus" aria-hidden="true"></i><span>Nova arrecadação</span></button><a href="index.html" aria-label="Voltar ao Portal"><i data-lucide="arrow-left" aria-hidden="true"></i><span>Portal</span></a></nav></div></header>
+    <header class="campaign-header"><div class="campaign-header-inner"><a href="index.html" class="campaign-brand"><img src="logo-vaquinhas.svg" alt="">Núcleo <span>IPCVT</span></a><nav aria-label="Navegação"><button id="nav-btn-list" onclick="window.switchView('list')">Vaquinhas</button><button id="nav-btn-form" onclick="window.requireAuth('create')"><i data-lucide="plus" aria-hidden="true"></i><span>Nova arrecadação</span></button><button id="vaquinhas-session-button" onclick="window.toggleManagementLogin()" aria-label="Entrar com Google">Entrar</button><a href="index.html" aria-label="Voltar ao Portal"><i data-lucide="arrow-left" aria-hidden="true"></i><span>Portal</span></a></nav></div></header>
     <main class="max-w-7xl mx-auto px-6 py-12 relative">
         
         <!-- ================= LISTA ================= -->
@@ -62,6 +62,16 @@
 
             </div>
             <div class="campaign-toolbar" role="search"><label><i data-lucide="search" aria-hidden="true"></i><input id="campaign-search" type="search" aria-label="Buscar arrecadação" placeholder="Buscar arrecadação" oninput="window.renderCampaignList()"></label><select id="campaign-type-filter" aria-label="Tipo de arrecadação" onchange="window.renderCampaignList()"><option value="">Todos os tipos</option><option value="finance">Financeiras</option><option value="item">Itens e alimentos</option></select></div>
+            <div id="vaquinhas-admin-access" class="hidden bg-white border border-slate-200 p-5 rounded-2xl shadow-sm">
+                <h3 class="font-bold text-presb-green mb-3">Autorizar gestores de vaquinhas</h3>
+                <form id="vaquinhas-access-form" class="flex flex-col sm:flex-row gap-2" onsubmit="window.authorizeVaquinhasUser(event)">
+                    <input id="vaquinhas-access-email" type="email" placeholder="E-mail Google" required class="flex-1 border rounded-xl p-3 text-sm">
+                    <button type="submit" class="bg-presb-green text-white rounded-xl px-5 py-3 text-sm font-bold">Autorizar</button>
+                </form>
+                <p class="text-xs text-slate-500 mt-2">Somente administradores da Comissão podem cadastrar outros gestores.</p>
+                <p id="vaquinhas-access-feedback" class="text-xs mt-2" role="status"></p>
+                <div id="vaquinhas-access-users" class="mt-4 space-y-2"></div>
+            </div>
             <div id="campaigns-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
         </div>
 
@@ -84,6 +94,14 @@
                     <div>
                         <label for="input-desc" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Descrição</label>
                         <textarea required id="input-desc" rows="3" placeholder="Explique o motivo, data, local..." class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-presb-gold/50 outline-none transition-all font-medium text-slate-600 resize-none"></textarea>
+                    </div>
+                    <div>
+                        <label for="input-visibility" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Visibilidade da arrecadação</label>
+                        <select id="input-visibility" class="w-full px-5 py-4 border border-slate-200 rounded-2xl outline-none bg-white focus:ring-2 focus:ring-presb-gold/50 font-medium">
+                            <option value="public">Pública — disponível para a igreja</option>
+                            <option value="private">Privada — somente gestores autorizados</option>
+                        </select>
+                        <p class="text-xs text-slate-500 mt-2">A visibilidade não altera a modalidade: valor livre, cotas ou por pessoa.</p>
                     </div>
                 </div>
 
@@ -113,7 +131,7 @@
                             <option value="open">Valor Livre</option>
                             <option value="fixed">Cotas Fixas</option><option value="person">Por pessoa</option>
                         </select>
-                        <p id="person-mode-hint" class="hidden">Valor individual por participante, sem meta total. A lista e os pagamentos ficam no controle com senha.</p>
+                        <p id="person-mode-hint" class="hidden">Valor por participante, sem meta total. Os registros ficam no controle administrativo.</p>
                     </div>
                 </div>
                 
@@ -142,6 +160,11 @@
                         <input id="input-pixname" type="text" placeholder="Nome na conta" class="w-full px-4 py-3 text-sm border border-slate-300 rounded-xl outline-none focus:border-presb-green font-medium">
                             </div>
                         </div>
+                        <div class="mt-4">
+                            <label for="input-receipt-phone" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">WhatsApp para comprovantes</label>
+                            <input id="input-receipt-phone" type="tel" inputmode="tel" placeholder="Ex.: 21 99999-9999" class="w-full px-4 py-3 text-sm border border-slate-300 rounded-xl outline-none focus:border-presb-green font-medium">
+                            <p class="text-xs text-slate-500 mt-2">Informe o número que receberá os comprovantes, com DDD.</p>
+                        </div>
                     </div>
                 </div>
 
@@ -161,6 +184,9 @@
                 <div class="pt-8 border-t border-slate-100 mt-8">
                     <button type="submit" id="btn-form-submit" class="w-full bg-presb-green hover:bg-black text-white font-black py-5 px-4 rounded-[1.5rem] transition-all shadow-xl active:scale-95 text-xs uppercase tracking-widest">
                         Publicar Arrecadação
+                    </button>
+                    <button type="button" id="btn-delete-campaign-form" onclick="window.deleteEditingCampaign()" class="hidden w-full mt-4 border-2 border-red-200 text-red-700 hover:bg-red-50 font-bold py-4 px-4 rounded-[1.5rem] transition-colors text-xs uppercase tracking-widest">
+                        Excluir esta vaquinha
                     </button>
                 </div>
             </form>
@@ -200,9 +226,13 @@
 
                     <div class="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-100">
                         <h3 class="text-xl font-bold font-serif text-presb-green mb-8 flex items-center gap-3 pb-6 border-b border-slate-100">
-                            <i data-lucide="users" class="w-6 h-6 text-presb-gold"></i> Quem já abençoou
+                            <i data-lucide="users" class="w-6 h-6 text-presb-gold"></i> <span id="contributor-list-title">Contribuições</span>
                         </h3>
                         <div id="detail-contributors-list"></div>
+                    </div>
+                    <div id="admin-contributions-section" class="hidden bg-white p-8 rounded-[3rem] shadow-xl border border-slate-100">
+                        <h3 class="text-xl font-bold font-serif text-presb-green mb-6">Contribuições pendentes</h3>
+                        <div id="admin-contributions-list" class="space-y-3"></div>
                     </div>
                 </div>
 
@@ -242,30 +272,36 @@
         </div>
     </main>
 
-    <!-- Modal Admin -->
+    <!-- Confirmação de registro financeiro e envio de comprovante -->
+    <div id="contribution-confirmation" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[150] hidden flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="contribution-confirmation-title">
+        <div class="bg-white rounded-3xl max-w-md w-full p-8 text-center shadow-xl">
+            <i data-lucide="clock-3" class="w-10 h-10 text-amber-500 mx-auto mb-4"></i>
+            <h2 id="contribution-confirmation-title" class="font-bold text-xl text-presb-green mb-3">Contribuição pendente</h2>
+            <p class="text-sm text-slate-600 mb-6">Seu registro foi enviado. O valor só será contabilizado depois da confirmação do responsável.</p>
+            <a id="contribution-whatsapp" href="#" target="_blank" rel="noopener noreferrer" class="hidden bg-[#128C7E] text-white rounded-xl px-5 py-4 font-bold text-sm mb-3 items-center justify-center gap-2"><i data-lucide="message-circle" class="w-5 h-5"></i> Enviar comprovante pelo WhatsApp</a>
+            <p id="contribution-whatsapp-hint" class="text-xs text-slate-500 mb-4 hidden">Anexe a imagem do comprovante na conversa. O WhatsApp não envia o arquivo automaticamente.</p>
+            <button type="button" onclick="window.closeContributionConfirmation()" class="block w-full text-slate-600 px-4 py-3 font-bold text-sm">Concluir</button>
+        </div>
+    </div>
+
+    <!-- Login administrativo -->
     <div id="auth-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-[2.5rem] shadow-2xl max-w-sm w-full overflow-hidden fade-in border-t-8 border-presb-gold">
             <div class="bg-slate-50 p-6 flex justify-between items-center text-presb-green border-b border-slate-100">
-                <h3 class="font-bold font-serif flex items-center gap-2"><i data-lucide="lock" class="w-5 h-5 text-presb-gold"></i> Acesso Restrito</h3>
+                <h3 class="font-bold font-serif flex items-center gap-2"><i data-lucide="lock" class="w-5 h-5 text-presb-gold"></i> Gestão das Vaquinhas</h3>
                 <button onclick="window.closeAuthModal()" class="text-slate-400 hover:text-slate-800 transition-colors">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-            <form onsubmit="window.handleAuthSubmit(event)" class="p-8 text-center">
-                <p id="auth-description" class="text-slate-500 text-xs mb-8 font-medium leading-relaxed">Insira a senha de gestão para autorizar a ação.</p>
-                <div class="mb-6">
-                    <input type="password" id="auth-password" required autocomplete="off" placeholder="••••••" class="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-presb-gold focus:ring-4 focus:ring-presb-gold/20 transition-all font-black tracking-[0.5em] text-center text-xl shadow-inner">
-                    <p id="auth-error" class="text-red-500 text-[10px] mt-3 font-bold uppercase tracking-widest hidden animate-pulse">Senha incorreta</p>
-                </div>
-                <button type="submit" class="w-full bg-presb-green hover:bg-black text-white font-black py-4 rounded-2xl transition-colors text-[10px] uppercase tracking-[0.2em] shadow-lg">
-                    Acessar
-                </button>
-            </form>
+            <div class="p-8 text-center">
+                <p id="auth-description" class="text-slate-500 text-xs mb-5 font-medium leading-relaxed">Entre com sua conta Google autorizada.</p>
+                <p id="auth-error" class="text-red-600 text-xs mb-5 hidden" role="alert"></p>
+                <button type="button" onclick="window.handleAuthSubmit()" class="w-full bg-presb-green hover:bg-black text-white font-black py-4 rounded-2xl transition-colors text-xs shadow-lg">Entrar com Google</button>
+            </div>
         </div>
     </div>
 
     <!-- CÓDIGO DO FIREBASE E LÓGICA -->
-    <dialog id="visibility-dialog" class="visibility-dialog"><h2>Quem poderá acessar?</h2><p>Privada: o cartão aparece como Arrecadação Oculta e a senha libera o controle de participantes.</p><div><button onclick="window.chooseVisibility('public')">Pública</button><button onclick="window.chooseVisibility('private')">Privada</button><button onclick="document.getElementById('visibility-dialog').close()">Cancelar</button></div></dialog>
     <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
@@ -273,8 +309,8 @@
     <script src="arrecadacoes-relatorios.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, onSnapshot, getDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, updateDoc, onSnapshot, getDoc, runTransaction, collection, addDoc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously, signOut, setPersistence, browserLocalPersistence, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAg9w5QohkcmXUFRgLfSI5Sh1chnCD1Owc",
@@ -286,9 +322,15 @@
             measurementId: "G-DJ8E3VPMSY"
         };
 
-        const app = initializeApp(firebaseConfig);
+        // O mesmo nome e configuração da Comissão permite reutilizar o login neste domínio.
+        const app = initializeApp(firebaseConfig, 'ipcvt-comissao');
         const db = getFirestore(app);
         const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
+        googleProvider.setCustomParameters({ prompt: 'select_account' });
+        const adminDocRef = doc(db, 'app_ipcvt', 'interas_dados');
+        const publicDocRef = doc(db, 'app_ipcvt', 'interas_publicas');
+        const pendingCollection = collection(db, 'interas_contribuicoes');
         IPCVTLedger.configure({
             onOpen: () => { ['list','form','detail'].forEach(v=>document.getElementById('view-'+v).classList.add('hidden')); currentView='ledger'; window.scrollTo(0,0); },
             onClose: () => window.switchView('list'),
@@ -302,14 +344,41 @@
             load: async id => { const snap = await getDoc(doc(db, 'app_ipcvt', 'controle_intera_' + id)); return snap.exists() ? snap.data() : {people:[],version:0}; },
             save: async (id, candidate, version) => runTransaction(db, async transaction => {
                 const ref = doc(db, 'app_ipcvt', 'controle_intera_' + id);
-                const snap = await transaction.get(ref);
+                const [snap, campaignSnap] = await Promise.all([transaction.get(ref), transaction.get(adminDocRef)]);
                 if ((snap.exists() ? snap.data().version || 0 : 0) !== version) throw Error('O controle foi atualizado em outro acesso. Feche e abra novamente antes de salvar.');
                 transaction.set(ref, {...candidate,version:version+1});
+                if (campaignSnap.exists()) {
+                    const current = campaignSnap.data();
+                    const updated = structuredClone(current.campaigns || []);
+                    const campaign = updated.find(c => String(c.id) === String(id));
+                    if (campaign?.mode === 'person') {
+                        const totalCents = candidate.people.reduce((sum, person) =>
+                            sum + (person.payments || []).reduce((n, payment) => n + Number(payment.amount || 0), 0), 0);
+                        campaign.raised = totalCents / 100;
+                        campaign.ledgerPaidCount = candidate.people.filter(person =>
+                            (person.payments || []).some(payment => Number(payment.amount) > 0)).length;
+                        transaction.set(adminDocRef, {...current, campaigns: updated});
+                        transaction.set(publicDocRef, {campaigns: projectPublicCampaigns(updated)});
+                    }
+                }
             })
         });
 
         // Estado do Banco de Dados
         let campaigns = [];
+        let publicCampaigns = [];
+        let privateCampaigns = [];
+        let manager = false;
+        let commissionAdmin = false;
+        let managerEmail = '';
+        let stopAdminData = null;
+        let stopPendingData = null;
+        let stopAccessList = null;
+        let stopOwnGrant = null;
+        let pendingContributions = [];
+        let publicLoaded = false;
+        let adminLoaded = false;
+        let authSequence = 0;
         let isFirebaseConnected = false;
         
         // Controle de Tela
@@ -317,44 +386,215 @@
         let selectedCampaign = null; 
         let pendingAction = null;
         let participantRemovalAuth = null;
-        let selectedVisibility = 'public'; 
         let formItemsNeeded = [];
         let editingCampaignId = null; // Controle do modo de Edição
 
         window.formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
 
+        const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+        const approvedContributions = camp => (camp.contributors || []).filter(c => !c.status || c.status === 'approved');
+        const approvedAmount = camp => approvedContributions(camp).reduce((total, c) => total + (Number(c.amount) || 0), 0);
+        const approvedCount = camp => new Set(approvedContributions(camp)
+            .map(c => String(c.name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase())
+            .filter(Boolean)).size;
+
+        // O documento público jamais recebe nomes, comprovantes ou valores individuais.
+        function projectPublicCampaigns(source) {
+            return source.map(camp => {
+                if (camp.visibility === 'private') return {
+                    id: camp.id, visibility: 'private', title: 'Arrecadação oculta',
+                    description: 'Conteúdo reservado aos gestores.', type: camp.type, mode: camp.mode
+                };
+                const {contributors, ...published} = camp;
+                return {
+                    ...published,
+                    raised: camp.type === 'finance' ? (Number(camp.raised) || approvedAmount(camp)) : 0,
+                    contributorCount: camp.mode === 'person' ? Number(camp.ledgerPaidCount || 0) : approvedCount(camp),
+                    contributors: []
+                };
+            });
+        }
+
+        function refreshVisibleCampaigns() {
+            campaigns = manager ? privateCampaigns : publicCampaigns;
+            if (currentView === 'list') renderList();
+            if (currentView === 'detail' && selectedCampaign) {
+                selectedCampaign = campaigns.find(c => String(c.id) === String(selectedCampaign.id));
+                if (selectedCampaign) renderDetail(); else window.switchView('list');
+            }
+            if (currentView === 'ledger' && !manager) window.switchView('list');
+        }
+
+        function updateManagerUI() {
+            const button = document.getElementById('vaquinhas-session-button');
+            button.textContent = manager ? 'Sair' : 'Entrar';
+            button.setAttribute('aria-label', manager ? 'Sair da gestão' : 'Entrar com Google');
+            document.getElementById('vaquinhas-admin-access').classList.toggle('hidden', !commissionAdmin);
+            document.getElementById('admin-contributions-section').classList.toggle('hidden', !manager || currentView !== 'detail');
+            refreshVisibleCampaigns();
+        }
+
+        function startAccessList() {
+            stopAccessList?.();
+            stopAccessList = onSnapshot(collection(db, 'vaquinhas_acessos'), snap => {
+                const root = document.getElementById('vaquinhas-access-users');
+                root.replaceChildren();
+                snap.docs.sort((a, b) => a.id.localeCompare(b.id)).forEach(entry => {
+                    const row = document.createElement('div');
+                    row.className = 'flex flex-wrap justify-between items-center gap-3 rounded-xl bg-slate-50 p-3';
+                    const email = document.createElement('span');
+                    email.className = 'text-xs font-medium text-slate-700 break-all';
+                    email.textContent = entry.id;
+                    const toggle = document.createElement('button');
+                    const active = entry.data().ativo === true;
+                    toggle.type = 'button';
+                    toggle.className = 'rounded-lg px-3 py-2 text-xs font-bold ' + (active ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700');
+                    toggle.textContent = active ? 'Suspender' : 'Reativar';
+                    toggle.onclick = async () => {
+                        toggle.disabled = true;
+                        try {
+                            await updateDoc(entry.ref, {ativo: !active, atualizadoPor: managerEmail, atualizadoEm: serverTimestamp()});
+                        } catch { alert('Não foi possível alterar o acesso.'); }
+                        finally { toggle.disabled = false; }
+                    };
+                    row.append(email, toggle); root.append(row);
+                });
+            }, error => console.error('Não foi possível listar gestores:', error));
+        }
+
+        async function syncPublicProjection() {
+            if (!manager || !adminLoaded || !publicLoaded) return;
+            const projection = projectPublicCampaigns(privateCampaigns);
+            if (JSON.stringify(projection) === JSON.stringify(publicCampaigns)) return;
+            try { await setDoc(publicDocRef, {campaigns: projection}); }
+            catch (error) { console.error('Não foi possível sincronizar o resumo público:', error); }
+        }
+
+        function startManagerData() {
+            stopAdminData?.();
+            stopPendingData?.();
+            adminLoaded = false;
+            stopAdminData = onSnapshot(adminDocRef, snap => {
+                privateCampaigns = snap.exists() ? snap.data().campaigns || [] : [];
+                adminLoaded = true;
+                refreshVisibleCampaigns();
+                syncPublicProjection();
+                if (pendingAction && manager) {
+                    const action = pendingAction;
+                    window.closeAuthModal(true);
+                    performAuthorizedAction(action);
+                }
+            }, error => console.error('Não foi possível ler os dados administrativos:', error));
+            stopPendingData = onSnapshot(pendingCollection, snap => {
+                pendingContributions = snap.docs.map(record => ({id: record.id, ...record.data()}));
+                renderPendingContributions();
+            }, error => console.error('Não foi possível ler as contribuições pendentes:', error));
+        }
+
+        onAuthStateChanged(auth, async user => {
+            const sequence = ++authSequence;
+            stopAdminData?.(); stopPendingData?.(); stopAccessList?.(); stopOwnGrant?.();
+            stopAdminData = null; stopPendingData = null;
+            stopAccessList = null; stopOwnGrant = null;
+            manager = false; commissionAdmin = false; managerEmail = '';
+            privateCampaigns = []; pendingContributions = []; adminLoaded = false;
+            if (!user || !user.email || !user.emailVerified) {
+                if (currentView !== 'list') window.switchView('list');
+                selectedCampaign = null;
+                updateManagerUI();
+                return;
+            }
+            try {
+                const token = await user.getIdTokenResult();
+                if (sequence !== authSequence) return;
+                if (token.claims.firebase?.sign_in_provider !== 'google.com') { updateManagerUI(); return; }
+                const email = user.email.trim().toLowerCase();
+                const [grant, commission] = await Promise.all([
+                    getDoc(doc(db, 'vaquinhas_acessos', email)),
+                    getDoc(doc(db, 'comissao_acessos', email))
+                ]);
+                if (sequence !== authSequence) return;
+                commissionAdmin = commission.exists() && commission.data().ativo === true && commission.data().perfil === 'admin';
+                manager = (grant.exists() && grant.data().ativo === true) || (commissionAdmin && email === 'hudsonamorim08@gmail.com');
+                managerEmail = email;
+                if (manager) startManagerData();
+                if (commissionAdmin) startAccessList();
+                stopOwnGrant = onSnapshot(doc(db, 'vaquinhas_acessos', email), record => {
+                    if (sequence !== authSequence) return;
+                    const allowed = record.exists() && record.data().ativo === true;
+                    const nextManager = allowed || (commissionAdmin && email === 'hudsonamorim08@gmail.com');
+                    if (nextManager === manager) return;
+                    manager = nextManager;
+                    if (manager) startManagerData();
+                    else {
+                        stopAdminData?.(); stopPendingData?.();
+                        stopAdminData = null; stopPendingData = null;
+                        privateCampaigns = []; pendingContributions = []; adminLoaded = false;
+                        window.switchView('list');
+                    }
+                    updateManagerUI();
+                }, error => console.error('Não foi possível acompanhar acesso:', error));
+                updateManagerUI();
+                if (manager && pendingAction && adminLoaded) {
+                    const action = pendingAction;
+                    window.closeAuthModal(true);
+                    await performAuthorizedAction(action);
+                } else if (pendingAction && !manager) {
+                    document.getElementById('auth-modal').classList.remove('hidden');
+                    const feedback = document.getElementById('auth-error');
+                    feedback.textContent = 'Este e-mail ainda não está autorizado a gerenciar vaquinhas.';
+                    feedback.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Não foi possível verificar o acesso:', error);
+                updateManagerUI();
+            }
+        });
+
+        window.authorizeVaquinhasUser = async event => {
+            event.preventDefault();
+            if (!commissionAdmin) return;
+            const email = document.getElementById('vaquinhas-access-email').value.trim().toLowerCase();
+            const feedback = document.getElementById('vaquinhas-access-feedback');
+            try {
+                await setDoc(doc(db, 'vaquinhas_acessos', email), {email, ativo: true, atualizadoPor: managerEmail, atualizadoEm: serverTimestamp()}, {merge: true});
+                feedback.textContent = `${email} autorizado para gerir vaquinhas.`;
+                document.getElementById('vaquinhas-access-email').value = '';
+            } catch (error) { feedback.textContent = 'Não foi possível autorizar. Verifique as regras do Firebase.'; }
+        };
+
         // Inicializa Banco
         window.onload = async () => {
-            try { await signInAnonymously(auth); } catch (e) { console.warn("Modo offline ativo"); }
-            
-            const docRef = doc(db, "app_ipcvt", "interas_dados");
-            onSnapshot(docRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    campaigns = docSnap.data().campaigns || [];
-                } else {
-                    campaigns = [];
-                }
-                
+            // Compatibilidade temporária com as regras legadas (leitura anônima).
+            // Nunca substitui uma sessão Google já existente no Portal.
+            await auth.authStateReady();
+            if (!auth.currentUser) {
+                try { await signInAnonymously(auth); }
+                catch (error) { console.warn('Consulta pública sem login anônimo:', error.code); }
+            }
+            onSnapshot(publicDocRef, docSnap => {
+                publicLoaded = true;
+                publicCampaigns = docSnap.exists() ? docSnap.data().campaigns || [] : [];
+                syncPublicProjection();
                 if (!isFirebaseConnected) {
                     isFirebaseConnected = true;
                     document.getElementById('loading-data').classList.add('opacity-0');
                     setTimeout(() => document.getElementById('loading-data').classList.add('hidden'), 500);
                     window.switchView('list');
-                } else {
-                    // Atualiza a tela se alguém mexer em outro computador
-                    if (currentView === 'list') renderList();
-                    if (currentView === 'detail' && selectedCampaign) {
-                        selectedCampaign = campaigns.find(c => c.id === selectedCampaign.id);
-                        if(selectedCampaign) renderDetail(); else window.switchView('list');
-                    }
                 }
+                refreshVisibleCampaigns();
+            }, error => {
+                console.error('Erro ao carregar vaquinhas públicas:', error);
+                document.getElementById('loading-data').classList.add('hidden');
             });
         };
 
         async function saveStateToFirebase() {
-            if(!isFirebaseConnected) return;
-            try { await setDoc(doc(db, "app_ipcvt", "interas_dados"), { campaigns }); } 
-            catch (err) { console.error("Erro ao salvar:", err); alert("Erro ao salvar dados."); }
+            if (!manager) throw Error('Acesso administrativo necessário.');
+            const batch = writeBatch(db);
+            batch.set(adminDocRef, {campaigns});
+            batch.set(publicDocRef, {campaigns: projectPublicCampaigns(campaigns)});
+            await batch.commit();
         }
 
         // Navegação e Views
@@ -376,6 +616,7 @@
                 document.getElementById('view-form').classList.remove('hidden');
                 document.getElementById('nav-btn-form').classList.replace('border-transparent', 'border-presb-gold');
                 document.getElementById('nav-btn-form').classList.add('text-presb-gold');
+                document.getElementById('btn-delete-campaign-form').classList.toggle('hidden', !editingCampaignId || !manager);
                 
                 // Se NÃO for modo de edição, reseta o formulário
                 if (!editingCampaignId) {
@@ -396,61 +637,72 @@
             lucide.createIcons();
         };
 
-        window.requireAuth = function(action) {
+        async function performAuthorizedAction(action) {
+            if (!manager) return;
+            if (action === 'create') {
+                editingCampaignId = null;
+                window.switchView('form');
+            } else if (action === 'edit') {
+                window.openEditForm();
+            } else if (action === 'open-private') {
+                const privateCampaign = privateCampaigns.find(c => String(c.id) === String(selectedCampaign?.id));
+                if (!privateCampaign) return;
+                selectedCampaign = privateCampaign;
+                window.switchView('detail');
+            } else if (action === 'ledger') {
+                IPCVTLedger.open(selectedCampaign.id, selectedCampaign.title, Math.round((selectedCampaign.quotaValue || 0) * 100), selectedCampaign.description);
+            } else if (action === 'delete') {
+                await window.deleteCampaign(selectedCampaign.id);
+            } else if (action === 'delete-participant') {
+                const resolve = participantRemovalAuth;
+                participantRemovalAuth = null;
+                if (window.confirm('Excluir o participante e seus pagamentos? Esta ação não pode ser desfeita.')) resolve?.(true);
+                else resolve?.(false);
+            }
+        }
+
+        window.requireAuth = async function(action) {
+            if (manager && (adminLoaded || action === 'manage')) return performAuthorizedAction(action);
             pendingAction = action;
-            document.getElementById('auth-description').textContent='Insira a senha de gestão para autorizar a ação.';
-            document.querySelector('#auth-modal button[type=submit]').textContent=action==='delete-participant' ? 'Excluir cadastro' : 'Acessar';
-            const modal = document.getElementById('auth-modal');
-            const input = document.getElementById('auth-password');
             document.getElementById('auth-error').classList.add('hidden');
-            input.value = '';
-            modal.classList.remove('hidden'); 
-            setTimeout(() => input.focus(), 100);
+            document.getElementById('auth-description').textContent = 'Entre com o Google para confirmar sua permissão.';
+            document.getElementById('auth-modal').classList.remove('hidden');
         };
 
-        window.closeAuthModal = function() {
+        window.closeAuthModal = function(keepRemoval = false) {
             document.getElementById('auth-modal').classList.add('hidden');
-            document.getElementById('auth-password').value='';
             pendingAction=null;
-            if (participantRemovalAuth) { const resolve=participantRemovalAuth; participantRemovalAuth=null; resolve(false); }
+            if (!keepRemoval && participantRemovalAuth) { const resolve=participantRemovalAuth; participantRemovalAuth=null; resolve(false); }
         };
         document.addEventListener('keydown', event => {
             if (event.key==='Escape' && !document.getElementById('auth-modal').classList.contains('hidden')) window.closeAuthModal();
         });
 
-        window.handleAuthSubmit = function(e) {
-            e.preventDefault();
-            if (document.getElementById('auth-password').value === 'Pr3sbit3ri4n4') {
-                const action=pendingAction;
-                const removalAuth=participantRemovalAuth;
-                participantRemovalAuth=null;
-                window.closeAuthModal();
-                if (action==='delete-participant') { removalAuth?.(true); return; }
-                if (action === 'create') { 
-                    editingCampaignId = null; // Garante que é criação
-                    document.getElementById('visibility-dialog').showModal();
-                } else if (action === 'edit') {
-                    window.openEditForm();
-                } else if (action === 'open-private' || action === 'ledger') {
-                    IPCVTLedger.open(selectedCampaign.id, selectedCampaign.title, Math.round((selectedCampaign.quotaValue || 0)*100), selectedCampaign.description);
-                } else if (action === 'delete') { 
-                    window.deleteCampaign(selectedCampaign.id); 
-                }
-            } else { 
-                document.getElementById('auth-error').classList.remove('hidden'); 
+        window.handleAuthSubmit = async function() {
+            const feedback = document.getElementById('auth-error');
+            feedback.classList.add('hidden');
+            try {
+                await setPersistence(auth, browserLocalPersistence);
+                await signInWithPopup(auth, googleProvider);
+            } catch (error) {
+                feedback.textContent = error.code === 'auth/popup-closed-by-user'
+                    ? 'O login foi cancelado.' : 'Não foi possível entrar com Google. Tente novamente.';
+                feedback.classList.remove('hidden');
             }
         };
 
-        window.chooseVisibility = visibility => {
-            selectedVisibility = visibility;
-            document.getElementById('visibility-dialog').close();
-            window.switchView('form');
-            if (visibility === 'private') { document.getElementById('input-mode').value = 'person'; window.handleModeChange(); }
+        window.toggleManagementLogin = async () => {
+            if (manager) {
+                await signOut(auth);
+                try { await signInAnonymously(auth); } catch { /* regras públicas novas não exigem sessão */ }
+                window.switchView('list');
+            } else await window.requireAuth('manage');
         };
+
         // Lógica do Form
         window.openEditForm = function() {
             editingCampaignId = selectedCampaign.id;
-            selectedVisibility = selectedCampaign.visibility || "public";
+            document.getElementById('input-visibility').value = selectedCampaign.visibility || 'public';
             
             // Popula as informações básicas
             document.getElementById('input-title').value = selectedCampaign.title;
@@ -474,6 +726,7 @@
                 document.getElementById('input-goal').value = selectedCampaign.goal || '';
                 document.getElementById('input-pixkey').value = selectedCampaign.pixKey || '';
                 document.getElementById('input-pixname').value = selectedCampaign.pixName || '';
+                document.getElementById('input-receipt-phone').value = selectedCampaign.receiptPhone || '';
                 if (selectedCampaign.mode === 'fixed' || selectedCampaign.mode === 'person') {
                     document.getElementById('input-quota').value = selectedCampaign.quotaValue || '';
                 }
@@ -543,7 +796,7 @@
             const list = document.getElementById('form-items-list');
             list.innerHTML = formItemsNeeded.map(i => `
                 <li class="flex justify-between items-center py-2 text-sm">
-                    <span class="font-bold text-slate-700">${i.name} (x${i.needed}) ${i.pledged > 0 ? `<span class="text-[10px] text-emerald-600 bg-emerald-50 px-2 rounded-md ml-2">Já doaram ${i.pledged}</span>` : ''}</span>
+                    <span class="font-bold text-slate-700">${escapeHtml(i.name)} (x${Number(i.needed)}) ${i.pledged > 0 ? `<span class="text-[10px] text-emerald-600 bg-emerald-50 px-2 rounded-md ml-2">Já doaram ${Number(i.pledged)}</span>` : ''}</span>
                     <button type="button" onclick="window.removeFormItem('${i.id}')" class="text-red-500 hover:text-red-700 font-bold"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                 </li>
             `).join('');
@@ -551,14 +804,16 @@
             lucide.createIcons();
         }
 
-        window.handleFormSubmit = function(e) {
+        window.handleFormSubmit = async function(e) {
             e.preventDefault();
+            if (!manager) return window.requireAuth('create');
             const type = document.querySelector('input[name="type"]:checked').value;
             const mode = document.getElementById('input-mode').value;
             
             let campData = {
                 title: document.getElementById('input-title').value,
                 description: document.getElementById('input-desc').value,
+                visibility: document.getElementById('input-visibility').value,
             };
 
             // Captura os dados com base no tipo
@@ -566,6 +821,10 @@
                 campData.goal = mode === 'person' ? null : parseFloat(document.getElementById('input-goal').value);
                 campData.pixKey = document.getElementById('input-pixkey').value;
                 campData.pixName = document.getElementById('input-pixname').value;
+                campData.receiptPhone = document.getElementById('input-receipt-phone').value.replace(/\D/g, '');
+                if (!/^\d{10,13}$/.test(campData.receiptPhone)) {
+                    alert('Informe o WhatsApp de comprovantes com DDD.'); return;
+                }
                 if(mode === 'fixed' || mode === 'person') campData.quotaValue = parseFloat(document.getElementById('input-quota').value);
             } else if (type === 'item' && mode === 'fixed') {
                 if(formItemsNeeded.length === 0) return alert("Adicione itens à lista!");
@@ -583,14 +842,14 @@
                 campData.id = Date.now();
                 campData.type = type;
                 campData.mode = mode;
-                campData.visibility = selectedVisibility;
                 campData.contributors = [];
                 if (type === 'finance') campData.raised = 0;
                 
                 campaigns.push(campData);
             }
 
-            saveStateToFirebase();
+            try { await saveStateToFirebase(); }
+            catch (error) { alert('Não foi possível salvar. Verifique a conexão e as regras do Firebase.'); console.error(error); return; }
             
             // Retorna para a tela de visualização da campanha caso seja edição
             if (editingCampaignId) {
@@ -613,7 +872,9 @@
                 if (expectedVersion !== undefined && version !== expectedVersion) throw Error('Os pagamentos foram atualizados em outro acesso. Reabra o controle antes de excluir.');
                 if (campaignSnap.exists()) {
                     const stored=campaignSnap.data();
-                    transaction.set(campaignRef,{...stored,campaigns:(stored.campaigns || []).filter(c=>String(c.id)!==String(id))});
+                    const remaining = (stored.campaigns || []).filter(c=>String(c.id)!==String(id));
+                    transaction.set(campaignRef,{...stored,campaigns:remaining});
+                    transaction.set(publicDocRef,{campaigns:projectPublicCampaigns(remaining)});
                 }
                 transaction.delete(ledgerRef);
             });
@@ -621,8 +882,21 @@
             if (selectedCampaign && String(selectedCampaign.id)===String(id)) selectedCampaign=null;
         }
         window.deleteCampaign = async function(id) {
-            try { await removeCampaignRecord(id); window.switchView('list'); }
-            catch(e) { alert('Não foi possível excluir: '+e.message); }
+            if (!manager) return window.requireAuth('delete');
+            const campaign = privateCampaigns.find(item => String(item.id) === String(id));
+            if (!campaign) return alert('A vaquinha não foi encontrada. Atualize a página.');
+            const confirmText = `Excluir definitivamente a vaquinha “${campaign.title}”?\n\nA arrecadação e o controle de participantes e pagamentos serão removidos. Esta ação não pode ser desfeita.`;
+            if (!window.confirm(confirmText)) return;
+            try {
+                await removeCampaignRecord(id);
+                editingCampaignId = null;
+                document.getElementById('btn-delete-campaign-form').classList.add('hidden');
+                window.switchView('list');
+            } catch(e) { alert('Não foi possível excluir: '+e.message); }
+        };
+        window.deleteEditingCampaign = () => {
+            if (!editingCampaignId || !manager) return;
+            return window.deleteCampaign(editingCampaignId);
         };
 
         // Renders
@@ -644,7 +918,7 @@
             filtered.slice().reverse().forEach(camp=>{
                 const privateCard=camp.visibility==='private',isFinance=camp.type==='finance',perPerson=camp.mode==='person';
                 const card=document.createElement('button');card.type='button';card.className='campaign-card'+(privateCard?' private-campaign-card':'');
-                card.setAttribute('aria-label','Abrir '+camp.title+(privateCard?' · acesso com senha':''));
+                card.setAttribute('aria-label','Abrir '+camp.title+(privateCard?' · acesso reservado':''));
                 const top=document.createElement('div');top.className='campaign-card-top';
                 const icon=document.createElement('i');icon.setAttribute('data-lucide',privateCard?'lock-keyhole':isFinance?'wallet':'gift');icon.setAttribute('aria-hidden','true');
                 const kind=document.createElement('span');kind.textContent=privateCard?'Arrecadação oculta':perPerson?'Por pessoa':isFinance?'Financeira':'Itens e alimentos';
@@ -653,16 +927,18 @@
                 const description=document.createElement('p');description.className='campaign-card-description';description.textContent=camp.description;
                 const bottom=document.createElement('div');bottom.className='campaign-card-bottom';
                 if(privateCard) {
-                    const tag=document.createElement('span');tag.className='private-campaign-tag';tag.textContent='Acesso com senha';bottom.append(tag);
+                    const tag=document.createElement('span');tag.className='private-campaign-tag';tag.textContent='Acesso restrito';bottom.append(tag);
                 } else if(isFinance && !perPerson) {
                     const line=document.createElement('div');line.className='campaign-card-values';const raised=document.createElement('strong');raised.textContent=window.formatCurrency(camp.raised);
                     const goal=document.createElement('span');goal.textContent='de '+window.formatCurrency(camp.goal);line.append(raised,goal);bottom.append(line);
                     const progress=Number(camp.goal)>0?Math.max(0,Math.min(100,(Number(camp.raised)||0)/Number(camp.goal)*100)):0;
                     const track=document.createElement('div');track.className='campaign-progress';track.setAttribute('role','progressbar');track.setAttribute('aria-label','Arrecadação em relação à meta');track.setAttribute('aria-valuenow',Math.round(progress));track.setAttribute('aria-valuemin','0');track.setAttribute('aria-valuemax','100');
                     const fill=document.createElement('span');fill.style.width=progress+'%';track.append(fill);bottom.append(track);
+                    const count=document.createElement('span');count.className='campaign-card-note';count.textContent=`${Number(camp.contributorCount ?? approvedCount(camp))} contribuintes confirmados`;
+                    bottom.append(count);
                 } else {
                     const line=document.createElement('span');line.className='campaign-card-note';
-                    line.textContent=perPerson?window.formatCurrency(camp.quotaValue)+' por pessoa':((camp.contributors||[]).length? (camp.contributors||[]).length+' participações':'Seja o primeiro a participar');bottom.append(line);
+                    line.textContent=perPerson?`${window.formatCurrency(camp.quotaValue)} por pessoa · ${Number(camp.contributorCount ?? camp.ledgerPaidCount ?? 0)} pagantes`:(Number(camp.contributorCount ?? approvedCount(camp)) ? (camp.contributorCount ?? approvedCount(camp))+' participações confirmadas':'Seja o primeiro a participar');bottom.append(line);
                 }
                 card.append(top,title,description,bottom);
                 card.onclick=()=>{selectedCampaign=camp;if(privateCard)window.requireAuth('open-private');else window.switchView('detail')};grid.append(card);
@@ -671,16 +947,19 @@
         }
 
         function renderDetail() {
-            if (selectedCampaign?.visibility === "private") { window.switchView("list"); return; }
+            if (selectedCampaign?.visibility === 'private' && !manager) { window.requireAuth('open-private'); return; }
             const camp = selectedCampaign; const isFinance = camp.type === 'finance';
+            document.getElementById('admin-contributions-section').classList.toggle('hidden', !manager);
+            document.getElementById('contributor-list-title').textContent = manager ? 'Registros de contribuições' : 'Resumo de contribuições';
             if (camp.mode === 'person') {
                 document.getElementById('detail-title').textContent=camp.title;
                 document.getElementById('detail-desc').textContent=camp.description;
                 document.getElementById('detail-tags').textContent='Por pessoa';
-                document.getElementById('detail-finance-progress').textContent=window.formatCurrency(camp.quotaValue)+' por pessoa · sem meta total';
+                document.getElementById('detail-finance-progress').textContent=window.formatCurrency(camp.quotaValue)+' por pessoa · '+Number(camp.contributorCount ?? camp.ledgerPaidCount ?? 0)+' pagantes · '+window.formatCurrency(camp.raised)+' recebido';
                 ['detail-items-needed','detail-pix-block','detail-contributors-list'].forEach(id=>document.getElementById(id).replaceChildren());
-                const button=document.createElement('button');button.textContent='Controle de participantes (senha)';button.onclick=()=>window.requireAuth('ledger');document.getElementById('detail-contributors-list').append(button);
+                const button=document.createElement('button');button.textContent='Controle de participantes (gestão)';button.onclick=()=>window.requireAuth('ledger');document.getElementById('detail-contributors-list').append(button);
                 document.getElementById('contrib-init').parentElement.hidden=true;
+                renderPendingContributions();
                 return;
             }
             document.getElementById('contrib-init').parentElement.hidden=false;
@@ -699,7 +978,9 @@
             const financeBlock = document.getElementById('detail-finance-progress');
             financeBlock.innerHTML = '';
             if (isFinance) {
-                const progress = Math.min((camp.raised / camp.goal) * 100, 100);
+                const progress = Number(camp.goal) > 0 ? Math.min((Number(camp.raised || 0) / camp.goal) * 100, 100) : 0;
+                const count = Number(camp.contributorCount ?? approvedCount(camp));
+                const remaining = Number(camp.goal) > 0 ? Math.max(0, Number(camp.goal) - Number(camp.raised || 0)) : null;
                 financeBlock.innerHTML = `
                     <div class="bg-slate-50 p-8 rounded-[2rem] border border-slate-200 mb-8">
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 gap-4">
@@ -716,6 +997,7 @@
                             <div class="h-full transition-all duration-1000 ease-out ${progress >= 100 ? 'bg-emerald-500' : 'bg-presb-gold'}" style="width: ${progress}%"></div>
                         </div>
                         <div class="text-right text-xs font-bold text-slate-500">${progress.toFixed(1)}% alcançado</div>
+                        <div class="flex flex-wrap gap-4 mt-4 text-xs font-bold text-slate-600"><span>${count} contribuintes confirmados</span>${remaining === null ? '' : `<span>Faltam ${window.formatCurrency(remaining)}</span>`}</div>
                     </div>
                 `;
             }
@@ -728,7 +1010,7 @@
                     return `
                         <div class="p-5 rounded-2xl border-2 ${completed ? 'bg-emerald-50 border-emerald-100' : 'bg-white border-slate-100 shadow-sm'} flex justify-between items-center transition-colors">
                             <div>
-                                <span class="block font-bold text-sm ${completed ? 'text-emerald-800 line-through opacity-60' : 'text-slate-700'}">${item.name}</span>
+                                <span class="block font-bold text-sm ${completed ? 'text-emerald-800 line-through opacity-60' : 'text-slate-700'}">${escapeHtml(item.name)}</span>
                                 <span class="text-[10px] uppercase tracking-widest font-bold text-slate-400 mt-1 block">Temos ${item.pledged} de ${item.needed}</span>
                             </div>
                             ${completed ? '<i data-lucide="check-circle-2" class="text-emerald-500 w-6 h-6"></i>' : `<div class="text-[10px] font-black text-presb-dark bg-presb-gold px-3 py-1.5 rounded-lg">Faltam ${item.needed - item.pledged}</div>`}
@@ -749,38 +1031,43 @@
                         </div>
                         <div class="flex-grow text-center sm:text-left z-10 w-full">
                             <h4 class="text-lg font-bold font-serif text-presb-green mb-1">Dados para PIX</h4>
-                            <p class="text-slate-500 text-xs mb-5 font-medium">Favorecido: <strong class="text-slate-700">${camp.pixName}</strong></p>
+                            <p class="text-slate-500 text-xs mb-5 font-medium">Favorecido: <strong class="text-slate-700">${escapeHtml(camp.pixName)}</strong></p>
                             <div class="flex flex-col sm:flex-row items-stretch sm:items-center max-w-lg bg-slate-50 border-2 border-slate-200 rounded-xl overflow-hidden focus-within:border-presb-gold transition-colors mx-auto sm:mx-0">
-                                <div class="px-5 py-4 text-slate-600 font-mono text-sm font-bold flex-grow truncate text-center sm:text-left">${camp.pixKey}</div>
-                                <button id="btn-copy-pix" onclick="window.copyPix('${camp.pixKey}')" class="px-6 py-4 font-bold text-[10px] uppercase tracking-widest transition-colors flex items-center justify-center gap-2 bg-slate-800 text-white hover:bg-black">
+                                <div class="px-5 py-4 text-slate-600 font-mono text-sm font-bold flex-grow truncate text-center sm:text-left">${escapeHtml(camp.pixKey)}</div>
+                                <button id="btn-copy-pix" class="px-6 py-4 font-bold text-[10px] uppercase tracking-widest transition-colors flex items-center justify-center gap-2 bg-slate-800 text-white hover:bg-black">
                                     <i data-lucide="copy" class="w-4 h-4"></i> Copiar Chave
                                 </button>
                             </div>
                         </div>
                     </div>
                 `;
+                document.getElementById('btn-copy-pix').onclick = () => window.copyPix(camp.pixKey);
             }
 
             const listBlock = document.getElementById('detail-contributors-list');
-            if (camp.contributors.length === 0) {
-                listBlock.innerHTML = `<div class="text-center py-10 text-slate-400"><i data-lucide="message-square" class="w-10 h-10 mx-auto mb-4 opacity-20"></i><p class="font-medium text-sm">Nenhuma oferta registrada. Seja o primeiro!</p></div>`;
+            if (!manager) {
+                const count = Number(camp.contributorCount ?? 0);
+                listBlock.innerHTML = `<p class="text-sm text-slate-500">${count} contribuições confirmadas. A lista de nomes e valores é reservada à gestão.</p>`;
+            } else if (!approvedContributions(camp).length) {
+                listBlock.innerHTML = `<div class="text-center py-10 text-slate-400"><i data-lucide="message-square" class="w-10 h-10 mx-auto mb-4 opacity-20"></i><p class="font-medium text-sm">Ainda não há contribuições aprovadas.</p></div>`;
             } else {
-                listBlock.innerHTML = '<ul class="space-y-4">' + camp.contributors.map(c => {
-                    const letter = c.name.charAt(0).toUpperCase();
+                listBlock.innerHTML = '<ul class="space-y-4">' + approvedContributions(camp).map(c => {
+                    const letter = escapeHtml(c.name?.charAt(0).toUpperCase() || '?');
                     const valBadge = isFinance 
                         ? `<span class="font-black text-sm text-presb-green bg-presb-green/10 px-4 py-2 rounded-xl border border-presb-green/20">${window.formatCurrency(c.amount)}</span>`
-                        : `<span class="font-bold text-sm text-yellow-700 bg-yellow-50 px-4 py-2 rounded-xl border border-yellow-200">${c.quantity}x ${c.itemName}</span>`;
+                        : `<span class="font-bold text-sm text-yellow-700 bg-yellow-50 px-4 py-2 rounded-xl border border-yellow-200">${Number(c.quantity)}x ${escapeHtml(c.itemName)}</span>`;
                     return `
                         <li class="p-5 bg-slate-50 rounded-[1.5rem] flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-slate-100 hover:border-presb-gold/30 transition-colors">
                             <div class="flex items-center gap-4">
                                 <div class="w-12 h-12 rounded-full flex items-center justify-center font-black text-lg bg-white text-presb-green border-2 border-slate-200 shadow-sm">${letter}</div>
-                                <span class="font-bold text-base text-slate-700">${c.name}</span>
+                                <span class="font-bold text-base text-slate-700">${escapeHtml(c.name)}</span>
                             </div>
                             <div class="text-center sm:text-right">${valBadge}</div>
                         </li>
                     `;
                 }).join('') + '</ul>';
             }
+            renderPendingContributions();
             
             document.getElementById('contrib-subtitle').innerText = isFinance ? "Registre aqui sua oferta após fazer o PIX, para controle da equipe." : "Assuma um item da lista e contribua com a comunhão!";
             window.toggleContribForm(false);
@@ -801,7 +1088,7 @@
                 }
             } else {
                 if(camp.mode === 'fixed') {
-                    const options = camp.itemsNeeded.filter(i => i.pledged < i.needed).map(i => `<option value="${i.id}">${i.name} (Faltam ${i.needed - i.pledged})</option>`).join('');
+                    const options = camp.itemsNeeded.filter(i => i.pledged < i.needed).map(i => `<option value="${escapeHtml(i.id)}">${escapeHtml(i.name)} (Faltam ${i.needed - i.pledged})</option>`).join('');
                     if(options) {
                         dynFields.innerHTML = `
                             <div class="mb-4"><label for="c-item-select" class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">O que vai levar?</label>
@@ -826,10 +1113,133 @@
             if(show) document.getElementById('contrib-name').value = '';
         };
 
-        window.submitContribution = function(e) {
+        function renderPendingContributions() {
+            const section = document.getElementById('admin-contributions-section');
+            const root = document.getElementById('admin-contributions-list');
+            if (!section || !root) return;
+            section.classList.toggle('hidden', !manager || currentView !== 'detail');
+            if (!manager || !selectedCampaign) return;
+            const records = pendingContributions.filter(record =>
+                String(record.campaignId) === String(selectedCampaign.id) && record.status === 'pending'
+            );
+            root.replaceChildren();
+            if (!records.length) {
+                const empty = document.createElement('p');
+                empty.className = 'text-sm text-slate-500';
+                empty.textContent = 'Nenhuma contribuição aguardando confirmação.';
+                root.append(empty); return;
+            }
+            records.forEach(record => {
+                const item = document.createElement('div');
+                item.className = 'p-4 rounded-2xl border border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-4';
+                const description = document.createElement('div');
+                const name = document.createElement('strong');
+                name.className = 'block text-slate-800';
+                name.textContent = record.name || 'Sem nome';
+                const details = document.createElement('span');
+                details.className = 'block text-xs text-slate-500';
+                details.textContent = record.type === 'finance'
+                    ? `${window.formatCurrency(record.amount)} · Ref. ${record.id.slice(0, 8).toUpperCase()}`
+                    : `${record.quantity || 1}x ${record.itemName || 'Item'} · Ref. ${record.id.slice(0, 8).toUpperCase()}`;
+                description.append(name, details);
+                const controls = document.createElement('div');
+                controls.className = 'flex gap-2';
+                const approve = document.createElement('button');
+                approve.type = 'button'; approve.textContent = '✓'; approve.title = 'Aprovar contribuição';
+                approve.setAttribute('aria-label', `Aprovar contribuição de ${record.name}`);
+                approve.className = 'bg-emerald-600 text-white rounded-xl px-4 py-2 font-bold text-lg';
+                approve.onclick = () => window.reviewContribution(record.id, 'approved');
+                const reject = document.createElement('button');
+                reject.type = 'button'; reject.textContent = '✕'; reject.title = 'Rejeitar contribuição';
+                reject.setAttribute('aria-label', `Rejeitar contribuição de ${record.name}`);
+                reject.className = 'bg-red-600 text-white rounded-xl px-4 py-2 font-bold text-lg';
+                reject.onclick = () => window.reviewContribution(record.id, 'rejected');
+                controls.append(approve, reject); item.append(description, controls); root.append(item);
+            });
+        }
+
+        window.reviewContribution = async (id, decision) => {
+            if (!manager || !['approved','rejected'].includes(decision)) return;
+            if (decision === 'rejected' && !confirm('Rejeitar esta contribuição? O valor não será contabilizado.')) return;
+            try {
+                await runTransaction(db, async transaction => {
+                    const contributionRef = doc(db, 'interas_contribuicoes', id);
+                    const [contributionSnap, adminSnap] = await Promise.all([
+                        transaction.get(contributionRef), transaction.get(adminDocRef)
+                    ]);
+                    if (!contributionSnap.exists() || contributionSnap.data().status !== 'pending') {
+                        throw Error('Este registro já foi analisado ou não existe.');
+                    }
+                    if (!adminSnap.exists()) throw Error('Dados administrativos não encontrados.');
+                    const contribution = contributionSnap.data();
+                    const saved = adminSnap.data();
+                    const updated = structuredClone(saved.campaigns || []);
+                    const campaign = updated.find(c => String(c.id) === String(contribution.campaignId));
+                    if (!campaign) throw Error('A vaquinha não existe mais.');
+                    if (decision === 'approved') {
+                        const approved = {
+                            id: id, name: contribution.name, status: 'approved',
+                            amount: Number(contribution.amount) || 0,
+                            quantity: Number(contribution.quantity) || 0,
+                            itemName: contribution.itemName || ''
+                        };
+                        if (campaign.type === 'finance') campaign.raised = Number(campaign.raised || 0) + approved.amount;
+                        if (campaign.type === 'item' && campaign.mode === 'fixed') {
+                            const item = (campaign.itemsNeeded || []).find(i => String(i.id) === String(contribution.itemId));
+                            if (!item) throw Error('O item selecionado não está disponível.');
+                            if (Number(item.pledged || 0) + approved.quantity > Number(item.needed)) {
+                                throw Error('A quantidade ultrapassa o que falta. Revise a contribuição.');
+                            }
+                            item.pledged = Number(item.pledged || 0) + approved.quantity;
+                        }
+                        campaign.contributors = [...(campaign.contributors || []), approved];
+                    }
+                    transaction.set(adminDocRef, {...saved, campaigns: updated});
+                    transaction.set(publicDocRef, {campaigns: projectPublicCampaigns(updated)});
+                    transaction.update(contributionRef, {
+                        status: decision, reviewedBy: managerEmail, reviewedAt: serverTimestamp()
+                    });
+                });
+            } catch (error) {
+                console.error('Falha ao analisar contribuição:', error);
+                alert('Não foi possível concluir: ' + error.message);
+            }
+        };
+
+        window.closeContributionConfirmation = () => {
+            document.getElementById('contribution-confirmation').classList.add('hidden');
+        };
+
+        function showContributionConfirmation(camp, contributionId) {
+            const modal = document.getElementById('contribution-confirmation');
+            const link = document.getElementById('contribution-whatsapp');
+            const hint = document.getElementById('contribution-whatsapp-hint');
+            const phone = String(camp.receiptPhone || '').replace(/\D/g, '');
+            const canSendProof = camp.type === 'finance' && /^\d{10,13}$/.test(phone);
+            link.classList.toggle('hidden', !canSendProof);
+            link.classList.toggle('flex', canSendProof);
+            hint.classList.toggle('hidden', camp.type !== 'finance');
+            hint.textContent = canSendProof
+                ? 'Anexe o comprovante na conversa. O WhatsApp não envia o arquivo automaticamente.'
+                : 'O responsável ainda não informou o WhatsApp. Guarde seu comprovante para apresentar à gestão.';
+            if (canSendProof) {
+                const recipient = phone.startsWith('55') ? phone : '55' + phone;
+                const message = `Oi! Acabei de fazer minha contribuição para ${camp.title}. Segue meu comprovante de pagamento! Referência: ${contributionId.slice(0, 8).toUpperCase()}.`;
+                link.href = `https://wa.me/${recipient}?text=${encodeURIComponent(message)}`;
+            }
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        window.submitContribution = async function(e) {
             e.preventDefault();
             const camp = selectedCampaign;
-            let payload = { id: Date.now(), name: document.getElementById('contrib-name').value };
+            if (!camp || (camp.visibility !== 'public' && !manager)) return;
+            let payload = {
+                campaignId: String(camp.id), name: document.getElementById('contrib-name').value.trim(),
+                type: camp.type, status: 'pending', createdAt: serverTimestamp()
+            };
+            if (!payload.name || payload.name.length > 120) return alert('Informe seu nome (até 120 caracteres).');
             
             if (camp.type === 'finance') {
                 if(camp.mode === 'fixed') {
@@ -837,7 +1247,7 @@
                 } else {
                     payload.amount = parseFloat(document.getElementById('c-amount').value);
                 }
-                camp.raised += payload.amount;
+                if (!Number.isFinite(payload.amount) || payload.amount <= 0) return alert('Informe um valor válido.');
             } else {
                 if (camp.mode === 'fixed') {
                     const itemSelect = document.getElementById('c-item-select');
@@ -845,18 +1255,28 @@
                     const itemId = itemSelect.value;
                     const qty = parseInt(document.getElementById('c-item-qty').value);
                     const item = camp.itemsNeeded.find(i => i.id === itemId);
+                    if (!item || !Number.isInteger(qty) || qty < 1 || qty > Number(item.needed) - Number(item.pledged || 0)) {
+                        return alert('Informe uma quantidade válida.');
+                    }
+                    payload.itemId = itemId;
                     payload.itemName = item.name;
                     payload.quantity = qty;
-                    item.pledged += qty;
                 } else {
                     payload.itemName = document.getElementById('c-item-name').value;
                     payload.quantity = 1; 
                 }
             }
             
-            camp.contributors.push(payload);
-            saveStateToFirebase(); // Salva oferta
-            renderDetail(); 
+            const submit = document.querySelector('#contrib-form button[type=submit]');
+            submit.disabled = true;
+            try {
+                const submitted = await addDoc(pendingCollection, payload);
+                renderDetail();
+                showContributionConfirmation(camp, submitted.id);
+            } catch (error) {
+                console.error('Falha ao registrar contribuição:', error);
+                alert('Não foi possível registrar sua contribuição. Tente novamente.');
+            } finally { submit.disabled = false; }
         };
 
         window.copyPix = function(text) {
