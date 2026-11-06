@@ -36,7 +36,7 @@ h1 em { font-weight:400; color:#c7d2d9; }
 .dashboard { width:100%; padding:70px 0 80px; }
 .dashboard-header { display:flex; align-items:start; justify-content:space-between; gap:25px; margin-bottom:40px; }
 .dashboard-header h1 { margin-bottom:17px; }
-.session-controls { display:flex; align-items:center; gap:14px; }
+.session-controls { display:flex; align-items:center; gap:14px; flex-wrap:wrap; justify-content:flex-end; }
 .member-email { font-size:10px; max-width:200px; color:#c0cbd3; overflow-wrap:anywhere; text-align:right; }
 .exit-button { background:transparent; border:1px solid #ffffff3d; border-radius:8px; color:#dee7eb; cursor:pointer; font:600 11px Inter,Arial,sans-serif; padding:11px 15px; display:flex; gap:9px; align-items:center; white-space:nowrap; }
 .exit-button:hover { background:#ffffff17; }
@@ -54,7 +54,10 @@ a.tool-card:hover { background:#30383f; border-color:#dce5ecbb; transform:transl
 .admin-section { background:#242b30; border:1px solid #ffffff24; border-radius:14px; padding:30px; margin-top:34px; }
 .admin-heading h2 { margin:0 0 9px; font-size:22px; letter-spacing:-.03em; }
 .admin-heading p:not(.eyebrow) { color:#b5c2ca; font-size:12px; line-height:1.7; margin:0 0 24px; }
-.member-form { display:grid; grid-template-columns:minmax(190px,1.6fr) minmax(150px,1.2fr) minmax(130px,.8fr) auto; align-items:end; gap:12px; }
+.tool-filter { display:flex; flex-direction:column; gap:9px; max-width:330px; margin-bottom:12px; font-size:11px; color:#d1dbe1; }
+.tool-filter select { width:100%; min-height:44px; padding:10px 12px; border:1px solid #65717b; border-radius:8px; background:#161d21; color:#fff; font:12px Inter,Arial,sans-serif; }
+.authorization-hint { font-size:11px; line-height:1.6; color:#b7c6cf; margin:0 0 20px; }
+.member-form { display:grid; grid-template-columns:minmax(190px,1.6fr) minmax(150px,1.2fr) auto; align-items:end; gap:12px; }
 .member-form label { margin:0; display:flex; flex-direction:column; gap:9px; font-size:11px; color:#d1dbe1; }
 .member-form input,.member-form select { width:100%; min-height:44px; padding:10px 12px; border:1px solid #65717b; border-radius:8px; background:#161d21; color:#fff; font:12px Inter,Arial,sans-serif; }
 .member-form .primary-button { width:auto; min-height:44px; padding:0 20px; white-space:nowrap; }
