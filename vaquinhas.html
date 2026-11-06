@@ -594,6 +594,9 @@
                 const privateCampaign = privateCampaigns.find(c => String(c.id) === String(selectedCampaign?.id));
                 if (!privateCampaign) return;
                 selectedCampaign = privateCampaign;
+                if (privateCampaign.mode === 'person') {
+                    return IPCVTLedger.open(privateCampaign.id, privateCampaign.title, Math.round((privateCampaign.quotaValue || 0) * 100), privateCampaign.description);
+                }
                 window.switchView('detail');
             } else if (action === 'ledger') {
                 IPCVTLedger.open(selectedCampaign.id, selectedCampaign.title, Math.round((selectedCampaign.quotaValue || 0) * 100), selectedCampaign.description);
@@ -887,7 +890,12 @@
                     line.textContent=perPerson?`${window.formatCurrency(camp.quotaValue)} por pessoa · ${Number(camp.contributorCount ?? camp.ledgerPaidCount ?? 0)} pagantes`:(Number(camp.contributorCount ?? approvedCount(camp)) ? (camp.contributorCount ?? approvedCount(camp))+' participações confirmadas':'Seja o primeiro a participar');bottom.append(line);
                 }
                 card.append(top,title,description,bottom);
-                card.onclick=()=>{selectedCampaign=camp;if(privateCard)window.requireAuth('open-private');else window.switchView('detail')};grid.append(card);
+                card.onclick=()=>{
+                    selectedCampaign=camp;
+                    if (privateCard && !manager) return window.requireAuth('open-private');
+                    if (manager && perPerson) return window.requireAuth('ledger');
+                    window.switchView('detail');
+                };grid.append(card);
             });
             lucide.createIcons();
         }
