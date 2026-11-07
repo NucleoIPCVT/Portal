@@ -1,152 +1,288 @@
-/* A tela de acesso segue a identidade do Planner IPCVT; o quadro preserva o
-   estilo original da versão atualizada do Planejamento Estratégico. */
+/* A entrada utiliza a paleta e os cartões do quadro; estilos limitados ao gate. */
 [hidden] { display: none !important; }
-body.gate-active { margin: 0; background: #f7f7f2 !important; }
+body.gate-active { margin: 0; background: #f8f7f2 !important; }
 .strategic-gate {
-  --access-green: #173f35;
-  --access-ink: #24372f;
-  --access-muted: #64756b;
-  --access-gold: #b4934f;
+  --gate-green: #304f3e;
+  --gate-green-dark: #263e31;
+  --gate-ink: #344b3c;
+  --gate-muted: #7d887b;
+  --gate-line: #e2e7dd;
+  --gate-paper: #f8f7f2;
+  --gate-surface: #fffefa;
   min-height: 100vh;
-  color: var(--access-ink);
-  background: radial-gradient(circle at 50% 10%, #eaf0e7, #f7f7f2 62%);
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+  background: var(--gate-paper);
+  color: var(--gate-ink);
+  font-family: 'DM Sans', 'Segoe UI', sans-serif;
 }
+.strategic-gate * { box-sizing: border-box; }
 .strategic-gate button, .strategic-gate a { font: inherit; }
 .strategic-gate-header {
-  min-height: 64px;
+  min-height: 68px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px clamp(16px, 4vw, 52px);
-  background: #173f35;
-  color: white;
+  gap: 18px;
+  padding: 12px clamp(20px, 5vw, 72px);
+  background: var(--gate-green);
+  color: #f7f8f1;
+  position: relative;
+  z-index: 2;
 }
-.strategic-gate-header a {
-  color: inherit;
-  font-size: 12px;
-  font-weight: 650;
-  text-decoration: none;
-}
+.strategic-gate-header a { color: inherit; text-decoration: none; }
+.strategic-gate-brand { display: inline-flex; align-items: center; gap: 12px; font-weight: 700; letter-spacing: -.01em; font-size: 14px; }
+.strategic-gate-brand-icon { display: grid; place-items: center; width: 31px; height: 31px; font-size: 25px; color: #d8e6cd; border: 1px solid #d8e6cd77; border-radius: 8px; font-family: Georgia,serif; }
+.strategic-gate-brand-divider { margin: 0 8px; opacity: .4; font-weight: 300; }
+.strategic-gate-nav { display: flex; align-items: center; gap: 20px; }
+.strategic-gate-back { font-size: 12px !important; font-weight: 650 !important; opacity: .88; transition: opacity .2s; white-space: nowrap; }
+.strategic-gate-back:hover { opacity: 1; }
 .strategic-gate-header button {
-  padding: 8px 13px;
+  min-height: 34px;
+  padding: 6px 12px;
+  color: #f8faf4;
+  background: #ffffff0a;
+  border: 1px solid #dce8d62c;
   border-radius: 9px;
-  border: 1px solid #ffffff44;
-  background: #ffffff12;
-  color: white;
-  font-size: 11px;
-  font-weight: 650;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
 }
-.strategic-gate-header button:hover { background: #ffffff24; }
+.strategic-gate-header button:hover { background: #ffffff20; }
 .strategic-gate-page {
-  min-height: calc(100vh - 64px);
-  padding: 40px 18px;
+  position: relative;
+  isolation: isolate;
+  flex: 1;
   display: grid;
   place-items: center;
+  padding: clamp(30px, 5vw, 76px) 22px;
+  overflow: hidden;
 }
-.strategic-gate-card {
-  width: min(100%, 460px);
-  padding: clamp(28px, 4vw, 42px);
-  background: #fff;
-  border: 1px solid #dfe6de;
-  border-radius: 19px;
-  box-shadow: 0 20px 55px #173f3512;
+.strategic-gate-sketches {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .52;
+  background-image:
+    radial-gradient(circle at 11% 25%, transparent 0 14px, #d6dbc9 15px 16px, transparent 17px),
+    radial-gradient(circle at 86% 78%, transparent 0 29px, #d4d9cd 30px 31px, transparent 32px),
+    radial-gradient(circle at 70% 17%, transparent 0 6px, #d4d9cd 7px 8px, transparent 9px),
+    radial-gradient(circle, #d6dccd 1px, transparent 1.5px);
+  background-size: auto, auto, auto, 35px 35px;
+  background-position: center;
 }
+.strategic-gate-page::before, .strategic-gate-page::after { content: '↗'; position: absolute; color: #d4d9cc; font-size: 80px; font-weight: 200; pointer-events: none; z-index: -1; }
+.strategic-gate-page::before { top: 12%; left: 6%; transform: rotate(-17deg); }
+.strategic-gate-page::after { right: 7%; bottom: 12%; transform: rotate(28deg); }
+.strategic-gate-layout {
+  width: min(100%, 1140px);
+  display: grid;
+  grid-template-columns: minmax(0, .9fr) minmax(0, 1.12fr);
+  align-items: center;
+  gap: clamp(26px, 5vw, 78px);
+}
+.strategic-gate-card { padding: clamp(25px, 3.5vw, 45px) 0; }
 .strategic-gate-kicker {
-  margin: 0 0 11px;
-  color: #a38548;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: .16em;
-}
-.strategic-gate-card h1 {
-  margin: 0 0 17px;
-  color: #173f35;
-  font-family: 'Cormorant Garamond', Georgia, serif;
-  font-weight: 600;
-  font-size: clamp(35px, 7vw, 44px);
-  line-height: 1.05;
-  letter-spacing: -.035em;
-}
-.strategic-gate-card p { color: #64756b; font-size: 13px; line-height: 1.6; }
-.strategic-gate-login {
   display: flex;
-  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 23px;
+  color: #657d62;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .14em;
+}
+.strategic-gate-kicker span { width: 27px; height: 27px; display: grid; place-items: center; background: #e5eddc; border: 1px solid #d5e2ca; color: #64825d; border-radius: 8px; font-size: 15px; }
+.strategic-gate-card h1 {
+  margin: 0 0 23px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 500;
+  font-size: clamp(42px, 4.65vw, 67px);
+  line-height: 1.02;
+  letter-spacing: -.055em;
+  color: var(--gate-green);
+  overflow-wrap: anywhere;
+}
+.strategic-gate-card h1 em { display: block; font-weight: 400; color: #78906e; }
+.strategic-gate-intro { max-width: 430px; margin: 0; color: #607266; font-size: 15px; line-height: 1.73; }
+.strategic-gate-feature {
+  display: inline-flex;
   align-items: center;
   gap: 10px;
+  margin-top: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #536d56;
+}
+.strategic-gate-feature span { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: #5f7d57; background: #e7ecdf; font-size: 17px; }
+.strategic-gate-auth {
+  max-width: 422px;
+  margin-top: 37px;
+  padding: 25px 25px 20px;
+  background: var(--gate-surface);
+  border: 1px solid #e0e4d9;
+  border-radius: 17px;
+  box-shadow: 0 13px 39px #344b3c0b;
+}
+.strategic-gate-auth-label { display: flex; align-items: center; gap: 9px; color: var(--gate-ink); font-weight: 800; font-size: 10px; letter-spacing: .13em; }
+.strategic-gate-auth-lock { display: grid; place-items: center; background: #e6eede; color: #6b875f; width: 25px; height: 25px; border-radius: 7px; font-size: 17px; }
+.strategic-gate-auth-description { margin: 11px 0 18px; color: var(--gate-muted); font-size: 12px; line-height: 1.6; }
+.strategic-gate-login {
   width: 100%;
-  min-height: 46px;
-  margin: 23px 0 0;
-  padding: 10px;
-  border: 0;
-  border-radius: 9px;
-  background: #173f35;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 750;
-  cursor: pointer;
-}
-.strategic-gate-login:hover { background: #103027; }
-.strategic-gate-login:disabled { opacity: .55; cursor: wait; }
-.strategic-gate-login span {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: white;
-  color: #4285f4;
-  display: grid;
-  place-items: center;
-  font-weight: 900;
-}
-#gate-feedback { margin: 15px 0 0; text-align: center; font-size: 12px; }
-.strategic-gate-pending {
-  margin: 15px 0;
-  padding: 14px;
-  border: 1px solid #dfe6de;
+  min-height: 48px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--gate-green);
+  color: white;
+  border: 1px solid var(--gate-green);
   border-radius: 10px;
-  background: #f4f6ef;
-  text-align: center;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  transition: background .2s, transform .2s;
+}
+.strategic-gate-login svg { flex: 0 0 20px; background: #fff; padding: 3px; border-radius: 50%; width: 25px; height: 25px; }
+.strategic-gate-login-arrow { margin-left: auto; font-size: 20px; line-height: 1; }
+.strategic-gate-login:hover:not(:disabled) { background: var(--gate-green-dark); transform: translateY(-1px); }
+.strategic-gate-login:disabled { opacity: .65; cursor: wait; }
+#gate-feedback { margin: 13px 0 0; text-align: center; font-size: 11.5px; line-height: 1.5; color: var(--gate-muted); }
+#gate-feedback[data-state='checking']::before { content: '◌'; display: inline-block; margin-right: 6px; font-size: 15px; animation: gate-spin 1.6s linear infinite; vertical-align: -1px; }
+#gate-feedback[data-state='error'] { color: #ad5f48; }
+#gate-feedback[data-state='pending'] { color: #946646; }
+@keyframes gate-spin { to { transform: rotate(360deg); } }
+.strategic-gate-pending {
+  margin-top: 15px;
+  padding: 15px;
+  background: #f6eee7;
+  border: 1px solid #ead8c6;
+  border-radius: 11px;
+  color: #765a48;
 }
 .strategic-gate-pending strong, .strategic-gate-pending span { display: block; overflow-wrap: anywhere; }
-.strategic-gate-pending strong { font-size: 13px; }
-.strategic-gate-pending span { margin-top: 7px; font-size: 11px; }
-.strategic-gate-pending p { margin: 10px 0 0; font-size: 12px; }
+.strategic-gate-pending strong { font-size: 12px; }
+.strategic-gate-pending span { margin-top: 6px; font-weight: 650; font-size: 12px; }
+.strategic-gate-pending p { margin: 10px 0 0; font-size: 11px; line-height: 1.65; }
 .strategic-gate-switch {
   display: block;
   width: 100%;
-  min-height: 38px;
-  margin-top: 15px;
-  border: 1px solid #d1ddd3;
-  border-radius: 9px;
-  color: #173f35;
+  min-height: 39px;
+  margin-top: 11px;
+  padding: 8px 12px;
   background: transparent;
-  cursor: pointer;
+  border: 1px solid #d8e1d4;
+  border-radius: 9px;
+  color: var(--gate-green);
   font-size: 12px;
   font-weight: 700;
+  cursor: pointer;
 }
-.strategic-gate-switch:hover { background: #eff3ed; }
-.strategic-gate a:focus-visible, .strategic-gate button:focus-visible {
-  outline: 3px solid #b4934f;
-  outline-offset: 3px;
+.strategic-gate-switch:hover { background: #f0f4eb; }
+.strategic-gate-preview {
+  position: relative;
+  padding: 22px;
+  background: #fbfaf6;
+  border: 1px solid #e2e3d9;
+  border-radius: 19px;
+  box-shadow: 0 18px 54px #52664d15;
+  transform: rotate(.5deg);
 }
-body.gate-dark { background: #171a1e !important; }
-.gate-dark .strategic-gate {
-  --access-ink: #edf1f2;
-  --access-muted: #adb8bd;
-  background: radial-gradient(circle at 50% 10%, #283b33, #171a1e 62%);
-}
-.gate-dark .strategic-gate-header { background: #26362d; }
-.gate-dark .strategic-gate-card { background: #24292e; border-color: #3d474e; box-shadow: 0 18px 55px #0005; }
-.gate-dark .strategic-gate-card h1 { color: #bcdcc9; }
-.gate-dark .strategic-gate-card p { color: #b4c0bf; }
-.gate-dark .strategic-gate-pending { background: #30373d; border-color: #526069; }
-.gate-dark .strategic-gate-switch { color: #edf1f2; border-color: #526069; }
-.gate-dark .strategic-gate-switch:hover { background: #30373d; }
-/* Nome completo na barra superior, sem comprimir os filtros em telas menores. */
+.strategic-gate-preview::before { content: ''; position: absolute; z-index: -1; inset: 9px -11px -10px 11px; border: 1px dashed #cad7c5; border-radius: 18px; transform: rotate(1.2deg); }
+.strategic-gate-preview-top { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7df; padding-bottom: 16px; }
+.strategic-gate-preview-stamp { color: #788577; font-size: 10px; font-weight: 800; letter-spacing: .15em; }
+.strategic-gate-preview-dots { color: #bdc9ba; font-size: 8px; letter-spacing: 4px; }
+.strategic-gate-preview-heading { display: flex; align-items: center; gap: 12px; margin: 23px 0 18px; }
+.strategic-gate-team-letter { width: 34px; height: 34px; display: grid; place-items: center; background: #dce8d4; border: 1px solid #bdd1b5; border-radius: 9px; color: #678061; font: 21px Georgia,serif; }
+.strategic-gate-preview-heading strong { display: block; font: 24px Georgia,serif; font-weight: 500; color: #425c45; }
+.strategic-gate-preview-heading div span { display: block; margin-top: 4px; font-size: 11px; color: #959d91; }
+.strategic-gate-team-grid { display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: 10px; }
+.strategic-gate-team-card { min-width: 0; min-height: 228px; padding: 12px 10px; border: 1px solid; border-radius: 12px; }
+.team-louvor { background: #eef1e6; border-color: #d6e0cc; color: #62765c; }
+.team-liturgia { background: #f7eee6; border-color: #ead6c6; color: #8c7464; }
+.team-midia { background: #f0edf5; border-color: #e0d8e9; color: #83768c; }
+.strategic-gate-team-title { min-height: 33px; display: flex; align-items: center; gap: 7px; border-bottom: 1px solid currentColor; border-color: #a7a69b44; font: 20px Georgia,serif; white-space: nowrap; }
+.strategic-gate-team-title span { width: 24px; height: 24px; display: grid; place-items: center; border: 1px solid currentColor; border-radius: 6px; font: 17px Georgia,serif; opacity: .8; }
+.strategic-gate-team-role { margin: 14px 0 9px; font-size: 9px; font-weight: 750; letter-spacing: .1em; }
+.strategic-gate-team-member { min-height: 49px; padding: 7px 6px; margin-top: 7px; display: flex; align-items: center; gap: 7px; border: 1px dashed #bfc6b38a; border-radius: 7px; color: #65766a; font-size: 10px; background: #ffffff5c; }
+.strategic-gate-avatar { width: 24px; height: 24px; display: grid; flex: 0 0 24px; place-items: center; border-radius: 50%; background: #d9e4d0; font-size: 10px; font-weight: 700; }
+.team-liturgia .strategic-gate-avatar { background: #ebddcf; }
+.team-midia .strategic-gate-avatar { background: #ded5e6; }
+.strategic-gate-team-drop { margin-top: 8px; padding: 12px 4px; border: 1px dashed #bfc6b38a; border-radius: 7px; text-align: center; color: #9da39a; font-size: 10px; }
+.strategic-gate-preview-bottom { display: flex; align-items: center; gap: 8px; margin-top: 20px; padding-top: 13px; border-top: 1px solid #e5e7df; font-size: 11px; color: #788877; }
+.strategic-gate-preview-bottom > span:first-child { color: #89a37f; font-size: 19px; }
+.strategic-gate-preview-note { margin-left: auto; color: #aaa89e; font-size: 10px; }
+.strategic-gate-footer { padding: 0 20px 21px; text-align: center; color: #9da398; font-size: 10px; }
+.strategic-gate a:focus-visible, .strategic-gate button:focus-visible { outline: 3px solid #a0b78c; outline-offset: 3px; }
+
+/* O painel principal cuida do próprio modo escuro; este tema só afeta o acesso. */
+body.gate-dark { background: #171d1a !important; }
+.gate-dark .strategic-gate { --gate-green: #293d31; --gate-green-dark: #375441; --gate-ink: #e1e9df; --gate-muted: #abb8ad; --gate-line: #46574a; --gate-paper: #1b2420; --gate-surface: #29342d; }
+.gate-dark .strategic-gate-header { background: #263b2e; }
+.gate-dark .strategic-gate-kicker { color: #aac0a3; }
+.gate-dark .strategic-gate-kicker span, .gate-dark .strategic-gate-feature span, .gate-dark .strategic-gate-auth-lock { background: #3c5141; border-color: #5a725b; color: #c0d6b6; }
+.gate-dark .strategic-gate-card h1 { color: #d7e7d2; }
+.gate-dark .strategic-gate-card h1 em { color: #a1bd93; }
+.gate-dark .strategic-gate-intro { color: #b4c4b7; }
+.gate-dark .strategic-gate-feature { color: #a7bca6; }
+.gate-dark .strategic-gate-auth { border-color: #4b5a4d; box-shadow: 0 16px 44px #0003; }
+.gate-dark .strategic-gate-login { background: #66846b; border-color: #66846b; }
+.gate-dark .strategic-gate-login:hover:not(:disabled) { background: #7a9a7e; }
+.gate-dark .strategic-gate-switch { color: #d8e7d5; border-color: #556957; }
+.gate-dark .strategic-gate-switch:hover { background: #3a4b3d; }
+.gate-dark .strategic-gate-pending { background: #43392f; color: #f0d4b9; border-color: #705746; }
+.gate-dark .strategic-gate-preview { background: #2b342d; border-color: #4b5a4d; box-shadow: 0 18px 50px #0003; }
+.gate-dark .strategic-gate-preview::before { border-color: #526c55; }
+.gate-dark .strategic-gate-preview-top, .gate-dark .strategic-gate-preview-bottom { border-color: #4b584b; }
+.gate-dark .strategic-gate-preview-heading strong { color: #d5e2d1; }
+.gate-dark .strategic-gate-team-letter { background: #415941; border-color: #6f896b; color: #d0dfca; }
+.gate-dark .team-louvor { background: #384a38; color: #cadbc5; border-color: #617760; }
+.gate-dark .team-liturgia { background: #4d4038; color: #e4ccba; border-color: #766354; }
+.gate-dark .team-midia { background: #413e4d; color: #dbd0e5; border-color: #70677e; }
+.gate-dark .strategic-gate-team-member { background: #ffffff0b; color: inherit; border-color: #ffffff44; }
+.gate-dark .strategic-gate-team-drop { border-color: #ffffff44; color: #adb5aa; }
+.gate-dark .strategic-gate-sketches { opacity: .12; }
+.gate-dark .strategic-gate-footer { color: #899a8b; }
+
+/* O título já ajustado do quadro permanece intacto. */
 #root .brand-name { font-size: clamp(11px, 1.35vw, 19px); white-space: nowrap; }
 #root .brand-toggle { max-width: min(350px, 52vw); overflow: hidden; }
-@media (max-width: 700px) {
+@media (max-width: 1050px) {
+  .strategic-gate-layout { gap: 24px; }
+  .strategic-gate-preview { padding: 15px; }
+  .strategic-gate-team-grid { gap: 6px; }
+  .strategic-gate-team-card { padding: 10px 7px; }
+  .strategic-gate-team-title { font-size: 17px; }
+  .strategic-gate-team-member { font-size: 9px; }
+}
+@media (max-width: 820px) {
+  .strategic-gate-layout { max-width: 620px; grid-template-columns: 1fr; gap: 32px; }
+  .strategic-gate-card { padding: 0; }
+  .strategic-gate-preview { transform: none; }
+  .strategic-gate-auth { max-width: 100%; }
+  .strategic-gate-page { padding-top: 50px; }
+}
+@media (max-width: 560px) {
+  .strategic-gate-header { min-height: 60px; padding: 10px 18px; }
+  .strategic-gate-brand { font-size: 12px; gap: 7px; }
+  .strategic-gate-brand-icon { width: 27px; height: 27px; font-size: 21px; }
+  .strategic-gate-brand-divider { margin: 0 4px; }
+  .strategic-gate-nav { gap: 0; }
+  .strategic-gate-back { display: none; }
+  .strategic-gate-header button { font-size: 16px; width: 35px; padding: 5px; }
+  #gate-theme-text { display: none; }
+  .strategic-gate-page { padding: 38px 18px 46px; }
+  .strategic-gate-card h1 { font-size: clamp(41px, 12vw, 55px); }
+  .strategic-gate-intro { font-size: 14px; }
+  .strategic-gate-auth { margin-top: 29px; padding: 20px; }
+  .strategic-gate-preview-bottom { flex-wrap: wrap; }
+  .strategic-gate-preview-note { margin-left: 0; }
+  .strategic-gate-footer { font-size: 9px; }
   #root .brand-name { overflow: hidden; text-overflow: ellipsis; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .strategic-gate *, .strategic-gate *::before, .strategic-gate *::after { animation: none !important; transition: none !important; }
 }

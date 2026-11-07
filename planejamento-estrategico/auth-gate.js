@@ -29,6 +29,8 @@ const ui = {
   pending: document.getElementById('gate-pending'),
   email: document.getElementById('gate-email'),
   theme: document.getElementById('gate-theme'),
+  themeIcon: document.getElementById('gate-theme-icon'),
+  themeText: document.getElementById('gate-theme-text'),
 }
 
 let sequence = 0
@@ -36,7 +38,7 @@ let unsubscribePermission = null
 let loaded = false
 let wasAuthorized = false
 
-function showGate(message = '', { email = '', canLogin = false, canSwitch = false } = {}) {
+function showGate(message = '', { email = '', canLogin = false, canSwitch = false, status = 'ready' } = {}) {
   if (wasAuthorized) {
     // Uma suspensão ou saída descarrega o quadro que já estava aberto.
     window.location.reload()
@@ -46,6 +48,7 @@ function showGate(message = '', { email = '', canLogin = false, canSwitch = fals
   ui.root.hidden = true
   document.body.classList.add('gate-active')
   ui.feedback.textContent = message
+  ui.feedback.dataset.state = status
   ui.login.hidden = !canLogin
   ui.switch.hidden = !canSwitch
   ui.pending.hidden = !email
@@ -54,11 +57,11 @@ function showGate(message = '', { email = '', canLogin = false, canSwitch = fals
 
 function signInError(error) {
   switch (error?.code) {
-    case 'auth/popup-blocked': return 'O navegador bloqueou a janela do Google. Habilite pop-ups e tente novamente.'
-    case 'auth/popup-closed-by-user': return 'O login foi cancelado.'
-    case 'auth/unauthorized-domain': return 'É necessário autorizar nucleoipcvt.github.io no Firebase Authentication.'
-    case 'auth/operation-not-allowed': return 'O login Google precisa ser habilitado no Firebase.'
-    default: return 'Falha no login Google. Tente novamente.'
+    case 'auth/popup-blocked': return 'O navegador bloqueou a janela do Google. Permita pop-ups e tente novamente.'
+    case 'auth/popup-closed-by-user': return 'O login foi cancelado. Tente novamente quando quiser.'
+    case 'auth/unauthorized-domain': return 'O endereço do portal precisa ser autorizado no Firebase.'
+    case 'auth/operation-not-allowed': return 'O login pelo Google precisa ser ativado no Firebase.'
+    default: return 'Não foi possível entrar com Google. Tente novamente.'
   }
 }
 
@@ -82,11 +85,13 @@ async function enterPlanning() {
 ui.login.addEventListener('click', async () => {
   ui.login.disabled = true
   ui.feedback.textContent = 'Abrindo o Google…'
+  ui.feedback.dataset.state = 'checking'
   try {
-    await setPersistence(auth, browserLocalPersistence)
-    await signInWithPopup(auth, provider)
+    // Abre o pop-up diretamente no clique (como no Planner), inclusive em celulares.
+    const googleLogin = signInWithPopup(auth, provider)
+    await Promise.all([googleLogin, setPersistence(auth, browserLocalPersistence)])
   } catch (error) {
-    showGate(signInError(error), { canLogin: true })
+    showGate(signInError(error), { canLogin: true, status: 'error' })
   } finally {
     ui.login.disabled = false
   }
@@ -97,7 +102,7 @@ ui.switch.addEventListener('click', async () => {
   try {
     await signOut(auth)
   } catch {
-    showGate('Não foi possível sair da conta. Tente novamente.', { canSwitch: true })
+    showGate('Não foi possível trocar de conta. Tente novamente.', { canSwitch: true, status: 'error' })
   } finally {
     ui.switch.disabled = false
   }
@@ -109,16 +114,17 @@ onAuthStateChanged(auth, async (user) => {
   unsubscribePermission = null
 
   if (!user) {
-    showGate('Entre com sua conta Google autorizada pela Comissão.', { canLogin: true })
+    showGate('Entre com sua conta Google para continuar.', { canLogin: true })
     return
   }
 
-  showGate('Conferindo sua autorização…')
+  showGate('Conferindo a permissão deste e-mail…', { status: 'checking' })
   try {
     const token = await user.getIdTokenResult()
     if (current !== sequence) return
-    if (!user.email || !user.emailVerified || token.claims.firebase?.sign_in_provider !== 'google.com') {
-      showGate('Use uma conta Google com e-mail verificado.', { canSwitch: true })
+    // Mesmos critérios de identidade usados pela Comissão e pelo Planner.
+    if (!user.email || !user.emailVerified || token.claims.firebase?.sign_in_provider !== 'google.com' || token.claims.email_verified !== true) {
+      showGate('Use uma conta Google com e-mail verificado.', { canSwitch: true, status: 'error' })
       return
     }
 
@@ -128,22 +134,23 @@ onAuthStateChanged(auth, async (user) => {
       if (snapshot.exists() && snapshot.data().ativo === true) {
         void enterPlanning()
       } else {
-        showGate('Este e-mail ainda não está liberado para o Planejamento Estratégico.', { email, canSwitch: true })
+        showGate('Acesso aguardando autorização da coordenação.', { email, canSwitch: true, status: 'pending' })
       }
     }, (error) => {
       if (current !== sequence) return
       showGate(error.code === 'permission-denied'
-        ? 'Falta permitir a leitura das autorizações nas regras do Firebase.'
-        : 'Não foi possível conferir seu acesso. Atualize a página e tente novamente.', { canSwitch: true })
+        ? 'Ainda falta configurar as permissões no Firebase.'
+        : 'Não foi possível consultar as permissões. Atualize a página e tente novamente.', { canSwitch: true, status: 'error' })
     })
   } catch {
-    if (current === sequence) showGate('Falha ao validar a conta Google.', { canSwitch: true })
+    if (current === sequence) showGate('Não foi possível verificar sua conta Google.', { canSwitch: true, status: 'error' })
   }
 })
 
 // Tema apenas para a tela de login; o painel tem botão de modo escuro próprio.
 ui.theme.addEventListener('click', () => {
   const dark = document.body.classList.toggle('gate-dark')
-  ui.theme.textContent = dark ? '☀ Modo claro' : '☾ Modo noturno'
+  ui.themeIcon.textContent = dark ? '☀' : '☾'
+  ui.themeText.textContent = dark ? 'Modo claro' : 'Modo noturno'
   ui.theme.setAttribute('aria-label', dark ? 'Ativar modo claro' : 'Ativar modo noturno')
 })
