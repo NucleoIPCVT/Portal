@@ -83,25 +83,22 @@
                         <span class="text-[9px] md:text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Geral</span>
                     </button>
                 </li>
-                <li class="flex-none w-1/3 md:w-full">
+                <li data-admin-only hidden class="flex-none w-1/3 md:w-full">
                     <button onclick="attemptSwitchTab('substituicoes')" id="tab-substituicoes" class="nav-btn w-full flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 px-2 md:px-6 py-3 md:py-5 hover:bg-white/5 transition-all text-white/50 border-b-4 md:border-b-0 md:border-l-4 border-transparent relative">
                         <i class="ph ph-arrows-left-right text-xl"></i>
                         <span class="text-[9px] md:text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Trocas</span>
-                        <i id="lock-substituicoes" class="ph-fill ph-lock-key absolute top-2 right-2 md:top-auto md:right-6 text-white/20 hidden md:block"></i>
                     </button>
                 </li>
-                <li class="flex-none w-1/3 md:w-full">
+                <li data-admin-only hidden class="flex-none w-1/3 md:w-full">
                     <button onclick="attemptSwitchTab('estatisticas')" id="tab-estatisticas" class="nav-btn w-full flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 px-2 md:px-6 py-3 md:py-5 hover:bg-white/5 transition-all text-white/50 border-b-4 md:border-b-0 md:border-l-4 border-transparent relative">
                         <i class="ph ph-chart-pie text-xl"></i>
                         <span class="text-[9px] md:text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Relatórios</span>
-                        <i id="lock-estatisticas" class="ph-fill ph-lock-key absolute top-2 right-2 md:top-auto md:right-6 text-white/20 hidden md:block"></i>
                     </button>
                 </li>
-                <li class="flex-none w-1/3 md:w-full">
+                <li data-admin-only hidden class="flex-none w-1/3 md:w-full">
                     <button onclick="attemptSwitchTab('cadastro')" id="tab-cadastro" class="nav-btn w-full flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 px-2 md:px-6 py-3 md:py-5 hover:bg-white/5 transition-all text-white/50 border-b-4 md:border-b-0 md:border-l-4 border-transparent relative">
                         <i class="ph ph-users-three text-xl"></i>
                         <span class="text-[9px] md:text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Equipe</span>
-                        <i id="lock-cadastro" class="ph-fill ph-lock-key absolute top-2 right-2 md:top-auto md:right-6 text-white/20 hidden md:block"></i>
                     </button>
                 </li>
             </ul>
@@ -610,9 +607,8 @@
             const logoutContainer = document.getElementById('admin-logout-container');
             const subtitle = document.getElementById('escala-subtitle');
             
-            ['lock-substituicoes', 'lock-estatisticas', 'lock-cadastro'].forEach(id => {
-                const el = document.getElementById(id);
-                if(el) isAdmin ? el.classList.add('hidden') : el.classList.remove('hidden');
+            document.querySelectorAll('[data-admin-only]').forEach(el => {
+                el.hidden = !isAdmin;
             });
 
             if (isAdmin) {
