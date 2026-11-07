@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#293f35" />
+    <meta name="theme-color" content="#304f3e" />
     <meta name="description" content="Planejamento Estratégico da Comissão IPCVT: organização de equipes, funções e integrantes." />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <title>Planejamento Estratégico · IPCVT</title>
@@ -13,24 +13,53 @@
   <body class="gate-active">
     <div id="access-gate" class="strategic-gate">
       <header class="strategic-gate-header">
-        <a href="../comissao.html" aria-label="Retornar ao Portal da Comissão">← Portal da Comissão</a>
-        <button id="gate-theme" type="button" aria-label="Ativar modo noturno">☾ Modo noturno</button>
+        <a class="strategic-gate-brand" href="../comissao.html" aria-label="Voltar ao Portal da Comissão">
+          <span class="strategic-gate-brand-icon" aria-hidden="true">▤</span>
+          <span>IPCVT <span class="strategic-gate-brand-divider">|</span> Planejamento Estratégico</span>
+        </a>
+        <div class="strategic-gate-nav">
+          <a href="../comissao.html" class="strategic-gate-back">← Portal da Comissão</a>
+          <button id="gate-theme" type="button" aria-label="Ativar modo noturno"><span id="gate-theme-icon" aria-hidden="true">☾</span> <span id="gate-theme-text">Modo noturno</span></button>
+        </div>
       </header>
       <main class="strategic-gate-page">
-        <section class="strategic-gate-card" aria-labelledby="strategic-gate-title">
-          <p class="strategic-gate-kicker">COMISSÃO DO NÚCLEO · IPCVT</p>
-          <h1 id="strategic-gate-title">Planejamento Estratégico</h1>
-          <p>Organize times, distribua funções e experimente combinações de integrantes.</p>
-          <button id="gate-google-login" type="button" class="strategic-gate-login" hidden><span aria-hidden="true">G</span> Entrar com Google</button>
-          <p id="gate-feedback" role="status" aria-live="polite">Verificando sua sessão…</p>
-          <div id="gate-pending" class="strategic-gate-pending" hidden>
-            <strong>Acesso aguardando autorização</strong>
-            <span id="gate-email"></span>
-            <p>Peça à coordenação para liberar este e-mail em “Administrar autorizações → Planejamento Estratégico”.</p>
-          </div>
-          <button id="gate-switch-account" type="button" class="strategic-gate-switch" hidden>Usar outra conta Google</button>
-        </section>
+        <div class="strategic-gate-sketches" aria-hidden="true"></div>
+        <div class="strategic-gate-layout">
+          <section class="strategic-gate-card" aria-labelledby="strategic-gate-title">
+            <div class="strategic-gate-kicker"><span aria-hidden="true">✦</span> COMISSÃO DO NÚCLEO · IPCVT</div>
+            <h1 id="strategic-gate-title">Planejamento <em>Estratégico.</em></h1>
+            <p class="strategic-gate-intro">Pessoas certas, nos lugares certos. Experimente combinações, organize funções e visualize seus times.</p>
+            <div class="strategic-gate-feature"><span aria-hidden="true">↗</span> Arraste, reorganize e encontre novas possibilidades.</div>
+            <div class="strategic-gate-auth">
+              <div class="strategic-gate-auth-label"><span class="strategic-gate-auth-lock" aria-hidden="true"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg></span><span>ACESSO DA COMISSÃO</span></div>
+              <p class="strategic-gate-auth-description">Use a conta Google autorizada para o Planejamento Estratégico.</p>
+              <button id="gate-google-login" type="button" class="strategic-gate-login" hidden>
+                <svg aria-hidden="true" viewBox="0 0 48 48" width="21" height="21"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.28 5.48-4.83 7.18l7.73 6C44.36 38.03 46.98 31.88 46.98 24.55z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.28-3.14.75-4.59l-7.98-6.2C.92 16.46 0 20.12 0 24s.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.91-5.79l-7.73-6c-2.14 1.44-4.89 2.29-8.18 2.29-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                <span>Entrar com Google</span><span class="strategic-gate-login-arrow" aria-hidden="true">→</span>
+              </button>
+              <p id="gate-feedback" role="status" aria-live="polite" data-state="checking">Verificando sua sessão…</p>
+              <div id="gate-pending" class="strategic-gate-pending" hidden>
+                <strong>Este e-mail ainda não está autorizado</strong>
+                <span id="gate-email"></span>
+                <p>Peça à coordenação que libere a conta em <b>Administrar autorizações → Planejamento Estratégico</b>. A página libera o acesso automaticamente após a aprovação.</p>
+              </div>
+              <button id="gate-switch-account" type="button" class="strategic-gate-switch" hidden>↩ Usar outra conta Google</button>
+            </div>
+          </section>
+
+          <aside class="strategic-gate-preview" aria-label="Ilustração da organização de equipes">
+            <div class="strategic-gate-preview-top"><span class="strategic-gate-preview-stamp">VISÃO DE EQUIPES</span><span class="strategic-gate-preview-dots" aria-hidden="true">● ● ●</span></div>
+            <div class="strategic-gate-preview-heading"><span class="strategic-gate-team-letter">A</span><div><strong>Monte sua equipe</strong><span>Simule movimentos entre funções</span></div></div>
+            <div class="strategic-gate-team-grid">
+              <div class="strategic-gate-team-card team-louvor"><div class="strategic-gate-team-title"><span aria-hidden="true">♫</span> Louvor</div><div class="strategic-gate-team-role">VOCAL</div><div class="strategic-gate-team-member"><span class="strategic-gate-avatar">A</span><span>Voz guia</span></div><div class="strategic-gate-team-member"><span class="strategic-gate-avatar">B</span><span>Contralto</span></div></div>
+              <div class="strategic-gate-team-card team-liturgia"><div class="strategic-gate-team-title"><span aria-hidden="true">▣</span> Litúrgicos</div><div class="strategic-gate-team-role">LITURGIA</div><div class="strategic-gate-team-member"><span class="strategic-gate-avatar">C</span><span>Projeção</span></div><div class="strategic-gate-team-drop">+ mover aqui</div></div>
+              <div class="strategic-gate-team-card team-midia"><div class="strategic-gate-team-title"><span aria-hidden="true">▧</span> Mídia</div><div class="strategic-gate-team-role">COMUNICAÇÃO</div><div class="strategic-gate-team-member"><span class="strategic-gate-avatar">D</span><span>Transmissão</span></div><div class="strategic-gate-team-drop">+ mover aqui</div></div>
+            </div>
+            <div class="strategic-gate-preview-bottom"><span aria-hidden="true">✳</span> Um quadro visual para planejar juntos <span class="strategic-gate-preview-note">Prévia ilustrativa</span></div>
+          </aside>
+        </div>
       </main>
+      <footer class="strategic-gate-footer">Comissão do Núcleo · Igreja Presbiteriana Central em Vilar dos Teles</footer>
     </div>
     <div id="root" hidden></div>
     <script type="module" src="./auth-gate.js"></script>
