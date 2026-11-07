@@ -1,0 +1,158 @@
+/* Tema grafite do Planejamento Estratégico. O tema claro segue em planner.css. */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--white);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.theme-toggle:hover { border-color: var(--gold); }
+.theme-toggle .theme-icon { font-size: 17px; line-height: 1; }
+@media (max-width: 760px) {
+  .portal-links { gap: 8px; }
+  .theme-toggle { min-height: 32px; padding: 5px 9px; font-size: 10px; }
+}
+@media (max-width: 400px) {
+  .theme-toggle { font-size: 9px; }
+}
+@media print { .theme-toggle { display: none !important; } }
+
+/* Os estilos escuros só valem na tela; impressões continuam com fundo claro. */
+@media screen {
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --green: #a9d1b9;
+    --green-dark: #89b99e;
+    --green-light: #2b3d34;
+    --gold: #d7b778;
+    --cream: #171a1e;
+    --white: #24292e;
+    --ink: #edf1f2;
+    --muted: #adb8bd;
+    --line: #3d474e;
+    --danger: #f0a6a1;
+    --danger-light: #382628;
+  }
+
+  :root[data-theme="dark"] body { background: var(--cream); }
+  :root[data-theme="dark"] .site-header { background: #20252a; }
+  :root[data-theme="dark"] .brand { color: var(--ink); }
+  :root[data-theme="dark"] .brand img { background: #416e58; }
+  :root[data-theme="dark"] .portal-links a:hover { color: var(--green); }
+  :root[data-theme="dark"] .theme-toggle { background: #30373d; color: var(--ink); }
+  :root[data-theme="dark"] .theme-toggle:hover { background: #394349; }
+  :root[data-theme="dark"] .skip-link { background: #356b50; }
+  :root[data-theme="dark"] .access-card,
+  :root[data-theme="dark"] .filters,
+  :root[data-theme="dark"] .task-card,
+  :root[data-theme="dark"] .empty-state,
+  :root[data-theme="dark"] .table-wrap,
+  :root[data-theme="dark"] .calendar-grid,
+  :root[data-theme="dark"] .calendar-unscheduled,
+  :root[data-theme="dark"] .gantt-wrap,
+  :root[data-theme="dark"] .stat-card,
+  :root[data-theme="dark"] .summary-section,
+  :root[data-theme="dark"] .integration-card,
+  :root[data-theme="dark"] .routine-card,
+  :root[data-theme="dark"] .editor-dialog,
+  :root[data-theme="dark"] .confirm-dialog { background: #24292e; border-color: var(--line); color: var(--ink); }
+  :root[data-theme="dark"] .access-card { box-shadow: 0 15px 50px #0003; }
+  :root[data-theme="dark"] .access-mark { background: #416e58; }
+  :root[data-theme="dark"] .pending-access,
+  :root[data-theme="dark"] .bucket-column,
+  :root[data-theme="dark"] .field-note { background: #2d353a; border-color: var(--line); }
+  :root[data-theme="dark"] .bucket-column.drag-over,
+  :root[data-theme="dark"] .bucket-column[data-drag-over="true"] { background: #35483e; border-color: #88bb9b; outline-color: #88bb9b; }
+  :root[data-theme="dark"] .task-card:hover { border-color: #698d7a; box-shadow: 0 5px 16px #0003; }
+  :root[data-theme="dark"] .task-card .card-actions,
+  :root[data-theme="dark"] .data-table td,
+  :root[data-theme="dark"] .calendar-choice,
+  :root[data-theme="dark"] .gantt-row { border-color: var(--line); }
+  :root[data-theme="dark"] .task-card.done h3,
+  :root[data-theme="dark"] .task-card.done .task-title { color: #9eaaad; }
+
+  :root[data-theme="dark"] .button,
+  :root[data-theme="dark"] .view-actions select,
+  :root[data-theme="dark"] .toolbar select,
+  :root[data-theme="dark"] .data-table select,
+  :root[data-theme="dark"] .event-filter-label select,
+  :root[data-theme="dark"] .toolbar input,
+  :root[data-theme="dark"] .integration-card select { background: #30373d; border-color: #526069; color: var(--ink); }
+  :root[data-theme="dark"] .button:hover { background: #3b4549; border-color: #72887c; }
+  :root[data-theme="dark"] .button-primary { background: #35674f; border-color: #477f63; color: #fff; }
+  :root[data-theme="dark"] .button-primary:hover { background: #417b5f; border-color: #5e9c79; color: #fff; }
+  :root[data-theme="dark"] .button-quiet { background: transparent; border-color: transparent; color: var(--muted); }
+  :root[data-theme="dark"] .button-danger { background: #432a2c; border-color: #86504c; color: #ffbbb4; }
+  :root[data-theme="dark"] .button-danger:hover { background: #583032; border-color: #b56b65; }
+  :root[data-theme="dark"] .button-google { box-shadow: 0 2px 12px #0003; }
+
+  :root[data-theme="dark"] .filters input,
+  :root[data-theme="dark"] .filters select,
+  :root[data-theme="dark"] .field input,
+  :root[data-theme="dark"] .field select,
+  :root[data-theme="dark"] .field textarea { background: #191f23; border-color: #4a565d; color: var(--ink); }
+  :root[data-theme="dark"] .filters input::placeholder,
+  :root[data-theme="dark"] .field input::placeholder,
+  :root[data-theme="dark"] .field textarea::placeholder { color: #89969b; }
+  :root[data-theme="dark"] .field input:focus,
+  :root[data-theme="dark"] .field select:focus,
+  :root[data-theme="dark"] .field textarea:focus { background: #20282b; border-color: var(--green); }
+  :root[data-theme="dark"] .field input:disabled,
+  :root[data-theme="dark"] .field select:disabled,
+  :root[data-theme="dark"] .field textarea:disabled { background: #30373a; color: #89979a; }
+  :root[data-theme="dark"] input,
+  :root[data-theme="dark"] select,
+  :root[data-theme="dark"] textarea { accent-color: #85b798; }
+
+  :root[data-theme="dark"] .view-nav button:hover,
+  :root[data-theme="dark"] .icon-button:hover { background: #323e3a; color: var(--green); }
+  :root[data-theme="dark"] .view-heading-note { color: #a6b5b7; }
+  :root[data-theme="dark"] .task-label,
+  :root[data-theme="dark"] .badge { background: #344038; color: #bcdbc7; border-color: #496052; }
+  :root[data-theme="dark"] .priority { color: #c5c4a7; }
+  :root[data-theme="dark"] .priority-high,
+  :root[data-theme="dark"] .priority.high,
+  :root[data-theme="dark"] .priority[data-priority="high"] { color: #e2bd7e; }
+  :root[data-theme="dark"] .priority-low,
+  :root[data-theme="dark"] .priority.low,
+  :root[data-theme="dark"] .priority[data-priority="low"] { color: #acbab2; }
+  :root[data-theme="dark"] .priority-urgent { color: #f0a6a1; }
+  :root[data-theme="dark"] .review-badge { background: #493a25; color: #f0cc87; border-color: #746041; }
+  :root[data-theme="dark"] .notice { background: #423723; border-color: #78613c; color: #f1d49b; }
+  :root[data-theme="dark"] .notice.error { background: var(--danger-light); border-color: #754449; color: #ffc1ba; }
+
+  :root[data-theme="dark"] .data-table th,
+  :root[data-theme="dark"] .gantt-row:first-child,
+  :root[data-theme="dark"] .gantt-row:first-child .gantt-label { background: #30383b; color: var(--muted); }
+  :root[data-theme="dark"] .data-table tbody tr:hover { background: #30393e; }
+  :root[data-theme="dark"] .calendar-weekday { background: #30393b; color: var(--muted); }
+  :root[data-theme="dark"] .calendar-day,
+  :root[data-theme="dark"] .gantt-label { background: #24292e; }
+  :root[data-theme="dark"] .calendar-day.other-month { background: #1e2428; color: #8e9ba0; }
+  :root[data-theme="dark"] .calendar-day.today { background: #303e36; box-shadow: inset 0 3px var(--gold); }
+  :root[data-theme="dark"] .calendar-event { background: #464734; color: #f0e5b6; border-left-color: #c3b978; }
+  :root[data-theme="dark"] .calendar-task { background: #30483c; color: #cee6d3; border-left-color: #83bb97; }
+  :root[data-theme="dark"] .calendar-task.overdue { background: #4b302f; color: #ffbbb0; border-left-color: #d18c78; }
+  :root[data-theme="dark"] .gantt-bar { background: #3d7857; color: #fff; }
+  :root[data-theme="dark"] .gantt-bar.done,
+  :root[data-theme="dark"] .gantt-bar.status-done { background: #596b64; }
+  :root[data-theme="dark"] .gantt-bar.status-doing { background: #41658b; }
+  :root[data-theme="dark"] .gantt-bar.overdue { background: #935a4d; }
+  :root[data-theme="dark"] .chart-track,
+  :root[data-theme="dark"] .progress-track { background: #3b4446; }
+  :root[data-theme="dark"] .chart-fill,
+  :root[data-theme="dark"] .progress-fill { background: #77a68a; }
+  :root[data-theme="dark"] .dialog-footer { background: #20262a; }
+  :root[data-theme="dark"] .editor-dialog::backdrop,
+  :root[data-theme="dark"] .confirm-dialog::backdrop { background: #05080bcc; }
+  :root[data-theme="dark"] .site-footer { color: #a5b0b5; }
+  :root[data-theme="dark"] .board-grid { scrollbar-color: #5c6a70 transparent; }
+}
