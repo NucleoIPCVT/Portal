@@ -3,13 +3,36 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#14532d" />
-    <meta name="description" content="Planejamento estratégico e organização de equipes do Núcleo IPCVT" />
+    <meta name="theme-color" content="#293f35" />
+    <meta name="description" content="Planejamento Estratégico da Comissão IPCVT: organização de equipes, funções e integrantes." />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <title>Planejamento Estratégico · IPCVT</title>
-    <script type="module" crossorigin src="./assets/index-KkIabThD.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-is7Nzqdm.css">
+    <link rel="stylesheet" href="./assets/index-BNMg6sGw.css" />
+    <link rel="stylesheet" href="./auth-gate.css" />
   </head>
-  <body>
-    <div id="root"></div>
+  <body class="gate-active">
+    <div id="access-gate" class="strategic-gate">
+      <header class="strategic-gate-header">
+        <a href="../comissao.html" aria-label="Retornar ao Portal da Comissão">← Portal da Comissão</a>
+        <button id="gate-theme" type="button" aria-label="Ativar modo noturno">☾ Modo noturno</button>
+      </header>
+      <main class="strategic-gate-page">
+        <section class="strategic-gate-card" aria-labelledby="strategic-gate-title">
+          <p class="strategic-gate-kicker">COMISSÃO DO NÚCLEO · IPCVT</p>
+          <h1 id="strategic-gate-title">Planejamento Estratégico</h1>
+          <p>Organize times, distribua funções e experimente combinações de integrantes.</p>
+          <button id="gate-google-login" type="button" class="strategic-gate-login" hidden><span aria-hidden="true">G</span> Entrar com Google</button>
+          <p id="gate-feedback" role="status" aria-live="polite">Verificando sua sessão…</p>
+          <div id="gate-pending" class="strategic-gate-pending" hidden>
+            <strong>Acesso aguardando autorização</strong>
+            <span id="gate-email"></span>
+            <p>Peça à coordenação para liberar este e-mail em “Administrar autorizações → Planejamento Estratégico”.</p>
+          </div>
+          <button id="gate-switch-account" type="button" class="strategic-gate-switch" hidden>Usar outra conta Google</button>
+        </section>
+      </main>
+    </div>
+    <div id="root" hidden></div>
+    <script type="module" src="./auth-gate.js"></script>
   </body>
 </html>
