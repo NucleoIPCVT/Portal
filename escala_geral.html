@@ -352,7 +352,7 @@
     <dialog id="excel-preview" class="excel-preview"><h3 id="excel-preview-title"></h3><p>Células vazias deixam a função livre. Apenas as datas e funções da planilha serão atualizadas.</p><ul id="excel-changes"></ul><div><button onclick="document.getElementById('excel-preview').close()">Cancelar</button><button id="excel-apply">Aplicar e salvar</button></div></dialog>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, updateDoc, arrayUnion, runTransaction, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, signInAnonymously, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -569,7 +569,10 @@
         async function saveStateToFirebase() {
             if (!isAdmin) return false;
             try {
-                await setDoc(doc(db, "app_ipcvt", "escala_geral_dados"), appState);
+                // Trocas usam gravação atômica própria: salvar a escala não pode
+                // substituir o histórico por uma cópia antiga (ou por []).
+                const { substitutions, ...scheduleData } = appState;
+                await setDoc(doc(db, "app_ipcvt", "escala_geral_dados"), scheduleData, { merge: true });
                 pendingNormalizationSave = false;
                 return true;
             } catch (e) {
@@ -1023,30 +1026,64 @@
             }
         }
 
-        function handleSubstituicao(e) {
+        async function handleSubstituicao(e) {
             e.preventDefault();
             if (!isAdmin) return;
             const payload = {
-                id: Date.now(), date: document.getElementById('sub-data').value,
+                id: crypto.randomUUID(), date: document.getElementById('sub-data').value,
                 role: document.getElementById('sub-funcao').value, turno: document.getElementById('sub-turno').value,
                 absent: document.getElementById('sub-ausente').value, substitute: document.getElementById('sub-substituto').value,
                 obs: document.getElementById('sub-obs').value.trim()
             };
             if(!payload.absent || payload.absent === "Vazio na escala") return showToast("Inválido", true);
             if(payload.absent === payload.substitute) return showToast("Erro: Mesmo nome", true);
-
-            if(!appState.substitutions) appState.substitutions = [];
-            appState.substitutions.push(payload);
-            document.getElementById('form-substituicao').reset();
-            updateAbsentPerson(); saveStateToFirebase(); renderSubstituicoes(); showToast('Salvo!');
+            const button = document.getElementById('btn-salvar-sub');
+            const originalButton = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<i class="ph ph-circle-notch animate-spin"></i> Salvando...';
+            try {
+                // arrayUnion acrescenta a troca sem regravar as outras informações
+                // da escala, inclusive se outro gestor fizer alterações ao mesmo tempo.
+                await updateDoc(doc(db, "app_ipcvt", "escala_geral_dados"), {
+                    substitutions: arrayUnion(payload)
+                });
+                document.getElementById('form-substituicao').reset();
+                updateAbsentPerson();
+                showToast('Troca confirmada no Firebase!');
+            } catch (error) {
+                console.error('Erro ao salvar troca:', error);
+                showToast('Erro ao salvar a troca. Os dados continuam no formulário.', true);
+            } finally {
+                button.disabled = false;
+                button.innerHTML = originalButton;
+            }
         }
 
         function deleteSubstituicao(subId) {
             if (!isAdmin) return;
-            openConfirmModal('Remover', 'Deseja excluir este registo?', () => {
+            openConfirmModal('Remover', 'Deseja excluir este registro?', async () => {
                 if (!isAdmin) return;
-                appState.substitutions = appState.substitutions.filter(s => String(s.id) !== String(subId));
-                saveStateToFirebase(); renderSubstituicoes(); showToast('Excluído.');
+                try {
+                    const removed = await deleteSubstitutionsFromFirebase([String(subId)]);
+                    showToast(removed ? 'Registro excluído do Firebase.' : 'Registro já não existe.');
+                } catch (error) {
+                    console.error('Erro ao excluir troca:', error);
+                    showToast('Não foi possível excluir o registro.', true);
+                }
+            });
+        }
+
+        async function deleteSubstitutionsFromFirebase(ids) {
+            const idsToDelete = new Set(ids.map(String));
+            const documentRef = doc(db, "app_ipcvt", "escala_geral_dados");
+            return runTransaction(db, async transaction => {
+                const snapshot = await transaction.get(documentRef);
+                if (!snapshot.exists()) throw new Error('Documento da escala não encontrado.');
+                const stored = Array.isArray(snapshot.data().substitutions) ? snapshot.data().substitutions : [];
+                const remaining = stored.filter(sub => !idsToDelete.has(String(sub.id)));
+                const removed = stored.length - remaining.length;
+                if (removed) transaction.update(documentRef, { substitutions: remaining });
+                return removed;
             });
         }
 
@@ -1091,14 +1128,17 @@
 
         function deleteSelectedSubs() {
             if (!isAdmin || selectedSubs.length === 0) return;
-            openConfirmModal('Excluir Registros', `Deseja excluir ${selectedSubs.length} registro(s) selecionado(s)?`, () => {
+            openConfirmModal('Excluir Registros', `Deseja excluir ${selectedSubs.length} registro(s) selecionado(s)?`, async () => {
                 if (!isAdmin) return;
-                appState.substitutions = appState.substitutions.filter(s => !selectedSubs.includes(String(s.id)));
-                selectedSubs = [];
-                document.getElementById('selectAllSubs').checked = false;
-                saveStateToFirebase(); 
-                renderSubstituicoes(); 
-                showToast('Excluídos com sucesso.');
+                try {
+                    const removed = await deleteSubstitutionsFromFirebase([...selectedSubs]);
+                    selectedSubs = [];
+                    renderSubstituicoes();
+                    showToast(removed ? `${removed} registro(s) excluído(s) do Firebase.` : 'Os registros já não existem.');
+                } catch (error) {
+                    console.error('Erro ao excluir trocas:', error);
+                    showToast('Não foi possível excluir os registros.', true);
+                }
             });
         }
 
@@ -1114,9 +1154,15 @@
 
         function renderSubstituicoes() {
             const uniqueMembers = getUniqueMembers();
+            // Um snapshot em tempo real não deve apagar o formulário que está sendo preenchido.
+            const formSelections = Object.fromEntries(['sub-data', 'sub-funcao', 'sub-substituto'].map(id => [id, document.getElementById(id).value]));
             document.getElementById('sub-data').innerHTML = '<option value="">Data...</option>' + appState.schedules.map(s => `<option value="${s.date}">${formatDateBR(s.date)}</option>`).join('');
             document.getElementById('sub-funcao').innerHTML = '<option value="">Função...</option>' + COLUMNS_ORDER.map(r => `<option value="${r}">${r}</option>`).join('');
             document.getElementById('sub-substituto').innerHTML = '<option value="">Substituto...</option>' + uniqueMembers.map(m => `<option value="${m}">${m}</option>`).join('');
+            Object.entries(formSelections).forEach(([id, value]) => {
+                const field = document.getElementById(id);
+                if (value && [...field.options].some(option => option.value === value)) field.value = value;
+            });
 
             const thead = document.getElementById('substituicoes-table-head');
             const getIcon = (col) => {
@@ -1467,7 +1513,8 @@
                     const button = document.getElementById('excel-apply'); button.disabled = true;
                     try {
                         const candidate = IPCVTExcel.apply(appState, changes);
-                        await setDoc(doc(db, "app_ipcvt", "escala_geral_dados"), candidate);
+                        const { substitutions, ...scheduleData } = candidate;
+                        await setDoc(doc(db, "app_ipcvt", "escala_geral_dados"), scheduleData, { merge: true });
                         appState = candidate; document.getElementById("filtro-ano").value = changes[0].date.slice(0,4); renderEscalas(); preview.close(); showToast('Planilha aplicada e salva.');
                     } catch(e) { showToast(e.message || 'Não foi possível salvar a planilha.', true); }
                     finally { button.disabled = false; }
