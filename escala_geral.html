@@ -59,6 +59,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
     <link rel="stylesheet" href="portal-ui.css?v=20261107-navegacao">
+    <link rel="stylesheet" href="escala-admin-ui.css?v=20261107-dashboard">
 </head>
 <body class="scale-page bg-slate-50 text-slate-800 font-sans h-[100dvh] overflow-hidden">
 
@@ -154,126 +155,141 @@
                 </div>
             </section>
 
-            <!-- SUBSTITUIÇÕES -->
-            <section id="sec-substituicoes" class="tab-content hidden animate-fade-in flex-1 flex-col overflow-y-auto lg:overflow-hidden min-h-0 px-1 md:pr-2">
-                <div class="mb-4 md:mb-6 shrink-0">
-                    <h2 class="text-2xl md:text-4xl font-bold text-presb-green font-serif tracking-tight">Trocas e Faltas</h2>
-                    <p class="text-slate-500 text-[10px] md:text-xs mt-1 md:mt-2 font-medium uppercase tracking-widest italic">Preenchimento e relatório de imprevistos.</p>
-                </div>
-
-                <div class="flex-1 flex flex-col lg:flex-row gap-6 md:gap-8 min-h-0 pb-4 lg:pb-0">
-                    
-                    <!-- Card 1: Formulário de Preenchimento -->
-                    <div class="w-full lg:w-1/3 bg-white p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] shadow-xl border border-slate-100 flex flex-col shrink-0 h-fit lg:h-full lg:overflow-y-auto table-container">
-                        <h3 class="font-serif font-bold text-lg mb-4 md:mb-6 flex items-center gap-2 text-presb-green border-b border-slate-100 pb-3 md:pb-4 shrink-0">
-                            <i class="ph-fill ph-note-pencil text-presb-gold"></i> Preenchimento
-                        </h3>
-                        <form id="form-substituicao" onsubmit="handleSubstituicao(event)" class="space-y-4 md:space-y-5 overflow-y-visible no-scrollbar pb-2 pr-1">
-                            <div>
-                                <label class="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Domingo Afetado</label>
-                                <select id="sub-data" required onchange="updateAbsentPerson()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 md:px-4 py-2.5 md:py-3 outline-none focus:ring-2 focus:ring-presb-gold/50 text-xs md:text-sm font-medium"></select>
-                            </div>
-                            <div>
-                                <label class="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Função</label>
-                                <select id="sub-funcao" required onchange="updateAbsentPerson()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 md:px-4 py-2.5 md:py-3 outline-none focus:ring-2 focus:ring-presb-gold/50 text-xs md:text-sm font-medium"></select>
-                            </div>
-                            <div>
-                                <label class="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Turno</label>
-                                <select id="sub-turno" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 md:px-4 py-2.5 md:py-3 outline-none focus:ring-2 focus:ring-presb-gold/50 text-xs md:text-sm font-medium">
-                                    <option value="Ambos">Ambos</option><option value="Manhã">Manhã</option><option value="Noite">Noite</option>
-                                </select>
-                            </div>
-                            <div class="p-3 md:p-4 bg-red-50 rounded-xl border border-red-100">
-                                <label class="block text-[9px] md:text-[10px] font-black text-red-500 uppercase tracking-widest mb-1">Ausente (-)</label>
-                                <input type="text" id="sub-ausente" readonly placeholder="Selecione data..." class="w-full bg-transparent text-red-800 font-bold outline-none cursor-not-allowed text-xs md:text-sm">
-                            </div>
-                            <div class="p-3 md:p-4 bg-emerald-50 rounded-xl border border-emerald-100">
-                                <label class="block text-[9px] md:text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Substituto (+)</label>
-                                <select id="sub-substituto" required class="w-full bg-transparent text-emerald-800 font-bold outline-none cursor-pointer text-xs md:text-sm"></select>
-                            </div>
-                            <div>
-                                <label class="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Motivo (Opcional)</label>
-                                <input type="text" id="sub-obs" placeholder="Ex: Doença, viagem..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 md:px-4 py-2.5 md:py-3 outline-none focus:ring-2 focus:ring-presb-gold/50 text-xs md:text-sm font-medium text-slate-700">
-                            </div>
-                            <button type="submit" id="btn-salvar-sub" class="w-full bg-presb-green hover:bg-black text-white px-4 py-3 md:py-4 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-colors mt-2 shadow-lg active:scale-95 shrink-0">
-                                Gravar Registro
-                            </button>
-                        </form>
+            <!-- TROCAS: registro rápido e histórico em um painel -->
+            <section id="sec-substituicoes" class="tab-content hidden admin-screen animate-fade-in flex-1 flex-col min-h-0">
+                <header class="admin-hero">
+                    <div class="admin-hero-copy">
+                        <span class="admin-kicker"><i class="ph ph-arrows-left-right"></i> Gestão de escalas / Operação</span>
+                        <h2>Trocas e faltas</h2>
+                        <p>Registre imprevistos e acompanhe quem assumiu cada função.</p>
                     </div>
+                    <div class="admin-metrics" aria-label="Resumo das substituições">
+                        <div><strong id="subs-total">0</strong><span>Registros</span></div>
+                        <div><strong id="subs-month">0</strong><span>Este mês</span></div>
+                        <div><strong id="subs-helpers">0</strong><span>Substitutos</span></div>
+                    </div>
+                </header>
 
-                    <!-- Card 2: Relatório Histórico c/ Scrollbars e Ordenadores -->
-                    <div class="w-full lg:w-2/3 bg-slate-100 rounded-[1.5rem] md:rounded-[2rem] shadow-xl border-2 border-white flex flex-col shrink-0 h-[450px] lg:h-full lg:min-h-0">
-                        <div class="p-4 md:p-6 border-b-2 border-white bg-slate-200 flex justify-between items-center shrink-0">
-                            <h3 class="font-serif font-bold text-presb-green text-sm md:text-base">Relatório de Registros</h3>
-                            <!-- Botão de Exclusão em Massa -->
-                            <button id="btn-bulk-delete" onclick="deleteSelectedSubs()" class="hidden items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 md:px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-colors shadow-md active:scale-95">
-                                <i class="ph-bold ph-trash text-sm"></i> <span class="hidden sm:inline">Excluir</span> (<span id="bulk-delete-count">0</span>)
-                            </button>
+                <div class="admin-content admin-content-split">
+                    <article class="admin-panel admin-form-panel">
+                        <div class="admin-panel-heading">
+                            <span class="admin-panel-icon"><i class="ph ph-note-pencil"></i></span>
+                            <div><span class="admin-overline">Novo registro</span><h3>Registrar troca</h3><p>Preencha os detalhes da substituição.</p></div>
                         </div>
-                        <div class="flex-1 overflow-auto table-container bg-slate-50 relative">
-                            <table class="w-full text-left whitespace-nowrap border-collapse relative">
-                                <thead class="sticky top-0 z-[50]" id="substituicoes-table-head">
-                                    <!-- Gerado via JS para suportar ordenação -->
-                                </thead>
-                                <tbody id="substituicoes-table-body" class="text-[10px] md:text-xs font-medium text-slate-700 bg-white"></tbody>
+                        <form id="form-substituicao" onsubmit="handleSubstituicao(event)" class="admin-form-grid">
+                            <div class="admin-field">
+                                <label for="sub-data">Domingo afetado</label>
+                                <select id="sub-data" required onchange="updateAbsentPerson()"></select>
+                            </div>
+                            <div class="admin-field-row">
+                                <div class="admin-field">
+                                    <label for="sub-funcao">Função</label>
+                                    <select id="sub-funcao" required onchange="updateAbsentPerson()"></select>
+                                </div>
+                                <div class="admin-field">
+                                    <label for="sub-turno">Turno</label>
+                                    <select id="sub-turno" required><option value="Ambos">Ambos</option><option value="Manhã">Manhã</option><option value="Noite">Noite</option></select>
+                                </div>
+                            </div>
+                            <div class="admin-person-card admin-person-card-absent">
+                                <span><i class="ph ph-user-minus"></i> Pessoa ausente</span>
+                                <input type="text" id="sub-ausente" readonly placeholder="Selecione a data e a função">
+                            </div>
+                            <div class="admin-person-card admin-person-card-helper">
+                                <label for="sub-substituto"><i class="ph ph-user-plus"></i> Quem vai substituir?</label>
+                                <select id="sub-substituto" required></select>
+                            </div>
+                            <div class="admin-field">
+                                <label for="sub-obs">Motivo <small>opcional</small></label>
+                                <input type="text" id="sub-obs" placeholder="Ex.: viagem, doença, compromisso...">
+                            </div>
+                            <button type="submit" id="btn-salvar-sub" class="admin-primary-button"><i class="ph-bold ph-check-circle"></i> Salvar registro</button>
+                        </form>
+                    </article>
+
+                    <article class="admin-panel admin-history-panel">
+                        <div class="admin-panel-heading admin-panel-heading-inline">
+                            <span class="admin-panel-icon"><i class="ph ph-clock-counter-clockwise"></i></span>
+                            <div><span class="admin-overline">Acompanhamento</span><h3>Histórico de trocas</h3><p>Selecione linhas para excluir registros.</p></div>
+                            <button id="btn-bulk-delete" onclick="deleteSelectedSubs()" class="admin-danger-button hidden items-center gap-2"><i class="ph-bold ph-trash"></i> Excluir <span id="bulk-delete-count">0</span></button>
+                        </div>
+                        <div class="admin-table-scroll table-container">
+                            <table class="admin-table admin-subs-table">
+                                <thead id="substituicoes-table-head"></thead>
+                                <tbody id="substituicoes-table-body"></tbody>
                             </table>
                         </div>
-                    </div>
+                    </article>
                 </div>
             </section>
 
-            <!-- ESTATÍSTICAS (NOVO LAYOUT INTERATIVO E COM SCROLL) -->
-            <section id="sec-estatisticas" class="tab-content hidden animate-fade-in flex-1 flex flex-col min-h-0 min-w-0 w-full h-full">
-                <!-- Cabeçalho com Busca -->
-                <div class="mb-4 md:mb-6 shrink-0 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-3 md:gap-6 px-1">
-                    <div>
-                        <h2 class="text-2xl md:text-4xl font-bold text-presb-green font-serif tracking-tight">Engajamento</h2>
-                        <p class="text-slate-500 text-[10px] md:text-xs mt-1 md:mt-2 font-medium uppercase tracking-widest italic">Painel Gráfico de Participação</p>
+            <!-- RELATÓRIOS: indicadores e participação por integrante -->
+            <section id="sec-estatisticas" class="tab-content hidden admin-screen animate-fade-in flex-1 flex-col min-h-0">
+                <header class="admin-hero">
+                    <div class="admin-hero-copy">
+                        <span class="admin-kicker"><i class="ph ph-chart-bar"></i> Gestão de escalas / Indicadores</span>
+                        <h2>Relatórios</h2>
+                        <p>Uma visão clara da participação de cada pessoa nas escalas.</p>
                     </div>
-                    
-                    <div class="w-full lg:w-80 flex items-center bg-white border-2 border-slate-200 rounded-xl px-4 py-2 md:py-3 shadow-sm focus-within:border-presb-gold focus-within:ring-4 focus-within:ring-presb-gold/10 transition-all">
-                        <i class="ph-bold ph-magnifying-glass text-slate-400 text-lg mr-3"></i>
-                        <input type="text" id="search-stats" onkeyup="renderEstatisticas()" placeholder="Buscar integrante..." class="bg-transparent outline-none w-full text-xs md:text-sm font-bold text-slate-700 placeholder-slate-400">
+                    <div class="admin-metrics" aria-label="Resumo dos relatórios">
+                        <div><strong id="stats-members">0</strong><span>Integrantes</span></div>
+                        <div><strong id="stats-attendance">0</strong><span>Participações</span></div>
+                        <div><strong id="stats-absences">0</strong><span>Faltas</span></div>
                     </div>
-                </div>
+                </header>
 
-                <!-- Tabela de Estatísticas -->
-                <div class="bg-slate-100 rounded-[1rem] md:rounded-[2rem] shadow-xl border-2 border-white overflow-hidden flex-1 flex flex-col min-h-0 min-w-0 w-full relative">
-                    <div class="table-container overflow-auto flex-1 min-h-0 w-full relative outline-none bg-slate-50 touch-pan-x touch-pan-y">
-                        <table class="w-full text-left whitespace-nowrap border-collapse relative">
-                            <thead class="sticky top-0 z-[60] shadow-sm" id="estatisticas-table-head">
-                                <!-- Gerado via JS para suportar ordenação -->
-                            </thead>
-                            <tbody id="estatisticas-table-body" class="text-[10px] md:text-sm bg-white"></tbody>
-                        </table>
-                    </div>
+                <div class="admin-content admin-content-stack">
+                    <article class="admin-panel admin-report-panel">
+                        <div class="admin-panel-heading admin-panel-heading-inline">
+                            <span class="admin-panel-icon"><i class="ph ph-chart-line-up"></i></span>
+                            <div><span class="admin-overline">Dados por integrante</span><h3>Participação da equipe</h3><p>Clique nas colunas para ordenar.</p></div>
+                            <label class="admin-search" for="search-stats">
+                                <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+                                <input type="search" id="search-stats" oninput="renderEstatisticas()" placeholder="Buscar integrante..." aria-label="Buscar integrante">
+                            </label>
+                        </div>
+                        <div class="admin-table-scroll table-container">
+                            <table class="admin-table admin-stats-table">
+                                <thead id="estatisticas-table-head"></thead>
+                                <tbody id="estatisticas-table-body"></tbody>
+                            </table>
+                        </div>
+                    </article>
+                    <div class="admin-footnote"><i class="ph ph-info"></i> Participações consideram as escalas, ausências e substituições registradas.</div>
                 </div>
             </section>
 
-            <!-- CADASTRO -->
-            <section id="sec-cadastro" class="tab-content hidden animate-fade-in flex-1 flex-col overflow-y-auto px-1 md:pr-2">
-                <div class="mb-6 md:mb-10 shrink-0">
-                    <h2 class="text-2xl md:text-4xl font-bold text-presb-green font-serif tracking-tight">Equipe IPCVT</h2>
-                    <p class="text-slate-500 text-[10px] md:text-xs mt-1 md:mt-2 font-medium uppercase tracking-widest italic">Gerenciamento de Funções.</p>
-                </div>
+            <!-- EQUIPE: cadastro e cartões por função -->
+            <section id="sec-cadastro" class="tab-content hidden admin-screen animate-fade-in flex-1 flex-col min-h-0">
+                <header class="admin-hero">
+                    <div class="admin-hero-copy">
+                        <span class="admin-kicker"><i class="ph ph-users-three"></i> Gestão de escalas / Pessoas</span>
+                        <h2>Equipe IPCVT</h2>
+                        <p>Organize as pessoas e suas funções no ministério.</p>
+                    </div>
+                    <div class="admin-metrics" aria-label="Resumo das equipes">
+                        <div><strong id="team-members">0</strong><span>Pessoas</span></div>
+                        <div><strong id="team-roles">0</strong><span>Funções</span></div>
+                        <div><strong id="team-filled">0</strong><span>Com membros</span></div>
+                    </div>
+                </header>
 
-                <div class="bg-white p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] shadow-xl border border-slate-100 mb-8 max-w-4xl">
-                    <form id="form-cadastro" onsubmit="handleAddMember(event)" class="flex flex-col md:flex-row gap-4 md:gap-5 items-end">
-                        <div class="w-full md:w-1/3">
-                            <label class="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 md:mb-2">Função</label>
-                            <select id="cad-funcao" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 md:px-4 py-2.5 md:py-4 outline-none text-xs md:text-sm"></select>
+                <div class="admin-content admin-team-content">
+                    <article class="admin-panel admin-add-panel">
+                        <div class="admin-panel-heading">
+                            <span class="admin-panel-icon"><i class="ph ph-user-plus"></i></span>
+                            <div><span class="admin-overline">Cadastro rápido</span><h3>Adicionar integrante</h3><p>Escolha a função e informe o nome.</p></div>
                         </div>
-                        <div class="w-full md:w-2/3">
-                            <label class="block text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 md:mb-2">Nome</label>
-                            <input type="text" id="cad-nome" required placeholder="Nome..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 md:px-4 py-2.5 md:py-4 outline-none font-bold text-slate-700 text-xs md:text-sm">
-                        </div>
-                        <button type="submit" class="w-full md:w-auto bg-presb-green hover:bg-black text-white px-6 md:px-8 py-3 md:py-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-colors shadow-lg active:scale-95">
-                            Salvar
-                        </button>
-                    </form>
-                </div>
+                        <form id="form-cadastro" onsubmit="handleAddMember(event)" class="admin-inline-form">
+                            <div class="admin-field"><label for="cad-funcao">Função</label><select id="cad-funcao" required></select></div>
+                            <div class="admin-field"><label for="cad-nome">Nome completo</label><input type="text" id="cad-nome" required placeholder="Nome do integrante..."></div>
+                            <button type="submit" class="admin-primary-button"><i class="ph-bold ph-plus"></i> Adicionar</button>
+                        </form>
+                    </article>
 
-                <div id="cadastro-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6"></div>
+                    <div class="admin-team-heading"><div><span class="admin-overline">Distribuição da equipe</span><h3>Integrantes por função</h3></div><span id="team-card-count" class="admin-section-count">0 funções</span></div>
+                    <div id="cadastro-grid" class="admin-team-grid"></div>
+                </div>
             </section>
 
         </main>
@@ -1060,36 +1076,28 @@
 
             const thead = document.getElementById('substituicoes-table-head');
             const getIcon = (col) => {
-                if (subsSort.column !== col) return `<i class="ph-bold ph-caret-up text-transparent group-hover:text-slate-400"></i>`;
-                return subsSort.direction === 'asc' ? `<i class="ph-bold ph-caret-up text-presb-green"></i>` : `<i class="ph-bold ph-caret-down text-presb-green"></i>`;
+                if (subsSort.column !== col) return `<i class="ph ph-arrows-down-up admin-sort-icon"></i>`;
+                return subsSort.direction === 'asc' ? `<i class="ph-bold ph-caret-up admin-sort-active"></i>` : `<i class="ph-bold ph-caret-down admin-sort-active"></i>`;
             };
 
-            // Cabeçalhos ultra-compactos para sobrar espaço para o Motivo
             thead.innerHTML = `
-                <tr class="bg-slate-200 text-slate-600 text-[7px] md:text-[9px] font-bold uppercase tracking-widest shadow-sm">
-                    <th class="p-1 border-2 border-white text-center w-6">
-                        <input type="checkbox" id="selectAllSubs" onchange="toggleAllSubs(this.checked)" class="w-3 h-3 accent-presb-gold cursor-pointer">
-                    </th>
-                    <th class="p-1 md:p-2 border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" onclick="handleSortSubs('date')">
-                        <div class="flex items-center gap-1">Data ${getIcon('date')}</div>
-                    </th>
-                    <th class="p-1 md:p-2 border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" onclick="handleSortSubs('role')">
-                        <div class="flex items-center gap-1">Função ${getIcon('role')}</div>
-                    </th>
-                    <th class="p-1 md:p-2 text-red-600 border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" onclick="handleSortSubs('absent')">
-                        <div class="flex items-center gap-1">Faltou ${getIcon('absent')}</div>
-                    </th>
-                    <th class="p-1 md:p-2 text-emerald-700 border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" onclick="handleSortSubs('substitute')">
-                        <div class="flex items-center gap-1">Substituto ${getIcon('substitute')}</div>
-                    </th>
-                    <th class="p-1.5 md:p-2 border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" onclick="handleSortSubs('obs')">
-                        <div class="flex items-center gap-1">Motivo ${getIcon('obs')}</div>
-                    </th>
+                <tr>
+                    <th class="admin-check-column"><input type="checkbox" id="selectAllSubs" aria-label="Selecionar todas as trocas" onchange="toggleAllSubs(this.checked)"></th>
+                    <th><button type="button" onclick="handleSortSubs('date')">Data ${getIcon('date')}</button></th>
+                    <th><button type="button" onclick="handleSortSubs('role')">Função ${getIcon('role')}</button></th>
+                    <th><button type="button" onclick="handleSortSubs('absent')">Ausente ${getIcon('absent')}</button></th>
+                    <th><button type="button" onclick="handleSortSubs('substitute')">Substituto ${getIcon('substitute')}</button></th>
+                    <th><button type="button" onclick="handleSortSubs('obs')">Motivo ${getIcon('obs')}</button></th>
                 </tr>
             `;
 
             const tbody = document.getElementById('substituicoes-table-body');
             const subsArray = [...(appState.substitutions || [])];
+            const now = new Date();
+            const monthPrefix = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+            document.getElementById('subs-total').textContent = subsArray.length;
+            document.getElementById('subs-month').textContent = subsArray.filter(sub => String(sub.date || '').startsWith(monthPrefix)).length;
+            document.getElementById('subs-helpers').textContent = new Set(subsArray.map(sub => sub.substitute).filter(Boolean)).size;
 
             // Executa a ordenação
             subsArray.sort((a, b) => {
@@ -1109,36 +1117,23 @@
             });
 
             if(subsArray.length === 0) { 
-                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400 border-2 border-white text-xs">Nenhum registro encontrado</td></tr>`; 
+                tbody.innerHTML = `<tr><td colspan="6"><div class="admin-empty"><i class="ph ph-calendar-check"></i><strong>Nenhuma troca registrada</strong><span>Os registros aparecerão aqui assim que forem salvos.</span></div></td></tr>`;
                 updateBulkDeleteButton();
                 return; 
             }
 
-            tbody.innerHTML = subsArray.map((sub, index) => {
-                const rowBg = index % 2 === 0 ? 'bg-slate-50' : 'bg-slate-100';
+            tbody.innerHTML = subsArray.map(sub => {
                 const isChecked = selectedSubs.includes(String(sub.id)) ? 'checked' : '';
-                
                 return `
-                <tr class="${rowBg} hover:bg-presb-gold/10 transition-colors cursor-pointer" onclick="document.getElementById('sub-cb-${sub.id}').click()">
-                    <td class="p-1 text-center border-2 border-white w-6" onclick="event.stopPropagation()">
-                        <input type="checkbox" class="sub-cb w-3 h-3 accent-presb-gold cursor-pointer" value="${sub.id}" id="sub-cb-${sub.id}" onchange="toggleSubSelection('${sub.id}')" ${isChecked}>
+                <tr class="admin-clickable-row" onclick="this.querySelector('.sub-cb').click()">
+                    <td class="admin-check-column" onclick="event.stopPropagation()">
+                        <input type="checkbox" class="sub-cb" aria-label="Selecionar troca de ${escapeHTML(sub.date)}" value="${escapeHTML(String(sub.id))}" onchange="toggleSubSelection(this.value)" ${isChecked}>
                     </td>
-                    <td class="px-1 py-1.5 md:p-2 font-black text-slate-800 border-2 border-white text-[8px] md:text-[10px] w-12 text-center leading-none">
-                        ${formatDateBR(sub.date).substring(0,5)} 
-                        <span class="block text-[7px] md:text-[8px] text-slate-400 mt-1 uppercase">${sub.turno || 'Ambos'}</span>
-                    </td>
-                    <td class="px-1 py-1.5 md:p-2 font-bold border-2 border-white text-[8px] md:text-[10px] text-slate-600 leading-tight w-16 whitespace-normal break-words">
-                        ${sub.role}
-                    </td>
-                    <td class="px-1 py-1.5 md:p-2 text-red-600 font-bold border-2 border-white text-[8px] md:text-[10px] leading-tight w-16 whitespace-normal break-words">
-                        - ${sub.absent}
-                    </td>
-                    <td class="px-1 py-1.5 md:p-2 text-emerald-700 font-bold border-2 border-white text-[8px] md:text-[10px] leading-tight w-16 whitespace-normal break-words">
-                        + ${sub.substitute}
-                    </td>
-                    <td class="p-1.5 md:p-3 text-slate-700 font-medium text-[10px] md:text-[11px] leading-snug border-2 border-white whitespace-normal w-full min-w-[150px] md:min-w-[200px]" title="${sub.obs || '-'}">
-                        ${sub.obs || '-'}
-                    </td>
+                    <td><span class="admin-date"><strong>${escapeHTML(formatDateBR(sub.date).substring(0,10))}</strong><small>${escapeHTML(sub.turno || 'Ambos')}</small></span></td>
+                    <td><span class="admin-role-badge">${escapeHTML(sub.role)}</span></td>
+                    <td><span class="admin-person-label admin-person-label-absent"><i class="ph ph-minus-circle"></i>${escapeHTML(sub.absent)}</span></td>
+                    <td><span class="admin-person-label admin-person-label-helper"><i class="ph ph-check-circle"></i>${escapeHTML(sub.substitute)}</span></td>
+                    <td class="admin-note-cell">${sub.obs ? escapeHTML(sub.obs) : '<span class="admin-muted">Sem observação</span>'}</td>
                 </tr>
                 `
             }).join('');
@@ -1183,6 +1178,10 @@
                 stats.push({ nome, esperado, faltas, extras, totalReal, percentual: parseFloat(percentual) });
             });
 
+            document.getElementById('stats-members').textContent = stats.length;
+            document.getElementById('stats-attendance').textContent = stats.reduce((total, st) => total + st.totalReal, 0);
+            document.getElementById('stats-absences').textContent = stats.reduce((total, st) => total + st.faltas, 0);
+
             // Filtro da barra de pesquisa interativa
             const searchTerm = document.getElementById('search-stats')?.value.toLowerCase() || '';
             if (searchTerm) {
@@ -1204,60 +1203,38 @@
             // Renderiza o Cabeçalho Dinâmico
             const thead = document.getElementById('estatisticas-table-head');
             const getIcon = (col) => {
-                if (statsSort.column !== col) return `<i class="ph-bold ph-caret-up text-transparent group-hover:text-slate-300"></i>`;
-                return statsSort.direction === 'asc' ? `<i class="ph-bold ph-caret-up text-presb-green"></i>` : `<i class="ph-bold ph-caret-down text-presb-green"></i>`;
+                if (statsSort.column !== col) return `<i class="ph ph-arrows-down-up admin-sort-icon"></i>`;
+                return statsSort.direction === 'asc' ? `<i class="ph-bold ph-caret-up admin-sort-active"></i>` : `<i class="ph-bold ph-caret-down admin-sort-active"></i>`;
             };
 
             thead.innerHTML = `
-                <tr class="bg-slate-200 text-slate-600 text-[8px] md:text-[10px] font-bold uppercase tracking-widest">
-                    <th class="p-2 md:p-4 sticky top-0 left-0 bg-slate-200 z-[70] border-2 border-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] cursor-pointer hover:bg-slate-300 transition-colors group" onclick="handleSort('nome')">
-                        <div class="flex items-center justify-between">Integrante ${getIcon('nome')}</div>
-                    </th>
-                    <th class="px-1 py-2 md:px-2 md:py-4 text-center border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" title="Domingos Escalados" onclick="handleSort('esperado')">
-                        <div class="flex items-center justify-center gap-1">Escalado ${getIcon('esperado')}</div>
-                    </th>
-                    <th class="px-1 py-2 md:px-2 md:py-4 text-center text-red-600 border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" title="Faltas Registradas" onclick="handleSort('faltas')">
-                        <div class="flex items-center justify-center gap-1">Faltas ${getIcon('faltas')}</div>
-                    </th>
-                    <th class="px-1 py-2 md:px-2 md:py-4 text-center text-emerald-700 border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" title="Substituições Extra" onclick="handleSort('extras')">
-                        <div class="flex items-center justify-center gap-1">Extra ${getIcon('extras')}</div>
-                    </th>
-                    <th class="px-1 py-2 md:px-2 md:py-4 text-center font-black border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" title="Total de Participações Reais" onclick="handleSort('totalReal')">
-                        <div class="flex items-center justify-center gap-1">Real ${getIcon('totalReal')}</div>
-                    </th>
-                    <th class="p-2 md:p-4 text-right w-full min-w-[90px] md:min-w-[140px] border-2 border-white cursor-pointer hover:bg-slate-300 transition-colors group" onclick="handleSort('percentual')">
-                        <div class="flex items-center justify-end gap-1">Desempenho ${getIcon('percentual')}</div>
-                    </th>
+                <tr>
+                    <th class="admin-sticky-name"><button type="button" onclick="handleSort('nome')">Integrante ${getIcon('nome')}</button></th>
+                    <th><button type="button" onclick="handleSort('esperado')" title="Participações previstas">Previstas ${getIcon('esperado')}</button></th>
+                    <th><button type="button" onclick="handleSort('faltas')">Faltas ${getIcon('faltas')}</button></th>
+                    <th><button type="button" onclick="handleSort('extras')">Extras ${getIcon('extras')}</button></th>
+                    <th><button type="button" onclick="handleSort('totalReal')">Realizadas ${getIcon('totalReal')}</button></th>
+                    <th class="admin-progress-column"><button type="button" onclick="handleSort('percentual')">Participação ${getIcon('percentual')}</button></th>
                 </tr>
             `;
             
             const tbody = document.getElementById('estatisticas-table-body');
 
             if(stats.length === 0) {
-                 tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">Nenhum integrante encontrado</td></tr>`;
+                 tbody.innerHTML = `<tr><td colspan="6"><div class="admin-empty"><i class="ph ph-magnifying-glass"></i><strong>Nenhum integrante encontrado</strong><span>Tente outro nome na busca.</span></div></td></tr>`;
                  return;
             }
 
-            tbody.innerHTML = stats.map((st, index) => {
-                const rowBg = index % 2 === 0 ? 'bg-slate-100' : 'bg-slate-200/50';
-                let barColor = st.percentual < 50 ? 'bg-red-500' : (st.percentual < 80 ? 'bg-amber-400' : 'bg-emerald-500');
-                let badgeClass = st.percentual < 50 ? 'text-red-700 bg-red-50 border-red-200' : (st.percentual < 80 ? 'text-amber-700 bg-amber-50 border-amber-200' : 'text-emerald-700 bg-emerald-50 border-emerald-200');
-                
+            tbody.innerHTML = stats.map(st => {
+                const band = st.percentual < 50 ? 'low' : (st.percentual < 80 ? 'mid' : 'good');
                 return `
-                    <tr class="${rowBg} hover:bg-presb-gold/10 transition-colors">
-                        <td class="p-2 md:p-4 font-black text-presb-green sticky left-0 z-[40] ${rowBg} border-2 border-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">${st.nome}</td>
-                        <td class="px-1 py-2 md:px-2 md:py-4 text-center font-bold text-slate-500 text-[10px] md:text-xs border-2 border-white">${st.esperado}</td>
-                        <td class="px-1 py-2 md:px-2 md:py-4 text-center font-bold ${st.faltas > 0 ? 'text-red-600' : 'text-slate-400'} text-[10px] md:text-xs border-2 border-white">${st.faltas > 0 ? '-'+st.faltas : 0}</td>
-                        <td class="px-1 py-2 md:px-2 md:py-4 text-center font-bold ${st.extras > 0 ? 'text-emerald-700' : 'text-slate-400'} text-[10px] md:text-xs border-2 border-white">${st.extras > 0 ? '+'+st.extras : 0}</td>
-                        <td class="px-1 py-2 md:px-2 md:py-4 text-center font-black text-[10px] md:text-sm border-2 border-white">${st.totalReal}</td>
-                        <td class="p-2 md:p-4 border-2 border-white">
-                            <div class="flex flex-col items-end gap-1 md:gap-2 w-full">
-                                <span class="px-2 py-1 rounded-md border text-[9px] md:text-[10px] font-black tracking-widest ${badgeClass}">${st.percentual}%</span>
-                                <div class="w-full bg-slate-200 rounded-full h-1 md:h-2 overflow-hidden shadow-inner">
-                                    <div class="${barColor} h-full rounded-full transition-all duration-1000 ease-out" style="width: ${Math.min(st.percentual, 100)}%"></div>
-                                </div>
-                            </div>
-                        </td>
+                    <tr>
+                        <td class="admin-sticky-name"><div class="admin-member-name"><span class="admin-avatar">${escapeHTML(st.nome.charAt(0).toUpperCase())}</span><strong>${escapeHTML(st.nome)}</strong></div></td>
+                        <td class="admin-number-cell">${st.esperado}</td>
+                        <td class="admin-number-cell"><span class="admin-number-chip ${st.faltas > 0 ? 'admin-chip-alert' : ''}">${st.faltas}</span></td>
+                        <td class="admin-number-cell"><span class="admin-number-chip ${st.extras > 0 ? 'admin-chip-positive' : ''}">${st.extras > 0 ? '+'+st.extras : 0}</span></td>
+                        <td class="admin-number-cell admin-number-strong">${st.totalReal}</td>
+                        <td><div class="admin-progress"><div class="admin-progress-top"><span>Presença registrada</span><strong>${st.percentual}%</strong></div><div class="admin-progress-track"><span class="admin-progress-fill ${band}" style="width:${Math.max(0, Math.min(st.percentual, 100))}%"></span></div></div></td>
                     </tr>
                 `;
             }).join('');
@@ -1265,12 +1242,27 @@
 
         function renderCadastro() {
             document.getElementById('cad-funcao').innerHTML = '<option value="">Selecione...</option>' + COLUMNS_ORDER.map(r => `<option value="${r}">${r}</option>`).join('');
+            document.getElementById('team-members').textContent = getUniqueMembers().length;
+            document.getElementById('team-roles').textContent = COLUMNS_ORDER.length;
+            document.getElementById('team-filled').textContent = COLUMNS_ORDER.filter(role => (appState.members[role] || []).length > 0).length;
+            document.getElementById('team-card-count').textContent = `${COLUMNS_ORDER.length} funções`;
+            const roleIcons = {
+                'Litúrgico':'ph-book-open-text','Soprano':'ph-microphone','Contralto':'ph-microphone','Tenor':'ph-microphone',
+                'Violão':'ph-guitar','Guitarra':'ph-guitar','Baixo':'ph-guitar','Bateria':'ph-disc','Piano':'ph-piano-keys',
+                'Violino':'ph-music-notes','Op. Som':'ph-speaker-high','Projeção':'ph-projector-screen',
+                'Transmissão':'ph-video-camera','Fotografia':'ph-camera'
+            };
             document.getElementById('cadastro-grid').innerHTML = COLUMNS_ORDER.map(role => {
                 const members = appState.members[role] || [];
-                let listHTML = members.length === 0 ? `<p class="text-slate-400 text-[10px] italic p-4 text-center">Vazio</p>` : 
-                    `<ul class="divide-y divide-slate-50 max-h-48 overflow-y-auto">` + members.sort().map(m => `
-                        <li class="p-3 flex justify-between items-center text-xs group"><span class="font-bold">${m}</span><button onclick="deleteMember('${role}', '${m}')" class="text-red-400"><i class="ph-bold ph-trash"></i></button></li>`).join('') + `</ul>`;
-                return `<div class="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden"><div class="bg-slate-50 border-b p-3 flex justify-between items-center"><h4 class="font-serif font-bold text-presb-green text-xs">${role}</h4><span class="bg-presb-green/10 text-presb-green text-[9px] font-black px-2 py-1 rounded-lg">${members.length}</span></div>${listHTML}</div>`;
+                const department = DEPARTMENTS[role] || 'Apoio';
+                const listHTML = members.length === 0
+                    ? `<div class="admin-team-empty"><i class="ph ph-user-circle-plus"></i><span>Sem integrantes cadastrados</span></div>`
+                    : `<ul class="admin-member-list">${[...members].sort((a,b) => a.localeCompare(b,'pt-BR')).map(m => `
+                        <li><span class="admin-small-avatar">${escapeHTML(m.charAt(0).toUpperCase())}</span><span class="admin-member-text">${escapeHTML(m)}</span><button type="button" class="admin-member-delete" data-role="${escapeHTML(role)}" data-member="${escapeHTML(m)}" onclick="deleteMember(this.dataset.role, this.dataset.member)" aria-label="Remover ${escapeHTML(m)} da função ${escapeHTML(role)}" title="Remover integrante"><i class="ph ph-trash"></i></button></li>`).join('')}</ul>`;
+                return `<article class="admin-team-card" data-department="${escapeHTML(department)}">
+                    <div class="admin-team-card-header"><span class="admin-role-icon"><i class="ph ${roleIcons[role] || 'ph-user'}"></i></span>
+                    <div class="admin-team-card-title"><small>${escapeHTML(department)}</small><h4>${escapeHTML(role)}</h4></div><span class="admin-team-count">${members.length}</span></div>
+                    ${listHTML}</article>`;
             }).join('');
         }
 
@@ -1300,6 +1292,10 @@
         function formatName(name) {
             const exceptions = ['da', 'de', 'do', 'das', 'dos'];
             return name.toLowerCase().split(' ').map((word, i) => (i > 0 && exceptions.includes(word)) ? word : word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        }
+
+        function escapeHTML(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
         }
 
         function showToast(message, isError = false) {
