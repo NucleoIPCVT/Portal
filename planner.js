@@ -48,7 +48,7 @@ function notice(message, error = false) {
 }
 function reportError(error) {
   notice(error?.code === 'permission-denied'
-    ? 'O acesso aos dados foi negado. A coordenação precisa conferir as regras do Planejamento Estratégico no Firebase.'
+    ? 'O acesso aos dados foi negado. A coordenação precisa conferir as regras do Planner no Firebase.'
     : error?.message || 'Não foi possível concluir. Tente novamente.', true)
 }
 async function action(work, success = '') {
@@ -336,7 +336,7 @@ function renderIntegrations(content) {
     node('p', { text: 'Importe eventos das agendas selecionadas e compartilhe-os com os membros autorizados da Comissão. As agendas do Google permanecem intactas.' }),
     node('p', { class: 'muted', text: 'A conexão vale enquanto esta página estiver aberta. Use Atualizar eventos para buscar alterações; ao expirar, conecte novamente.' })
   ]))
-  if (!session.isAdmin) { content.append(empty('A coordenação administra as agendas compartilhadas. Os eventos importados ficam disponíveis no calendário do Planejamento Estratégico.')); return }
+  if (!session.isAdmin) { content.append(empty('A coordenação administra as agendas compartilhadas. Os eventos importados ficam disponíveis no calendário do Planner.')); return }
   const connect = button(googleClient ? 'Reconectar Google Agenda' : 'Conectar Google Agenda', async () => {
     connect.disabled = true
     try {
@@ -631,7 +631,7 @@ function openEvent(event = null) {
   for (const id of ['event-title', 'event-start', 'event-end']) $(id).disabled = external
   $('event-form').querySelector('[type=submit]').hidden = external
   $('delete-event-button').hidden = !event || (external && !session.isAdmin)
-  $('delete-event-button').textContent = external ? 'Ocultar no Planejamento Estratégico' : 'Excluir evento'
+  $('delete-event-button').textContent = external ? 'Ocultar no Planner' : 'Excluir evento'
   $('event-preparation').hidden = !event || !activePlans().length || event.status === 'cancelled'
   setOptions($('event-plan'), activePlans().map(plan => [plan.id, plan.name]), selectedPlan())
   if (external) $('event-feedback').textContent = (event.status === 'cancelled' ? 'Evento cancelado no Google. Revise as demandas vinculadas. ' : '') + 'Origem: ' + event.calendarName + '. Os dados são atualizados pelo Google Agenda.'
@@ -657,7 +657,7 @@ $('event-form').addEventListener('submit', async event => {
 })
 $('delete-event-button').addEventListener('click', async () => {
   const event = byId('events', value('event-id'))
-  if (!event || !await confirmAction('Remover evento do Planejamento Estratégico?', 'As demandas vinculadas serão preservadas. A agenda original do Google permanece intacta.')) return
+  if (!event || !await confirmAction('Remover evento do Planner?', 'As demandas vinculadas serão preservadas. A agenda original do Google permanece intacta.')) return
   try { await action(() => save('events', { ...event, deleted: true }), 'Evento removido das visões.'); $('event-dialog').close() } catch {}
 })
 
