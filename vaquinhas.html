@@ -188,7 +188,7 @@
                 <button onclick="window.switchView('list')" class="flex items-center gap-2 text-slate-400 hover:text-presb-green font-bold text-[10px] uppercase tracking-widest transition-colors">
                     <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar
                 </button>
-                <div class="flex gap-3 w-full sm:w-auto">
+                <div id="campaign-admin-actions" class="hidden flex gap-3 w-full sm:w-auto">
                     <button onclick="window.requireAuth('edit')" class="flex-1 sm:flex-none flex items-center justify-center gap-2 text-presb-dark bg-presb-gold/20 hover:bg-presb-gold/40 px-5 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-colors">
                         <i data-lucide="pencil" class="w-4 h-4"></i> <span class="hidden sm:inline">Editar</span>
                     </button>
@@ -977,6 +977,7 @@
                 void window.requireAuth('ledger');
                 return;
             }
+            document.getElementById('campaign-admin-actions').classList.toggle('hidden', !manager);
             document.getElementById('detail-contributors-section').classList.toggle('hidden', !manager);
             document.getElementById('admin-contributions-section').classList.toggle('hidden', !manager);
             document.getElementById('contributor-list-title').textContent = manager ? 'Registros de contribuições' : 'Resumo de contribuições';
