@@ -1,8 +1,12 @@
-# Planner da Comissão IPCVT
+# Planejamento Estratégico da Comissão IPCVT
 
-Abra `planner.html` pelo cartão Planner no Portal da Comissão. O acesso usa a
+Abra `planner.html` pelo cartão Planejamento Estratégico no Portal da Comissão. O acesso usa a
 mesma conta Google autorizada em `comissao_acessos`. Antes do uso em produção,
 siga a ativação em [PLANNER-FIREBASE.md](PLANNER-FIREBASE.md).
+
+O Planejamento Estratégico é publicado diretamente pelo GitHub Pages do
+repositório `NucleoIPCVT/Portal`, sem dependência do Vercel. O endereço Vercel
+existente no painel da Comissão pertence à ferramenta separada Planejamento Tático.
 
 ## Organizar o trabalho
 
@@ -50,7 +54,7 @@ confirma que deseja disponibilizar seus eventos aos membros da Comissão.
 Somente agendas com permissão de leitura de detalhes podem ser importadas.
 Agendas compartilhadas precisam estar adicionadas à conta do Google Agenda.
 
-A sincronização desta versão é **Google → Planner**, pelo botão **Atualizar
+A sincronização desta versão é **Google → Planejamento Estratégico**, pelo botão **Atualizar
 eventos**, num intervalo de até um ano. Importações repetidas atualizam o mesmo
 registro, inclusive ocorrências recorrentes. Não há escrita no Google nem
 sincronização com o navegador fechado. A conexão expira e deve ser renovada
