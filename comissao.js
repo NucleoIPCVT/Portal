@@ -24,7 +24,7 @@ const OWNER_EMAIL = 'hudsonamorim08@gmail.com'
 const TOOL_ACCESS = {
   comissao: { collection: ACCESS_COLLECTION, hint: 'Acesso ao painel da Comissão.' },
   vaquinhas: { collection: 'vaquinhas_acessos', hint: 'Acesso à criação, edição e validação das vaquinhas.' },
-  escala: { collection: 'escala_geral_acessos', hint: 'Cadastro preparado. O login Google da Escala Geral será integrado em uma próxima atualização.' },
+  escala: { collection: 'escala_geral_acessos', hint: 'Acesso ao modo administrador, trocas, relatórios e equipes da Escala Geral.' },
   tatico: { collection: 'tatico_acessos', hint: 'Cadastro preparado. O Planejamento Tático ainda precisa integrar o login Google.' }
 }
 const app = initializeApp(firebaseConfig, 'ipcvt-comissao')
