@@ -36,15 +36,17 @@
 
     <header class="bg-presby text-white shadow-md z-10 relative">
         <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center">
-            <div class="flex items-center gap-3">
+            <a href="revisao_repertorio.html" aria-label="Início da Revisão de Repertório" class="flex items-center gap-3 text-white no-underline">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15V6"/><path d="M18.5 18a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/><path d="M12 12H3"/><path d="M16 6H3"/><path d="M12 18H3"/></svg>
                 <div>
                     <h1 class="text-2xl font-bold tracking-tight">Revisão de Repertório</h1>
                     <p class="text-sm text-presby-light opacity-90 font-medium">Comissão do Núcleio IPCVT</p>
                 </div>
-            </div>
+            </a>
             
-            <nav class="mt-4 sm:mt-0 flex gap-4 items-center">
+            <nav class="mt-4 sm:mt-0 flex flex-wrap gap-4 items-center">
+                <a href="index.html" class="text-xs font-bold text-white hover:text-green-200">← Portal IPCVT</a>
+                <a href="comissao.html" class="text-xs font-bold text-white hover:text-green-200">← Portal Comissão IPCVT</a>
                 <div id="nav-tabs" class="flex gap-2 bg-presby-dark/50 p-1.5 rounded-lg border border-presby-dark">
                     <button onclick="window.setTab('cadastro')" id="tab-cadastro" class="px-5 py-2 rounded-md transition-all duration-200 text-sm font-semibold">Cadastrar Músicas</button>
                     <button onclick="window.setTab('analise')" id="tab-analise" class="px-5 py-2 rounded-md transition-all duration-200 text-sm font-semibold">Análise e Votação</button>
