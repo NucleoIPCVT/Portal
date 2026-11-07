@@ -39,8 +39,8 @@ function error(message, code = 'planner-error') {
 function readableError(cause) {
   if (cause?.code === 'conflict' || cause?.code?.startsWith('planner-')) return cause
   const messages = {
-    'permission-denied': 'O acesso aos dados do Planner foi negado. Confira sua autorização e as regras do Firestore.',
-    'unavailable': 'O Planner está sem conexão com o servidor. Tente salvar novamente quando a conexão voltar.',
+    'permission-denied': 'O acesso aos dados do Planejamento Estratégico foi negado. Confira sua autorização e as regras do Firestore.',
+    'unavailable': 'O Planejamento Estratégico está sem conexão com o servidor. Tente salvar novamente quando a conexão voltar.',
     'auth/popup-closed-by-user': 'O login foi cancelado.',
     'auth/cancelled-popup-request': 'A janela anterior de login foi cancelada.',
     'auth/popup-blocked': 'Permita a janela do Google neste navegador para continuar.',
