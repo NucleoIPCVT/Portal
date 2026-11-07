@@ -106,7 +106,7 @@
  <div id="excel-actions" class="hidden toolbar-excel"><button onclick="exportScheduleExcel()"><i class="ph ph-download-simple"></i> Baixar base</button><button onclick="document.getElementById('excel-file').click()"><i class="ph ph-upload-simple"></i> Importar base</button></div></div>
             <div id="admin-logout-container" class="hidden p-3 md:p-6 border-t border-white/5 mt-auto shrink-0">
                 <button onclick="logoutAdmin()" class="w-full text-white/40 hover:text-white text-[9px] md:text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-colors">
-                    <i class="ph ph-sign-out text-lg"></i> Sair do modo administrador
+                    <i class="ph ph-sign-out text-lg"></i> Sair da conta Google
                 </button>
             </div>
         </nav>
@@ -279,7 +279,7 @@
         </main>
     </div>
 
-    <!-- MODAL DE SENHA -->
+    <!-- ACESSO GOOGLE À ADMINISTRAÇÃO -->
     <div id="auth-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden z-[200] flex items-center justify-center p-4">
         <div class="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden animate-fade-in border-t-8 border-presb-gold">
             <div class="p-6 md:p-8 text-center relative">
@@ -287,19 +287,14 @@
                     <i class="ph-bold ph-x text-xl"></i>
                 </button>
                 <div class="w-16 h-16 md:w-20 md:h-20 bg-presb-gold/20 text-presb-gold rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6 shadow-inner">
-                    <i class="ph-fill ph-lock-key text-3xl md:text-4xl"></i>
+                    <i class="ph-fill ph-google-logo text-3xl md:text-4xl"></i>
                 </div>
-                <h3 class="text-xl md:text-2xl font-black text-slate-800 mb-1 md:mb-2 font-serif tracking-tight">Acesso Restrito</h3>
-                <p class="text-slate-400 text-[9px] md:text-[10px] uppercase tracking-widest font-bold mb-6 md:mb-8">Digite a senha administrativa</p>
-                
-                <form onsubmit="handleAuthSubmit(event)" class="space-y-4">
-                    <input type="password" id="auth-password" placeholder="••••••" required 
-                           class="w-full border-2 border-slate-100 bg-slate-50 rounded-2xl px-4 py-3 md:py-4 outline-none focus:border-presb-gold text-center text-xl md:text-2xl tracking-[0.5em] font-black shadow-inner">
-                    <p id="auth-error" class="text-red-500 text-[9px] font-bold uppercase hidden animate-pulse pt-1">Senha incorreta</p>
-                    <button type="submit" class="w-full bg-presb-green text-white font-black py-3 md:py-4 rounded-2xl shadow-xl uppercase tracking-[0.2em] text-[10px] mt-4">
-                        Desbloquear
-                    </button>
-                </form>
+                <h3 class="text-xl md:text-2xl font-black text-slate-800 mb-1 md:mb-2 font-serif tracking-tight">Administração da Escala</h3>
+                <p id="auth-description" class="text-slate-500 text-xs font-medium mb-6 md:mb-8">Entre com uma conta Google autorizada no Portal Comissão IPCVT.</p>
+                <p id="auth-error" role="alert" class="text-red-600 text-xs font-semibold hidden mb-4"></p>
+                <button type="button" id="auth-google-button" onclick="loginGoogle()" class="w-full bg-presb-green text-white font-black py-3 md:py-4 rounded-2xl shadow-xl uppercase tracking-[0.1em] text-xs flex justify-center items-center gap-2">
+                    <i class="ph-bold ph-google-logo text-lg"></i> Entrar com Google
+                </button>
             </div>
         </div>
     </div>
@@ -330,7 +325,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, signInAnonymously, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAg9w5QohkcmXUFRgLfSI5Sh1chnCD1Owc",
@@ -342,19 +337,27 @@
             measurementId: "G-DJ8E3VPMSY"
         };
 
-        const app = initializeApp(firebaseConfig);
+        // Mesmo nome do aplicativo da Comissão e das Vaquinhas: a sessão Google é compartilhada.
+        const app = initializeApp(firebaseConfig, 'ipcvt-comissao');
         const db = getFirestore(app);
         const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
+        googleProvider.setCustomParameters({ prompt: 'select_account' });
+        const OWNER_EMAIL = 'hudsonamorim08@gmail.com';
 
         // ==========================================
         // VARIÁVEIS GLOBAIS
         // ==========================================
         const CURRENT_YEAR = 2026;
-        const APP_PASSWORD = "Pr3sbit3ri4n4";
         let isFirebaseConnected = false;
         let activeTab = 'escalas';
         
-        let isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+        let isAdmin = false;
+        let pendingNormalizationSave = false;
+        let stopEscalaAccess = null;
+        let stopOwnerAccess = null;
+        let authRevision = 0;
+        let currentAuthorizedEmail = '';
         let pendingAction = null; 
         let pendingTab = null;
         
@@ -462,7 +465,15 @@
         }
 
         async function startApp() {
-            try { await signInAnonymously(auth); } catch (err) { console.warn("Modo offline"); }
+            try { await setPersistence(auth, browserLocalPersistence); }
+            catch (err) { console.warn('Não foi possível configurar a permanência do login.', err); }
+            onAuthStateChanged(auth, handleAuthChange);
+            await auth.authStateReady();
+            // Não substitui uma sessão Google já iniciada na Comissão ou nas Vaquinhas.
+            if (!auth.currentUser) {
+                try { await signInAnonymously(auth); }
+                catch (err) { console.warn('Acesso anônimo indisponível.', err); }
+            }
             initFirebaseConnection();
             updateAuthUI();
         }
@@ -473,10 +484,8 @@
                 if (docSnap.exists()) {
                     const { normalizedData, needsSave } = normalizeData(docSnap.data());
                     appState = normalizedData;
-                    
-                    if (needsSave) {
-                        saveStateToFirebase();
-                    }
+                    pendingNormalizationSave = needsSave;
+                    if (needsSave && isAdmin) saveStateToFirebase();
 
                     if (!isFirebaseConnected) {
                         isFirebaseConnected = true;
@@ -487,11 +496,11 @@
                     }
                 } else {
                     generateDefaultData();
-                    saveStateToFirebase().then(() => {
-                        isFirebaseConnected = true;
-                        document.getElementById('loading-data').classList.add('hidden');
-                        proceedSwitchTab('escalas');
-                    });
+                    pendingNormalizationSave = true;
+                    if (isAdmin) saveStateToFirebase();
+                    isFirebaseConnected = true;
+                    document.getElementById('loading-data').classList.add('hidden');
+                    proceedSwitchTab('escalas');
                 }
             }, (error) => {
                 showToast("Erro ao conectar com a nuvem.", true);
@@ -500,7 +509,15 @@
         }
 
         async function saveStateToFirebase() {
-            try { await setDoc(doc(db, "app_ipcvt", "escala_geral_dados"), appState); } catch (e) { showToast("Erro ao salvar!", true); }
+            if (!isAdmin) return false;
+            try {
+                await setDoc(doc(db, "app_ipcvt", "escala_geral_dados"), appState);
+                pendingNormalizationSave = false;
+                return true;
+            } catch (e) {
+                showToast("Erro ao salvar! Confira as regras do Firebase.", true);
+                return false;
+            }
         }
 
         function generateDefaultData() {
@@ -559,17 +576,98 @@
         // ==========================================
         // AUTENTICAÇÃO E NAVEGAÇÃO
         // ==========================================
+        function showAuthError(message) {
+            const error = document.getElementById('auth-error');
+            error.textContent = message;
+            error.classList.toggle('hidden', !message);
+        }
+
+        function setAdminAccess(allowed, email = '') {
+            if (isAdmin === allowed && currentAuthorizedEmail === (allowed ? email : '')) return;
+            isAdmin = allowed;
+            currentAuthorizedEmail = allowed ? email : '';
+            updateAuthUI();
+            if (allowed) {
+                const action = pendingAction, target = pendingTab;
+                closeAuthModal();
+                if (!isFirebaseConnected) return;
+                if (pendingNormalizationSave) saveStateToFirebase();
+                if (action === 'switch_tab' && target) proceedSwitchTab(target);
+                else refreshCurrentTab();
+            } else if (!isFirebaseConnected) {
+                return;
+            } else if (activeTab !== 'escalas') {
+                proceedSwitchTab('escalas');
+            } else {
+                renderEscalas();
+            }
+        }
+
+        async function handleAuthChange(user) {
+            const revision = ++authRevision;
+            stopEscalaAccess?.(); stopOwnerAccess?.();
+            stopEscalaAccess = null; stopOwnerAccess = null;
+            setAdminAccess(false);
+            if (!user?.email || !user.emailVerified) return;
+            let googleLogin = false;
+            try {
+                const token = await user.getIdTokenResult();
+                googleLogin = token.claims.firebase?.sign_in_provider === 'google.com';
+            } catch (err) { console.warn('Não foi possível verificar o login Google.', err); }
+            if (revision !== authRevision) return;
+            if (!googleLogin) {
+                if (!document.getElementById('auth-modal').classList.contains('hidden')) {
+                    showAuthError('É necessário entrar com uma conta Google válida.');
+                }
+                return;
+            }
+
+            const email = user.email.trim().toLowerCase();
+            let escalaGrant = false, ownerGrant = false;
+            let escalaReady = false, ownerReady = email !== OWNER_EMAIL;
+            const applyGrants = () => {
+                if (revision !== authRevision || !escalaReady || !ownerReady) return;
+                const allowed = escalaGrant || ownerGrant;
+                setAdminAccess(allowed, email);
+                if (!allowed && !document.getElementById('auth-modal').classList.contains('hidden')) {
+                    showAuthError('Conta sem acesso. Peça a autorização em Comissão > Administrar autorizações > Escala Geral.');
+                }
+            };
+            stopEscalaAccess = onSnapshot(doc(db, 'escala_geral_acessos', email), snap => {
+                escalaReady = true;
+                escalaGrant = snap.exists() && snap.data().ativo === true;
+                applyGrants();
+            }, () => {
+                escalaReady = true;
+                escalaGrant = false;
+                applyGrants();
+            });
+            // Hudson mantém o acesso principal enquanto estiver ativo como admin da Comissão.
+            if (email === OWNER_EMAIL) {
+                stopOwnerAccess = onSnapshot(doc(db, 'comissao_acessos', email), snap => {
+                    ownerReady = true;
+                    ownerGrant = snap.exists() && snap.data().ativo === true && snap.data().perfil === 'admin';
+                    applyGrants();
+                }, () => {
+                    ownerReady = true;
+                    ownerGrant = false;
+                    applyGrants();
+                });
+            }
+        }
+
         function requestAuth(action, target = null) {
             if (isAdmin) {
-                if (action === 'edit_escala') return; 
-                if (action === 'switch_tab') proceedSwitchTab(target);
+                if (action === 'switch_tab' && target) proceedSwitchTab(target);
                 return;
             }
             pendingAction = action; pendingTab = target;
+            showAuthError('');
+            const email = auth.currentUser?.email;
+            document.getElementById('auth-description').textContent = email
+                ? `Conta atual: ${email}. Entre com uma conta autorizada para administrar a Escala.`
+                : 'Entre com uma conta Google autorizada no Portal Comissão IPCVT.';
             document.getElementById('auth-modal').classList.remove('hidden');
-            document.getElementById('auth-password').value = '';
-            document.getElementById('auth-error').classList.add('hidden');
-            setTimeout(() => document.getElementById('auth-password').focus(), 100);
         }
 
         function closeAuthModal() {
@@ -577,28 +675,35 @@
             pendingAction = null; pendingTab = null;
         }
 
-        function handleAuthSubmit(e) {
-            e.preventDefault();
-            if (document.getElementById('auth-password').value === APP_PASSWORD) {
-                isAdmin = true; sessionStorage.setItem('isAdmin', 'true');
-                const action = pendingAction, target = pendingTab;
-                closeAuthModal(); 
-                updateAuthUI();
-                
-                if (action === 'switch_tab') proceedSwitchTab(target);
-                else if (action === 'edit_escala') renderEscalas(); 
-                else refreshCurrentTab(); 
-                
-                showToast("Acesso Liberado");
-            } else {
-                document.getElementById('auth-error').classList.remove('hidden');
+        async function loginGoogle() {
+            const button = document.getElementById('auth-google-button');
+            button.disabled = true;
+            showAuthError('');
+            document.getElementById('auth-description').textContent = 'Abrindo o Google e verificando a autorização...';
+            try {
+                await signInWithPopup(auth, googleProvider);
+            } catch (error) {
+                const messages = {
+                    'auth/popup-closed-by-user': 'O login foi cancelado.',
+                    'auth/popup-blocked': 'O navegador bloqueou o Google. Permita pop-ups e tente novamente.',
+                    'auth/unauthorized-domain': 'Este domínio precisa ser autorizado no Firebase.',
+                    'auth/operation-not-allowed': 'Ative o provedor Google nas configurações do Firebase.'
+                };
+                showAuthError(messages[error.code] || 'Não foi possível entrar com Google. Tente novamente.');
+            } finally {
+                button.disabled = false;
             }
         }
 
-        function logoutAdmin() {
-            isAdmin = false; sessionStorage.removeItem('isAdmin'); updateAuthUI();
-            if (activeTab !== 'escalas') proceedSwitchTab('escalas'); else renderEscalas();
-            showToast("Edição bloqueada.");
+        async function logoutAdmin() {
+            try {
+                await signOut(auth);
+                // Mantém a consulta pública onde as regras antigas exigem autenticação anônima.
+                try { await signInAnonymously(auth); } catch (err) { console.warn('Consulta anônima indisponível.', err); }
+                showToast('Conta Google desconectada.');
+            } catch (err) {
+                showToast('Não foi possível sair da conta.', true);
+            }
         }
 
         function updateAuthUI() {
@@ -613,7 +718,7 @@
 
             if (isAdmin) {
                 btnEdit.classList.add('hidden'); logoutContainer.classList.remove('hidden');
-                subtitle.innerText = "Modo administrador · alterações salvas automaticamente.";
+                subtitle.innerText = "Modo administrador · " + currentAuthorizedEmail + " · alterações salvas automaticamente.";
                 subtitle.classList.replace('text-slate-500', 'text-presb-gold');
             } else {
                 btnEdit.classList.remove('hidden'); logoutContainer.classList.add('hidden');
@@ -860,6 +965,7 @@
 
         function handleSubstituicao(e) {
             e.preventDefault();
+            if (!isAdmin) return;
             const payload = {
                 id: Date.now(), date: document.getElementById('sub-data').value,
                 role: document.getElementById('sub-funcao').value, turno: document.getElementById('sub-turno').value,
@@ -876,7 +982,9 @@
         }
 
         function deleteSubstituicao(subId) {
+            if (!isAdmin) return;
             openConfirmModal('Remover', 'Deseja excluir este registo?', () => {
+                if (!isAdmin) return;
                 appState.substitutions = appState.substitutions.filter(s => String(s.id) !== String(subId));
                 saveStateToFirebase(); renderSubstituicoes(); showToast('Excluído.');
             });
@@ -922,8 +1030,9 @@
         }
 
         function deleteSelectedSubs() {
-            if (selectedSubs.length === 0) return;
+            if (!isAdmin || selectedSubs.length === 0) return;
             openConfirmModal('Excluir Registros', `Deseja excluir ${selectedSubs.length} registro(s) selecionado(s)?`, () => {
+                if (!isAdmin) return;
                 appState.substitutions = appState.substitutions.filter(s => !selectedSubs.includes(String(s.id)));
                 selectedSubs = [];
                 document.getElementById('selectAllSubs').checked = false;
@@ -1167,6 +1276,7 @@
 
         function handleAddMember(e) {
             e.preventDefault();
+            if (!isAdmin) return;
             const role = document.getElementById('cad-funcao').value;
             const nameInput = document.getElementById('cad-nome');
             const name = formatName(nameInput.value.trim());
@@ -1179,7 +1289,9 @@
         }
 
         function deleteMember(role, name) {
+            if (!isAdmin) return;
             openConfirmModal('Remover', `Excluir ${name}?`, () => {
+                if (!isAdmin) return;
                 appState.members[role] = appState.members[role].filter(m => m !== name);
                 saveStateToFirebase(); renderCadastro(); showToast('Removido.');
             });
@@ -1214,7 +1326,7 @@
 
         // Geração das exportações completas para o escopo Global (window)
         window.startApp = startApp; window.attemptSwitchTab = attemptSwitchTab; window.requestAuth = requestAuth;
-        window.handleAuthSubmit = handleAuthSubmit; window.closeAuthModal = closeAuthModal; window.logoutAdmin = logoutAdmin;
+        window.loginGoogle = loginGoogle; window.closeAuthModal = closeAuthModal; window.logoutAdmin = logoutAdmin;
         window.renderEscalas = renderEscalas; window.exportarPDF = exportarPDF; window.updateAssignment = updateAssignment;
         window.updateAbsentPerson = updateAbsentPerson; window.handleSubstituicao = handleSubstituicao;
         window.deleteSubstituicao = deleteSubstituicao; window.handleAddMember = handleAddMember; window.deleteMember = deleteMember;
