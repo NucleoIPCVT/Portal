@@ -431,7 +431,7 @@
         function projectPublicCampaigns(source) {
             return source.map(camp => {
                 if (camp.visibility === 'private') return {
-                    id: camp.id, visibility: 'private', title: 'Arrecadação oculta',
+                    id: camp.id, visibility: 'private', title: camp.title || 'Arrecadação sem título',
                     description: 'Conteúdo reservado aos gestores.', type: camp.type, mode: camp.mode
                 };
                 const {contributors, ...published} = camp;
