@@ -17,8 +17,8 @@ antes de substituí-lo.
    `app_ipcvt/interas_dados` e de `interas_contribuicoes` é negada.
 5. Dentro da **Comissão > Administrar autorizações**, Hudson cadastra os
    e-mails dos gestores de cada ferramenta. Cada pessoa usa sua conta Google.
-   O cadastro de Escala Geral e Planejamento Tático fica preparado, mas essas
-   duas ferramentas só o aplicarão quando a autenticação delas for integrada.
+   A Escala Geral já consulta essa lista para liberar o modo administrador.
+   O Planejamento Tático ainda precisa integrar o login Google.
 
 O WhatsApp é informado em cada vaquinha financeira. O botão abre uma conversa
 com a mensagem pronta; o contribuinte precisa anexar o arquivo manualmente.
@@ -61,6 +61,16 @@ service cloud.firestore {
         || (
           exists(/databases/$(database)/documents/vaquinhas_acessos/$(emailGoogle()))
           && get(/databases/$(database)/documents/vaquinhas_acessos/$(emailGoogle())).data.ativo == true
+        )
+      );
+    }
+
+    function gestorEscala() {
+      return googleLogin() && (
+        (emailGoogle() == 'hudsonamorim08@gmail.com' && comissaoAdmin())
+        || (
+          exists(/databases/$(database)/documents/escala_geral_acessos/$(emailGoogle()))
+          && get(/databases/$(database)/documents/escala_geral_acessos/$(emailGoogle())).data.ativo == true
         )
       );
     }
@@ -164,6 +174,9 @@ service cloud.firestore {
     match /app_ipcvt/{documento} {
       // Mantido como na versão anterior até a atualização do Planejamento Tático.
       allow read, write: if documento == 'planner_dados';
+      // A escala pode ser consultada publicamente, mas só gestores podem editá-la.
+      allow read: if documento == 'escala_geral_dados';
+      allow write: if documento == 'escala_geral_dados' && gestorEscala();
       // Somente dados sanitizados são públicos.
       allow read: if documento == 'interas_publicas';
       allow write: if documento == 'interas_publicas' && gestorVaquinhas();
@@ -172,10 +185,11 @@ service cloud.firestore {
         documento == 'interas_dados'
         || documento.matches('controle_intera_.*')
       ) && gestorVaquinhas();
-      // Compatibilidade com a Escala Geral e os outros aplicativos legados.
+      // Compatibilidade apenas com os demais aplicativos legados.
       allow read, write: if request.auth != null
         && documento != 'interas_publicas'
         && documento != 'interas_dados'
+        && documento != 'escala_geral_dados'
         && documento != 'planner_dados'
         && !documento.matches('controle_intera_.*');
     }
@@ -203,6 +217,10 @@ service cloud.firestore {
 - Gestor: Google já autenticado na Comissão é reconhecido, sem repetir login.
 - Gestor: ✓ atualiza total e contador; ✕ mantém total inalterado.
 - Private: cartão não revela título nem descrição e exige gestor autenticado.
+- Escala Geral pública: as escalas carregam sem login Google, mas nenhuma edição é oferecida.
+- Escala Geral autorizada: o Google já conectado na Comissão abre as ferramentas de gestão.
+- Escala Geral sem autorização: uma tentativa de escrita no Firestore é negada.
+- Escala Geral: suspender a autorização na Comissão remove o modo administrador automaticamente.
 - Legado: vaquinhas e pagamentos antigos continuam íntegros.
 - Cadastro de gestores: só `hudsonamorim08@gmail.com`, como administrador
   da Comissão, consegue autorizar e-mail para qualquer ferramenta.
