@@ -18,7 +18,7 @@ antes de substituí-lo.
 5. Dentro da **Comissão > Administrar autorizações**, Hudson cadastra os
    e-mails dos gestores de cada ferramenta. Cada pessoa usa sua conta Google.
    A Escala Geral já consulta essa lista para liberar o modo administrador.
-   O Planejamento Tático ainda precisa integrar o login Google.
+   O Planejamento Estratégico usa essa lista para liberar o painel de equipes.
 
 O WhatsApp é informado em cada vaquinha financeira. O botão abre uma conversa
 com a mensagem pronta; o contribuinte precisa anexar o arquivo manualmente.
@@ -73,6 +73,12 @@ service cloud.firestore {
           && get(/databases/$(database)/documents/escala_geral_acessos/$(emailGoogle())).data.ativo == true
         )
       );
+    }
+
+    function gestorEstrategico() {
+      return googleLogin()
+        && exists(/databases/$(database)/documents/tatico_acessos/$(emailGoogle()))
+        && get(/databases/$(database)/documents/tatico_acessos/$(emailGoogle())).data.ativo == true;
     }
 
     match /comissao_acessos/{email} {
@@ -172,8 +178,8 @@ service cloud.firestore {
     }
 
     match /app_ipcvt/{documento} {
-      // Mantido como na versão anterior até a atualização do Planejamento Tático.
-      allow read, write: if documento == 'planner_dados';
+      // Quadro de equipes: acesso apenas com Google e autorização ativa.
+      allow read, write: if documento == 'planner_dados' && gestorEstrategico();
       // A escala pode ser consultada publicamente, mas só gestores podem editá-la.
       allow read: if documento == 'escala_geral_dados';
       allow write: if documento == 'escala_geral_dados' && gestorEscala();
@@ -224,3 +230,6 @@ service cloud.firestore {
 - Legado: vaquinhas e pagamentos antigos continuam íntegros.
 - Cadastro de gestores: só `hudsonamorim08@gmail.com`, como administrador
   da Comissão, consegue autorizar e-mail para qualquer ferramenta.
+- Planejamento Estratégico: Google autorizado em `tatico_acessos` consegue
+  ler/salvar a organização; usuário não autorizado ou suspenso recebe
+  `permission-denied`, inclusive ao acessar o documento diretamente.
