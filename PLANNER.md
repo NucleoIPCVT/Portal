@@ -45,16 +45,29 @@ evitar recriação por modelos. Arquivar um plano preserva suas demandas e hist�
 
 ## Google Agenda
 
-Um administrador conecta a conta, escolhe agendas às quais possui acesso e
-confirma que deseja disponibilizar seus eventos aos membros da Comissão.
-Somente agendas com permissão de leitura de detalhes podem ser importadas.
-Agendas compartilhadas precisam estar adicionadas à conta do Google Agenda.
+A **Agenda IPCVT** oficial é pública e já está cadastrada no Planner. O GitHub Actions
+lê o iCal público da igreja periodicamente e gera `agenda-ipcvt.json` no repositório
+`NucleoIPCVT/Portal`. Nenhum membro precisa conectar sua conta Google pessoal
+para essa leitura. A agenda precisa estar configurada como pública, com detalhes
+dos eventos visíveis.
 
-A sincronização desta versão é **Google → Planner**, pelo botão **Atualizar
-eventos**, num intervalo de até um ano. Importações repetidas atualizam o mesmo
-registro, inclusive ocorrências recorrentes. Não há escrita no Google nem
-sincronização com o navegador fechado. A conexão expira e deve ser renovada
-quando necessário; o token fica somente na memória da página.
+Na aba **Google Agenda**, um administrador clica em **Atualizar eventos da Agenda
+IPCVT** para importar as alterações da cópia pública do GitHub ao Firestore.
+Os eventos ficam então disponíveis para a Comissão e podem ser vinculados às
+demandas. Importações repetidas preservam os identificadores e não duplicam os
+registros; registros ocultados manualmente não reaparecem. A atualização do
+arquivo público é automática, mas a importação ao Planner ainda exige o clique
+de um administrador.
+
+Em **Outras agendas Google (opcional)**, o fluxo anterior com autorização OAuth
+continua disponível para importar outras agendas compartilhadas com a conta
+conectada. A sincronização desses calendários é **Google → Planner**, também
+manual e limitada a um intervalo de até um ano. A conexão expira e deve ser
+renovada quando necessário; o token permanece somente na memória da página.
+
+As importações não escrevem nem excluem eventos na agenda original. Quando a
+data de um evento importado muda, o Planner atualiza os prazos relativos das
+demandas elegíveis ou sinaliza as demais para revisão.
 
 ## Validação
 

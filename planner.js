@@ -1,6 +1,7 @@
 import { createPlannerStore } from './planner-store.js'
 import { todayISO, addDays, formatDate, calendarCells, computeSummary, validateTask, isOverdue, taskProgress, generateWeeklyTasks, eventPreparationTasks } from './planner-core.js'
 import { GoogleCalendarClient } from './planner-google.js'
+import { publicCalendar, readPublicCalendar } from './planner-public.js'
 
 const $ = id => document.getElementById(id)
 const labels = { todo: 'Não iniciada', doing: 'Em andamento', done: 'Concluída', low: 'Baixa', normal: 'Normal', high: 'Alta', urgent: 'Urgente' }
@@ -330,7 +331,66 @@ function renderRoutines(content) {
   }
   if (!routines.length) content.append(empty('Nenhuma rotina cadastrada.'))
 }
+function renderPublicIntegration(content) {
+  const importedCount = state.events.filter(event => !event.deleted && event.sourceCalendarId === publicCalendar.id).length
+  const section = node('section', { class: 'integration-card' }, [
+    node('h3', { text: publicCalendar.name + ' · agenda pública' }),
+    node('p', { text: 'Os eventos são publicados pela conta oficial da igreja. O GitHub consulta a agenda pública periodicamente, sem acessar sua agenda particular ou pedir outra autorização Google.' }),
+    node('p', { class: 'muted', text: importedCount + ' evento(s) já disponíveis para vincular a demandas do Planner.' }),
+    node('a', { class: 'button', href: publicCalendar.calendarUrl, target: '_blank', rel: 'noopener noreferrer', text: 'Abrir agenda oficial ↗' })
+  ])
+  content.append(section)
+  if (!session.isAdmin) return
+
+  const update = button(importBusy ? 'Atualizando…' : 'Atualizar eventos da Agenda IPCVT', async () => {
+    if (importBusy) return
+    update.disabled = true
+    importBusy = true
+    const epoch = authEpoch
+    let count = 0
+    let reviewed = 0
+    try {
+      const snapshot = await readPublicCalendar()
+      if (epoch !== authEpoch || !session.isAdmin) throw new Error('Sua sessão mudou. Entre novamente no Planner.')
+      await action(async () => {
+        for (const imported of snapshot.events) {
+          if (epoch !== authEpoch || !session.isAdmin) throw new Error('Sua sessão mudou. A atualização foi interrompida.')
+          const previous = byId('events', imported.id)
+          // Respeite eventos ocultados manualmente pela Comissão e evite gravações sem mudança.
+          if (previous?.deleted) continue
+          if (previous && Object.keys(imported).every(key => JSON.stringify(previous[key] ?? null) === JSON.stringify(imported[key] ?? null))) continue
+          const next = { ...(previous || {}), ...imported }
+          await save('events', next)
+          count++
+          if (previous && previous.startDate && (previous.startDate !== next.startDate || previous.status !== next.status)) {
+            reviewed += await updateRelativeDates(previous, next)
+          }
+        }
+      })
+      notice(count + ' evento(s) atualizado(s) a partir da agenda pública.' +
+        (reviewed ? ' ' + reviewed + ' demanda(s) precisam de revisão de prazos.' : '') +
+        (!snapshot.events.length ? ' A agenda pública não retornou eventos no período disponibilizado.' : ''))
+    } catch (error) {
+      notice(count + ' evento(s) salvo(s) antes da interrupção. ' + (error?.message || 'Não foi possível atualizar a agenda pública.'), true)
+    } finally {
+      importBusy = false
+      if (session.status === 'authorized' && currentView === 'integrations') render()
+    }
+  }, 'button button-primary')
+  update.disabled = importBusy
+  section.append(node('p', { class: 'muted', text: 'Clique para trazer as alterações mais recentes da cópia pública do GitHub. Os eventos já vinculados às demandas permanecem identificados.' }), update)
+}
+
 function renderIntegrations(content) {
+  renderPublicIntegration(content)
+  if (!session.isAdmin) return
+  const optional = node('details', { class: 'integration-card' })
+  optional.append(node('summary', { text: 'Outras agendas Google (opcional)' }))
+  content.append(optional)
+  renderPrivateIntegrations(optional)
+}
+
+function renderPrivateIntegrations(content) {
   content.append(node('section', { class: 'integration-card' }, [
     node('h3', { text: 'Google Agenda' }),
     node('p', { text: 'Importe eventos das agendas selecionadas e compartilhe-os com os membros autorizados da Comissão. As agendas do Google permanecem intactas.' }),

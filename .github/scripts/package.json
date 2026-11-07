@@ -1,0 +1,8 @@
+{
+  "name": "ipcvt-public-calendar-sync",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "node-ical": "0.27.3"
+  }
+}

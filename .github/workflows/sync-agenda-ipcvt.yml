@@ -1,0 +1,42 @@
+name: Atualizar Agenda IPCVT
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/sync-agenda-ipcvt.yml'
+      - '.github/scripts/sync-agenda-ipcvt.mjs'
+      - '.github/scripts/package.json'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-agenda-ipcvt
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obter código do Portal
+        uses: actions/checkout@v4
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar leitor iCal
+        run: npm install --prefix .github/scripts --no-package-lock --ignore-scripts --no-audit --no-fund
+      - name: Ler agenda pública
+        run: node .github/scripts/sync-agenda-ipcvt.mjs
+      - name: Publicar eventos atualizados
+        run: |
+          git add -- agenda-ipcvt.json
+          if git diff --cached --quiet; then
+            echo 'Agenda sem alterações.'
+            exit 0
+          fi
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Atualiza eventos públicos da Agenda IPCVT'
+          git push

@@ -234,7 +234,20 @@ match /comissao_planner/main/{kind}/{id} {
 }
 ```
 
-## Google Agenda — leitura e atualização interativa
+## Google Agenda — leitura pública da IPCVT e conexão opcional
+
+A Agenda IPCVT é lida pelo GitHub Actions a partir do endereço **público iCal**;
+o fluxo não usa token OAuth pessoal, chave de API ou credencial da igreja. O
+arquivo público `agenda-ipcvt.json` é gerado no repositório do Portal. Um
+administrador usa **Atualizar eventos da Agenda IPCVT** no Planner para importar
+os registros ao Firestore e possibilitar o vínculo com as demandas. Para isso,
+a agenda deve estar pública com permissão de visualizar detalhes. A sincronização
+do JSON não substitui o clique de importação ao Firestore.
+
+A integração OAuth antiga permanece disponível somente em **Outras agendas
+Google (opcional)** para situações em que seja preciso importar outros
+calendários.
+
 
 O botão **Conectar Google Agenda** pede os escopos apenas quando um
 administrador decide usar a integração:
