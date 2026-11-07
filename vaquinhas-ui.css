@@ -144,6 +144,24 @@ body.campaign-page {
 .campaign-page #section-finance, .campaign-page #section-items { border-left: 0; padding-left: 0; }
 .campaign-page #section-finance > div:last-child { padding: 20px 0 0; border: 0; border-top: 1px solid var(--line); background: transparent; }
 .campaign-page #view-form #btn-form-submit, .campaign-page #contrib-init button, .campaign-page #contrib-form button[type=submit] { background: #234b37; color: #fff5dc; border: 1px solid #234b37; min-height: 41px; padding: 11px 16px; }
+/* Mantém o texto claro nos botões escuros, acima das regras genéricas de texto do formulário. */
+.campaign-page #view-detail #contrib-init button,
+.campaign-page #view-detail #contrib-form button[type=submit],
+.campaign-page #view-detail #btn-copy-pix {
+  background: #234b37;
+  border-color: #234b37;
+  color: #fff8e8;
+}
+.campaign-page #view-detail #contrib-init button:hover,
+.campaign-page #view-detail #contrib-form button[type=submit]:hover,
+.campaign-page #view-detail #btn-copy-pix:hover {
+  background: #123727;
+  color: #fff8e8;
+}
+.campaign-page #view-detail #btn-copy-pix.bg-emerald-600 {
+  background: #15674b;
+  color: #ffffff;
+}
 .campaign-page #contrib-form button[type=button] { color: #616b54; }
 /* Modal dialogs retain a restrained cream surface. */
 .campaign-page #auth-modal { background: #071c15c9; backdrop-filter: blur(4px); }
