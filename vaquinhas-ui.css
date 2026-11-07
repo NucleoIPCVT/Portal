@@ -61,6 +61,9 @@ body.campaign-page {
 .campaign-progress { height: 4px; background: #dbd1b4; border-radius: 1px; overflow: hidden; }
 .campaign-progress > span { height: 100%; display: block; background: #8c773d; }
 .campaign-page #campaigns-grid .private-campaign-card { --ink: #ffffff; --muted: #e3eadd; background: #32634f; color: var(--ink); border-color: #61856e; }
+.campaign-page #campaigns-grid .private-campaign-card { align-items:center; justify-content:center; text-align:center; }
+.private-campaign-card .campaign-card-top { justify-content:center; margin-bottom:12px; }
+.private-campaign-card .campaign-card-top > svg { width:23px; height:23px; }
 .campaign-page #campaigns-grid .private-campaign-card:hover { background: #386752; border-color: #a4b99c; }
 .private-campaign-tag { display: inline-flex; color: #f4f0df; background: #244e3c; border: 1px solid #99ad92; border-radius: 3px; padding: 4px 7px; font-size: 10px; }
 .campaign-empty { grid-column: 1/-1; padding: 54px 24px; border: 1px dashed #c6ad7255; border-radius: var(--radius); text-align: center; }
