@@ -375,6 +375,9 @@
 .scale-page .admin-team-content { overflow-y: auto; }
 .scale-page .admin-add-panel { margin-bottom: 20px; overflow: visible; }
 .scale-page .admin-add-panel .admin-panel-heading { border: none; padding-bottom: 5px; }
+.scale-page .admin-role-panel { border-color: #cbded1; background: #f7faf6; }
+.scale-page .admin-role-panel .admin-panel-icon { background: #e4efe6; color: #317253; }
+.scale-page .admin-role-panel .admin-panel-heading p { max-width: 530px; }
 .scale-page .admin-inline-form { display: grid; grid-template-columns: minmax(175px,.9fr) minmax(220px,1.5fr) auto; align-items: end; gap: 12px; padding: 10px 21px 21px; }
 .scale-page .admin-inline-form .admin-primary-button { width: auto; min-height: 40px; white-space: nowrap; }
 .scale-page .admin-team-heading { display: flex; justify-content: space-between; align-items: end; gap: 12px; margin-bottom: 14px; }
@@ -389,6 +392,10 @@
 .scale-page .admin-team-card-title small { display: block; font-size: 9px; font-weight: 650; color: #8a998c; margin-bottom: 3px; }
 .scale-page .admin-team-card-title h4 { font-size: 13px; font-weight: 800; line-height: 1.25; color: #203f30; }
 .scale-page .admin-team-count { font-size: 11px; font-weight: 800; background: #eff3ed; color: #47634c; padding: 5px 8px; border-radius: 7px; }
+.scale-page .admin-role-actions { display: flex; flex-direction: column; align-items: end; gap: 5px; flex-shrink: 0; }
+.scale-page .admin-role-delete { display: inline-flex; align-items: center; gap: 4px; padding: 4px 5px; border: 0; border-radius: 6px!important; background: transparent; color: #9c7771; font-size: 10px; font-weight: 700; }
+.scale-page .admin-role-delete:hover { background: #fff0ed; color: #af4639; }
+.scale-page .admin-role-delete i { font-size: 12px; }
 .scale-page .admin-member-list { max-height: 225px; overflow-y: auto; padding: 5px 10px 9px; margin: 0; list-style: none; }
 .scale-page .admin-member-list li { display: flex; gap: 9px; align-items: center; padding: 9px 5px; }
 .scale-page .admin-member-list li+li { border-top: 1px solid #f1f4ef; }
