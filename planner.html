@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#173f35">
+    <meta name="robots" content="noindex,nofollow">
+    <title>Planner da Comissão · IPCVT</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="planner.css">
+    <script type="module" src="planner.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Ir para o conteúdo</a>
+    <header class="site-header">
+      <a class="brand" href="planner.html" aria-label="Início do Planner da Comissão">
+        <img src="logo-comissao.svg" alt="" width="38" height="38">
+        <span>Planner <strong>IPCVT</strong><small>Comissão do Núcleo</small></span>
+      </a>
+      <nav class="portal-links" aria-label="Voltar aos portais">
+        <a href="index.html"><span aria-hidden="true">←</span> Portal IPCVT</a>
+        <a href="comissao.html"><span aria-hidden="true">←</span> Portal Comissão IPCVT</a>
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <section id="access-gate" class="access-wrap" aria-labelledby="access-title">
+        <div class="access-card">
+          <a class="access-mark" href="planner.html" aria-label="Início do Planner da Comissão"><img src="logo-comissao.svg" alt="" width="58" height="58"></a>
+          <p class="eyebrow">Comissão do Núcleo · IPCVT</p>
+          <h1 id="access-title">O trabalho de todos,<br><em>em um só lugar.</em></h1>
+          <p class="access-description">Organize os cultos, acompanhe as demandas da semana e faça os projetos avançarem.</p>
+          <button id="google-login" class="button button-google" type="button">
+            <svg aria-hidden="true" viewBox="0 0 48 48" width="20" height="20"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.28 5.48-4.83 7.18l7.73 6C44.36 38.03 46.98 31.88 46.98 24.55z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.28-3.14.75-4.59l-7.98-6.2C.92 16.46 0 20.12 0 24s.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.91-5.79l-7.73-6c-2.14 1.44-4.89 2.29-8.18 2.29-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+            Entrar com Google
+          </button>
+          <p id="auth-feedback" class="feedback" role="status" aria-live="polite">Verificando sua sessão…</p>
+          <div id="access-pending" class="pending-access" hidden>
+            <p>Seu acesso ainda precisa ser autorizado pela coordenação.</p>
+            <strong id="pending-email"></strong>
+            <button id="switch-account" class="button button-small" type="button">Usar outra conta</button>
+          </div>
+          <div class="access-footer"><span class="status-dot" aria-hidden="true"></span> Acesso exclusivo aos membros autorizados</div>
+        </div>
+      </section>
+
+      <section id="planner-app" class="workspace" hidden aria-labelledby="workspace-title">
+        <div class="workspace-heading">
+          <div>
+            <p class="eyebrow">Cultos · Rotinas · Projetos</p>
+            <h1 id="workspace-title">Planner <em>da Comissão.</em></h1>
+            <p class="workspace-description">Clareza para planejar. Compromisso para realizar.</p>
+          </div>
+          <div class="workspace-session">
+            <span id="member-email" class="member-email"></span>
+            <button id="logout-button" class="button button-small button-quiet" type="button">Sair</button>
+          </div>
+        </div>
+
+        <div class="workspace-bar">
+          <div class="workspace-actions">
+            <button id="new-task-button" class="button button-primary" type="button"><span aria-hidden="true">＋</span> Nova demanda</button>
+            <button id="new-plan-button" class="button" type="button">Novo plano</button>
+          </div>
+          <p id="save-status" class="save-status" role="status" aria-live="polite">Carregando seus planos…</p>
+        </div>
+
+        <nav class="view-nav" aria-label="Visões do Planner">
+          <button type="button" data-view="board" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="10" rx="1.5"/><rect x="17" y="4" width="4" height="13" rx="1.5"/></svg>Quadro</button>
+          <button type="button" data-view="list" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h12M9 12h12M9 18h12M3 6h1M3 12h1M3 18h1"/></svg>Lista</button>
+          <button type="button" data-view="calendar" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 11h18M7 15h1M12 15h1M17 15h1"/></svg>Calendário</button>
+          <button type="button" data-view="gantt" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v18h17M7 6h7M10 11h8M15 16h6"/></svg>Gantt</button>
+          <button type="button" data-view="summary" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Resumo</button>
+          <button type="button" data-view="routines" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7h-7M20 7V1M4 17h7M4 17v6M4.5 8a8 8 0 0 1 13.3-4L20 7M4 17l2.2 3A8 8 0 0 0 19.5 16"/></svg>Rotinas</button>
+          <button type="button" data-view="integrations" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 15l6-6M8 17l-1 1a4.2 4.2 0 0 1-6-6l4-4a4.2 4.2 0 0 1 6 0M16 7l1-1a4.2 4.2 0 0 1 6 6l-4 4a4.2 4.2 0 0 1-6 0" transform="translate(0 -1) scale(.96)"/></svg>Google Agenda</button>
+        </nav>
+
+        <div class="filters" role="search" aria-label="Filtrar demandas">
+          <label class="search-field" for="search-filter"><span>Buscar demanda</span><input id="search-filter" type="search" placeholder="O que você procura?" autocomplete="off"></label>
+          <label for="plan-filter"><span>Plano</span><select id="plan-filter"><option value="">Todos os planos</option></select></label>
+          <label for="team-filter"><span>Equipe</span><select id="team-filter"><option value="">Todas as equipes</option></select></label>
+          <label for="assignee-filter"><span>Responsável</span><select id="assignee-filter"><option value="">Todos os responsáveis</option><option value="mine">Minhas demandas</option></select></label>
+          <label for="status-filter"><span>Andamento</span><select id="status-filter"><option value="">Todos os status</option><option value="todo">Não iniciada</option><option value="doing">Em andamento</option><option value="done">Concluída</option></select></label>
+        </div>
+
+        <label class="event-filter-label" for="event-filter">Evento relacionado <select id="event-filter"><option value="">Todos os eventos</option></select></label>
+        <p id="notice" class="notice" role="status" aria-live="polite" hidden></p>
+        <div class="view-heading"><h2 id="view-title">Quadro de demandas</h2><span class="view-heading-note">Cada entrega, um próximo passo.</span></div>
+        <div id="empty-start" class="empty-state" hidden><h3>O próximo projeto começa aqui.</h3><p>Crie um plano para reunir as primeiras demandas da Comissão.</p></div>
+        <div id="view-content" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <dialog id="task-dialog" class="editor-dialog" aria-labelledby="task-dialog-title">
+      <form id="task-form">
+        <div class="dialog-heading"><div><p class="eyebrow">Planejar e acompanhar</p><h2 id="task-dialog-title">Demanda</h2></div><button class="icon-button" type="button" data-close-dialog="task-dialog" aria-label="Fechar demanda">×</button></div>
+        <div class="dialog-body">
+          <input id="task-id" type="hidden">
+          <label class="field" for="task-title">O que precisa ser feito?<input id="task-title" type="text" required maxlength="160" placeholder="Dê um nome claro à entrega"></label>
+          <div class="field-grid">
+            <label class="field" for="task-plan">Plano<select id="task-plan" required></select></label>
+            <label class="field" for="task-bucket">Bucket<select id="task-bucket"></select></label>
+            <label class="field" for="task-team">Equipe<input id="task-team" type="text" maxlength="80" placeholder="Ex.: Louvor, Litúrgico, Técnica" list="team-suggestions"></label>
+            <label class="field" for="task-status">Andamento<select id="task-status"><option value="todo">Não iniciada</option><option value="doing">Em andamento</option><option value="done">Concluída</option></select></label>
+            <label class="field" for="task-start">Início<input id="task-start" type="date"></label>
+            <label class="field" for="task-due">Prazo<input id="task-due" type="date"></label>
+            <label class="field" for="task-priority">Prioridade<select id="task-priority"><option value="low">Baixa</option><option value="normal" selected>Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option></select></label>
+            <label class="field" for="task-event">Evento relacionado<select id="task-event"><option value="">Sem evento</option></select></label>
+          </div>
+          <label class="field" for="task-assignees">Responsáveis<textarea id="task-assignees" rows="3" aria-describedby="assignees-help" placeholder="Nome &lt;email@exemplo.com&gt;&#10;ou email@exemplo.com"></textarea><small id="assignees-help">Uma pessoa por linha, com nome ou e-mail. Até 10 responsáveis por demanda.</small></label>
+          <label class="field" for="task-description">Descrição<textarea id="task-description" rows="4" maxlength="10000" placeholder="Contexto, orientações e links úteis"></textarea></label>
+          <label class="field" for="task-checklist">Checklist<textarea id="task-checklist" rows="4" aria-describedby="checklist-help" placeholder="Confirmar informações&#10;[x] Etapa já concluída"></textarea><small id="checklist-help">Até 20 itens, um por linha. Use [x] no início para marcar um item concluído.</small></label>
+          <label class="field" for="task-dependencies">Depende de outras demandas<select id="task-dependencies" multiple size="4" aria-describedby="dependencies-help"></select><small id="dependencies-help">Selecione as demandas que precisam terminar antes desta. Use Ctrl ou ⌘ para selecionar mais de uma.</small></label>
+          <div class="field-grid">
+            <label class="field" for="task-date-mode">Como definir o prazo<select id="task-date-mode"><option value="manual">Data definida manualmente</option><option value="event">Em relação ao evento</option></select></label>
+            <label class="field" for="task-offset">Dias em relação ao evento<input id="task-offset" type="number" min="-365" max="365" step="1" value="0" aria-describedby="offset-help"><small id="offset-help">Ex.: −3 significa três dias antes; 0, no dia do evento.</small></label>
+          </div>
+          <p id="task-feedback" class="feedback" role="status" aria-live="polite"></p>
+        </div>
+        <div class="dialog-footer"><button id="delete-task-button" class="button button-danger" type="button" hidden>Excluir demanda</button><span class="footer-spacer"></span><button class="button" type="button" data-close-dialog="task-dialog">Cancelar</button><button class="button button-primary" type="submit">Salvar demanda</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="plan-dialog" class="editor-dialog" aria-labelledby="plan-dialog-title">
+      <form id="plan-form">
+        <div class="dialog-heading"><div><p class="eyebrow">Uma frente de trabalho</p><h2 id="plan-dialog-title">Plano</h2></div><button class="icon-button" type="button" data-close-dialog="plan-dialog" aria-label="Fechar plano">×</button></div>
+        <div class="dialog-body">
+          <input id="plan-id" type="hidden">
+          <label class="field" for="plan-name">Nome do plano<input id="plan-name" type="text" required maxlength="100" placeholder="Ex.: Cultos e Rotinas, Podcast, Kits de Voz"></label>
+          <label class="field" for="plan-kind">Tipo de trabalho<select id="plan-kind"><option value="continuous">Trabalho contínuo</option><option value="project">Projeto com prazo</option></select></label>
+          <label class="field" for="plan-description">Descrição<textarea id="plan-description" rows="3" maxlength="5000" placeholder="O que este plano reúne?"></textarea></label>
+          <div class="field-grid"><label class="field" for="plan-start">Início<input id="plan-start" type="date"></label><label class="field" for="plan-due">Prazo do projeto<input id="plan-due" type="date"></label></div>
+          <label class="field" for="plan-buckets">Buckets<textarea id="plan-buckets" rows="5" required aria-describedby="buckets-help" placeholder="Preparação musical&#10;Liturgia&#10;Técnica&#10;Comunicação"></textarea><small id="buckets-help">Um bucket por linha, na ordem desejada. Eles podem representar equipes ou etapas do trabalho.</small></label>
+          <p id="plan-feedback" class="feedback" role="status" aria-live="polite"></p>
+        </div>
+        <div class="dialog-footer"><button id="delete-plan-button" class="button button-danger" type="button" hidden>Excluir plano</button><span class="footer-spacer"></span><button class="button" type="button" data-close-dialog="plan-dialog">Cancelar</button><button class="button button-primary" type="submit">Salvar plano</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="routine-dialog" class="editor-dialog" aria-labelledby="routine-dialog-title">
+      <form id="routine-form">
+        <div class="dialog-heading"><div><p class="eyebrow">Preparar cada semana</p><h2 id="routine-dialog-title">Rotina semanal</h2></div><button class="icon-button" type="button" data-close-dialog="routine-dialog" aria-label="Fechar rotina">×</button></div>
+        <div class="dialog-body">
+          <input id="routine-id" type="hidden">
+          <label class="field" for="routine-title">Demanda recorrente<input id="routine-title" type="text" required maxlength="160" placeholder="O que precisa acontecer a cada semana?"></label>
+          <div class="field-grid">
+            <label class="field" for="routine-plan">Plano<select id="routine-plan" required></select></label>
+            <label class="field" for="routine-bucket">Bucket<select id="routine-bucket"></select></label>
+            <label class="field" for="routine-team">Equipe<input id="routine-team" type="text" maxlength="80" list="team-suggestions"></label>
+            <label class="field" for="routine-weekday">Dia do prazo<select id="routine-weekday"><option value="0">Domingo</option><option value="1">Segunda-feira</option><option value="2">Terça-feira</option><option value="3">Quarta-feira</option><option value="4">Quinta-feira</option><option value="5">Sexta-feira</option><option value="6">Sábado</option></select></label>
+            <label class="field" for="routine-priority">Prioridade<select id="routine-priority"><option value="low">Baixa</option><option value="normal" selected>Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option></select></label>
+          </div>
+          <label class="field" for="routine-assignees">Responsáveis<textarea id="routine-assignees" rows="3" placeholder="Nome &lt;email@exemplo.com&gt;&#10;Uma pessoa por linha"></textarea></label>
+          <p class="field-note">Cada semana terá uma demanda própria, preservando o histórico das semanas anteriores. Para preparar um culto específico, use o modelo do evento.</p>
+          <p id="routine-feedback" class="feedback" role="status" aria-live="polite"></p>
+        </div>
+        <div class="dialog-footer"><button id="delete-routine-button" class="button button-danger" type="button" hidden>Excluir rotina</button><span class="footer-spacer"></span><button class="button" type="button" data-close-dialog="routine-dialog">Cancelar</button><button class="button button-primary" type="submit">Salvar rotina</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="event-dialog" class="editor-dialog compact-dialog" aria-labelledby="event-dialog-title">
+      <form id="event-form">
+        <div class="dialog-heading"><div><p class="eyebrow">Um compromisso em comum</p><h2 id="event-dialog-title">Evento</h2></div><button class="icon-button" type="button" data-close-dialog="event-dialog" aria-label="Fechar evento">×</button></div>
+        <div class="dialog-body">
+          <input id="event-id" type="hidden">
+          <label class="field" for="event-title">Nome do evento<input id="event-title" type="text" required maxlength="160" placeholder="Ex.: Culto de domingo"></label>
+          <div class="field-grid"><label class="field" for="event-start">Data de início<input id="event-start" type="date" required></label><label class="field" for="event-end">Data de término<input id="event-end" type="date" required></label></div>
+          <p id="event-feedback" class="feedback" role="status" aria-live="polite"></p>
+        </div>
+        <div class="dialog-footer"><button id="delete-event-button" class="button button-danger" type="button" hidden>Excluir evento</button><span class="footer-spacer"></span><button class="button" type="button" data-close-dialog="event-dialog">Cancelar</button><button class="button button-primary" type="submit">Salvar evento</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="confirm-dialog" class="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+      <div class="dialog-heading"><h2 id="confirm-title">Confirmar exclusão</h2></div>
+      <div class="dialog-body"><p id="confirm-message"></p></div>
+      <div class="dialog-footer"><button id="confirm-cancel" class="button" type="button">Cancelar</button><button id="confirm-accept" class="button button-danger" type="button">Excluir</button></div>
+    </dialog>
+
+    <datalist id="team-suggestions"><option value="Comissão"><option value="Louvor"><option value="Litúrgico"><option value="Técnica"><option value="Mídia"><option value="Comunicação"><option value="Estrutura"></datalist>
+    <footer class="site-footer">Comissão do Núcleo <span aria-hidden="true">·</span> Igreja Presbiteriana Central em Vilar dos Telles</footer>
+  </body>
+</html>

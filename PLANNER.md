@@ -1,0 +1,70 @@
+# Planner da Comissão IPCVT
+
+Abra `planner.html` pelo cartão Planner no Portal da Comissão. O acesso usa a
+mesma conta Google autorizada em `comissao_acessos`. Antes do uso em produção,
+siga a ativação em [PLANNER-FIREBASE.md](PLANNER-FIREBASE.md).
+
+## Organizar o trabalho
+
+1. Crie um plano contínuo para **Cultos e Rotinas**, ou um projeto com prazo
+   como **Podcast** e **Kits de Voz**. Configure os buckets no formulário do plano.
+2. Use **Nova demanda** para criar tarefas, atribuir pessoas por nome/e-mail,
+   definir equipe, início, prazo, prioridade, checklist e dependências.
+3. Abra qualquer cartão para editar ou excluir. No quadro, arraste entre
+   buckets do mesmo plano; no calendário, arraste para alterar a data.
+   O formulário também permite fazer essas alterações com teclado ou celular.
+4. Use os filtros de plano, equipe, pessoa, evento e status para cruzar os
+   trabalhos. **Minhas tarefas** usa o e-mail da conta conectada.
+
+As visões Quadro, Lista, Calendário, Gantt e Resumo consultam os mesmos dados.
+O calendário tem mês/semana e uma lista de demandas sem data. O Gantt mostra
+início/término e as dependências; não recalcula automaticamente todo o projeto.
+Use a descrição da demanda para orientações e links de arquivos.
+
+## Eventos e rotinas
+
+No Calendário, crie um evento manual ou abra um evento importado. Escolha um
+plano e use **Gerar demandas de preparação** para banda, repertório, liturgia
+e técnica. Depois personalize as demandas e atribua seus responsáveis.
+Aplicar novamente o modelo não duplica as etapas existentes ou excluídas.
+
+Os prazos relativos acompanham remarcações do evento somente quando a tarefa
+continua não iniciada, sem checklist executado e com o prazo derivado original.
+As outras ficam sinalizadas para **Revisar prazo**. Cancelamentos do Google
+preservam o andamento e o histórico das demandas.
+
+Em **Rotinas**, cadastre uma demanda independente com frequência semanal.
+Salvar a rotina gera as próximas quatro semanas. O botão de geração acrescenta
+apenas semanas ainda sem ocorrência. Alterar o modelo preserva ocorrências já
+criadas; excluir a rotina interrompe novas gerações. Demandas excluídas não são
+recriadas ao gerar a mesma semana. Para o repertório semanal ligado ao culto,
+use a preparação do próprio evento, sem cadastrar uma rotina paralela.
+
+Excluir uma demanda retira-a das visões ativas e mantém sua identificação para
+evitar recriação por modelos. Arquivar um plano preserva suas demandas e histórico.
+
+## Google Agenda
+
+Um administrador conecta a conta, escolhe agendas às quais possui acesso e
+confirma que deseja disponibilizar seus eventos aos membros da Comissão.
+Somente agendas com permissão de leitura de detalhes podem ser importadas.
+Agendas compartilhadas precisam estar adicionadas à conta do Google Agenda.
+
+A sincronização desta versão é **Google → Planner**, pelo botão **Atualizar
+eventos**, num intervalo de até um ano. Importações repetidas atualizam o mesmo
+registro, inclusive ocorrências recorrentes. Não há escrita no Google nem
+sincronização com o navegador fechado. A conexão expira e deve ser renovada
+quando necessário; o token fica somente na memória da página.
+
+## Validação
+
+Com Node.js 22 ou superior:
+
+```sh
+node --test tests/planner-core.test.mjs tests/planner-google.test.mjs
+```
+
+Os testes de domínio cobrem datas, recorrências, deduplicação, dependências,
+resumos e importação paginada. A integração de interface foi verificada no
+Chromium em computador e celular com serviços simulados, sem acessar dados de
+produção. As regras isoladas foram verificadas no emulador Firestore.
