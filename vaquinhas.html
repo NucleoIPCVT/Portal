@@ -38,7 +38,7 @@
         ::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 4px; }
     </style>
     <link rel="stylesheet" href="portal-ui.css">
-    <link rel="stylesheet" href="vaquinhas-ui.css?v=20261107-contraste">
+    <link rel="stylesheet" href="vaquinhas-ui.css?v=20261107-navegacao">
 </head>
 <body class="campaign-page min-h-screen font-sans selection:bg-presb-gold selection:text-presb-green">
 
@@ -48,7 +48,7 @@
         <p class="text-presb-green font-black uppercase text-xs tracking-widest">Sincronizando Projetos</p>
     </div>
 
-    <header class="campaign-header"><div class="campaign-header-inner"><a href="index.html" class="campaign-brand"><img src="logo-vaquinhas.svg" alt="">Núcleo <span>IPCVT</span></a><nav aria-label="Navegação"><button id="nav-btn-list" onclick="window.switchView('list')">Vaquinhas</button><button id="nav-btn-form" onclick="window.requireAuth('create')"><i data-lucide="plus" aria-hidden="true"></i><span>Nova arrecadação</span></button><button id="vaquinhas-session-button" onclick="window.toggleManagementLogin()" aria-label="Entrar com Google">Entrar</button><a href="index.html" aria-label="Voltar ao Portal"><i data-lucide="arrow-left" aria-hidden="true"></i><span>Portal</span></a></nav></div></header>
+    <header class="campaign-header"><div class="campaign-header-inner"><a href="vaquinhas.html" class="campaign-brand" aria-label="Início das Vaquinhas"><img src="logo-vaquinhas.svg" alt="">Núcleo <span>IPCVT</span></a><nav aria-label="Navegação"><button id="nav-btn-list" onclick="window.switchView('list')">Vaquinhas</button><button id="nav-btn-form" onclick="window.requireAuth('create')"><i data-lucide="plus" aria-hidden="true"></i><span>Nova arrecadação</span></button><button id="vaquinhas-session-button" onclick="window.toggleManagementLogin()" aria-label="Entrar com Google">Entrar</button><a href="index.html" class="portal-return" aria-label="Voltar ao Portal IPCVT"><i data-lucide="arrow-left" aria-hidden="true"></i><span>Portal IPCVT</span></a></nav></div></header>
     <main class="max-w-7xl mx-auto px-6 py-12 relative">
         
         <!-- ================= LISTA ================= -->
@@ -294,7 +294,7 @@
     <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-    <script src="arrecadacoes.js?v=20261106-gestao"></script>
+    <script src="arrecadacoes.js?v=20261107-pessoas"></script>
     <script src="arrecadacoes-relatorios.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -321,7 +321,7 @@
         const publicDocRef = doc(db, 'app_ipcvt', 'interas_publicas');
         const pendingCollection = collection(db, 'interas_contribuicoes');
         IPCVTLedger.configure({
-            onOpen: () => { ['list','form','detail'].forEach(v=>document.getElementById('view-'+v).classList.add('hidden')); currentView='ledger'; window.scrollTo(0,0); },
+            onOpen: () => { ['list','form','detail'].forEach(v=>document.getElementById('view-'+v).classList.add('hidden')); currentView='ledger'; renderPendingContributions(); window.scrollTo(0,0); },
             onClose: () => window.switchView('list'),
             remove: (id, version) => removeCampaignRecord(id, version),
             reauthenticateRemoval: person => new Promise(resolve => {
@@ -385,6 +385,8 @@
         const approvedCount = camp => new Set(approvedContributions(camp)
             .map(c => String(c.name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase())
             .filter(Boolean)).size;
+        const nameKey = value => String(value || '').normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
 
         // O resumo deve refletir os pagamentos existentes, inclusive os lançados antes
         // de a arrecadação ganhar campos de total e quantidade de pagantes.
@@ -978,23 +980,13 @@
             document.getElementById('detail-contributors-section').classList.toggle('hidden', !manager);
             document.getElementById('admin-contributions-section').classList.toggle('hidden', !manager);
             document.getElementById('contributor-list-title').textContent = manager ? 'Registros de contribuições' : 'Resumo de contribuições';
-            if (camp.mode === 'person') {
-                document.getElementById('detail-title').textContent=camp.title;
-                document.getElementById('detail-desc').textContent=camp.description;
-                document.getElementById('detail-tags').textContent='Por pessoa';
-                document.getElementById('detail-finance-progress').textContent=window.formatCurrency(camp.quotaValue)+' por pessoa · '+Number(camp.contributorCount ?? camp.ledgerPaidCount ?? 0)+' pagantes · '+window.formatCurrency(camp.raised)+' recebido';
-                ['detail-items-needed','detail-pix-block','detail-contributors-list'].forEach(id=>document.getElementById(id).replaceChildren());
-                document.getElementById('contrib-init').parentElement.hidden=true;
-                renderPendingContributions();
-                return;
-            }
             document.getElementById('contrib-init').parentElement.hidden=false;
             document.getElementById('detail-tags').innerHTML = `
                 <span class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm ${isFinance ? 'bg-presb-green text-white' : 'bg-presb-gold text-presb-dark'}">
                     <i data-lucide="${isFinance ? 'wallet' : 'coffee'}" class="w-4 h-4"></i> ${isFinance ? 'Financeira' : 'Itens/Comida'}
                 </span>
                 <span class="bg-slate-50 text-slate-500 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-slate-200">
-                    ${camp.mode === 'fixed' ? 'Modelo Fechado' : 'Oferta Livre'}
+                    ${camp.mode === 'person' ? 'Por pessoa' : camp.mode === 'fixed' ? 'Modelo Fechado' : 'Oferta Livre'}
                 </span>
             `;
 
@@ -1003,7 +995,16 @@
 
             const financeBlock = document.getElementById('detail-finance-progress');
             financeBlock.innerHTML = '';
-            if (isFinance) {
+            if (isFinance && camp.mode === 'person') {
+                financeBlock.innerHTML = `
+                    <div class="bg-slate-50 p-8 rounded-[2rem] border border-slate-200 mb-8">
+                        <div class="flex flex-wrap items-center justify-between gap-6">
+                            <div><strong class="text-4xl font-black text-presb-green block">${window.formatCurrency(camp.raised)}</strong><span class="text-xs text-slate-500">Total recebido</span></div>
+                            <div><strong class="text-2xl font-black text-presb-green block">${window.formatCurrency(camp.quotaValue)}</strong><span class="text-xs text-slate-500">Valor único por pessoa</span></div>
+                            <div><strong class="text-2xl font-black text-presb-green block">${Number(camp.contributorCount ?? camp.ledgerPaidCount ?? 0)}</strong><span class="text-xs text-slate-500">Pagantes confirmados</span></div>
+                        </div>
+                    </div>`;
+            } else if (isFinance) {
                 const progress = Number(camp.goal) > 0 ? Math.min((Number(camp.raised || 0) / camp.goal) * 100, 100) : 0;
                 const count = Number(camp.contributorCount ?? approvedCount(camp));
                 const remaining = Number(camp.goal) > 0 ? Math.max(0, Number(camp.goal) - Number(camp.raised || 0)) : null;
@@ -1091,7 +1092,9 @@
             // Build Dynamic Form
             const dynFields = document.getElementById('contrib-dynamic-fields');
             if (isFinance) {
-                if(camp.mode === 'fixed') {
+                if(camp.mode === 'person') {
+                    dynFields.innerHTML = `<div class="border border-presb-gold/30 rounded-xl p-4 text-sm"><p class="font-bold">Oferta única: ${window.formatCurrency(camp.quotaValue)}</p><p class="mt-2 text-xs">Uma contribuição confirmada por nome. Após o PIX, envie o comprovante para validação.</p></div>`;
+                } else if(camp.mode === 'fixed') {
                     dynFields.innerHTML = `
                         <div class="flex items-center justify-between mb-4"><span class="text-xs font-bold text-white">Valor da Cota:</span> <span class="text-sm font-black text-presb-gold">${window.formatCurrency(camp.quotaValue)}</span></div>
                         <label for="c-quota-qty" class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Quantas cotas?</label>
@@ -1130,22 +1133,30 @@
         };
 
         function renderPendingContributions() {
-            const section = document.getElementById('admin-contributions-section');
-            const root = document.getElementById('admin-contributions-list');
-            if (!section || !root) return;
-            section.classList.toggle('hidden', !manager || currentView !== 'detail');
-            if (!manager || !selectedCampaign) return;
             const records = pendingContributions.filter(record =>
-                String(record.campaignId) === String(selectedCampaign.id) && record.status === 'pending'
+                String(record.campaignId) === String(selectedCampaign?.id) && record.status === 'pending'
             );
-            root.replaceChildren();
-            if (!records.length) {
-                const empty = document.createElement('p');
-                empty.className = 'text-sm text-slate-500';
-                empty.textContent = 'Nenhuma contribuição aguardando confirmação.';
-                root.append(empty); return;
-            }
-            records.forEach(record => {
+            const targets = [
+                {sectionId:'admin-contributions-section',listId:'admin-contributions-list',view:'detail'},
+                {sectionId:'ledger-pending-section',listId:'ledger-pending-list',view:'ledger'}
+            ];
+            targets.forEach(target => {
+                const section = document.getElementById(target.sectionId);
+                const root = document.getElementById(target.listId);
+                if (!section || !root) return;
+                const visible = manager && Boolean(selectedCampaign) && currentView === target.view &&
+                    (target.view !== 'ledger' || records.length > 0);
+                section.classList.toggle('hidden', !visible);
+                section.hidden = !visible;
+                if (!visible) return;
+                root.replaceChildren();
+                if (!records.length) {
+                    const empty = document.createElement('p');
+                    empty.className = 'text-sm text-slate-500';
+                    empty.textContent = 'Nenhuma contribuição aguardando confirmação.';
+                    root.append(empty); return;
+                }
+                records.forEach(record => {
                 const item = document.createElement('div');
                 item.className = 'p-4 rounded-2xl border border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-4';
                 const description = document.createElement('div');
@@ -1170,7 +1181,8 @@
                 reject.setAttribute('aria-label', `Rejeitar contribuição de ${record.name}`);
                 reject.className = 'bg-red-600 text-white rounded-xl px-4 py-2 font-bold text-lg';
                 reject.onclick = () => window.reviewContribution(record.id, 'rejected');
-                controls.append(approve, reject); item.append(description, controls); root.append(item);
+                    controls.append(approve, reject); item.append(description, controls); root.append(item);
+                });
             });
         }
 
@@ -1199,7 +1211,37 @@
                             quantity: Number(contribution.quantity) || 0,
                             itemName: contribution.itemName || ''
                         };
-                        if (campaign.type === 'finance') campaign.raised = Number(campaign.raised || 0) + approved.amount;
+                        if (campaign.type === 'finance' && campaign.mode === 'person') {
+                            const expectedCents = Math.round(Number(campaign.quotaValue) * 100);
+                            if (!Number.isFinite(expectedCents) || expectedCents <= 0 ||
+                                Math.round(approved.amount * 100) !== expectedCents) {
+                                throw Error('O valor da oferta não corresponde à taxa por pessoa.');
+                            }
+                            const ledgerRef = doc(db, 'app_ipcvt', 'controle_intera_' + campaign.id);
+                            const ledgerSnap = await transaction.get(ledgerRef);
+                            const ledger = ledgerSnap.exists() ? ledgerSnap.data() : {people:[], version:0};
+                            const people = structuredClone(ledger.people || []);
+                            const personName = nameKey(contribution.name);
+                            if (!personName) throw Error('Informe o nome da pessoa.');
+                            const existing = people.find(person => nameKey(person.name) === personName);
+                            if ((campaign.contributors || []).some(c => nameKey(c.name) === personName && (!c.status || c.status === 'approved')) ||
+                                (existing && (existing.payments || []).some(payment => Number(payment.amount) > 0))) {
+                                throw Error('Este nome já possui uma contribuição confirmada.');
+                            }
+                            const person = existing || {
+                                id: 'oferta_' + id, name: contribution.name, expected: expectedCents, payments: []
+                            };
+                            if (!existing) people.push(person);
+                            if (!Number(person.expected)) person.expected = expectedCents;
+                            person.payments = [...(person.payments || []), {
+                                id: 'comprovante_' + id, amount: expectedCents,
+                                date: new Date().toISOString(), note: 'Oferta validada pelo gestor'
+                            }];
+                            transaction.set(ledgerRef, {...ledger, people, version: Number(ledger.version || 0) + 1});
+                            Object.assign(campaign, personLedgerSummary(people));
+                        } else if (campaign.type === 'finance') {
+                            campaign.raised = Number(campaign.raised || 0) + approved.amount;
+                        }
                         if (campaign.type === 'item' && campaign.mode === 'fixed') {
                             const item = (campaign.itemsNeeded || []).find(i => String(i.id) === String(contribution.itemId));
                             if (!item) throw Error('O item selecionado não está disponível.');
@@ -1216,6 +1258,10 @@
                         status: decision, reviewedBy: managerEmail, reviewedAt: serverTimestamp()
                     });
                 });
+                if (currentView === 'ledger') {
+                    try { await IPCVTLedger.refresh(); }
+                    catch (error) { console.error('Não foi possível atualizar a tela de pagamentos:', error); }
+                }
             } catch (error) {
                 console.error('Falha ao analisar contribuição:', error);
                 alert('Não foi possível concluir: ' + error.message);
@@ -1258,7 +1304,9 @@
             if (!payload.name || payload.name.length > 120) return alert('Informe seu nome (até 120 caracteres).');
             
             if (camp.type === 'finance') {
-                if(camp.mode === 'fixed') {
+                if(camp.mode === 'person') {
+                    payload.amount = Number(camp.quotaValue);
+                } else if(camp.mode === 'fixed') {
                     payload.amount = camp.quotaValue * parseInt(document.getElementById('c-quota-qty').value);
                 } else {
                     payload.amount = parseFloat(document.getElementById('c-amount').value);
