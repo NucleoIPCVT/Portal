@@ -38,7 +38,7 @@
         ::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 4px; }
     </style>
     <link rel="stylesheet" href="portal-ui.css">
-    <link rel="stylesheet" href="vaquinhas-ui.css?v=20261107-navegacao">
+    <link rel="stylesheet" href="vaquinhas-ui.css?v=20261107-titulos-privados">
 </head>
 <body class="campaign-page min-h-screen font-sans selection:bg-presb-gold selection:text-presb-green">
 
@@ -431,8 +431,7 @@
         function projectPublicCampaigns(source) {
             return source.map(camp => {
                 if (camp.visibility === 'private') return {
-                    id: camp.id, visibility: 'private', title: camp.title || 'Arrecadação sem título',
-                    description: 'Conteúdo reservado aos gestores.', type: camp.type, mode: camp.mode
+                    id: camp.id, visibility: 'private', title: camp.title || 'Arrecadação sem título'
                 };
                 const {contributors, ...published} = camp;
                 return {
@@ -940,14 +939,14 @@
                 card.setAttribute('aria-label','Abrir '+camp.title+(privateCard?' · acesso reservado':''));
                 const top=document.createElement('div');top.className='campaign-card-top';
                 const icon=document.createElement('i');icon.setAttribute('data-lucide',privateCard?'lock-keyhole':isFinance?'wallet':'gift');icon.setAttribute('aria-hidden','true');
-                const kind=document.createElement('span');kind.textContent=privateCard?'Arrecadação oculta':perPerson?'Por pessoa':isFinance?'Financeira':'Itens e alimentos';
-                const arrow=document.createElement('i');arrow.setAttribute('data-lucide','arrow-up-right');arrow.setAttribute('aria-hidden','true');arrow.className='campaign-card-arrow';top.append(icon,kind,arrow);
+                const kind=document.createElement('span');kind.textContent=perPerson?'Por pessoa':isFinance?'Financeira':'Itens e alimentos';
+                const arrow=document.createElement('i');arrow.setAttribute('data-lucide','arrow-up-right');arrow.setAttribute('aria-hidden','true');arrow.className='campaign-card-arrow';
+                if (privateCard) top.append(icon);
+                else top.append(icon,kind,arrow);
                 const title=document.createElement('h3');title.textContent=camp.title;
                 const description=document.createElement('p');description.className='campaign-card-description';description.textContent=camp.description;
                 const bottom=document.createElement('div');bottom.className='campaign-card-bottom';
-                if(privateCard) {
-                    const tag=document.createElement('span');tag.className='private-campaign-tag';tag.textContent='Acesso restrito';bottom.append(tag);
-                } else if(isFinance && !perPerson) {
+                if(!privateCard && isFinance && !perPerson) {
                     const line=document.createElement('div');line.className='campaign-card-values';const raised=document.createElement('strong');raised.textContent=window.formatCurrency(camp.raised);
                     const goal=document.createElement('span');goal.textContent='de '+window.formatCurrency(camp.goal);line.append(raised,goal);bottom.append(line);
                     const progress=Number(camp.goal)>0?Math.max(0,Math.min(100,(Number(camp.raised)||0)/Number(camp.goal)*100)):0;
@@ -955,11 +954,12 @@
                     const fill=document.createElement('span');fill.style.width=progress+'%';track.append(fill);bottom.append(track);
                     const count=document.createElement('span');count.className='campaign-card-note';count.textContent=`${Number(camp.contributorCount ?? approvedCount(camp))} contribuintes confirmados`;
                     bottom.append(count);
-                } else {
+                } else if (!privateCard) {
                     const line=document.createElement('span');line.className='campaign-card-note';
                     line.textContent=perPerson?`${window.formatCurrency(camp.quotaValue)} por pessoa · ${Number(camp.contributorCount ?? camp.ledgerPaidCount ?? 0)} pagantes`:(Number(camp.contributorCount ?? approvedCount(camp)) ? (camp.contributorCount ?? approvedCount(camp))+' participações confirmadas':'Seja o primeiro a participar');bottom.append(line);
                 }
-                card.append(top,title,description,bottom);
+                card.append(top,title);
+                if (!privateCard) card.append(description,bottom);
                 card.onclick=()=>{
                     selectedCampaign=camp;
                     if (privateCard && !manager) return window.requireAuth('open-private');
