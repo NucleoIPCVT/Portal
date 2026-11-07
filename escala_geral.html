@@ -59,7 +59,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
     <link rel="stylesheet" href="portal-ui.css?v=20261107-navegacao">
-    <link rel="stylesheet" href="escala-admin-ui.css?v=20261107-dashboard">
+    <link rel="stylesheet" href="escala-admin-ui.css?v=20261107-funcoes">
 </head>
 <body class="scale-page bg-slate-50 text-slate-800 font-sans h-[100dvh] overflow-hidden">
 
@@ -287,6 +287,18 @@
                         </form>
                     </article>
 
+                    <article class="admin-panel admin-add-panel admin-role-panel">
+                        <div class="admin-panel-heading">
+                            <span class="admin-panel-icon"><i class="ph ph-list-plus"></i></span>
+                            <div><span class="admin-overline">Organização</span><h3>Criar função</h3><p>A nova função também aparecerá nas escalas e nos relatórios.</p></div>
+                        </div>
+                        <form id="form-funcao" onsubmit="handleAddRole(event)" class="admin-inline-form">
+                            <div class="admin-field"><label for="cad-nova-funcao">Nome da função</label><input type="text" id="cad-nova-funcao" required maxlength="48" placeholder="Ex.: Teclado"></div>
+                            <div class="admin-field"><label for="cad-grupo-funcao">Grupo na escala</label><select id="cad-grupo-funcao" required></select></div>
+                            <button type="submit" class="admin-primary-button"><i class="ph-bold ph-plus"></i> Criar função</button>
+                        </form>
+                    </article>
+
                     <div class="admin-team-heading"><div><span class="admin-overline">Distribuição da equipe</span><h3>Integrantes por função</h3></div><span id="team-card-count" class="admin-section-count">0 funções</span></div>
                     <div id="cadastro-grid" class="admin-team-grid"></div>
                 </div>
@@ -404,13 +416,35 @@
             "Op. Som": "Louvor", "Projeção": "Técnica"
         };
 
+        const GROUP_DEPARTMENTS = {
+            'Litúrgico': 'Louvor', 'Vocal': 'Louvor', 'Instrumental': 'Louvor',
+            'Som': 'Louvor', 'Projeção': 'Técnica', 'Transmissão': 'Mídia'
+        };
+        const DEFAULT_ROLE_CONFIG = COLUMNS_ORDER.map(name => ({
+            name,
+            group: Object.keys(ROLE_GROUPS).find(group => ROLE_GROUPS[group].includes(name)),
+            department: DEPARTMENTS[name]
+        }));
+
+        function applyRoleConfig(roles) {
+            COLUMNS_ORDER.length = 0;
+            Object.keys(ROLE_GROUPS).forEach(group => { ROLE_GROUPS[group].length = 0; });
+            Object.keys(GROUP_DEPARTMENTS).forEach(group => {
+                roles.filter(role => role.group === group).forEach(role => {
+                    COLUMNS_ORDER.push(role.name);
+                    ROLE_GROUPS[group].push(role.name);
+                    DEPARTMENTS[role.name] = role.department || GROUP_DEPARTMENTS[group];
+                });
+            });
+        }
+
         const DEPT_COLORS = {
             "Louvor": { header: "bg-emerald-100 text-emerald-900", cellAlt1: "bg-emerald-50/50", cellAlt2: "bg-emerald-100/50" },
             "Mídia": { header: "bg-blue-100 text-blue-900", cellAlt1: "bg-blue-50/50", cellAlt2: "bg-blue-100/50" },
             "Técnica": { header: "bg-amber-100 text-amber-900", cellAlt1: "bg-amber-50/50", cellAlt2: "bg-amber-100/50" }
         };
 
-        let appState = { members: {}, schedules: [], substitutions: [] };
+        let appState = { members: {}, schedules: [], substitutions: [], roles: [] };
 
         // ==========================================
         // INICIALIZAÇÃO E FIREBASE
@@ -475,6 +509,14 @@
                     }
                 });
             }
+
+            // Documentos anteriores não tinham o cadastro de funções separado.
+            // Depois da migração, a lista salva é a referência (inclusive para exclusões).
+            if (!Array.isArray(data.roles)) {
+                data.roles = DEFAULT_ROLE_CONFIG.map(role => ({ ...role }));
+                needsSave = true;
+            }
+            applyRoleConfig(data.roles);
 
             if (ensureScheduleYear(data, 2027)) needsSave = true;
             return { normalizedData: data, needsSave };
@@ -587,6 +629,8 @@
                 "Fotografia": ["Mariana", "Arlete", "Manuela", "Gabi", "Victor"],
                 "Op. Som": [], "Projeção": [], "Litúrgico": ["João Victor", "Liliane"]
             };
+            appState.roles = DEFAULT_ROLE_CONFIG.map(role => ({ ...role }));
+            applyRoleConfig(appState.roles);
         }
 
         // ==========================================
@@ -1241,7 +1285,12 @@
         }
 
         function renderCadastro() {
-            document.getElementById('cad-funcao').innerHTML = '<option value="">Selecione...</option>' + COLUMNS_ORDER.map(r => `<option value="${r}">${r}</option>`).join('');
+            const roleSelect = document.getElementById('cad-funcao');
+            const selectedRole = roleSelect.value;
+            roleSelect.innerHTML = '<option value="">Selecione...</option>' + COLUMNS_ORDER.map(r => `<option value="${escapeHTML(r)}">${escapeHTML(r)}</option>`).join('');
+            if (COLUMNS_ORDER.includes(selectedRole)) roleSelect.value = selectedRole;
+            const groupSelect = document.getElementById('cad-grupo-funcao');
+            if (!groupSelect.options.length) groupSelect.innerHTML = Object.keys(GROUP_DEPARTMENTS).map(group => `<option value="${escapeHTML(group)}">${escapeHTML(group)}</option>`).join('');
             document.getElementById('team-members').textContent = getUniqueMembers().length;
             document.getElementById('team-roles').textContent = COLUMNS_ORDER.length;
             document.getElementById('team-filled').textContent = COLUMNS_ORDER.filter(role => (appState.members[role] || []).length > 0).length;
@@ -1261,9 +1310,62 @@
                         <li><span class="admin-small-avatar">${escapeHTML(m.charAt(0).toUpperCase())}</span><span class="admin-member-text">${escapeHTML(m)}</span><button type="button" class="admin-member-delete" data-role="${escapeHTML(role)}" data-member="${escapeHTML(m)}" onclick="deleteMember(this.dataset.role, this.dataset.member)" aria-label="Remover ${escapeHTML(m)} da função ${escapeHTML(role)}" title="Remover integrante"><i class="ph ph-trash"></i></button></li>`).join('')}</ul>`;
                 return `<article class="admin-team-card" data-department="${escapeHTML(department)}">
                     <div class="admin-team-card-header"><span class="admin-role-icon"><i class="ph ${roleIcons[role] || 'ph-user'}"></i></span>
-                    <div class="admin-team-card-title"><small>${escapeHTML(department)}</small><h4>${escapeHTML(role)}</h4></div><span class="admin-team-count">${members.length}</span></div>
+                    <div class="admin-team-card-title"><small>${escapeHTML(department)}</small><h4>${escapeHTML(role)}</h4></div>
+                    <div class="admin-role-actions"><span class="admin-team-count">${members.length}</span><button type="button" class="admin-role-delete" data-role="${escapeHTML(role)}" onclick="deleteRole(this.dataset.role)" aria-label="Excluir função ${escapeHTML(role)}" title="Excluir função"><i class="ph ph-trash"></i><span>Excluir</span></button></div></div>
                     ${listHTML}</article>`;
             }).join('');
+        }
+
+        function handleAddRole(e) {
+            e.preventDefault();
+            if (!isAdmin) return;
+            const input = document.getElementById('cad-nova-funcao');
+            const name = input.value.trim().replace(/\s+/g, ' ');
+            const group = document.getElementById('cad-grupo-funcao').value;
+            if (!name || name.length > 48 || !/^[\p{L}\p{N}][\p{L}\p{N} .()/-]*$/u.test(name)) {
+                showToast('Use um nome de até 48 caracteres, sem aspas ou símbolos especiais.', true);
+                return;
+            }
+            if (!Object.hasOwn(GROUP_DEPARTMENTS, group)) return;
+            if (COLUMNS_ORDER.some(role => searchKey(role) === searchKey(name))) {
+                showToast('Essa função já existe.', true);
+                return;
+            }
+            appState.roles.push({ name, group, department: GROUP_DEPARTMENTS[group] });
+            applyRoleConfig(appState.roles);
+            input.value = '';
+            saveStateToFirebase();
+            renderCadastro();
+            showToast('Função criada! Ela já aparece na escala.');
+        }
+
+        function deleteRole(role) {
+            if (!isAdmin || !COLUMNS_ORDER.includes(role)) return;
+            const schedulesInUse = appState.schedules.filter(s => s.assignments?.[role]).length;
+            const substitutionsInUse = appState.substitutions.filter(s => s.role === role).length;
+            if (schedulesInUse || substitutionsInUse) {
+                showToast(`Não é possível excluir: ${schedulesInUse} escalas e ${substitutionsInUse} trocas usam essa função.`, true);
+                return;
+            }
+            const membersCount = (appState.members[role] || []).length;
+            const description = membersCount
+                ? `Excluir a função “${role}” e remover seus ${membersCount} integrante(s) dessa função? Eles continuarão nas outras funções.`
+                : `Excluir a função “${role}”? Ela deixará de aparecer nas escalas e nos relatórios.`;
+            openConfirmModal('Excluir função', description, () => {
+                if (!isAdmin) return;
+                // Reconfere se uma atualização remota não incluiu uso da função.
+                if (appState.schedules.some(s => s.assignments?.[role]) || appState.substitutions.some(s => s.role === role)) {
+                    showToast('A função está em uso e não pode ser excluída.', true);
+                    return;
+                }
+                appState.roles = appState.roles.filter(entry => entry.name !== role);
+                delete appState.members[role];
+                appState.schedules.forEach(s => { if (s.assignments) delete s.assignments[role]; });
+                applyRoleConfig(appState.roles);
+                saveStateToFirebase();
+                renderCadastro();
+                showToast('Função excluída.');
+            });
         }
 
         function handleAddMember(e) {
@@ -1326,6 +1428,7 @@
         window.renderEscalas = renderEscalas; window.exportarPDF = exportarPDF; window.updateAssignment = updateAssignment;
         window.updateAbsentPerson = updateAbsentPerson; window.handleSubstituicao = handleSubstituicao;
         window.deleteSubstituicao = deleteSubstituicao; window.handleAddMember = handleAddMember; window.deleteMember = deleteMember;
+        window.handleAddRole = handleAddRole; window.deleteRole = deleteRole;
         window.closeConfirmModal = closeConfirmModal; window.renderEstatisticas = renderEstatisticas; 
         window.handleSort = handleSort; window.handleSortSubs = handleSortSubs;
         window.toggleSubSelection = toggleSubSelection; window.toggleAllSubs = toggleAllSubs; window.deleteSelectedSubs = deleteSelectedSubs;
