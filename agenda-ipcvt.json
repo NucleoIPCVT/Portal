@@ -1,7 +1,7 @@
 {
   "calendarId": "0d88300041a5eeef838f5f57c87594ebbd4e2ae41b4f5745335825299acdc5de@group.calendar.google.com",
   "calendarName": "Agenda IPCVT",
-  "generatedAt": "2026-11-07T04:56:15.026Z",
+  "generatedAt": "2026-11-09T20:37:59.197Z",
   "events": [
     {
       "id": "0d0f88e77aaaded52ce6643e40d98b10a2d84b0814a4ded1190be4ae6d770174",
@@ -1115,13 +1115,13 @@
       "description": "<p>Fonte: Agenda 2026 (IPCVT).\nOrganização: IPB.</p>",
       "location": "",
       "htmlLink": "",
-      "sourceUpdatedAt": "2026-11-07T04:05:54.000Z",
+      "sourceUpdatedAt": "2026-11-09T20:19:34.000Z",
       "recurringEventId": "",
       "originalStartTime": null,
       "allDay": true,
       "timeZone": "America/Sao_Paulo",
       "startDate": "2026-07-01",
-      "endDate": "2026-07-31",
+      "endDate": "2026-07-01",
       "startAt": null,
       "endAt": null
     },
@@ -1533,13 +1533,13 @@
       "description": "<p>Fonte: Agenda 2026 (IPCVT).\nOrganização: IPB.\nObservação: O documento informa 01 a 31, mas setembro tem 30 dias.</p>",
       "location": "",
       "htmlLink": "",
-      "sourceUpdatedAt": "2026-11-07T04:06:32.000Z",
+      "sourceUpdatedAt": "2026-11-09T20:19:48.000Z",
       "recurringEventId": "",
       "originalStartTime": null,
       "allDay": true,
       "timeZone": "America/Sao_Paulo",
       "startDate": "2026-09-01",
-      "endDate": "2026-09-30",
+      "endDate": "2026-09-01",
       "startAt": null,
       "endAt": null
     },
