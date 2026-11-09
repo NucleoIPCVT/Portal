@@ -160,12 +160,37 @@ function render() {
   status.classList.remove('is-error');
 }
 
+// A API pública do GitHub consulta o arquivo publicado na branch principal e
+// evita a demora eventual do cache CDN de raw.githubusercontent.com.
+// O Planner continua utilizando sua integração existente.
+async function readLatestPublishedCalendar() {
+  try {
+    const endpoint = 'https://api.github.com/repos/NucleoIPCVT/Portal/contents/agenda-ipcvt.json';
+    const response = await fetch(`${endpoint}?ref=main&at=${Date.now()}`, {
+      cache: 'no-store', headers: { Accept: 'application/vnd.github+json' },
+    });
+    if (!response.ok) throw new Error('API do GitHub indisponível');
+    const file = await response.json();
+    if (file.encoding !== 'base64' || typeof file.content !== 'string') throw new Error('Arquivo indisponível');
+    const binary = atob(file.content.replace(/\\s/g, ''));
+    const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
+    const data = JSON.parse(new TextDecoder().decode(bytes));
+    if (!data || !Array.isArray(data.events) || data.calendarId !== '0d88300041a5eeef838f5f57c87594ebbd4e2ae41b4f5745335825299acdc5de@group.calendar.google.com') {
+      throw new Error('Calendário publicado não corresponde à Agenda IPCVT');
+    }
+    return data;
+  } catch (error) {
+    console.warn('Consulta direta ao GitHub falhou; tentando a cópia pública tradicional.', error);
+    return readPublicCalendar({ now: Date.now() });
+  }
+}
+
 async function loadCalendar() {
   refreshButton.disabled = true;
   refreshButton.classList.add('is-loading');
   status.textContent = 'Buscando os eventos da Agenda IPCVT...';
   try {
-    const fresh = await readPublicCalendar({ now: Date.now() });
+    const fresh = await readLatestPublishedCalendar();
     snapshot = fresh;
     const years = [...new Set(fresh.events.flatMap(event => {
       const start = Number(event.startDate.slice(0, 4));
