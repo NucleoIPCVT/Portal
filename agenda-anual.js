@@ -172,7 +172,7 @@ async function readLatestPublishedCalendar() {
     if (!response.ok) throw new Error('API do GitHub indisponível');
     const file = await response.json();
     if (file.encoding !== 'base64' || typeof file.content !== 'string') throw new Error('Arquivo indisponível');
-    const binary = atob(file.content.replace(/\\s/g, ''));
+    const binary = atob(file.content.replaceAll(String.fromCharCode(10), ''));
     const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
     const data = JSON.parse(new TextDecoder().decode(bytes));
     if (!data || !Array.isArray(data.events) || data.calendarId !== '0d88300041a5eeef838f5f57c87594ebbd4e2ae41b4f5745335825299acdc5de@group.calendar.google.com') {
