@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#153e31">
+    <meta name="description" content="Agenda anual de eventos da Igreja Presbiteriana Central em Vilar dos Teles, atualizada a partir do Google Agenda e pronta para impressão.">
+    <title>Agenda Anual IPCVT · Eventos da Igreja</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="agenda-anual.css">
+    <script type="module" src="agenda-anual.js"></script>
+  </head>
+  <body>
+    <header class="app-bar screen-only">
+      <a href="index.html" class="home-link" aria-label="Voltar ao Portal IPCVT">
+        <img src="logo-nucleo.svg" alt="" width="36" height="36">
+        <span>Portal <strong>IPCVT</strong></span>
+      </a>
+      <span class="app-bar-caption">Igreja Presbiteriana Central em Vilar dos Teles</span>
+    </header>
+
+    <main class="app-shell">
+      <div class="page-toolbar screen-only">
+        <div class="page-intro">
+          <span class="eyebrow">Calendário oficial da igreja</span>
+          <h1>Agenda Anual <em>IPCVT</em></h1>
+          <p>Consulte os eventos e tenha sempre uma versão atualizada para imprimir ou salvar em PDF.</p>
+        </div>
+        <div class="toolbar-actions">
+          <label class="year-control" for="year-select">Ano
+            <select id="year-select" disabled aria-label="Escolher ano da agenda"><option>Carregando...</option></select>
+          </label>
+          <button id="refresh-button" class="button button-secondary" type="button" title="Buscar a versão pública mais recente">↻ <span>Atualizar</span></button>
+          <button id="print-button" class="button button-primary" type="button" disabled>▤ <span>Imprimir / Salvar PDF</span></button>
+        </div>
+      </div>
+
+      <div id="load-status" class="load-status screen-only" role="status" aria-live="polite">Buscando os eventos da Agenda IPCVT...</div>
+
+      <div id="print-area" class="print-area" hidden>
+        <section class="print-sheet overview-sheet" aria-label="Visão anual do calendário">
+          <div class="sheet-masthead">
+            <div class="church-identity">
+              <img src="logo-igreja.png" alt="Igreja Presbiteriana Central em Vilar dos Teles">
+              <div>
+                <span class="identity-kicker">Igreja Presbiteriana Central</span>
+                <strong>em Vilar dos Teles</strong>
+              </div>
+            </div>
+            <div class="identity-side">IPCVT <span>•</span> AGENDA ANUAL</div>
+          </div>
+          <div class="cover-heading">
+            <div>
+              <span class="overline">Programação da igreja</span>
+              <h2>Um ano de <em>comunhão.</em></h2>
+              <p>Encontros, celebrações e atividades da nossa comunidade.</p>
+            </div>
+            <div id="cover-year" class="cover-year">2026</div>
+          </div>
+          <div id="calendar-grid" class="calendar-grid" aria-label="Calendário dos doze meses"></div>
+          <div class="sheet-foot">
+            <span><i class="event-key"></i> Dias com eventos cadastrados</span>
+            <span id="cover-summary">Fonte: Agenda IPCVT · Google Agenda</span>
+          </div>
+        </section>
+        <div id="detail-pages" class="detail-pages"></div>
+      </div>
+      <footer class="screen-footer screen-only">
+        <a href="index.html">← Voltar ao Portal</a>
+        <p>Os eventos vêm da Agenda IPCVT no Google. O Portal consulta a cópia pública atualizada periodicamente.</p>
+      </footer>
+    </main>
+  </body>
+</html>
