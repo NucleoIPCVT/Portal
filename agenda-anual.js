@@ -12,6 +12,8 @@ const refreshButton = byId('refresh-button');
 const status = byId('load-status');
 let snapshot = null;
 let selectedYear = null;
+let lastSuccessfulSync = null;
+let lastCalendarLoad = 0;
 
 function pad(value) { return String(value).padStart(2, '0'); }
 function dateKey(year, monthIndex, day) { return `${year}-${pad(monthIndex + 1)}-${pad(day)}`; }
@@ -256,43 +258,43 @@ function render() {
   renderBooklet(year, groups, months, yearEvents.length);
   byId('print-area').hidden = false;
   printButton.disabled = false;
-  const fileDate = snapshot.generatedAt ? `Arquivo gerado em ${formatDate(snapshot.generatedAt)}.` : '';
-  status.textContent = `${yearEvents.length} eventos em ${year}. ${fileDate} "Atualizar" busca a última cópia publicada no Portal; alterações recentes feitas no Google podem levar alguns minutos para aparecer.`;
+  const fileDate = snapshot.generatedAt ? `Última alteração importada: ${formatDate(snapshot.generatedAt)}.` : '';
+  const verifiedDate = lastSuccessfulSync ? `Última consulta automática ao Google: ${formatDate(lastSuccessfulSync)}.` : '';
+  const overdue = lastSuccessfulSync && Date.now() - Date.parse(lastSuccessfulSync) > 45 * 60 * 1000;
+  const explanation = overdue
+    ? 'A sincronização automática está atrasada. Confira o Google Agenda para ver as alterações mais recentes.'
+    : 'O botão Atualizar consulta a última cópia sincronizada; a leitura do Google é feita automaticamente em segundo plano.';
+  status.textContent = `${yearEvents.length} eventos em ${year}. ${fileDate} ${verifiedDate} ${explanation}`;
   status.classList.remove('is-error');
+  status.classList.toggle('is-warning', Boolean(overdue));
 }
 
-// A API pública do GitHub consulta o arquivo publicado na branch principal e
-// evita a demora eventual do cache CDN de raw.githubusercontent.com.
-// O Planner continua utilizando sua integração existente.
-async function readLatestPublishedCalendar() {
+// Exibe quando o servidor realmente consultou o Google, inclusive se não
+// houve modificações no calendário e o arquivo JSON permaneceu igual.
+async function checkLatestSync() {
   try {
-    const endpoint = 'https://api.github.com/repos/NucleoIPCVT/Portal/contents/agenda-ipcvt.json';
-    const response = await fetch(`${endpoint}?ref=main&at=${Date.now()}`, {
+    const endpoint = 'https://api.github.com/repos/NucleoIPCVT/Portal/actions/workflows/sync-agenda-ipcvt.yml/runs';
+    const response = await fetch(`${endpoint}?per_page=8&at=${Date.now()}`, {
       cache: 'no-store', headers: { Accept: 'application/vnd.github+json' },
     });
-    if (!response.ok) throw new Error('API do GitHub indisponível');
-    const file = await response.json();
-    if (file.encoding !== 'base64' || typeof file.content !== 'string') throw new Error('Arquivo indisponível');
-    const binary = atob(file.content.replaceAll(String.fromCharCode(10), ''));
-    const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
-    const data = JSON.parse(new TextDecoder().decode(bytes));
-    if (!data || !Array.isArray(data.events) || data.calendarId !== '0d88300041a5eeef838f5f57c87594ebbd4e2ae41b4f5745335825299acdc5de@group.calendar.google.com') {
-      throw new Error('Calendário publicado não corresponde à Agenda IPCVT');
-    }
-    return data;
-  } catch (error) {
-    console.warn('Consulta direta ao GitHub falhou; tentando a cópia pública tradicional.', error);
-    return readPublicCalendar({ now: Date.now() });
+    if (!response.ok) return;
+    const data = await response.json();
+    const successful = data.workflow_runs?.find(run => run.status === 'completed' && run.conclusion === 'success');
+    if (successful) lastSuccessfulSync = successful.updated_at || successful.run_started_at || successful.created_at;
+    if (snapshot) render();
+  } catch {
+    // O calendário continua disponível quando a API de status está indisponível.
   }
 }
 
-async function loadCalendar() {
+async function loadCalendar({ checkWorkflow = true } = {}) {
   refreshButton.disabled = true;
   refreshButton.classList.add('is-loading');
   status.textContent = 'Buscando os eventos da Agenda IPCVT...';
   try {
-    const fresh = await readLatestPublishedCalendar();
+    const fresh = await readPublicCalendar({ now: Date.now() });
     snapshot = fresh;
+    lastCalendarLoad = Date.now();
     const years = [...new Set(fresh.events.flatMap(event => {
       const start = Number(event.startDate.slice(0, 4));
       const end = Number(event.endDate.slice(0, 4));
@@ -310,6 +312,7 @@ async function loadCalendar() {
     yearSelect.value = String(selectedYear);
     yearSelect.disabled = false;
     render();
+    if (checkWorkflow) void checkLatestSync();
   } catch (error) {
     status.textContent = error.message || 'Não foi possível obter a agenda. Tente novamente.';
     status.classList.add('is-error');
@@ -327,6 +330,16 @@ yearSelect.addEventListener('change', () => {
   selectedYear = Number(yearSelect.value);
   render();
 });
-refreshButton.addEventListener('click', loadCalendar);
+refreshButton.addEventListener('click', () => loadCalendar());
 printButton.addEventListener('click', () => window.print());
 loadCalendar();
+
+// Atualiza a tela enquanto ela estiver aberta e ao voltar para a aba.
+setInterval(() => {
+  if (document.visibilityState === 'visible' && !refreshButton.disabled) void loadCalendar({ checkWorkflow: false });
+}, 5 * 60 * 1000);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && Date.now() - lastCalendarLoad > 60 * 1000 && !refreshButton.disabled) {
+    void loadCalendar({ checkWorkflow: false });
+  }
+});

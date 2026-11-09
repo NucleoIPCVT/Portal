@@ -40,6 +40,7 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid
 .button.is-loading { opacity: .65; }
 .load-status { padding: 12px 16px; margin-bottom: 22px; background: #edf3e9; border: 1px solid #d3dfd1; border-radius: 8px; color: #456251; font-size: 11px; line-height: 1.6; }
 .load-status.is-error { background: #fff0ed; border-color: #e9beb5; color: #8f3025; }
+.load-status.is-warning { background: #fff7e8; border-color: #ebd29f; color: #7c5520; }
 .booklet-instructions { margin: -8px 0 22px; padding: 0 4px; color: #597366; font-size: 11px; line-height: 1.7; }
 .booklet-instructions strong { color: var(--green); }
 .booklet-print-area { display: none; }

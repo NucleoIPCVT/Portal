@@ -34,15 +34,29 @@ export function calendarWebUrl(id = publicCalendar.id) {
 }
 
 export async function readPublicCalendar({ calendarId = publicCalendar.id, fetchImpl = globalThis.fetch, now = Date.now() } = {}) {
-  let response
-  try {
-    response = await fetchImpl(publicCalendar.snapshotUrl + '?at=' + now, { cache: 'no-store' })
-  } catch {
-    throw new Error('Não foi possível consultar a Agenda IPCVT no GitHub. Confira sua conexão.')
-  }
-  if (!response.ok) throw new Error('A cópia pública da Agenda IPCVT ainda não está disponível no GitHub.')
   let snapshot
-  try { snapshot = await response.json() } catch { /* Resposta inválida. */ }
+  try {
+    // A API de conteúdos do GitHub entrega o arquivo da branch principal
+    // sem depender do cache do GitHub Pages ou do raw.githubusercontent.com.
+    const endpoint = 'https://api.github.com/repos/NucleoIPCVT/Portal/contents/agenda-ipcvt.json'
+    const response = await fetchImpl(`${endpoint}?ref=main&at=${now}`, {
+      cache: 'no-store', headers: { Accept: 'application/vnd.github+json' }
+    })
+    if (!response.ok) throw new Error(`GitHub API: HTTP ${response.status}`)
+    const file = await response.json()
+    if (file.encoding !== 'base64' || typeof file.content !== 'string') throw new Error('Arquivo não encontrado na API.')
+    const bytes = Uint8Array.from(atob(file.content.replace(/\s/g, '')), char => char.charCodeAt(0))
+    snapshot = JSON.parse(new TextDecoder().decode(bytes))
+  } catch (error) {
+    console.warn('Consulta direta ao GitHub indisponível; usando a cópia pública.', error)
+    try {
+      const response = await fetchImpl(`${publicCalendar.snapshotUrl}?at=${now}`, { cache: 'no-store' })
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      snapshot = await response.json()
+    } catch {
+      throw new Error('Não foi possível consultar a Agenda IPCVT. Confira sua conexão e tente novamente.')
+    }
+  }
   if (!snapshot || !Array.isArray(snapshot.events)
     || snapshot.events.some(event => !event || typeof event.id !== 'string'
       || typeof event.startDate !== 'string' || typeof event.endDate !== 'string'

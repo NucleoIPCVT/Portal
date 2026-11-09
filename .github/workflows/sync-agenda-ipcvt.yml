@@ -2,7 +2,8 @@ name: Atualizar Agenda IPCVT
 
 on:
   schedule:
-    - cron: '7,22,37,52 * * * *'
+    # A cada cinco minutos, fora do início da hora (horário de maior carga no GitHub).
+    - cron: '3-58/5 * * * *'
   workflow_dispatch:
   push:
     paths:
@@ -39,4 +40,5 @@ jobs:
             exit 0
           fi
           git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Atualiza eventos públicos da Agenda IPCVT'
+          git pull --rebase origin main
           git push

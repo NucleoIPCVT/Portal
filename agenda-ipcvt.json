@@ -1,7 +1,7 @@
 {
   "calendarId": "0d88300041a5eeef838f5f57c87594ebbd4e2ae41b4f5745335825299acdc5de@group.calendar.google.com",
   "calendarName": "Agenda IPCVT",
-  "generatedAt": "2026-11-09T20:37:59.197Z",
+  "generatedAt": "2026-11-09T23:50:46.360Z",
   "events": [
     {
       "id": "0d0f88e77aaaded52ce6643e40d98b10a2d84b0814a4ded1190be4ae6d770174",
@@ -2026,6 +2026,28 @@
       "endDate": "2026-11-07",
       "startAt": "2026-11-07T11:00:00.000Z",
       "endAt": "2026-11-07T12:00:00.000Z"
+    },
+    {
+      "id": "b0d402e57121497728c3439ec4f7a1706ae5186fafa581db22cbe9352fb65045",
+      "source": "google",
+      "sourceCalendarId": "0d88300041a5eeef838f5f57c87594ebbd4e2ae41b4f5745335825299acdc5de@group.calendar.google.com",
+      "sourceEventId": "cpgjiphk71j34bb36sqj4b9kcpi3ibb2cpi32b9h70pmadj16lj30c1mcg@google.com",
+      "sourceKey": "public-ical:0d88300041a5eeef838f5f57c87594ebbd4e2ae41b4f5745335825299acdc5de@group.calendar.google.com:cpgjiphk71j34bb36sqj4b9kcpi3ibb2cpi32b9h70pmadj16lj30c1mcg@google.com",
+      "calendarName": "Agenda IPCVT",
+      "status": "confirmed",
+      "title": "Isa&Hud",
+      "description": "",
+      "location": "",
+      "htmlLink": "",
+      "sourceUpdatedAt": "2026-11-09T22:49:51.000Z",
+      "recurringEventId": "",
+      "originalStartTime": null,
+      "allDay": true,
+      "timeZone": "America/Sao_Paulo",
+      "startDate": "2026-11-11",
+      "endDate": "2026-11-11",
+      "startAt": null,
+      "endAt": null
     },
     {
       "id": "eea2e50627c4a353102bb549d5420e97787d9542fb1b52f523dabc1640ec8af4",

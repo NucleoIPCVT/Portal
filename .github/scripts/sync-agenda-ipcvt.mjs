@@ -71,6 +71,25 @@ function normalize(entry, occurrence, recurring) {
 
 const configEndpoint = 'https://firestore.googleapis.com/v1/projects/repertorio-ipcvt/databases/(default)/documents/comissao_planner/main/config/calendar';
 
+async function fetchCalendar(url) {
+  let lastError;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const response = await fetch(`${url}?refresh=${Date.now()}`, {
+        cache: 'no-store', signal: AbortSignal.timeout(30000), headers: { Accept: 'text/calendar' },
+      });
+      if (!response.ok) throw new Error(`Agenda pública respondeu HTTP ${response.status}.`);
+      const content = await response.text();
+      if (!content.includes('BEGIN:VCALENDAR')) throw new Error('O link não retornou um calendário iCal público.');
+      return content;
+    } catch (error) {
+      lastError = error;
+      if (attempt < 3) await new Promise(resolve => setTimeout(resolve, attempt * 1500));
+    }
+  }
+  throw lastError;
+}
+
 async function resolveCalendarId() {
   let response;
   try {
@@ -95,10 +114,7 @@ async function resolveCalendarId() {
 async function main() {
   calendarId = await resolveCalendarId();
   const calendarUrl = `https://calendar.google.com/calendar/ical/${encodeURIComponent(calendarId)}/public/basic.ics`;
-  const response = await fetch(`${calendarUrl}?refresh=${Date.now()}`, { cache: 'no-store', signal: AbortSignal.timeout(30000), headers: { Accept: 'text/calendar' } });
-  if (!response.ok) throw new Error(`Agenda pública não respondeu corretamente (HTTP ${response.status}).`);
-  const content = await response.text();
-  if (!content.includes('BEGIN:VCALENDAR')) throw new Error('O link não retornou um calendário iCal público.');
+  const content = await fetchCalendar(calendarUrl);
 
   const parsed = ical.sync.parseICS(content);
   const year = new Date().getUTCFullYear();
