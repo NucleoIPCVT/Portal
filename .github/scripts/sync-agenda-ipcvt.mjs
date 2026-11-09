@@ -95,7 +95,7 @@ async function resolveCalendarId() {
 async function main() {
   calendarId = await resolveCalendarId();
   const calendarUrl = `https://calendar.google.com/calendar/ical/${encodeURIComponent(calendarId)}/public/basic.ics`;
-  const response = await fetch(calendarUrl, { signal: AbortSignal.timeout(30000), headers: { Accept: 'text/calendar' } });
+  const response = await fetch(`${calendarUrl}?refresh=${Date.now()}`, { cache: 'no-store', signal: AbortSignal.timeout(30000), headers: { Accept: 'text/calendar' } });
   if (!response.ok) throw new Error(`Agenda pública não respondeu corretamente (HTTP ${response.status}).`);
   const content = await response.text();
   if (!content.includes('BEGIN:VCALENDAR')) throw new Error('O link não retornou um calendário iCal público.');
