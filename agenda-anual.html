@@ -34,11 +34,16 @@
           </label>
           <button id="refresh-button" class="button button-secondary" type="button" title="Consultar a versão já sincronizada da Agenda IPCVT no Portal">↻ <span>Atualizar</span></button>
           <a class="button button-secondary" href="https://calendar.google.com/calendar/embed?src=0d88300041a5eeef838f5f57c87594ebbd4e2ae41b4f5745335825299acdc5de%40group.calendar.google.com&amp;ctz=America%2FSao_Paulo" target="_blank" rel="noopener noreferrer" title="Consultar a agenda original diretamente no Google">Ver no Google ↗</a>
-          <button id="print-button" class="button button-primary" type="button" disabled>▤ <span>Imprimir / Salvar PDF</span></button>
+          <button id="print-button" class="button button-primary" type="button" disabled>▤ <span>Imprimir caderneta / Salvar PDF</span></button>
         </div>
       </div>
 
       <div id="load-status" class="load-status screen-only" role="status" aria-live="polite">Buscando os eventos da Agenda IPCVT...</div>
+      <p class="booklet-instructions screen-only">
+        <strong>Formato de caderneta:</strong> impressão em A4 paisagem, frente e verso, virando na borda curta.
+        As páginas já saem na ordem para dobrar cada folha ao meio e encaixar uma dentro da outra.
+        <span id="booklet-sheet-count"></span>
+      </p>
 
       <div id="print-area" class="print-area" hidden>
         <section class="print-sheet overview-sheet" aria-label="Visão anual do calendário">
@@ -68,6 +73,7 @@
         </section>
         <div id="detail-pages" class="detail-pages"></div>
       </div>
+      <div id="booklet-print-area" class="booklet-print-area" aria-hidden="true"></div>
       <footer class="screen-footer screen-only">
         <a href="index.html">← Voltar ao Portal</a>
         <p>Os eventos vêm da Agenda IPCVT no Google. O Portal consulta a cópia pública atualizada periodicamente.</p>
