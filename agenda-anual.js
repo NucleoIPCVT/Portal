@@ -156,7 +156,24 @@ function bookletCover(year, totalEvents) {
   center.append(textElement('strong', 'booklet-cover-year', String(year)));
   center.append(textElement('p', '', 'Encontros, celebrações e atividades da nossa comunidade.'));
   page.append(center);
-  page.append(textElement('p', 'booklet-cover-bottom', `IPCVT  ·  ${totalEvents} eventos registrados`));
+  const footer = textElement('div', 'booklet-cover-footer', '');
+  const societies = textElement('div', 'booklet-cover-societies', '');
+  const logos = [
+    ['saf', 'Sociedade Auxiliadora Feminina'],
+    ['uph', 'União Presbiteriana de Homens'],
+    ['ucp', 'União de Crianças Presbiterianas'],
+    ['ump', 'União de Mocidade Presbiteriana'],
+    ['upa', 'União Presbiteriana de Adolescentes'],
+  ];
+  for (const [name, label] of logos) {
+    const logo = document.createElement('img');
+    logo.src = `logo-${name}.webp`;
+    logo.alt = label;
+    societies.append(logo);
+  }
+  footer.append(societies);
+  footer.append(textElement('p', 'booklet-cover-bottom', `IPCVT  ·  ${totalEvents} eventos registrados`));
+  page.append(footer);
   return page;
 }
 
