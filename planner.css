@@ -24,29 +24,23 @@
 #calendar-source-url{overflow-wrap:anywhere}
 @media(max-width:760px){.planner-header-icon{width:33px;height:33px}.workspace-session{gap:6px}.member-email{max-width:min(45vw,220px)}}
 
-/* Barra de ações compacta, logo abaixo do cabeçalho principal. */
-.workspace{padding-top:15px}
-.workspace-bar{margin:0 0 19px;min-height:40px;justify-content:flex-start;gap:15px}
-.workspace-actions{flex:0 0 auto}
-.workspace-session{margin-left:auto;padding-top:0;flex:0 1 auto;min-width:0}
-.workspace-heading{align-items:flex-end;margin-bottom:16px}
-.workspace-heading .save-status{margin-left:auto;padding-bottom:3px}
-
-@media(max-width:1100px){
-  .workspace{padding-top:15px}
-}
+/* Faixa compacta de ações logo abaixo do cabeçalho principal, sem moldura visual. */
+.workspace{padding-top:16px}
+.workspace-quickbar{display:flex;align-items:center;justify-content:space-between;gap:10px 16px;flex-wrap:wrap;margin-bottom:15px}
+.workspace-quickbar .workspace-actions{flex:0 1 auto;min-width:0}
+.workspace-quickbar .workspace-session{padding-top:0;width:auto;gap:9px}
+.workspace-heading{margin-bottom:18px}
+.workspace-heading .save-status{align-self:flex-end;padding-bottom:3px}
 @media(max-width:760px){
-  .workspace{padding-top:13px}
-  .workspace-bar{margin:0 0 18px;gap:9px;flex-wrap:wrap}
-  .workspace-session{width:auto;justify-content:flex-end;padding:0;gap:6px}
-  .member-email{max-width:145px}
-  .workspace-heading{margin-bottom:16px;gap:6px;align-items:flex-start}
-  .workspace-heading .save-status{margin-left:0;padding:0;text-align:left;width:auto}
+  .workspace{padding-top:14px}
+  .workspace-quickbar{margin-bottom:12px;gap:9px}
+  .workspace-quickbar .workspace-actions{flex:0 1 auto}
+  .workspace-quickbar .workspace-session{width:auto;justify-content:flex-end;margin-left:auto}
+  .workspace-quickbar .member-email{display:none}
+  .workspace-heading{margin-bottom:14px}
+  .workspace-heading .save-status{width:100%;max-width:none;align-self:auto;text-align:left}
 }
-@media(max-width:600px){
-  .workspace-bar{row-gap:8px}
-  .workspace-actions{flex:1 1 100%}
-  .workspace-session{flex:1 1 100%;margin-left:0;justify-content:flex-end}
-  .member-email{margin-right:auto;max-width:calc(100% - 156px)}
+@media(max-width:440px){
+  .workspace-quickbar .workspace-actions .button{min-height:32px;padding:6px 9px;font-size:10px}
+  .workspace-quickbar .workspace-session{margin-left:0}
 }
-
