@@ -40,6 +40,9 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid
 .button.is-loading { opacity: .65; }
 .load-status { padding: 12px 16px; margin-bottom: 22px; background: #edf3e9; border: 1px solid #d3dfd1; border-radius: 8px; color: #456251; font-size: 11px; line-height: 1.6; }
 .load-status.is-error { background: #fff0ed; border-color: #e9beb5; color: #8f3025; }
+.booklet-instructions { margin: -8px 0 22px; padding: 0 4px; color: #597366; font-size: 11px; line-height: 1.7; }
+.booklet-instructions strong { color: var(--green); }
+.booklet-print-area { display: none; }
 .print-area[hidden] { display: none; }
 .print-sheet { position: relative; display: flex; flex-direction: column; min-height: 760px; background: var(--paper); padding: 35px 42px 23px; border: 1px solid #dce2d9; box-shadow: 0 12px 36px #172d2216; margin-bottom: 26px; overflow: hidden; }
 .print-sheet::before { position: absolute; content: ''; inset: 0 auto 0 0; width: 5px; background: linear-gradient(var(--green), var(--gold)); }
@@ -162,4 +165,86 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid
   .event-details h4 { font-size: 8.2pt; line-height: 1.3; }
   .event-meta { font-size: 6.7pt; margin-top: 1mm; line-height: 1.25; }
   .detail-foot { padding-top: 2mm; font-size: 7pt; }
+}
+
+/* Caderneta: cada página física A4 tem duas páginas A5 já impostas. */
+@page { size: A4 landscape; margin: 0; }
+@media print {
+  .print-area { display: none !important; }
+  .booklet-print-area { display: block !important; width: 297mm; margin: 0; padding: 0; }
+  .booklet-spread {
+    display: flex;
+    width: 297mm;
+    height: 210mm;
+    margin: 0;
+    padding: 0;
+    break-after: page;
+    page-break-after: always;
+    overflow: hidden;
+  }
+  .booklet-spread:last-child { break-after: auto; page-break-after: auto; }
+  .booklet-page {
+    position: relative;
+    display: flex;
+    flex: 0 0 148.5mm;
+    flex-direction: column;
+    width: 148.5mm;
+    height: 210mm;
+    margin: 0;
+    padding: 10mm 9mm 8mm;
+    background: white;
+    color: #243e30;
+    overflow: hidden;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .booklet-cover { align-items: center; text-align: center; justify-content: space-between; padding: 17mm 13mm 15mm; }
+  .booklet-cover::before { content: ''; position: absolute; inset: 6mm; border: .45mm solid #276248; pointer-events: none; }
+  .booklet-cover-identity { display: flex; flex-direction: column; align-items: center; gap: 3mm; width: 100%; }
+  .booklet-cover-identity img { width: 28mm; max-height: 30mm; object-fit: contain; }
+  .booklet-cover-identity p { max-width: 100mm; margin: 0; font: 700 9pt/1.4 'DM Sans', Arial, sans-serif; letter-spacing: .03em; color: #37614a; }
+  .booklet-cover-center { display: flex; align-items: center; flex-direction: column; gap: 3mm; }
+  .booklet-cover-kicker { color: #a38a54; font: 700 8pt 'DM Sans',Arial,sans-serif; letter-spacing: .16em; text-transform: uppercase; }
+  .booklet-cover-center h1 { font: normal 28pt/1 'DM Serif Display',Georgia,serif; color: #173f32; margin: 2mm 0 0; }
+  .booklet-cover-year { font: normal 60pt/1 'DM Serif Display',Georgia,serif; color: #2e664a; }
+  .booklet-cover-center p { max-width: 98mm; font: 8.5pt/1.6 'DM Sans',Arial,sans-serif; color: #60766b; margin: 2mm 0 0; }
+  .booklet-cover-bottom { margin: 0; color: #9a8655; font: 700 7.5pt 'DM Sans',Arial,sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+
+  .booklet-events-page { padding-top: 9mm; padding-bottom: 9mm; }
+  .booklet-events-header { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 2.7mm; margin-bottom: 3mm; border-bottom: .5mm solid #b29a61; font-size: 8pt; font-weight: 700; color: #315942; text-transform: uppercase; letter-spacing: .08em; }
+  .booklet-events-header strong { font: normal 16pt 'DM Serif Display',Georgia,serif; letter-spacing: 0; color: #bd9f68; }
+  .booklet-month-list { display: flex; flex: 1; min-height: 0; flex-direction: column; gap: 4mm; }
+  .booklet-events-page .month-panel { display: block; min-width: 0; }
+  .booklet-events-page .month-panel + .month-panel { padding: 0; border: 0; }
+  .booklet-events-page .month-panel-heading { display: flex; align-items: baseline; padding: 0 0 1.5mm; margin: 0 0 1mm; gap: 2mm; border-bottom: 1px solid #d6e2d7; }
+  .booklet-events-page .month-number { font: normal 12pt 'DM Serif Display',Georgia,serif; color: #b59a60; }
+  .booklet-events-page .month-panel-heading h3 { font: normal 16pt 'DM Serif Display',Georgia,serif; color: #173f32; }
+  .booklet-events-page .month-count { font-size: 6.3pt; margin-left: auto; color: #71897c; }
+  .booklet-events-page .event-list { display: block; }
+  .booklet-events-page .event-row { display: flex; gap: 1.4mm; padding: .8mm 0; border-bottom: 1px solid #edf1eb; break-inside: avoid; }
+  .booklet-events-page .event-date { flex: 0 0 10mm; width: 10mm; align-items: flex-start; text-align: left; padding: 0; background: none; border-radius: 0; }
+  .booklet-events-page .event-weekday { display: none; }
+  .booklet-events-page .event-day,
+  .booklet-events-page .event-day-range { font: 700 9pt/1.2 'DM Sans',Arial,sans-serif; color: #214b36; white-space: nowrap; }
+  .booklet-events-page .event-details { display: block; min-width: 0; padding: 0; line-height: 1.25; }
+  .booklet-events-page .event-details h4 { display: inline; color: #243b30; font: 700 8.4pt/1.25 'DM Sans',Arial,sans-serif; overflow-wrap: anywhere; }
+  .booklet-events-page .event-meta { display: inline; margin: 0 0 0 1.2mm; color: #6e8073; font: 7.2pt/1.2 'DM Sans',Arial,sans-serif; overflow-wrap: anywhere; }
+  .booklet-events-page .empty-month { font-size: 8pt; }
+  .booklet-page-footer { border-top: 1px solid #dce4db; margin-top: auto; padding-top: 2mm; text-align: center; color: #789080; font: 6.8pt 'DM Sans',Arial,sans-serif; }
+
+  .booklet-calendar-page { padding: 12mm 9mm 9mm; }
+  .booklet-calendar-heading { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4mm; padding-bottom: 2mm; border-bottom: .45mm solid #b49d68; }
+  .booklet-calendar-heading span { font: 700 8pt 'DM Sans',Arial,sans-serif; color: #37664b; text-transform: uppercase; letter-spacing: .07em; }
+  .booklet-calendar-heading h2 { margin: 0; font: normal 25pt 'DM Serif Display',Georgia,serif; color: #173f32; }
+  .booklet-calendar-grid { display: grid; flex: 1; grid-template-columns: repeat(3,minmax(0,1fr)); grid-template-rows: repeat(4,minmax(0,1fr)); gap: 2.4mm; min-height: 0; }
+  .booklet-calendar-page .mini-month { padding: 1.4mm 1mm 1mm; min-width: 0; background: #fff; border: 1px solid #dce6da; border-radius: 1mm; }
+  .booklet-calendar-page .mini-month-head { padding-bottom: 1mm; margin-bottom: 1mm; border-bottom: 1px solid #e2ebe2; }
+  .booklet-calendar-page .mini-month-head strong { font: normal 9.5pt 'DM Serif Display',Georgia,serif; color: #173f32; }
+  .booklet-calendar-page .mini-month-head span { display: none; }
+  .booklet-calendar-page .mini-month-grid { gap: .2mm 0; }
+  .booklet-calendar-page .mini-month-grid span,
+  .booklet-calendar-page .mini-month-grid .weekday { height: 3.6mm; font: 6pt 'DM Sans',Arial,sans-serif; }
+  .booklet-calendar-page .mini-month-grid .weekday { color: #74917d; font-weight: 700; }
+  .booklet-calendar-page .mini-month-grid .day.has-event { color: #fff; background: #376a50; font-weight: 700; }
+  .booklet-calendar-legend { margin-top: 3mm; text-align: center; font: 7pt 'DM Sans',Arial,sans-serif; color: #607d6b; }
 }
