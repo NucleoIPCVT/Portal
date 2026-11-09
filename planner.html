@@ -50,11 +50,10 @@
       </section>
 
       <section id="planner-app" class="workspace" hidden aria-labelledby="workspace-title">
-        <div class="workspace-heading">
-          <div>
-            <p class="eyebrow">Cultos · Rotinas · Projetos</p>
-            <h1 id="workspace-title">Planner <em>da Comissão.</em></h1>
-            <p class="workspace-description">Clareza para planejar. Compromisso para realizar.</p>
+        <div class="workspace-bar" role="group" aria-label="Ações do Planner">
+          <div class="workspace-actions">
+            <button id="new-task-button" class="button button-primary" type="button"><span aria-hidden="true">＋</span> Nova demanda</button>
+            <button id="new-plan-button" class="button" type="button">Novo plano</button>
           </div>
           <div class="workspace-session">
             <span id="member-email" class="member-email"></span>
@@ -69,10 +68,11 @@
           </div>
         </div>
 
-        <div class="workspace-bar">
-          <div class="workspace-actions">
-            <button id="new-task-button" class="button button-primary" type="button"><span aria-hidden="true">＋</span> Nova demanda</button>
-            <button id="new-plan-button" class="button" type="button">Novo plano</button>
+        <div class="workspace-heading">
+          <div>
+            <p class="eyebrow">Cultos · Rotinas · Projetos</p>
+            <h1 id="workspace-title">Planner <em>da Comissão.</em></h1>
+            <p class="workspace-description">Clareza para planejar. Compromisso para realizar.</p>
           </div>
           <p id="save-status" class="save-status" role="status" aria-live="polite">Carregando seus planos…</p>
         </div>
@@ -215,3 +215,4 @@
     <footer class="site-footer">Comissão do Núcleo <span aria-hidden="true">·</span> Igreja Presbiteriana Central em Vilar dos Telles</footer>
   </body>
 </html>
+
