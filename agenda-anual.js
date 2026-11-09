@@ -156,7 +156,7 @@ function render() {
   byId('print-area').hidden = false;
   printButton.disabled = false;
   const fileDate = snapshot.generatedAt ? `Arquivo gerado em ${formatDate(snapshot.generatedAt)}.` : '';
-  status.textContent = `${yearEvents.length} eventos em ${year}. ${fileDate} A cópia da agenda é verificada automaticamente a cada 15 minutos, aproximadamente.`;
+  status.textContent = `${yearEvents.length} eventos em ${year}. ${fileDate} "Atualizar" busca a última cópia publicada no Portal; alterações recentes feitas no Google podem levar alguns minutos para aparecer.`;
   status.classList.remove('is-error');
 }
 
