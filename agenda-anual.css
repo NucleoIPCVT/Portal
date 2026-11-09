@@ -1,0 +1,165 @@
+:root {
+  --green: #173f32;
+  --deep: #0e2f27;
+  --sage: #719080;
+  --gold: #b29a61;
+  --cream: #f8f7f1;
+  --paper: #fffdfa;
+  --ink: #253c32;
+  --muted: #68786f;
+  --line: #d9e2d7;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; color: var(--ink); background: #e7ebe5; font-family: 'DM Sans', Arial, sans-serif; }
+button, select { font: inherit; }
+button, a, select { touch-action: manipulation; }
+button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid #bda16a; outline-offset: 3px; }
+.app-bar { min-height: 75px; display: flex; justify-content: space-between; align-items: center; padding: 12px max(24px, calc((100% - 1240px) / 2)); background: var(--deep); color: #e8efe7; border-bottom: 1px solid #d9c68b42; }
+.home-link { display: flex; align-items: center; gap: 11px; text-decoration: none; color: inherit; font-size: 13px; letter-spacing: .04em; }
+.home-link img { width: 39px; height: 39px; }
+.home-link span strong { color: #e2c98e; }
+.app-bar-caption { font-size: 11px; color: #afc3b3; }
+.app-shell { max-width: 1240px; padding: 40px 24px 35px; margin: 0 auto; }
+.page-toolbar { display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 30px; margin-bottom: 24px; }
+.eyebrow, .overline { text-transform: uppercase; letter-spacing: .18em; font-size: 10px; font-weight: 700; color: var(--gold); }
+.page-intro h1 { margin: 11px 0 7px; font: normal 43px/1.12 'DM Serif Display', Georgia, serif; color: var(--green); letter-spacing: -.02em; }
+.page-intro h1 em { font-style: normal; color: #8c7952; }
+.page-intro p { margin: 0; color: #5e7366; font-size: 12px; line-height: 1.7; max-width: 460px; }
+.toolbar-actions { display: flex; align-items: end; gap: 10px; flex-wrap: wrap; }
+.year-control { display: grid; gap: 5px; color: #52695b; font-size: 11px; font-weight: 700; }
+.year-control select { min-width: 105px; border: 1px solid #bccbc0; border-radius: 8px; background: white; color: #183b2d; height: 43px; padding: 0 12px; }
+.button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 43px; padding: 0 17px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; font-size: 12px; font-weight: 700; transition: transform .16s, background-color .16s; }
+.button:hover:not(:disabled) { transform: translateY(-1px); }
+.button:disabled { opacity: .55; cursor: wait; }
+.button-primary { background: var(--green); color: #fff; }
+.button-primary:hover { background: #2a5945; }
+.button-secondary { background: white; border-color: #bdcbc0; color: var(--green); }
+.button-secondary:hover { background: #f2f7f0; }
+.button.is-loading { opacity: .65; }
+.load-status { padding: 12px 16px; margin-bottom: 22px; background: #edf3e9; border: 1px solid #d3dfd1; border-radius: 8px; color: #456251; font-size: 11px; line-height: 1.6; }
+.load-status.is-error { background: #fff0ed; border-color: #e9beb5; color: #8f3025; }
+.print-area[hidden] { display: none; }
+.print-sheet { position: relative; display: flex; flex-direction: column; min-height: 760px; background: var(--paper); padding: 35px 42px 23px; border: 1px solid #dce2d9; box-shadow: 0 12px 36px #172d2216; margin-bottom: 26px; overflow: hidden; }
+.print-sheet::before { position: absolute; content: ''; inset: 0 auto 0 0; width: 5px; background: linear-gradient(var(--green), var(--gold)); }
+.sheet-masthead { display: flex; align-items: center; justify-content: space-between; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.church-identity { display: flex; align-items: center; gap: 10px; }
+.church-identity img { width: 43px; height: 45px; object-fit: contain; }
+.church-identity div { display: grid; gap: 2px; }
+.identity-kicker { text-transform: uppercase; font-weight: 700; letter-spacing: .08em; font-size: 9px; color: var(--green); }
+.church-identity strong { font-size: 10px; font-weight: 500; color: #627669; }
+.identity-side { font-size: 10px; font-weight: 700; letter-spacing: .12em; color: #6b8675; }
+.identity-side span { color: var(--gold); }
+.cover-heading { display: flex; align-items: center; justify-content: space-between; gap: 22px; padding: 17px 0 20px; }
+.cover-heading h2 { font: normal 38px/1.1 'DM Serif Display', Georgia, serif; letter-spacing: -.015em; color: var(--green); margin: 8px 0 6px; }
+.cover-heading h2 em { font-weight: normal; font-style: italic; color: #ae935a; }
+.cover-heading p { font-size: 11px; color: var(--muted); margin: 0; }
+.cover-year { font: normal 69px/1 'DM Serif Display', Georgia, serif; color: #d5b76c; letter-spacing: -.06em; }
+.calendar-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 13px; flex: 1; }
+.mini-month { min-width: 0; border: 1px solid #dce5d8; background: linear-gradient(180deg,#fbfcf9,#fffdfa); border-radius: 7px; padding: 11px 12px 9px; }
+.mini-month-head { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-bottom: 9px; padding-bottom: 6px; border-bottom: 1px solid #e2e7de; }
+.mini-month-head strong { color: var(--green); font: normal 17px/1.1 'DM Serif Display', Georgia, serif; }
+.mini-month-head span { color: #809285; font-size: 8px; white-space: nowrap; }
+.mini-month-grid { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 3px 2px; text-align: center; }
+.mini-month-grid span { height: 19px; display: grid; place-items: center; border-radius: 50%; font-size: 9px; line-height: 1; font-weight: 500; }
+.mini-month-grid .weekday { height: 18px; color: #74887b; font-size: 9px; font-weight: 700; }
+.mini-month-grid .day { color: #52685b; }
+.mini-month-grid .day.has-event { color: white; background: #376a50; font-weight: 700; }
+.sheet-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding-top: 13px; margin-top: 20px; font-size: 9px; color: #75887b; }
+.sheet-foot span:first-child { display: flex; align-items: center; gap: 7px; }
+.event-key { width: 10px; height: 10px; display: inline-block; border-radius: 50%; background: #376a50; }
+.detail-masthead { display: flex; align-items: end; justify-content: space-between; gap: 20px; padding-bottom: 21px; margin-bottom: 20px; border-bottom: 2px solid #bba36e; }
+.detail-masthead h2 { font: normal 32px/1 'DM Serif Display', Georgia, serif; color: var(--green); margin: 8px 0 0; }
+.detail-year { font: normal 48px/1 'DM Serif Display', Georgia, serif; color: #d7c9a9; }
+.month-columns { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 27px; flex: 1; }
+.month-panel { min-width: 0; display: flex; flex-direction: column; }
+.month-panel + .month-panel { padding-left: 25px; border-left: 1px solid var(--line); }
+.month-panel-heading { display: flex; align-items: baseline; gap: 10px; padding-bottom: 11px; border-bottom: 1px solid #d3dfd2; margin-bottom: 6px; }
+.month-number { font: normal 27px/1 'DM Serif Display', Georgia, serif; color: #af965d; }
+.month-panel-heading h3 { font: normal 24px/1 'DM Serif Display', Georgia, serif; color: var(--green); margin: 0; }
+.month-count { margin-left: auto; color: #84988a; font-size: 9px; white-space: nowrap; }
+.event-list { display: flex; flex-direction: column; }
+.event-row { display: flex; min-width: 0; gap: 12px; border-bottom: 1px solid #edf0e9; padding: 9px 0; break-inside: avoid; }
+.event-date { width: 49px; flex: 0 0 49px; text-align: center; border-radius: 6px; background: #edf3ed; padding: 5px 3px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.event-weekday { color: #7a9082; font-size: 8px; font-weight: 700; letter-spacing: .08em; }
+.event-day { font: normal 20px/1.1 'DM Serif Display', Georgia, serif; color: var(--green); }
+.event-day-range { font: normal 14px/1.3 'DM Serif Display', Georgia, serif; white-space: nowrap; color: var(--green); }
+.event-details { min-width: 0; padding-top: 2px; }
+.event-details h4 { color: #243e30; font-weight: 700; font-size: 11px; line-height: 1.45; margin: 0; overflow-wrap: anywhere; }
+.event-meta { color: #778679; font-size: 9px; line-height: 1.5; margin: 4px 0 0; overflow-wrap: anywhere; }
+.empty-month { font-size: 11px; color: #7a8b7e; font-style: italic; }
+.detail-foot { margin-top: auto; border-top: 1px solid var(--line); padding-top: 13px; display: flex; justify-content: space-between; gap: 15px; font-size: 9px; color: #799080; }
+.screen-footer { display: flex; justify-content: space-between; align-items: start; gap: 20px; font-size: 11px; color: #64796a; padding: 8px 2px; }
+.screen-footer p { margin: 0; max-width: 470px; text-align: right; line-height: 1.6; }
+.screen-footer a { color: var(--green); font-weight: 700; text-decoration: none; }
+
+@media (max-width: 980px) {
+  .calendar-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .print-sheet { min-height: auto; }
+  .month-columns { gap: 16px; }
+  .month-panel + .month-panel { padding-left: 16px; }
+}
+@media (max-width: 720px) {
+  .app-bar-caption { display: none; }
+  .app-shell { padding: 25px 12px; }
+  .page-intro h1 { font-size: 34px; }
+  .toolbar-actions { width: 100%; }
+  .toolbar-actions .button-primary { flex: 1; }
+  .print-sheet { padding: 22px 16px 18px; }
+  .sheet-masthead { gap: 10px; }
+  .identity-side { display: none; }
+  .cover-heading h2 { font-size: 27px; }
+  .cover-heading p { font-size: 9px; }
+  .cover-year { font-size: 48px; }
+  .calendar-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+  .mini-month { padding: 10px 8px; }
+  .mini-month-grid { gap: 1px; }
+  .mini-month-grid span { font-size: 8px; height: 17px; }
+  .mini-month-head strong { font-size: 15px; }
+  .mini-month-head span { font-size: 7px; }
+  .sheet-foot { align-items: start; flex-direction: column; }
+  .month-columns { grid-template-columns: 1fr; }
+  .month-panel + .month-panel { border-left: 0; border-top: 1px solid var(--line); padding-left: 0; padding-top: 20px; }
+  .screen-footer { flex-direction: column; }
+  .screen-footer p { text-align: left; }
+}
+
+@page { size: A4 landscape; margin: 8mm; }
+@media print {
+  html, body { margin: 0 !important; padding: 0 !important; background: white !important; color-adjust: exact; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .screen-only { display: none !important; }
+  .app-shell, .print-area { max-width: none; width: auto; padding: 0; margin: 0; }
+  .print-sheet { box-shadow: none; border: 0; padding: 5mm 5mm 3mm 6mm; margin: 0; width: 100%; height: 194mm; min-height: 0; break-after: page; page-break-after: always; overflow: visible; }
+  .print-sheet:last-child { break-after: auto; page-break-after: auto; }
+  .print-sheet::before { width: 1.1mm; }
+  .sheet-masthead { padding-bottom: 3mm; }
+  .cover-heading { padding: 3mm 0 4mm; }
+  .cover-heading h2 { font-size: 27pt; margin: 2mm 0 1mm; }
+  .cover-heading p { font-size: 8pt; }
+  .cover-year { font-size: 48pt; }
+  .calendar-grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 2mm 3mm; }
+  .mini-month { padding: 2mm 2.4mm 1mm; border-radius: 1mm; }
+  .mini-month-head { margin-bottom: 1mm; padding-bottom: 1mm; }
+  .mini-month-head strong { font-size: 12pt; }
+  .mini-month-head span { font-size: 6pt; }
+  .mini-month-grid { gap: .2mm; }
+  .mini-month-grid span, .mini-month-grid .weekday { height: 4.2mm; font-size: 7pt; }
+  .sheet-foot { margin-top: 3mm; padding-top: 2mm; font-size: 7pt; }
+  .detail-masthead { margin-bottom: 5mm; padding-bottom: 4mm; }
+  .detail-masthead h2 { font-size: 25pt; }
+  .detail-year { font-size: 33pt; }
+  .month-columns { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 5mm; }
+  .month-panel + .month-panel { border-top: 0; border-left: 1px solid var(--line); padding-top: 0; padding-left: 5mm; }
+  .month-panel-heading { padding-bottom: 2mm; margin-bottom: 1mm; }
+  .month-number { font-size: 20pt; }
+  .month-panel-heading h3 { font-size: 18pt; }
+  .event-row { gap: 2.5mm; padding: 1.6mm 0; }
+  .event-date { width: 12mm; flex: 0 0 12mm; padding: 1mm .5mm; }
+  .event-weekday { font-size: 5.7pt; }
+  .event-day { font-size: 14pt; }
+  .event-day-range { font-size: 10pt; }
+  .event-details h4 { font-size: 8.2pt; line-height: 1.3; }
+  .event-meta { font-size: 6.7pt; margin-top: 1mm; line-height: 1.25; }
+  .detail-foot { padding-top: 2mm; font-size: 7pt; }
+}
