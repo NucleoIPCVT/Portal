@@ -4,7 +4,7 @@ import {
   reauthenticateWithPopup, signOut, setPersistence, browserLocalPersistence
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'
 import {
-  getFirestore, collection, doc, onSnapshot, runTransaction, serverTimestamp
+  getFirestore, collection, doc, onSnapshot, runTransaction, serverTimestamp, setDoc
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'
 
 const firebaseConfig = {
@@ -105,7 +105,7 @@ function snapshotItem(kind, item) {
 }
 
 /** Each item is a separate versioned Firestore document; no shared board snapshot is overwritten. */
-export function createPlannerStore({ onSession = () => {}, onData = () => {}, onError = () => {} } = {}) {
+export function createPlannerStore({ onSession = () => {}, onData = () => {}, onConfig = () => {}, onConfigError = () => {}, onError = () => {} } = {}) {
   const app = getApps().find(candidate => candidate.name === 'ipcvt-comissao') || initializeApp(firebaseConfig, 'ipcvt-comissao')
   const auth = getAuth(app)
   const db = getFirestore(app)
@@ -127,6 +127,7 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
     watchingData = false
     data = blankData()
     onData(data)
+    onConfig(null)
   }
 
   function clearAll() {
@@ -161,6 +162,13 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
       clearData()
       publishSession({ status: 'error', isAdmin: false, message: problem.message })
       onError(problem)
+    }))
+    stopData.push(onSnapshot(doc(db, 'comissao_planner', 'main', 'config', 'calendar'), snapshot => {
+      if (sequence !== currentSequence || session.status !== 'authorized') return
+      onConfig(snapshot.exists() ? snapshot.data() : null)
+    }, cause => {
+      if (sequence !== currentSequence) return
+      onConfigError(readableError(cause))
     }))
   }
 
@@ -278,6 +286,20 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
           if (!Number.isInteger(expectedVersion) || previous.data().version !== expectedVersion) throw error('Este registro mudou. Abra novamente antes de excluir.', 'conflict')
           if (kind === 'events' && previous.data().source === 'google' && !actor.isAdmin) throw error('Somente um administrador pode remover eventos importados.', 'planner-admin-required')
           transaction.delete(ref)
+        })
+      } catch (cause) { throw readableError(cause) }
+    },
+
+    async saveCalendarConfig({ calendarId, sourceUrl }) {
+      const actor = requireSession()
+      if (!actor.isAdmin) throw error('Somente a administração pode alterar a agenda oficial.', 'planner-admin-required')
+      if (typeof calendarId !== 'string' || !/^[-A-Za-z0-9_.@+]{1,250}$/.test(calendarId)
+        || typeof sourceUrl !== 'string' || sourceUrl.length > 2000 || !sourceUrl.startsWith('https://calendar.google.com/calendar/')) {
+        throw error('Informe um link público válido do Google Agenda.', 'planner-calendar-config-invalid')
+      }
+      try {
+        await setDoc(doc(db, 'comissao_planner', 'main', 'config', 'calendar'), {
+          calendarId, sourceUrl, updatedBy: actor.email, updatedAt: serverTimestamp()
         })
       } catch (cause) { throw readableError(cause) }
     },

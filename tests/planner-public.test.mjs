@@ -1,31 +1,30 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { publicCalendar, readPublicCalendar, eventsInRange } from '../planner-public.js';
+import { publicCalendar, parseCalendarSourceUrl, readPublicCalendar, diffCalendarEvents, summarizeCalendarEvents } from '../planner-public.js';
 
-test('lê o calendário público sem token pessoal', async () => {
-  let requestedUrl;
-  const result = await readPublicCalendar({
-    now: 1,
-    fetchImpl: async (url, options) => {
-      requestedUrl = url;
-      assert.deepEqual(options, { cache: 'no-store' });
-      return { ok: true, json: async () => ({ calendarId: publicCalendar.id, events: [
-        { id: '1', sourceCalendarId: publicCalendar.id, sourceKey: 'public-ical:1', startDate: '2026-11-07', endDate: '2026-11-07' }
-      ] }) };
-    }
-  });
-  assert.equal(result.events.length, 1);
-  assert.equal(requestedUrl, `${publicCalendar.snapshotUrl}?at=1`);
+test('parses church shared URL and extracts exact calendar ID', () => {
+  const config = parseCalendarSourceUrl(publicCalendar.sourceUrl);
+  assert.equal(config.calendarId, publicCalendar.id);
+  assert.equal(parseCalendarSourceUrl('https://calendar.google.com/calendar/embed?src=' + encodeURIComponent(publicCalendar.id)).calendarId, publicCalendar.id);
+  assert.throws(() => parseCalendarSourceUrl('https://example.com?src=not-a-calendar'));
+  assert.throws(() => parseCalendarSourceUrl('https://calendar.google.com/calendar/u/1'));
 });
 
-test('inclui eventos de vários dias que atravessam o período', () => {
-  const events = [
-    { startDate: '2026-12-30', endDate: '2027-01-03' },
-    { startDate: '2027-02-01', endDate: '2027-02-01' }
-  ];
-  assert.deepEqual(eventsInRange(events, '2027-01-01', '2027-01-31'), [events[0]]);
+test('accepts matching public snapshots and rejects a stale calendar source', async () => {
+  const event = {
+    id: '123', sourceCalendarId: publicCalendar.id, sourceKey: 'public-ical:' + publicCalendar.id + ':event',
+    startDate: '2026-11-09', endDate: '2026-11-09', title: 'Culto'
+  };
+  const response = { ok: true, json: async () => ({ calendarId: publicCalendar.id, generatedAt: '2026-11-09T00:00:00Z', events: [event] }) };
+  const snapshot = await readPublicCalendar({ fetchImpl: async () => response });
+  assert.equal(snapshot.events.length, 1);
+  await assert.rejects(readPublicCalendar({ calendarId: 'other@group.calendar.google.com', fetchImpl: async () => response }), /ainda está sendo preparada/);
 });
 
-test('rejeita dados de outra agenda', async () => {
-  await assert.rejects(readPublicCalendar({ fetchImpl: async () => ({ ok: true, json: async () => ({ calendarId: 'outra', events: [] }) }) }), /inválida/);
+test('detects additions, reschedules, and removals without false duplicates', () => {
+  const oldEvents = summarizeCalendarEvents([{ id: 'a', title: 'Culto', startDate: '2026-11-10', endDate: '2026-11-10' }, { id: 'b', title: 'Evento antigo', startDate: '2026-11-08', endDate: '2026-11-08' }]);
+  const updated = summarizeCalendarEvents([{ id: 'a', title: 'Culto', startDate: '2026-11-11', endDate: '2026-11-11' }, { id: 'c', title: 'Evento novo', startDate: '2026-11-13', endDate: '2026-11-13' }]);
+  const changes = diffCalendarEvents(oldEvents, updated);
+  assert.deepEqual(changes.map(c => c.type), ['changed', 'added', 'removed']);
+  assert.deepEqual(diffCalendarEvents(updated, updated), []);
 });

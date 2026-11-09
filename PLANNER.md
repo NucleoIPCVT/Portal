@@ -45,36 +45,57 @@ evitar recriação por modelos. Arquivar um plano preserva suas demandas e hist�
 
 ## Google Agenda
 
-A **Agenda IPCVT** oficial é pública e já está cadastrada no Planner. O GitHub Actions
-lê o iCal público da igreja periodicamente e gera `agenda-ipcvt.json` no repositório
-`NucleoIPCVT/Portal`. Nenhum membro precisa conectar sua conta Google pessoal
-para essa leitura. A agenda precisa estar configurada como pública, com detalhes
-dos eventos visíveis.
+A **Agenda IPCVT**, gerenciada na conta oficial da igreja, é o calendário de
+referência do Planner. A integração é somente leitura: **Google Agenda → Planner**.
+Criar ou editar demandas e eventos internos no Planner não altera o Google.
 
-Na aba **Google Agenda**, um administrador clica em **Atualizar eventos da Agenda
-IPCVT** para importar as alterações da cópia pública do GitHub ao Firestore.
-Os eventos ficam então disponíveis para a Comissão e podem ser vinculados às
-demandas. Importações repetidas preservam os identificadores e não duplicam os
-registros; registros ocultados manualmente não reaparecem. A atualização do
-arquivo público é automática, mas a importação ao Planner ainda exige o clique
-de um administrador.
+### Atualização automática
 
-Em **Outras agendas Google (opcional)**, o fluxo anterior com autorização OAuth
-continua disponível para importar outras agendas compartilhadas com a conta
-conectada. A sincronização desses calendários é **Google → Planner**, também
-manual e limitada a um intervalo de até um ano. A conexão expira e deve ser
-renovada quando necessário; o token permanece somente na memória da página.
+- Um fluxo do GitHub Actions consulta o iCal público a cada **15 minutos**
+  (a execução pode atrasar por filas do GitHub). Ele gera `agenda-ipcvt.json`.
+- O Planner carrega esse arquivo ao entrar e verifica atualizações a cada
+  **5 minutos** enquanto estiver aberto. Os eventos oficiais surgem diretamente
+  nas visões Calendário e nas opções de vincular tarefas, sem importação manual.
+- A campainha no cabeçalho destaca eventos **novos, alterados ou removidos**
+  desde a última leitura daquele usuário no navegador. A primeira leitura
+  estabelece a referência inicial, sem criar centenas de alertas antigos;
+  abrir a campainha marca os alertas como lidos.
+- Se o evento oficial for movido ou removido, as demandas associadas permanecem
+  no Planner. Demandas com prazo relativo divergente recebem a indicação
+  **Revisar prazo**, para conferência antes de qualquer ajuste. O Planner não
+  escreve nenhum dado na agenda oficial.
 
-As importações não escrevem nem excluem eventos na agenda original. Quando a
-data de um evento importado muda, o Planner atualiza os prazos relativos das
-demandas elegíveis ou sinaliza as demais para revisão.
+### Configuração administrativa
+
+No cabeçalho, somente administradores veem o ícone de **engrenagem**.
+Em **Configurações do Planner**, é possível substituir o link público
+de referência e salvar. O valor é validado e armazenado em
+`comissao_planner/main/config/calendar` no Firestore. A automação do
+GitHub lê a mesma configuração, de modo que a alteração vale para todos.
+Até a primeira configuração gravada, prevalece o link da Agenda IPCVT
+informado inicialmente.
+
+**Pré-requisito:** publicar as regras atualizadas de
+`firestore-ipcvt-integrado.rules` no Firebase. O arquivo no GitHub é
+documentação do conjunto de regras, mas o push do repositório não altera
+automaticamente o que está publicado no console do Firebase. Sem esse passo,
+a tela de configuração pode informar falta de permissão e os links de eventos
+oficiais nas novas demandas podem ser recusados. Consulte
+[PLANNER-FIREBASE.md](PLANNER-FIREBASE.md).
+
+O calendário deve estar compartilhado publicamente com detalhes dos eventos.
+Não há necessidade de autorizar a conta Google pessoal dos integrantes.
+
+A seção **Outras agendas Google (opcional)** mantém o fluxo OAuth anterior,
+usado apenas quando a administração desejar importar outros calendários. Esse
+fluxo continua manual e temporário, sem acesso de escrita ao Google.
 
 ## Validação
 
 Com Node.js 22 ou superior:
 
 ```sh
-node --test tests/planner-core.test.mjs tests/planner-google.test.mjs
+node --test tests/planner-core.test.mjs tests/planner-google.test.mjs tests/planner-public.test.mjs
 ```
 
 Os testes de domínio cobrem datas, recorrências, deduplicação, dependências,

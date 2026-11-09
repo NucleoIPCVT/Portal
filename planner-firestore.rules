@@ -52,8 +52,10 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/comissao_planner/main/buckets/$(id)).data.get('deleted', false) == false);
     }
     function plnrEventRef(id) {
-      return id == '' || (plnrId(id)
-        && exists(/databases/$(database)/documents/comissao_planner/main/events/$(id)));
+      // As ocorrências públicas são SHA-256 e podem existir só no JSON do GitHub.
+      return id == '' || (plnrId(id) &&
+        (exists(/databases/$(database)/documents/comissao_planner/main/events/$(id))
+          || id.matches('^[0-9a-f]{64}$')));
     }
     // Firestore has no generic list-item type validation or loops. Keep the
     // rules expression budget predictable; the store validates each item and
@@ -161,6 +163,24 @@ service cloud.firestore {
       allow delete: if plnrMember() && kind in ['buckets', 'tasks', 'events', 'routines']
         && (kind != 'events' || resource.data.source != 'google' || plnrAdmin());
     }
+    // Somente o endereço público da agenda é legível sem autenticação.
+    // Este caminho já está excluído da regra abrangente.
+    match /comissao_planner/main/config/calendar {
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if plnrAdmin()
+        && request.resource.data.keys().hasOnly(['calendarId', 'sourceUrl', 'updatedAt', 'updatedBy'])
+        && request.resource.data.keys().hasAll(['calendarId', 'sourceUrl', 'updatedAt', 'updatedBy'])
+        && plnrText(request.resource.data.calendarId, 250)
+        && request.resource.data.calendarId.size() > 0
+        && request.resource.data.calendarId.matches('^[-A-Za-z0-9_.@+]+$')
+        && plnrText(request.resource.data.sourceUrl, 2000)
+        && request.resource.data.sourceUrl.matches('^https://calendar[.]google[.]com/calendar/.*')
+        && request.resource.data.updatedBy == plnrEmail()
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+
     // Only for isolated emulator tests. The integrated rules already allow own-access get.
     match /comissao_acessos/{email} {
       allow get: if plnrGoogle() && email == plnrEmail();

@@ -3,10 +3,9 @@ import { readFile, writeFile } from 'node:fs/promises';
 import ical from 'node-ical';
 
 // The link shared by the church identifies this public Google Calendar.
-const calendarId = '0d88300041a5eeef838f5f57c87594ebbd4e2ae41b4f5745335825299acdc5de@group.calendar.google.com';
+let calendarId = '0d88300041a5eeef838f5f57c87594ebbd4e2ae41b4f5745335825299acdc5de@group.calendar.google.com';
 const calendarName = 'Agenda IPCVT';
 const outputFile = new URL('../../agenda-ipcvt.json', import.meta.url);
-const calendarUrl = `https://calendar.google.com/calendar/ical/${encodeURIComponent(calendarId)}/public/basic.ics`;
 const zone = 'America/Sao_Paulo';
 
 const dateParts = new Intl.DateTimeFormat('en-CA', {
@@ -70,7 +69,32 @@ function normalize(entry, occurrence, recurring) {
   };
 }
 
+const configEndpoint = 'https://firestore.googleapis.com/v1/projects/repertorio-ipcvt/databases/(default)/documents/comissao_planner/main/config/calendar';
+
+async function resolveCalendarId() {
+  let response;
+  try {
+    response = await fetch(configEndpoint, { signal: AbortSignal.timeout(15000), headers: { Accept: 'application/json' } });
+  } catch {
+    console.warn('A configuração remota está indisponível. Mantendo a Agenda IPCVT original.');
+    return calendarId;
+  }
+  if (response.status === 403 || response.status === 404) {
+    console.warn('Configuração administrativa ainda não publicada; usando a agenda original.');
+    return calendarId;
+  }
+  if (!response.ok) throw new Error(`Não foi possível ler a configuração da agenda (HTTP ${response.status}).`);
+  const payload = await response.json();
+  const configuredId = payload?.fields?.calendarId?.stringValue;
+  if (typeof configuredId !== 'string' || !/^[-A-Za-z0-9_.@+]{1,250}$/.test(configuredId)) {
+    throw new Error('O Firebase retornou um identificador de agenda inválido.');
+  }
+  return configuredId;
+}
+
 async function main() {
+  calendarId = await resolveCalendarId();
+  const calendarUrl = `https://calendar.google.com/calendar/ical/${encodeURIComponent(calendarId)}/public/basic.ics`;
   const response = await fetch(calendarUrl, { signal: AbortSignal.timeout(30000), headers: { Accept: 'text/calendar' } });
   if (!response.ok) throw new Error(`Agenda pública não respondeu corretamente (HTTP ${response.status}).`);
   const content = await response.text();

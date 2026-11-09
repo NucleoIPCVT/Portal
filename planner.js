@@ -1,7 +1,7 @@
 import { createPlannerStore } from './planner-store.js'
 import { todayISO, addDays, formatDate, calendarCells, computeSummary, validateTask, isOverdue, taskProgress, generateWeeklyTasks, eventPreparationTasks } from './planner-core.js'
 import { GoogleCalendarClient } from './planner-google.js'
-import { publicCalendar, readPublicCalendar } from './planner-public.js'
+import { publicCalendar, readPublicCalendar, parseCalendarSourceUrl, calendarWebUrl, summarizeCalendarEvents, diffCalendarEvents } from './planner-public.js'
 
 const $ = id => document.getElementById(id)
 const labels = { todo: 'Não iniciada', doing: 'Em andamento', done: 'Concluída', low: 'Baixa', normal: 'Normal', high: 'Alta', urgent: 'Urgente' }
@@ -18,6 +18,14 @@ let draggedTask = ''
 let importBusy = false
 const integrationRange = { from: addDays(todayISO(), -30), to: addDays(todayISO(), 180) }
 let authEpoch = 0
+let calendarConfig = { calendarId: publicCalendar.id, sourceUrl: publicCalendar.sourceUrl }
+let calendarConfigError = ''
+let publicSnapshot = null
+let publicEvents = []
+let calendarLoadError = ''
+let calendarFetching = false
+let calendarTimer = null
+let calendarUnread = []
 
 function node(tag, attrs = {}, children = []) {
   const element = document.createElement(tag)
@@ -36,8 +44,44 @@ const button = (text, handler, cls = 'button') => node('button', { type: 'button
 const activePlans = () => state.plans.filter(plan => !plan.deleted)
 const planName = id => state.plans.find(plan => plan.id === id)?.name || 'Plano'
 const bucketName = id => state.buckets.find(bucket => bucket.id === id)?.name || 'Sem bucket'
-const liveTasks = () => state.tasks.filter(task => !task.deleted && activePlans().some(plan => plan.id === task.planId))
-const liveEvents = () => state.events.filter(event => !event.deleted)
+function liveTasks() {
+  const visible = state.tasks.filter(task => !task.deleted && activePlans().some(plan => plan.id === task.planId))
+  if (!publicSnapshot) return visible
+  const events = new Map(liveEvents().map(event => [event.id, event]))
+  return visible.map(task => {
+    if (task.dateMode !== 'event' || !/^[0-9a-f]{64}$/.test(task.eventId || '')) return task
+    const linked = events.get(task.eventId)
+    if (!linked || linked.status === 'cancelled') return { ...task, reviewRequired: true, reviewReason: 'O evento oficial foi removido da agenda. Confira esta demanda.' }
+    const expected = addDays(linked.startDate, Number(task.dueOffsetDays || 0))
+    return expected !== task.dueDate
+      ? { ...task, reviewRequired: true, reviewReason: 'O evento oficial mudou de data. Confira o prazo desta demanda.' }
+      : task
+  })
+}
+function liveEvents() {
+  const linked = new Set(state.tasks.filter(task => !task.deleted).map(task => task.eventId).filter(Boolean))
+  const items = state.events.filter(event => {
+    if (event.deleted) return false
+    if (!event.sourceKey?.startsWith('public-ical:')) return true
+    if (event.sourceCalendarId !== calendarConfig.calendarId) return linked.has(event.id)
+    return !publicSnapshot || linked.has(event.id) || publicEvents.some(item => item.id === event.id)
+  })
+  const mapped = new Map(items.map(event => [event.id, event]))
+  if (publicSnapshot?.calendarId === calendarConfig.calendarId) {
+    const activeIds = new Set(publicEvents.map(event => event.id))
+    for (const event of publicEvents) {
+      if (state.events.some(stored => stored.id === event.id && stored.deleted)) continue
+      mapped.set(event.id, { ...(mapped.get(event.id) || {}), ...event })
+    }
+    for (const event of items) {
+      if (event.sourceKey?.startsWith('public-ical:') && event.sourceCalendarId === calendarConfig.calendarId
+        && !activeIds.has(event.id) && linked.has(event.id)) {
+        mapped.set(event.id, { ...event, status: 'cancelled' })
+      }
+    }
+  }
+  return [...mapped.values()]
+}
 const byId = (kind, id) => state[kind].find(item => item.id === id)
 const newId = () => crypto.randomUUID()
 const value = id => $(id).value.trim()
@@ -158,7 +202,7 @@ function taskCard(task) {
   else card.append(button('Adicionar responsável', () => openTask(task), 'button button-small'))
   if (task.reviewRequired) card.append(node('span', { class: 'badge review-badge', title: task.reviewReason || '', text: 'Revisar prazo' }))
   if (task.checklist?.length) card.append(node('span', { class: 'muted', text: task.checklist.filter(item => item.done).length + '/' + task.checklist.length + ' itens · ' + taskProgress(task) + '%' }))
-  if (task.eventId) card.append(node('span', { class: 'task-label', text: byId('events', task.eventId)?.title || 'Evento vinculado' }))
+  if (task.eventId) card.append(node('span', { class: 'task-label', text: liveEvents().find(item => item.id === task.eventId)?.title || 'Evento vinculado' }))
   const unmet = (task.dependencyIds || []).filter(id => byId('tasks', id)?.status !== 'done')
   if (unmet.length) card.append(node('span', { class: 'badge', text: unmet.length + ' dependência(s) pendente(s)' }))
   card.addEventListener('dragstart', event => { draggedTask = task.id; event.dataTransfer.setData('text/plain', task.id); event.dataTransfer.effectAllowed = 'move' })
@@ -331,54 +375,85 @@ function renderRoutines(content) {
   }
   if (!routines.length) content.append(empty('Nenhuma rotina cadastrada.'))
 }
+function calendarTrackingKey() {
+  return 'ipcvt:public-calendar:' + (session.user?.uid || 'visitor') + ':' + calendarConfig.calendarId
+}
+
+function readCalendarTracking() {
+  try {
+    const entry = JSON.parse(localStorage.getItem(calendarTrackingKey()) || 'null')
+    return entry && Array.isArray(entry.events) && Array.isArray(entry.unread) ? entry : null
+  } catch { return null }
+}
+
+function writeCalendarTracking(events, unread) {
+  try { localStorage.setItem(calendarTrackingKey(), JSON.stringify({ events, unread })) } catch { /* Armazenamento indisponível. */ }
+}
+
+function updateCalendarBadge() {
+  const count = calendarUnread.length
+  $('planner-notifications-button').hidden = session.status !== 'authorized'
+  $('planner-notifications-count').hidden = !count
+  $('planner-notifications-count').textContent = count > 99 ? '99+' : String(count)
+  $('planner-notifications-button').title = count ? count + ' novidade(s) na agenda' : 'Nenhuma novidade na agenda'
+}
+
+async function refreshPublicCalendar() {
+  if (session.status !== 'authorized' || calendarFetching) return
+  calendarFetching = true
+  const epoch = authEpoch
+  const calendarId = calendarConfig.calendarId
+  try {
+    const snapshot = await readPublicCalendar({ calendarId })
+    if (epoch !== authEpoch || calendarConfig.calendarId !== calendarId || session.status !== 'authorized') return
+    const summary = summarizeCalendarEvents(snapshot.events)
+    const previous = readCalendarTracking()
+    const changes = previous ? diffCalendarEvents(previous.events, summary) : []
+    calendarUnread = [...(previous?.unread || []), ...changes.map(change => ({
+      ...change, detectedAt: new Date().toISOString()
+    }))].slice(-50)
+    writeCalendarTracking(summary, calendarUnread)
+    publicSnapshot = snapshot
+    publicEvents = snapshot.events
+    calendarLoadError = ''
+    updateCalendarBadge()
+    render()
+  } catch (error) {
+    if (epoch !== authEpoch || calendarConfig.calendarId !== calendarId) return
+    calendarLoadError = error?.message || 'Não foi possível atualizar os eventos.'
+    render()
+  } finally {
+    calendarFetching = false
+    if (session.status === 'authorized' && calendarConfig.calendarId !== calendarId) setTimeout(refreshPublicCalendar, 0)
+  }
+}
+
+function startCalendarPolling() {
+  if (calendarTimer) return
+  refreshPublicCalendar()
+  calendarTimer = setInterval(refreshPublicCalendar, 5 * 60 * 1000)
+}
+
+function stopCalendarPolling() {
+  if (calendarTimer) clearInterval(calendarTimer)
+  calendarTimer = null
+  calendarFetching = false
+}
+
 function renderPublicIntegration(content) {
-  const importedCount = state.events.filter(event => !event.deleted && event.sourceCalendarId === publicCalendar.id).length
   const section = node('section', { class: 'integration-card' }, [
-    node('h3', { text: publicCalendar.name + ' · agenda pública' }),
-    node('p', { text: 'Os eventos são publicados pela conta oficial da igreja. O GitHub consulta a agenda pública periodicamente, sem acessar sua agenda particular ou pedir outra autorização Google.' }),
-    node('p', { class: 'muted', text: importedCount + ' evento(s) já disponíveis para vincular a demandas do Planner.' }),
-    node('a', { class: 'button', href: publicCalendar.calendarUrl, target: '_blank', rel: 'noopener noreferrer', text: 'Abrir agenda oficial ↗' })
+    node('h3', { text: 'Agenda IPCVT · calendário oficial' }),
+    node('p', { text: 'Os eventos públicos aparecem automaticamente no calendário do Planner. Nenhum integrante precisa conectar a própria conta Google. O Planner não escreve na agenda da igreja.' }),
+    node('p', { class: 'calendar-sync-status', text: calendarLoadError
+      ? calendarLoadError
+      : publicSnapshot
+        ? publicEvents.length + ' evento(s) carregado(s). Cópia gerada em ' + new Date(publicSnapshot.generatedAt).toLocaleString('pt-BR') + '.'
+        : 'Buscando os eventos da agenda pública…' }),
+    node('a', { class: 'button button-small', href: calendarWebUrl(calendarConfig.calendarId), target: '_blank', rel: 'noopener noreferrer', text: 'Abrir agenda oficial ↗' }),
+    button(calendarFetching ? 'Verificando…' : 'Verificar novidades agora', () => refreshPublicCalendar(), 'button button-small')
   ])
   content.append(section)
-  if (!session.isAdmin) return
-
-  const update = button(importBusy ? 'Atualizando…' : 'Atualizar eventos da Agenda IPCVT', async () => {
-    if (importBusy) return
-    update.disabled = true
-    importBusy = true
-    const epoch = authEpoch
-    let count = 0
-    let reviewed = 0
-    try {
-      const snapshot = await readPublicCalendar()
-      if (epoch !== authEpoch || !session.isAdmin) throw new Error('Sua sessão mudou. Entre novamente no Planner.')
-      await action(async () => {
-        for (const imported of snapshot.events) {
-          if (epoch !== authEpoch || !session.isAdmin) throw new Error('Sua sessão mudou. A atualização foi interrompida.')
-          const previous = byId('events', imported.id)
-          // Respeite eventos ocultados manualmente pela Comissão e evite gravações sem mudança.
-          if (previous?.deleted) continue
-          if (previous && Object.keys(imported).every(key => JSON.stringify(previous[key] ?? null) === JSON.stringify(imported[key] ?? null))) continue
-          const next = { ...(previous || {}), ...imported }
-          await save('events', next)
-          count++
-          if (previous && previous.startDate && (previous.startDate !== next.startDate || previous.status !== next.status)) {
-            reviewed += await updateRelativeDates(previous, next)
-          }
-        }
-      })
-      notice(count + ' evento(s) atualizado(s) a partir da agenda pública.' +
-        (reviewed ? ' ' + reviewed + ' demanda(s) precisam de revisão de prazos.' : '') +
-        (!snapshot.events.length ? ' A agenda pública não retornou eventos no período disponibilizado.' : ''))
-    } catch (error) {
-      notice(count + ' evento(s) salvo(s) antes da interrupção. ' + (error?.message || 'Não foi possível atualizar a agenda pública.'), true)
-    } finally {
-      importBusy = false
-      if (session.status === 'authorized' && currentView === 'integrations') render()
-    }
-  }, 'button button-primary')
-  update.disabled = importBusy
-  section.append(node('p', { class: 'muted', text: 'Clique para trazer as alterações mais recentes da cópia pública do GitHub. Os eventos já vinculados às demandas permanecem identificados.' }), update)
+  if (session.isAdmin) section.append(node('p', { class: 'muted', text: 'Para trocar o link da agenda oficial, use a engrenagem de Configurações ao lado do seu nome.' }))
 }
 
 function renderIntegrations(content) {
@@ -543,7 +618,7 @@ $('task-form').addEventListener('submit', async event => {
     })
     const task = { ...(previous || {}), id: previous?.id || newId(), title: value('task-title'), planId: value('task-plan'), bucketId: value('task-bucket'), team: value('task-team'), description: value('task-description'), assignees: parseAssignees(value('task-assignees')), startDate: value('task-start'), dueDate: value('task-due'), status: value('task-status'), priority: value('task-priority'), checklist, dependencyIds: [...$('task-dependencies').selectedOptions].map(option => option.value), eventId: value('task-event'), dateMode: value('task-date-mode'), dueOffsetDays: Number(value('task-offset')) }
     if (task.dateMode === 'event') {
-      const linked = byId('events', task.eventId)
+      const linked = liveEvents().find(event => event.id === task.eventId)
       if (!linked?.startDate || !Number.isInteger(task.dueOffsetDays) || Math.abs(task.dueOffsetDays) > 365) throw new Error('Selecione um evento e um intervalo de até 365 dias para o prazo relativo.')
       task.dueDate = addDays(linked.startDate, task.dueOffsetDays)
     }
@@ -665,7 +740,7 @@ function eventControls() {
     node('p', { class: 'muted', text: 'Gere demandas de banda, repertório, liturgia e técnica uma única vez. Depois, edite responsáveis, prazos e checklists em cada demanda.' }),
     node('label', {}, ['Plano de preparação', node('select', { id: 'event-plan' })]),
     button('Gerar demandas de preparação', async () => {
-      const event = byId('events', value('event-id'))
+      const event = liveEvents().find(item => item.id === value('event-id'))
       const planId = value('event-plan')
       if (!event || !planId) return
       const lookup = {}
@@ -690,7 +765,7 @@ function openEvent(event = null) {
   const external = event?.source === 'google'
   for (const id of ['event-title', 'event-start', 'event-end']) $(id).disabled = external
   $('event-form').querySelector('[type=submit]').hidden = external
-  $('delete-event-button').hidden = !event || (external && !session.isAdmin)
+  $('delete-event-button').hidden = !event || (external && (event.sourceKey?.startsWith('public-ical:') || !session.isAdmin || !byId('events', event.id)))
   $('delete-event-button').textContent = external ? 'Ocultar no Planner' : 'Excluir evento'
   $('event-preparation').hidden = !event || !activePlans().length || event.status === 'cancelled'
   setOptions($('event-plan'), activePlans().map(plan => [plan.id, plan.name]), selectedPlan())
@@ -731,6 +806,73 @@ $('google-login').addEventListener('click', async () => {
   try { await store.login() } catch (error) { $('auth-feedback').textContent = error.message } finally { $('google-login').disabled = false }
 })
 for (const id of ['logout-button', 'switch-account']) $(id).addEventListener('click', async () => { try { await store.logout() } catch (error) { reportError(error) } })
+
+function openCalendarSettings() {
+  if (session.status !== 'authorized' || !session.isAdmin) return
+  $('calendar-settings-feedback').textContent = ''
+  $('calendar-source-url').value = calendarConfig.sourceUrl
+  $('open-calendar-url').href = calendarWebUrl(calendarConfig.calendarId)
+  $('calendar-config-status').textContent = calendarConfigError
+    ? 'A configuração remota não pôde ser lida: ' + calendarConfigError
+    : 'Origem oficial: ' + calendarConfig.calendarId + '. A publicação da nova origem pode levar cerca de 15 a 30 minutos.'
+  $('calendar-settings-dialog').showModal()
+}
+
+$('planner-settings-button').addEventListener('click', openCalendarSettings)
+$('copy-calendar-url').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(value('calendar-source-url'))
+    $('calendar-settings-feedback').textContent = 'Link copiado.'
+  } catch { $('calendar-settings-feedback').textContent = 'Não foi possível copiar automaticamente. Selecione o endereço no campo.' }
+})
+$('calendar-source-url').addEventListener('input', () => {
+  try { $('open-calendar-url').href = calendarWebUrl(parseCalendarSourceUrl(value('calendar-source-url')).calendarId) }
+  catch { $('open-calendar-url').removeAttribute('href') }
+})
+$('calendar-settings-form').addEventListener('submit', async event => {
+  event.preventDefault()
+  if (session.status !== 'authorized' || !session.isAdmin) return
+  const submit = event.submitter
+  try {
+    const parsed = parseCalendarSourceUrl(value('calendar-source-url'))
+    submit.disabled = true
+    $('calendar-settings-feedback').textContent = 'Salvando a fonte oficial…'
+    await store.saveCalendarConfig(parsed)
+    $('calendar-settings-feedback').textContent = 'Link salvo. O Planner fará a leitura automática da nova agenda após a atualização do GitHub.'
+  } catch (error) {
+    $('calendar-settings-feedback').textContent = error.code === 'permission-denied'
+      ? 'O Firebase ainda precisa publicar as regras de acesso às configurações do Planner. O link não foi alterado.'
+      : error?.message || 'Não foi possível salvar a agenda.'
+  } finally { if (submit) submit.disabled = false }
+})
+
+function openCalendarNotifications() {
+  if (session.status !== 'authorized') return
+  const list = $('calendar-notifications-list')
+  list.replaceChildren()
+  if (!calendarUnread.length) list.append(node('p', { class: 'muted', text: 'Nenhuma novidade desde sua última consulta. O Planner verifica a agenda automaticamente.' }))
+  for (const item of [...calendarUnread].reverse()) {
+    const label = { added: 'Evento adicionado', changed: 'Evento alterado', removed: 'Evento removido' }[item.type] || 'Mudança na agenda'
+    list.append(node('article', { class: 'calendar-alert-item' }, [
+      node('div', { class: 'calendar-alert-icon', text: item.type === 'added' ? '+' : item.type === 'removed' ? '−' : '↻' }),
+      node('div', {}, [
+        node('strong', { text: label + ': ' + item.title }),
+        node('p', { class: 'muted', text: [item.date ? formatDate(item.date) : '', item.detectedAt ? new Date(item.detectedAt).toLocaleString('pt-BR') : ''].filter(Boolean).join(' · ') })
+      ])
+    ]))
+  }
+  calendarUnread = []
+  writeCalendarTracking(readCalendarTracking()?.events || summarizeCalendarEvents(publicEvents), [])
+  updateCalendarBadge()
+  $('calendar-notifications-dialog').showModal()
+}
+$('planner-notifications-button').addEventListener('click', openCalendarNotifications)
+$('calendar-notifications-refresh').addEventListener('click', async () => {
+  await refreshPublicCalendar()
+  $('calendar-notifications-dialog').close()
+  openCalendarNotifications()
+})
+
 const store = createPlannerStore({
   onSession(next) {
     const previousEmail = session.email
@@ -757,7 +899,40 @@ const store = createPlannerStore({
     $('pending-email').textContent = next.email || ''
     $('google-login').hidden = next.status === 'pending'
     $('member-email').textContent = next.name || next.email || ''
-    if (allowed) render()
+    $('planner-settings-button').hidden = !allowed || !next.isAdmin
+    if (allowed) {
+      if (!calendarTimer) startCalendarPolling()
+      calendarUnread = readCalendarTracking()?.unread || []
+      updateCalendarBadge()
+      render()
+    } else {
+      stopCalendarPolling()
+      publicSnapshot = null
+      publicEvents = []
+      calendarUnread = []
+      calendarLoadError = ''
+      updateCalendarBadge()
+    }
+  },
+  onConfig(next) {
+    calendarConfigError = ''
+    const newConfig = next && typeof next.calendarId === 'string' && typeof next.sourceUrl === 'string'
+      ? { calendarId: next.calendarId, sourceUrl: next.sourceUrl }
+      : { calendarId: publicCalendar.id, sourceUrl: publicCalendar.sourceUrl }
+    if (newConfig.calendarId !== calendarConfig.calendarId) {
+      calendarConfig = newConfig
+      publicSnapshot = null
+      publicEvents = []
+      calendarLoadError = ''
+      calendarUnread = readCalendarTracking()?.unread || []
+      updateCalendarBadge()
+      if (session.status === 'authorized') setTimeout(refreshPublicCalendar, 100)
+    } else calendarConfig = newConfig
+    if (session.status === 'authorized') render()
+  },
+  onConfigError(error) {
+    calendarConfigError = error?.message || 'Não foi possível consultar as configurações.'
+    if (session.status === 'authorized' && currentView === 'integrations') render()
   },
   onData(next) { state = next; if (session.status === 'authorized') { $('save-status').textContent = 'Sincronizado'; render() } },
   onError(error) {

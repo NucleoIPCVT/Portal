@@ -58,6 +58,13 @@
           </div>
           <div class="workspace-session">
             <span id="member-email" class="member-email"></span>
+            <button id="planner-notifications-button" class="planner-header-icon" type="button" aria-label="Notificações da agenda" title="Novidades da agenda" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 8-3 9h18c0-1-3-2-3-9M10 21h4"/></svg>
+              <span id="planner-notifications-count" class="planner-header-count" hidden>0</span>
+            </button>
+            <button id="planner-settings-button" class="planner-header-icon" type="button" aria-label="Configurações do Planner" title="Configurações" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a8 8 0 0 0 .1-6l1.7-1.3-2-3.4-2 .8a8 8 0 0 0-5.2-2.1L11.6 1H8.4L8 3a8 8 0 0 0-3.9 2.2l-2-.8-2 3.4L1.8 9a8 8 0 0 0 0 6L.1 16.3l2 3.4 2-.8A8 8 0 0 0 8 21l.4 2h3.2l.4-2a8 8 0 0 0 5.2-2.1l2 .8 2-3.4L19.4 15Z" transform="translate(1 -1) scale(.9)"/></svg>
+            </button>
             <button id="logout-button" class="button button-small button-quiet" type="button">Sair</button>
           </div>
         </div>
@@ -174,6 +181,28 @@
         </div>
         <div class="dialog-footer"><button id="delete-event-button" class="button button-danger" type="button" hidden>Excluir evento</button><span class="footer-spacer"></span><button class="button" type="button" data-close-dialog="event-dialog">Cancelar</button><button class="button button-primary" type="submit">Salvar evento</button></div>
       </form>
+    </dialog>
+
+    <dialog id="calendar-settings-dialog" class="editor-dialog compact-dialog" aria-labelledby="calendar-settings-title">
+      <form id="calendar-settings-form">
+        <div class="dialog-heading"><div><p class="eyebrow">Administração</p><h2 id="calendar-settings-title">Configurações do Planner</h2></div><button class="icon-button" type="button" data-close-dialog="calendar-settings-dialog" aria-label="Fechar configurações">×</button></div>
+        <div class="dialog-body">
+          <label class="field" for="calendar-source-url">Link público da Agenda IPCVT
+            <input id="calendar-source-url" type="url" required maxlength="2000" autocomplete="off" spellcheck="false" placeholder="https://calendar.google.com/calendar/u/1?cid=...">
+            <small>Este é o único calendário oficial consultado automaticamente. Use o link público obtido no Google Agenda.</small>
+          </label>
+          <div class="toolbar"><button id="copy-calendar-url" class="button button-small" type="button">Copiar link</button><a id="open-calendar-url" class="button button-small" target="_blank" rel="noopener noreferrer">Abrir agenda</a></div>
+          <p id="calendar-config-status" class="field-note"></p>
+          <p id="calendar-settings-feedback" class="feedback" role="status" aria-live="polite"></p>
+        </div>
+        <div class="dialog-footer"><span class="footer-spacer"></span><button class="button" type="button" data-close-dialog="calendar-settings-dialog">Cancelar</button><button class="button button-primary" type="submit">Salvar link da agenda</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="calendar-notifications-dialog" class="editor-dialog compact-dialog" aria-labelledby="calendar-notifications-title">
+      <div class="dialog-heading"><div><p class="eyebrow">Última sincronização</p><h2 id="calendar-notifications-title">Novidades da agenda</h2></div><button class="icon-button" type="button" data-close-dialog="calendar-notifications-dialog" aria-label="Fechar notificações">×</button></div>
+      <div id="calendar-notifications-list" class="dialog-body"></div>
+      <div class="dialog-footer"><button id="calendar-notifications-refresh" class="button" type="button">Verificar agora</button><button class="button button-primary" type="button" data-close-dialog="calendar-notifications-dialog">Fechar</button></div>
     </dialog>
 
     <dialog id="confirm-dialog" class="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-message">

@@ -32,7 +32,7 @@ usar dados de demonstração ou fingir que salvou.
 
 ## Dados e permissões
 
-Os documentos ficam em `comissao_planner/main/{colecao}/{id}`:
+Os documentos de trabalho ficam em `comissao_planner/main/{colecao}/{id}`. A configuração pública de origem fica em `comissao_planner/main/config/calendar`, com leitura pública apenas desse documento e edição administrativa:
 
 - `plans`: planos contínuos ou projetos; `deleted: true` arquiva um plano.
 - `buckets`: agrupamentos de um plano.
@@ -123,8 +123,10 @@ function plnrBucketRef(id, planId) {
     && get(/databases/$(database)/documents/comissao_planner/main/buckets/$(id)).data.get('deleted', false) == false);
 }
 function plnrEventRef(id) {
-  return id == '' || (plnrId(id)
-    && exists(/databases/$(database)/documents/comissao_planner/main/events/$(id)));
+  // As ocorrências públicas são SHA-256 e podem existir só no JSON do GitHub.
+  return id == '' || (plnrId(id) &&
+    (exists(/databases/$(database)/documents/comissao_planner/main/events/$(id))
+      || id.matches('^[0-9a-f]{64}$')));
 }
 // Firestore has no generic list-item type validation or loops. Keep the
 // rules expression budget predictable; the store validates each item and
@@ -232,6 +234,24 @@ match /comissao_planner/main/{kind}/{id} {
   allow delete: if plnrMember() && kind in ['buckets', 'tasks', 'events', 'routines']
     && (kind != 'events' || resource.data.source != 'google' || plnrAdmin());
 }
+
+// Somente o endereço público da agenda é legível sem autenticação.
+// Este caminho já está excluído da regra abrangente.
+match /comissao_planner/main/config/calendar {
+  allow get: if true;
+  allow list: if false;
+  allow create, update: if plnrAdmin()
+    && request.resource.data.keys().hasOnly(['calendarId', 'sourceUrl', 'updatedAt', 'updatedBy'])
+    && request.resource.data.keys().hasAll(['calendarId', 'sourceUrl', 'updatedAt', 'updatedBy'])
+    && plnrText(request.resource.data.calendarId, 250)
+    && request.resource.data.calendarId.size() > 0
+    && request.resource.data.calendarId.matches('^[-A-Za-z0-9_.@+]+$')
+    && plnrText(request.resource.data.sourceUrl, 2000)
+    && request.resource.data.sourceUrl.matches('^https://calendar[.]google[.]com/calendar/.*')
+    && request.resource.data.updatedBy == plnrEmail()
+    && request.resource.data.updatedAt == request.time;
+  allow delete: if false;
+}
 ```
 
 ## Google Agenda — leitura pública da IPCVT e conexão opcional
@@ -284,15 +304,14 @@ consultas atualizam o registro existente. Ausência em uma consulta de intervalo
 não é tratada como cancelamento. Cancelamentos explícitos do Google preservam
 a identidade e os vínculos do evento.
 
-Esta versão atualiza ao clicar com o Planner aberto. Não promete atualização
-com a página fechada. Sincronização automática futura exige backend com fluxo
-OAuth próprio para acesso offline, armazenamento de credenciais somente no
-servidor e tratamento de renovação/revogação; isso não é fornecido pela sessão
-Firebase persistida.
+A **Agenda IPCVT pública** tem leitura automática em sentido único: GitHub Actions
+consulta o iCal público a cada 15 minutos e o Planner atualiza a cópia no
+navegador a cada 5 minutos. Não há OAuth nem token Google nesse fluxo.
+Outras agendas conectadas por OAuth permanecem importações manuais.
 
 ## Verificação de liberação
 
-- Sem login: dados do Planner não podem ser lidos nem escritos diretamente.
+- Sem login: dados operacionais do Planner não podem ser lidos nem escritos. Somente o documento que identifica a agenda pública pode ser consultado sem login.
 - Google verificado sem autorização ou suspenso: leitura/escrita negadas.
 - Membro ativo: criar plano, bucket e demanda, atribuir responsável, editar,
   concluir e excluir demanda; conferir a mesma tarefa em todas as visões.
@@ -301,7 +320,8 @@ Firebase persistida.
 - Escrita com versão antiga, criador alterado, status inválido ou campos de
   token/segredo deve ser negada pelo Firestore.
 - Membro comum: criação/alteração/exclusão de evento Google negada.
-- Administrador: selecionar uma agenda permitida e importar suas ocorrências.
+- Administrador: salvar o link oficial pela engrenagem e conferir a atualização automática. A publicação das regras é necessária para salvar e para associar demandas a eventos públicos.
+- Administrador: selecionar outras agendas permitidas e importar suas ocorrências.
   Repetir a importação deve atualizar o registro, sem duplicar.
 - Verificar evento de dia inteiro, recorrência remarcada, cancelamento e datas
   em `America/Sao_Paulo`.
