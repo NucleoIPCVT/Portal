@@ -383,3 +383,118 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid
   .booklet-print-area { display: block !important; position: static !important; visibility: visible !important; width: 297mm; margin: 0 !important; padding: 0 !important; }
   .single-page-sheet { break-inside: avoid; break-after: auto; page-break-inside: avoid; margin: 0; box-shadow: none; }
 }
+
+/* Frente e verso: frente com 12 meses; verso com a programação completa. */
+.duplex-sheet {
+  display: flex;
+  flex-direction: column;
+  width: 297mm;
+  height: 210mm;
+  margin: 0;
+  overflow: hidden;
+  background: #fffdfa;
+  color: #253d32;
+  font-family: 'DM Sans', Arial, sans-serif;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+.duplex-calendar-page { padding: 6mm 7mm 5mm; }
+.duplex-calendar-heading {
+  display: flex;
+  flex: 0 0 18mm;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 3mm;
+  border-bottom: .5mm solid #b9a16b;
+}
+.duplex-calendar-brand { display: flex; align-items: center; gap: 3.5mm; }
+.duplex-calendar-brand img { width: 15mm; height: 15mm; object-fit: contain; }
+.duplex-calendar-brand span { color: #708879; font: 700 8.2pt/1 'DM Sans',Arial,sans-serif; }
+.duplex-calendar-brand h2 { margin: 1mm 0 0; color: #173f32; font: normal 23pt/1 'DM Serif Display',Georgia,serif; }
+.duplex-calendar-heading > strong { color: #bd9e65; font: normal 34pt/1 'DM Serif Display',Georgia,serif; }
+.duplex-calendar-grid {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  grid-template-rows: repeat(3,minmax(0,1fr));
+  gap: 2.8mm;
+}
+.duplex-calendar-grid .mini-month { min-width: 0; padding: 2mm 2mm 1mm; background: #fff; border: .3mm solid #dce6d9; border-radius: 1.3mm; }
+.duplex-calendar-grid .mini-month-head { margin-bottom: 1.4mm; padding-bottom: 1mm; border-bottom: 1px solid #e1e9df; }
+.duplex-calendar-grid .mini-month-head strong { color: #173f32; font: normal 14pt/1 'DM Serif Display',Georgia,serif; }
+.duplex-calendar-grid .mini-month-head span { color: #82988a; font: 7pt/1 'DM Sans',Arial,sans-serif; }
+.duplex-calendar-grid .mini-month-grid { gap: .3mm .1mm; }
+.duplex-calendar-grid .mini-month-grid span,
+.duplex-calendar-grid .mini-month-grid .weekday { height: 5.25mm; font: 8.8pt/1 'DM Sans',Arial,sans-serif; }
+.duplex-calendar-grid .mini-month-grid .weekday { color: #749080; font-weight: 700; }
+.duplex-calendar-grid .mini-month-grid .day.has-event { color: #fff; background: #316a4e; font-weight: 700; }
+.duplex-calendar-footer {
+  display: flex;
+  flex: 0 0 12mm;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5mm;
+  color: #617d6a;
+  font: 8pt/1 'DM Sans',Arial,sans-serif;
+}
+.duplex-calendar-societies { display: flex; align-items: center; gap: 3mm; }
+.duplex-calendar-societies img { width: 16mm; height: 10mm; object-fit: contain; }
+
+.duplex-events-page { --duplex-event-font: 8.2pt; padding: 5mm 6mm 3.5mm; }
+.duplex-events-heading {
+  display: flex;
+  flex: 0 0 16mm;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.6mm;
+  border-bottom: .5mm solid #b7a16a;
+}
+.duplex-events-heading span { display: block; margin-bottom: 1mm; color: #b09962; font: 700 7pt/1 'DM Sans',Arial,sans-serif; text-transform: uppercase; letter-spacing: .12em; }
+.duplex-events-heading h2 { margin: 0; color: #173f32; font: normal 21pt/1 'DM Serif Display',Georgia,serif; }
+.duplex-events-heading > strong { color: #b9a16b; font: normal 26pt/1 'DM Serif Display',Georgia,serif; }
+.duplex-event-columns {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 3.2mm;
+}
+.duplex-event-column { min-width: 0; min-height: 0; overflow: hidden; }
+.duplex-month { margin: 0 0 1.1mm; }
+.duplex-month-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 2mm;
+  margin: 1.5mm 0 .7mm;
+  padding: .5mm 0 .7mm;
+  border-bottom: .3mm solid #d1e0d3;
+  color: #28533e;
+}
+.duplex-month-heading strong { font: 700 calc(var(--duplex-event-font) + 1.6pt)/1.05 'DM Sans',Arial,sans-serif; text-transform: uppercase; }
+.duplex-month-heading span { color: #899d8d; font: 600 calc(var(--duplex-event-font) - 1pt)/1 'DM Sans',Arial,sans-serif; }
+.duplex-event-row { display: flex; gap: 1.2mm; padding: .28mm 0; break-inside: avoid; }
+.duplex-event-date {
+  display: flex;
+  flex: 0 0 12mm;
+  align-items: baseline;
+  gap: .3mm;
+  min-width: 0;
+  padding-left: 1.1mm;
+  border-left: .65mm solid #b29a61;
+  color: #1b563a;
+}
+.duplex-event-date strong { font: 700 calc(var(--duplex-event-font) + 2pt)/1.05 'DM Sans',Arial,sans-serif; }
+.duplex-event-date small { color: #668678; font: 600 calc(var(--duplex-event-font) - 2.2pt)/1.05 'DM Sans',Arial,sans-serif; }
+.duplex-event-detail { flex: 1; min-width: 0; overflow-wrap: anywhere; color: #263c30; font: var(--duplex-event-font)/1.14 'DM Sans',Arial,sans-serif; }
+.duplex-event-detail strong { font-weight: 600; }
+.duplex-event-time { color: #9c7f43; white-space: nowrap; font-weight: 700; }
+.duplex-event-place { color: #738778; }
+.duplex-events-footer { display: flex; flex: 0 0 5mm; align-items: flex-end; justify-content: space-between; border-top: 1px solid #dbe5db; color: #849788; font: 6.7pt 'DM Sans',Arial,sans-serif; }
+
+@page { size: A4 landscape; margin: 0; }
+@media print {
+  .duplex-sheet { break-after: page; page-break-after: always; break-inside: avoid; page-break-inside: avoid; }
+  .duplex-sheet:last-child { break-after: auto; page-break-after: auto; }
+}

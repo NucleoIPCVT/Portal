@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="agenda-anual.css?v=20261110-onepage2">
-    <script type="module" src="agenda-anual.js?v=20261110-onepage2"></script>
+    <link rel="stylesheet" href="agenda-anual.css?v=20261110-duplex">
+    <script type="module" src="agenda-anual.js?v=20261110-duplex"></script>
   </head>
   <body>
     <header class="app-bar screen-only">
@@ -34,14 +34,14 @@
           </label>
           <button id="refresh-button" class="button button-secondary" type="button" title="Consultar os eventos mais recentes da Agenda IPCVT">↻ <span>Atualizar</span></button>
           <a class="button button-secondary" href="https://calendar.google.com/calendar/embed?src=0d88300041a5eeef838f5f57c87594ebbd4e2ae41b4f5745335825299acdc5de%40group.calendar.google.com&amp;ctz=America%2FSao_Paulo" target="_blank" rel="noopener noreferrer" title="Consultar a agenda original diretamente no Google">Ver no Google ↗</a>
-          <button id="print-button" class="button button-primary" type="button" disabled>▤ <span>Imprimir 1 página / Salvar PDF</span></button>
+          <button id="print-button" class="button button-primary" type="button" disabled>▤ <span>Imprimir frente e verso / Salvar PDF</span></button>
         </div>
       </div>
 
       <div id="load-status" class="load-status screen-only" role="status" aria-live="polite">Buscando os eventos da Agenda IPCVT...</div>
       <p class="booklet-instructions screen-only">
-        <strong>Formato compacto:</strong> uma folha A4 em paisagem, com os 12 meses à esquerda e a lista cronológica de eventos à direita.
-        Imprima apenas um lado da folha, em escala de 100%, ou salve em PDF.
+        <strong>Formato frente e verso:</strong> folha A4 em paisagem, com o calendário completo na frente e os eventos no verso.
+        Na impressão, escolha frente e verso, virando na borda curta. Se houver eventos demais, páginas extras são adicionadas automaticamente.
         <span id="booklet-sheet-count"></span>
       </p>
 

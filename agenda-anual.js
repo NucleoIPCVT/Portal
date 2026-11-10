@@ -137,61 +137,59 @@ function renderDetailSheet(year, monthIndexes, monthData, pageNumber, totalPages
   return sheet;
 }
 
-function compactDateLabel(event) {
-  if (event.startDate === event.endDate) return event.startDate.slice(8);
-  const shortDate = value => `${value.slice(8)}/${value.slice(5, 7)}`;
-  return `${shortDate(event.startDate)}–${shortDate(event.endDate)}`;
-}
-
-function compactMonth(monthIndex, events) {
-  const panel = textElement('section', 'single-event-month', '');
-  const title = textElement('header', 'single-event-month-title', '');
-  title.append(textElement('strong', '', MONTHS[monthIndex]));
-  title.append(textElement('span', '', `${events.length}`));
-  panel.append(title);
+function duplexMonth(monthIndex, events) {
+  const panel = textElement('section', 'duplex-month', '');
+  const heading = textElement('header', 'duplex-month-heading', '');
+  heading.append(textElement('strong', '', MONTHS[monthIndex]));
+  heading.append(textElement('span', '', `${events.length}`));
+  panel.append(heading);
 
   for (const event of events) {
-    const row = textElement('div', 'single-event-row', '');
-    row.append(textElement('span', 'single-event-date', compactDateLabel(event)));
-    const detail = textElement('span', 'single-event-detail', '');
-    detail.append(textElement('strong', 'single-event-name', event.title || 'Evento sem título'));
-    if (!event.allDay && event.startAt) detail.append(textElement('span', 'single-event-time', ` · ${formatHour(event.startAt)}`));
-    if (event.location?.trim()) {
-      // O endereço completo da igreja aparece no cabeçalho; evita repetição em dezenas de linhas.
-      const place = event.location.trim().replace(/^Igreja Presbiteriana Central em Vilar dos Teles$/i, 'IPCVT');
-      detail.append(textElement('span', 'single-event-location', ` · ${place}`));
+    const row = textElement('article', 'duplex-event-row', '');
+    const date = textElement('div', 'duplex-event-date', '');
+    date.append(textElement('strong', '', event.startDate.slice(8)));
+    if (event.startDate !== event.endDate) {
+      const end = event.endDate;
+      const range = event.startDate.slice(5, 7) === end.slice(5, 7)
+        ? `–${end.slice(8)}` : `até ${end.slice(8)}/${end.slice(5, 7)}`;
+      date.append(textElement('small', '', range));
     }
-    row.append(detail);
+    const detail = textElement('div', 'duplex-event-detail', '');
+    detail.append(textElement('strong', '', event.title || 'Evento sem título'));
+    if (!event.allDay && event.startAt) detail.append(textElement('span', 'duplex-event-time', ` · ${formatHour(event.startAt)}`));
+    if (event.location?.trim()) {
+      const place = event.location.trim().replace(/^Igreja Presbiteriana Central em Vilar dos Teles$/i, 'IPCVT');
+      detail.append(textElement('span', 'duplex-event-place', ` · ${place}`));
+    }
+    row.append(date, detail);
     panel.append(row);
   }
   return panel;
 }
 
-function renderSinglePage(year, months, yearEvents) {
-  const sheet = textElement('section', 'single-page-sheet', '');
-  sheet.setAttribute('aria-label', `Calendário e eventos da IPCVT de ${year} em uma página`);
-
-  const calendar = textElement('section', 'single-page-calendar', '');
-  const calendarHeading = textElement('header', 'single-page-heading', '');
-  const brand = textElement('div', 'single-page-brand', '');
+function duplexCalendarPage(year, months, totalEvents) {
+  const page = textElement('section', 'duplex-sheet duplex-calendar-page', '');
+  page.setAttribute('aria-label', `Frente: calendário completo de ${year}`);
+  const heading = textElement('header', 'duplex-calendar-heading', '');
+  const brand = textElement('div', 'duplex-calendar-brand', '');
   const churchLogo = document.createElement('img');
   churchLogo.src = 'logo-igreja.png';
   churchLogo.alt = '';
   brand.append(churchLogo);
-  const title = textElement('div', '', '');
-  title.append(textElement('span', '', 'Igreja Presbiteriana Central em Vilar dos Teles'));
-  title.append(textElement('h2', '', 'Calendário anual'));
-  brand.append(title);
-  calendarHeading.append(brand, textElement('strong', 'single-page-year', String(year)));
-  calendar.append(calendarHeading);
+  const identity = textElement('div', '', '');
+  identity.append(textElement('span', '', 'Igreja Presbiteriana Central em Vilar dos Teles'));
+  identity.append(textElement('h2', '', 'Calendário anual'));
+  brand.append(identity);
+  heading.append(brand, textElement('strong', '', String(year)));
+  page.append(heading);
 
-  const calendarGrid = textElement('div', 'single-page-calendar-grid', '');
-  for (let index = 0; index < 12; index += 1) calendarGrid.append(renderMiniMonth(year, index, months[index]));
-  calendar.append(calendarGrid);
+  const grid = textElement('div', 'duplex-calendar-grid', '');
+  for (let index = 0; index < 12; index += 1) grid.append(renderMiniMonth(year, index, months[index]));
+  page.append(grid);
 
-  const calendarFooter = textElement('footer', 'single-page-calendar-footer', '');
-  calendarFooter.append(textElement('span', '', '● Dias com eventos'));
-  const societies = textElement('div', 'single-page-societies', '');
+  const footer = textElement('footer', 'duplex-calendar-footer', '');
+  footer.append(textElement('span', '', `● Dias com eventos  ·  ${totalEvents} compromissos no ano`));
+  const societies = textElement('div', 'duplex-calendar-societies', '');
   for (const [name, label] of [
     ['saf', 'Sociedade Auxiliadora Feminina'],
     ['uph', 'União Presbiteriana de Homens'],
@@ -204,54 +202,93 @@ function renderSinglePage(year, months, yearEvents) {
     logo.alt = label;
     societies.append(logo);
   }
-  calendarFooter.append(societies);
-  calendar.append(calendarFooter);
+  footer.append(societies);
+  page.append(footer);
+  return page;
+}
 
-  const details = textElement('section', 'single-page-events', '');
-  const heading = textElement('header', 'single-page-events-heading', '');
-  heading.append(textElement('h2', '', 'Programação de eventos'));
-  heading.append(textElement('span', '', `${yearEvents.length} eventos · ${year}`));
-  details.append(heading);
+function balancedMonthRanges(eventMonths) {
+  const weights = eventMonths.map(items => items.length ? 2 + items.reduce((sum, event) =>
+    sum + 1 + Math.max(0, (event.title?.length || 0) + (event.location?.length || 0) - 70) / 85, 0) : 0);
+  const weight = (start, end) => weights.slice(start, end).reduce((sum, value) => sum + value, 0);
+  let best = [4, 8];
+  let score = Infinity;
+  for (let first = 1; first <= 10; first += 1) {
+    for (let second = first + 1; second <= 11; second += 1) {
+      const loads = [weight(0, first), weight(first, second), weight(second, 12)];
+      const nextScore = Math.max(...loads) + (Math.max(...loads) - Math.min(...loads)) * .15;
+      if (nextScore < score) { score = nextScore; best = [first, second]; }
+    }
+  }
+  return [[0, best[0]], [best[0], best[1]], [best[1], 12]];
+}
 
-  // Cada compromisso aparece uma única vez, inclusive quando ocupa mais de um mês.
-  const eventMonths = MONTHS.map((_, index) => yearEvents.filter(event => {
+function duplexEventsPage(year, events, pageNumber, totalPages) {
+  const page = textElement('section', 'duplex-sheet duplex-events-page', '');
+  page.setAttribute('aria-label', `Verso: eventos de ${year}, parte ${pageNumber} de ${totalPages}`);
+  const heading = textElement('header', 'duplex-events-heading', '');
+  const headerText = textElement('div', '', '');
+  headerText.append(textElement('span', '', 'Agenda IPCVT · Programação da igreja'));
+  headerText.append(textElement('h2', '', 'Eventos do ano'));
+  heading.append(headerText, textElement('strong', '', String(year)));
+  page.append(heading);
+
+  const eventMonths = MONTHS.map((_, index) => events.filter(event => {
     const month = event.startDate < `${year}-01-01` ? 1 : Number(event.startDate.slice(5, 7));
     return month === index + 1;
   }));
-  const estimate = items => items.reduce((sum, event) =>
-    sum + 1 + Math.max(0, (event.title?.length || 0) + (event.location?.length || 0) - 48) / 75, 0);
-  const weights = eventMonths.map(items => items.length ? 1.8 + estimate(items) : 0);
-  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
-  let leftWeight = 0;
-  let bestSplit = 6;
-  let closest = Infinity;
-  for (let index = 1; index < 12; index += 1) {
-    leftWeight += weights[index - 1];
-    const difference = Math.abs(totalWeight - leftWeight * 2);
-    if (difference < closest) { closest = difference; bestSplit = index; }
-  }
-  const columns = textElement('div', 'single-page-event-columns', '');
-  for (const [start, end] of [[0, bestSplit], [bestSplit, 12]]) {
-    const column = textElement('div', 'single-page-event-column', '');
+  const columns = textElement('div', 'duplex-event-columns', '');
+  for (const [start, end] of balancedMonthRanges(eventMonths)) {
+    const column = textElement('div', 'duplex-event-column', '');
     for (let index = start; index < end; index += 1) {
-      if (eventMonths[index].length) column.append(compactMonth(index, eventMonths[index]));
+      if (eventMonths[index].length) column.append(duplexMonth(index, eventMonths[index]));
     }
     columns.append(column);
   }
-  details.append(columns);
-  details.append(textElement('footer', 'single-page-events-footer', 'Fonte: Agenda IPCVT no Google Agenda'));
-  sheet.append(calendar, details);
-  byId('booklet-print-area').replaceChildren(sheet);
-  byId('booklet-sheet-count').textContent = ` · ${yearEvents.length} eventos em uma página.`;
+  page.append(columns);
+  const footer = textElement('footer', 'duplex-events-footer', '');
+  footer.append(textElement('span', '', `Fonte: Google Agenda  ·  ${events.length} eventos nesta página`));
+  footer.append(textElement('span', '', totalPages > 1 ? `${pageNumber} / ${totalPages}` : 'IPCVT'));
+  page.append(footer);
+  return page;
+}
 
-  // A folha de impressão é medida fora da tela para ajustar anos com mais eventos.
+function renderDuplex(year, months, yearEvents) {
+  const area = byId('booklet-print-area');
+  const front = duplexCalendarPage(year, months, yearEvents.length);
+  // Uma página de eventos no verso. Anos excepcionalmente cheios ganham
+  // uma página de continuação para não cortar compromissos da agenda.
+  let groups = [yearEvents];
   requestAnimationFrame(() => {
-    const eventColumns = sheet.querySelectorAll('.single-page-event-column');
-    let size = 6.7;
-    while (size > 4.8 && [...eventColumns].some(column => column.scrollHeight > column.clientHeight + 1)) {
-      size = Math.max(4.8, size - 0.2);
-      sheet.style.setProperty('--single-event-font', `${size.toFixed(1)}pt`);
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      const backs = groups.map((events, index) => duplexEventsPage(year, events, index + 1, groups.length));
+      area.replaceChildren(front, ...backs);
+      const overflow = [];
+      backs.forEach((back, index) => {
+        const columns = [...back.querySelectorAll('.duplex-event-column')];
+        let font = 8.2;
+        while (font > 6.8 && columns.some(col => col.scrollHeight > col.clientHeight * .98 + 1)) {
+          font = Math.max(6.8, font - .2);
+          back.style.setProperty('--duplex-event-font', `${font.toFixed(1)}pt`);
+        }
+        if (columns.some(col => col.scrollHeight > col.clientHeight + 1)) overflow.push(index);
+      });
+      if (!overflow.length) break;
+      const next = [];
+      for (let index = 0; index < groups.length; index += 1) {
+        const events = groups[index];
+        if (overflow.includes(index) && events.length > 1) {
+          const middle = Math.ceil(events.length / 2);
+          next.push(events.slice(0, middle), events.slice(middle));
+        } else next.push(events);
+      }
+      if (next.length === groups.length) break;
+      groups = next;
     }
+    const pageCount = area.querySelectorAll('.duplex-sheet').length;
+    byId('booklet-sheet-count').textContent = pageCount === 2
+      ? ` · ${yearEvents.length} eventos, 2 páginas (frente e verso).`
+      : ` · ${yearEvents.length} eventos, ${pageCount} páginas para não cortar a programação.`;
   });
 }
 
@@ -273,7 +310,7 @@ function render() {
   for (let i = 0; i < activeIndexes.length; i += 2) groups.push(activeIndexes.slice(i, i + 2));
   const details = byId('detail-pages');
   details.replaceChildren(...groups.map((indexes, index) => renderDetailSheet(year, indexes, months, index + 2, groups.length + 1)));
-  renderSinglePage(year, months, yearEvents);
+  renderDuplex(year, months, yearEvents);
   byId('print-area').hidden = false;
   printButton.disabled = false;
   const direct = snapshot.sourceKind === 'google-api';
