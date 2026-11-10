@@ -280,16 +280,16 @@
 }
 
 .portal-page .portal-card.portal-card-louvor {
-  color: #fff;
-  background: linear-gradient(140deg, #0649ae, #075dcb 62%, #0966c8);
-  border-color: #206dd3;
+  color: #103b48;
+  background: #9eecff;
+  border-color: #67cde7;
 }
-.portal-page .portal-card.portal-card-louvor:hover { background: linear-gradient(140deg, #0853bc, #0c68d7 62%, #096ed1); border-color: #75a8f1; }
+.portal-page .portal-card.portal-card-louvor:hover { background: #aef0ff; border-color: #42b5d1; }
 .portal-page .portal-card-louvor .portal-icon { width: 60px; }
 .portal-page .portal-card-louvor .portal-icon img { width: 58px; height: 58px; }
 .portal-page .portal-card-louvor p,
 .portal-page .portal-card-louvor .portal-card-meta,
-.portal-page .portal-card-louvor .portal-card-arrow { color: #fff; }
+.portal-page .portal-card-louvor .portal-card-arrow { color: #194957; }
 
 .portal-page .portal-card.portal-card-comissao {
   color: #fff;
