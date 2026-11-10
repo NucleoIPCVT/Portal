@@ -281,10 +281,10 @@
 
 .portal-page .portal-card.portal-card-louvor {
   color: #103b48;
-  background: #9eecff;
-  border-color: #67cde7;
+  background: #AED3E3;
+  border-color: #80b4ca;
 }
-.portal-page .portal-card.portal-card-louvor:hover { background: #aef0ff; border-color: #42b5d1; }
+.portal-page .portal-card.portal-card-louvor:hover { background: #bfdeea; border-color: #629cb5; }
 .portal-page .portal-card-louvor .portal-icon { width: 60px; }
 .portal-page .portal-card-louvor .portal-icon img { width: 58px; height: 58px; }
 .portal-page .portal-card-louvor p,
