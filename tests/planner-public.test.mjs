@@ -18,10 +18,10 @@ test('accepts matching public snapshots and rejects a stale calendar source', as
   };
   const body = { calendarId: publicCalendar.id, generatedAt: '2026-11-09T00:00:00Z', events: [event] };
   const response = { ok: true, json: async () => ({ encoding: 'base64', content: Buffer.from(JSON.stringify(body)).toString('base64') }) };
-  const snapshot = await readPublicCalendar({ fetchImpl: async () => response });
+  const snapshot = await readPublicCalendar({ apiKey: '', fetchImpl: async () => response });
   assert.equal(snapshot.events.length, 1);
   assert.equal(snapshot.sourceKind, 'github-snapshot');
-  await assert.rejects(readPublicCalendar({ calendarId: 'other@group.calendar.google.com', fetchImpl: async () => response }), /ainda está sendo preparada/);
+  await assert.rejects(readPublicCalendar({ calendarId: 'other@group.calendar.google.com', apiKey: '', fetchImpl: async () => response }), /ainda está sendo preparada/);
 });
 
 test('reads the public Google Calendar API directly, paginates, preserves iCal IDs and dates', async () => {
