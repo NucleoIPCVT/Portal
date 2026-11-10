@@ -211,16 +211,18 @@ function balancedMonthRanges(eventMonths) {
   const weights = eventMonths.map(items => items.length ? 2 + items.reduce((sum, event) =>
     sum + 1 + Math.max(0, (event.title?.length || 0) + (event.location?.length || 0) - 70) / 85, 0) : 0);
   const weight = (start, end) => weights.slice(start, end).reduce((sum, value) => sum + value, 0);
-  let best = [4, 8];
+  let best = [3, 6, 9];
   let score = Infinity;
-  for (let first = 1; first <= 10; first += 1) {
-    for (let second = first + 1; second <= 11; second += 1) {
-      const loads = [weight(0, first), weight(first, second), weight(second, 12)];
-      const nextScore = Math.max(...loads) + (Math.max(...loads) - Math.min(...loads)) * .15;
-      if (nextScore < score) { score = nextScore; best = [first, second]; }
+  for (let first = 1; first <= 9; first += 1) {
+    for (let second = first + 1; second <= 10; second += 1) {
+      for (let third = second + 1; third <= 11; third += 1) {
+        const loads = [weight(0, first), weight(first, second), weight(second, third), weight(third, 12)];
+        const nextScore = Math.max(...loads) + (Math.max(...loads) - Math.min(...loads)) * .15;
+        if (nextScore < score) { score = nextScore; best = [first, second, third]; }
+      }
     }
   }
-  return [[0, best[0]], [best[0], best[1]], [best[1], 12]];
+  return [[0, best[0]], [best[0], best[1]], [best[1], best[2]], [best[2], 12]];
 }
 
 function duplexEventsPage(year, events, pageNumber, totalPages) {

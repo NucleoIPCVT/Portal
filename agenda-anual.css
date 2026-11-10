@@ -457,8 +457,8 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid
   display: grid;
   flex: 1;
   min-height: 0;
-  grid-template-columns: repeat(3,minmax(0,1fr));
-  gap: 3.2mm;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 2.4mm;
 }
 .duplex-event-column { min-width: 0; min-height: 0; overflow: hidden; }
 .duplex-month { margin: 0 0 1.1mm; }
@@ -492,6 +492,24 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid
 .duplex-event-time { color: #9c7f43; white-space: nowrap; font-weight: 700; }
 .duplex-event-place { color: #738778; }
 .duplex-events-footer { display: flex; flex: 0 0 5mm; align-items: flex-end; justify-content: space-between; border-top: 1px solid #dbe5db; color: #849788; font: 6.7pt 'DM Sans',Arial,sans-serif; }
+
+/* A visualização na tela corresponde exatamente às faces para impressão. */
+@media screen {
+  .print-area { display: none !important; }
+  .booklet-print-area {
+    position: static;
+    left: auto;
+    width: 297mm;
+    max-width: none;
+    margin: 0 auto;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  .duplex-sheet {
+    margin-bottom: 22px;
+    box-shadow: 0 12px 36px #172d2216;
+  }
+}
 
 @page { size: A4 landscape; margin: 0; }
 @media print {
