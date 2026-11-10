@@ -139,6 +139,7 @@ function renderDetailSheet(year, monthIndexes, monthData, pageNumber, totalPages
 
 function duplexMonth(monthIndex, events) {
   const panel = textElement('section', 'duplex-month', '');
+  panel.dataset.monthIndex = String(monthIndex);
   const heading = textElement('header', 'duplex-month-heading', '');
   heading.append(textElement('strong', '', MONTHS[monthIndex]));
   heading.append(textElement('span', '', `${events.length}`));
@@ -207,8 +208,8 @@ function duplexCalendarPage(year, months, totalEvents) {
   return page;
 }
 
-function balancedMonthRanges(eventMonths) {
-  const weights = eventMonths.map(items => items.length ? 2 + items.reduce((sum, event) =>
+function balancedMonthRanges(eventMonths, measuredHeights) {
+  const weights = measuredHeights || eventMonths.map(items => items.length ? 2 + items.reduce((sum, event) =>
     sum + 1 + Math.max(0, (event.title?.length || 0) + (event.location?.length || 0) - 70) / 85, 0) : 0);
   const weight = (start, end) => weights.slice(start, end).reduce((sum, value) => sum + value, 0);
   let best = [3, 6, 9];
@@ -223,6 +224,27 @@ function balancedMonthRanges(eventMonths) {
     }
   }
   return [[0, best[0]], [best[0], best[1]], [best[1], best[2]], [best[2], 12]];
+}
+
+function rebalanceDuplexColumns(page) {
+  const columns = [...page.querySelectorAll('.duplex-event-column')];
+  const panels = [...page.querySelectorAll('.duplex-month')];
+  if (columns.length !== 4 || !panels.length) return columns;
+  // O peso usado inicialmente é estimado. Aqui o navegador já pode medir
+  // títulos longos e locais com quebras de linha na largura real da coluna.
+  const heights = Array(12).fill(0);
+  for (const panel of panels) {
+    const style = getComputedStyle(panel);
+    heights[Number(panel.dataset.monthIndex)] = panel.getBoundingClientRect().height + parseFloat(style.marginBottom || '0') + 3;
+  }
+  const ranges = balancedMonthRanges([], heights);
+  ranges.forEach(([start, end], index) => {
+    columns[index].replaceChildren(...panels.filter(panel => {
+      const month = Number(panel.dataset.monthIndex);
+      return month >= start && month < end;
+    }));
+  });
+  return columns;
 }
 
 function duplexEventsPage(year, events, pageNumber, totalPages) {
@@ -267,11 +289,12 @@ function renderDuplex(year, months, yearEvents) {
       area.replaceChildren(front, ...backs);
       const overflow = [];
       backs.forEach((back, index) => {
-        const columns = [...back.querySelectorAll('.duplex-event-column')];
+        let columns = rebalanceDuplexColumns(back);
         let font = 8.2;
         while (font > 6.8 && columns.some(col => col.scrollHeight > col.clientHeight * .98 + 1)) {
           font = Math.max(6.8, font - .2);
           back.style.setProperty('--duplex-event-font', `${font.toFixed(1)}pt`);
+          columns = rebalanceDuplexColumns(back);
         }
         if (columns.some(col => col.scrollHeight > col.clientHeight + 1)) overflow.push(index);
       });
