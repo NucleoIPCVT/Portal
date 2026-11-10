@@ -1,5 +1,7 @@
 import { createPlannerStore } from './planner-store.js'
-import { todayISO, addDays, formatDate, calendarCells, computeSummary, validateTask, isOverdue, taskProgress, generateWeeklyTasks, eventPreparationTasks } from './planner-core.js'
+import { todayISO, addDays, formatDate, calendarCells, computeSummary, validateTask, isOverdue, taskProgress, generateWeeklyTasks } from './planner-core.js'
+import { taskCreationContext } from './planner-task-context.js'
+import { createTaskEditor } from './planner-task-editor.js'
 import { GoogleCalendarClient } from './planner-google.js'
 import { publicCalendar, readPublicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl, summarizeCalendarEvents, diffCalendarEvents } from './planner-public.js?v=20261110'
 
@@ -29,6 +31,11 @@ let calendarFetching = false
 let calendarTimer = null
 let calendarLastLoad = 0
 let calendarUnread = []
+const taskEditor = createTaskEditor({
+  assigneesRoot: $('task-assignees-editor'),
+  checklistRoot: $('task-checklist-editor'),
+  dependencyRoot: $('task-dependencies-editor')
+})
 
 function node(tag, attrs = {}, children = []) {
   const element = document.createElement(tag)
@@ -46,7 +53,7 @@ function node(tag, attrs = {}, children = []) {
 const button = (text, handler, cls = 'button') => node('button', { type: 'button', class: cls, text, onClick: handler })
 const activePlans = () => state.plans.filter(plan => !plan.deleted)
 const planName = id => state.plans.find(plan => plan.id === id)?.name || 'Plano'
-const bucketName = id => state.buckets.find(bucket => bucket.id === id)?.name || 'Sem bucket'
+const bucketName = id => state.buckets.find(bucket => bucket.id === id)?.name || 'Sem coluna'
 function liveTasks() {
   const visible = state.tasks.filter(task => !task.deleted && activePlans().some(plan => plan.id === task.planId))
   if (!publicSnapshot) return visible
@@ -177,12 +184,13 @@ async function openIndependentTask() {
 async function openEventTask(event) {
   if (!event || event.status === 'cancelled' || !event.startDate) return notice('Esse evento não está disponível para novas demandas.', true)
   try {
+    const relatedPlanId = liveTasks().find(task => task.eventId === event.id)?.planId
     const selected = activePlans().find(plan => plan.id === selectedPlan())
+      || activePlans().find(plan => plan.id === relatedPlanId)
     const result = selected
       ? { plan: selected, bucket: state.buckets.find(bucket => bucket.planId === selected.id && !bucket.deleted) }
       : await action(() => ensureWorkPlan('events'))
-    const dueDate = addDays(event.startDate, -14)
-    openTask(null, { planId: result.plan.id, bucketId: result.bucket?.id || '', eventId: event.id, dateMode: 'event', dueOffsetDays: -14, dueDate, startDate: dueDate })
+    openTask(null, { planId: result.plan.id, bucketId: result.bucket?.id || '', eventId: event.id, dateMode: 'manual' })
   } catch (error) { reportError(error) }
 }
 function parseAssignees(text) {
@@ -228,7 +236,7 @@ function taskCard(task) {
       catch { event.target.checked = task.status === 'done' }
     } })
   card.append(node('div', { class: 'task-heading' }, [toggle, title]))
-  if (!selectedPlan()) card.append(node('span', { class: 'task-label', text: planName(task.planId) }))
+  if (!selectedPlan() && currentView !== 'board') card.append(node('span', { class: 'task-label', text: planName(task.planId) }))
   card.append(node('div', { class: 'task-meta' }, [
     node('span', { class: 'badge', text: task.team || 'Sem equipe' }),
     node('span', { class: 'priority priority-' + task.priority, text: labels[task.priority] || 'Normal' }),
@@ -247,17 +255,36 @@ function taskCard(task) {
 }
 function viewActions() {
   const toolbar = node('div', { class: 'view-actions' })
-  if (selectedPlan()) toolbar.append(button('Editar plano e buckets', () => openPlan(byId('plans', selectedPlan()))))
+  if (selectedPlan()) toolbar.append(button('Editar plano e colunas', () => openPlan(byId('plans', selectedPlan()))))
   return toolbar
 }
+function boardContext(content, tasks) {
+  const id = value('event-filter')
+  if (!id) return
+  const event = liveEvents().find(item => item.id === id)
+  const context = node('div', { class: 'board-context' })
+  const detail = node('div', {}, [
+    node('span', { class: 'eyebrow', text: event ? 'Demandas do evento' : 'Demandas independentes' }),
+    node('h3', { text: event?.title || 'Sem evento vinculado' }),
+    node('p', { class: 'muted', text: (event ? formatDate(event.startDate) + ' · ' : '') + tasks.length + ' demanda(s) nesta visão' })
+  ])
+  context.append(detail, button('Ver todas as demandas', () => { $('event-filter').value = ''; render() }, 'button button-small'))
+  content.append(context)
+}
 function renderBoard(content, tasks) {
+  boardContext(content, tasks)
   const grid = node('div', { class: 'board-grid' })
-  const plans = activePlans().filter(plan => (!selectedPlan() || plan.id === selectedPlan())
-    && (!value('event-filter') || tasks.some(task => task.planId === plan.id)))
+  let plans = activePlans().filter(plan => !selectedPlan() || plan.id === selectedPlan())
+  if (!selectedPlan() && value('event-filter')) {
+    const related = liveTasks().filter(task => value('event-filter') === '__independent__' ? !task.eventId : task.eventId === value('event-filter'))
+    const ids = new Set(related.map(task => task.planId))
+    const fallback = taskCreationContext({ ...state, eventId: value('event-filter') }).planId
+    plans = plans.filter(plan => ids.size ? ids.has(plan.id) : plan.id === fallback)
+  }
   for (const plan of plans) {
     const buckets = state.buckets.filter(bucket => bucket.planId === plan.id && !bucket.deleted).sort((a, b) => a.order - b.order)
     const groups = [...buckets]
-    if (tasks.some(task => task.planId === plan.id && !buckets.some(bucket => bucket.id === task.bucketId)) || !groups.length) groups.push({ id: '', name: 'Sem bucket', planId: plan.id })
+    if (tasks.some(task => task.planId === plan.id && !buckets.some(bucket => bucket.id === task.bucketId)) || !groups.length) groups.push({ id: '', name: 'Sem coluna', planId: plan.id })
     for (const bucket of groups) {
       const entries = tasks.filter(task => task.planId === plan.id && (bucket.id ? task.bucketId === bucket.id : !buckets.some(item => item.id === task.bucketId)))
       const column = node('section', { class: 'bucket-column', 'data-bucket-id': bucket.id, 'aria-label': bucket.name })
@@ -276,11 +303,14 @@ function renderBoard(content, tasks) {
     }
   }
   content.append(viewActions(), grid)
-  if (!tasks.length) content.append(node('p', { class: 'muted', text: 'Nenhuma demanda com estes filtros. Você pode criar uma demanda em qualquer bucket.' }))
+  if (!plans.length) {
+    const event = liveEvents().find(item => item.id === value('event-filter'))
+    content.append(empty('Crie a primeira demanda para começar a organizar o trabalho.'), button('Nova demanda', () => event ? openEventTask(event) : openIndependentTask(), 'button button-primary'))
+  } else if (!tasks.length) content.append(node('p', { class: 'muted', text: 'Nenhuma demanda com estes filtros. Adicione uma demanda em uma das colunas.' }))
 }
 function renderList(content, tasks) {
   const table = node('table', { class: 'data-table' })
-  table.append(node('thead', {}, node('tr', {}, ['Demanda', 'Plano / Bucket', 'Responsáveis', 'Equipe', 'Prazo', 'Andamento', 'Ações'].map(text => node('th', { scope: 'col', text })))))
+  table.append(node('thead', {}, node('tr', {}, ['Demanda', 'Plano / Coluna', 'Responsáveis', 'Equipe', 'Prazo', 'Andamento', 'Ações'].map(text => node('th', { scope: 'col', text })))))
   table.append(node('tbody', {}, tasks.map(task => node('tr', {}, [
     node('td', {}, button(task.title, () => openTask(task), 'task-title')),
     node('td', { text: planName(task.planId) + ' / ' + bucketName(task.bucketId) }),
@@ -442,8 +472,7 @@ function eventCard(event, tasks) {
   }
   const actions = node('div', { class: 'event-card-actions' })
   if (event.status !== 'cancelled') actions.append(button('+ Demanda', () => openEventTask(event), 'button button-small button-primary'))
-  actions.append(button(related.length ? 'Ver demandas' : 'Preparar evento', () => {
-    if (!related.length) return openEvent(event)
+  actions.append(button('Ver demandas', () => {
     $('event-filter').value = event.id
     currentView = 'board'
     render()
@@ -733,16 +762,16 @@ function render() {
   if (session.status !== 'authorized') return
   refreshFilters()
   $('search-filter').parentElement.querySelector('span').textContent = currentView === 'events' ? 'Buscar evento ou demanda' : 'Buscar demanda'
-  $('search-filter').placeholder = currentView === 'events' ? 'Nome do evento ou preparativo' : 'O que você procura?'
+  $('search-filter').placeholder = currentView === 'events' ? 'Nome do evento ou demanda' : 'O que você procura?'
   const title = { events: 'Eventos da igreja', mine: 'Meu dia', board: 'Quadro de demandas', list: 'Lista de demandas', calendar: 'Calendário', gantt: 'Cronograma · Gantt', summary: 'Resumo da Comissão', integrations: 'Integrações', routines: 'Rotinas semanais' }[currentView]
   $('view-title').textContent = title
   $('view-title').parentElement.querySelector('.view-heading-note').textContent = currentView === 'events'
-    ? 'Google Agenda e preparação de eventos'
+    ? 'A agenda da igreja e suas demandas'
     : currentView === 'mine' ? 'O que depende de você' : 'Cada entrega, um próximo passo.'
   document.querySelectorAll('[data-view]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.view === currentView)))
   const content = $('view-content')
   content.replaceChildren()
-  if (!activePlans().length && !['events', 'mine', 'calendar', 'integrations'].includes(currentView)) {
+  if (!activePlans().length && !['events', 'mine', 'board', 'calendar', 'integrations'].includes(currentView)) {
     content.append(empty('Comece pelas demandas de um evento da agenda ou crie um plano para seu projeto.'), button('Ver eventos da igreja', () => { currentView = 'events'; render() }, 'button button-primary'), button('Criar plano', () => openPlan()))
     return
   }
@@ -750,14 +779,19 @@ function render() {
   ;({ events: renderEvents, mine: renderMyDay, board: renderBoard, list: renderList, calendar: renderCalendar, gantt: renderGantt, summary: renderSummary, integrations: renderIntegrations, routines: renderRoutines }[currentView])(content, tasks)
 }
 function fillBucketSelect(select, planId, current = '') {
-  setOptions(select, state.buckets.filter(bucket => bucket.planId === planId && !bucket.deleted).sort((a, b) => a.order - b.order).map(bucket => [bucket.id, bucket.name]), current, ['', 'Sem bucket'])
+  setOptions(select, state.buckets.filter(bucket => bucket.planId === planId && !bucket.deleted).sort((a, b) => a.order - b.order).map(bucket => [bucket.id, bucket.name]), current, ['', 'Sem coluna'])
 }
 function openTask(task = null, defaults = {}) {
   if (!task && !requirePlan()) return
+  const context = task ? {} : taskCreationContext({ ...state, planId: selectedPlan(), eventId: value('event-filter'), defaults })
+  if (!task && context.eventId && liveEvents().find(event => event.id === context.eventId)?.status === 'cancelled') {
+    return notice('Este evento foi cancelado. Crie uma demanda independente ou escolha outro evento.', true)
+  }
   $('task-form').reset()
   $('task-feedback').textContent = ''
   if (task?.reviewRequired) $('task-feedback').textContent = task.reviewReason
-  const current = task || { title: '', planId: defaults.planId || selectedPlan() || activePlans()[0]?.id, bucketId: defaults.bucketId || '', startDate: defaults.startDate || '', dueDate: defaults.dueDate || '', status: 'todo', priority: 'normal', dateMode: 'manual', ...defaults }
+  const current = task || { title: '', startDate: '', dueDate: '', status: 'todo', priority: 'normal', dateMode: 'manual', ...context }
+  $('task-dialog-title').textContent = task ? 'Editar demanda' : 'Nova demanda'
   $('task-id').value = current.id || ''
   $('task-dialog').dataset.version = current.version ?? ''
   $('task-title').value = current.title || ''
@@ -766,14 +800,17 @@ function openTask(task = null, defaults = {}) {
   for (const [field, key] of [['task-team', 'team'], ['task-start', 'startDate'], ['task-due', 'dueDate'], ['task-description', 'description']]) $(field).value = current[key] || ''
   $('task-status').value = current.status
   $('task-priority').value = current.priority
-  $('task-assignees').value = assigneeText(current.assignees)
-  $('task-checklist').value = (current.checklist || []).map(item => (item.done ? '[x] ' : '') + item.text).join('\n')
   const dependencies = state.tasks.filter(item => item.planId === current.planId && item.id !== current.id && (!item.deleted || current.dependencyIds?.includes(item.id)))
-  setOptions($('task-dependencies'), dependencies.map(item => [item.id, (item.deleted ? '[Excluída] ' : '') + item.title]))
-  for (const option of $('task-dependencies').options) option.selected = current.dependencyIds?.includes(option.value) || false
-  setOptions($('task-event'), liveEvents().sort((a, b) => a.startDate.localeCompare(b.startDate)).map(event => [event.id, event.title + ' · ' + formatDate(event.startDate)]), current.eventId || '', ['', 'Demanda independente (sem evento)'])
+  const people = [...state.tasks.flatMap(item => item.assignees || []), { name: session.name || '', email: session.email || '' }]
+  taskEditor.setTask(current, { people, dependencies })
+  const eventOptions = liveEvents().filter(event => event.status !== 'cancelled' || event.id === task?.eventId)
+    .sort((a, b) => a.startDate.localeCompare(b.startDate))
+    .map(event => [event.id, event.title + ' · ' + formatDate(event.startDate) + (event.status === 'cancelled' ? ' · Cancelado' : '')])
+  if (current.eventId && !eventOptions.some(([id]) => id === current.eventId)) eventOptions.push([current.eventId, 'Evento indisponível · vínculo preservado'])
+  setOptions($('task-event'), eventOptions, current.eventId || '', ['', 'Demanda independente (sem evento)'])
   $('task-date-mode').value = current.dateMode || 'manual'
   $('task-offset').value = current.dueOffsetDays ?? 0
+  $('task-advanced').open = current.dateMode === 'event' || Boolean(current.dependencyIds?.length)
   updateTaskEventFields()
   $('delete-task-button').hidden = !task
   $('task-dialog').showModal()
@@ -783,10 +820,11 @@ function updateTaskEventFields(recalculate = false) {
   const event = liveEvents().find(item => item.id === value('task-event'))
   if (!event && value('task-date-mode') === 'event') $('task-date-mode').value = 'manual'
   const relative = value('task-date-mode') === 'event' && !!event
+  $('task-date-mode').querySelector('[value="event"]').disabled = !event
   $('task-offset').disabled = !relative
   $('task-offset').closest('.field')?.classList.toggle('is-disabled', !relative)
   $('task-event-hint').textContent = event
-    ? 'Vinculada a “' + event.title + '”. Você pode usar um prazo manual ou, para preparação antecipada, calcular a data em relação ao evento.'
+    ? 'Vinculada a “' + event.title + '” · ' + formatDate(event.startDate) + '. ' + (relative ? 'O prazo é calculado em relação ao evento.' : 'Defina o início e o prazo conforme a necessidade da demanda.')
     : 'Sem evento vinculado: esta demanda pode ser criada para qualquer trabalho ou projeto independente.'
   if (recalculate && relative) {
     const oldDue = value('task-due')
@@ -800,10 +838,15 @@ function updateTaskEventFields(recalculate = false) {
 $('task-event').addEventListener('change', () => updateTaskEventFields(true))
 $('task-date-mode').addEventListener('change', () => updateTaskEventFields(true))
 $('task-offset').addEventListener('input', () => updateTaskEventFields(true))
+$('task-due').addEventListener('input', () => {
+  if (value('task-date-mode') === 'event') {
+    $('task-date-mode').value = 'manual'
+    updateTaskEventFields()
+  }
+})
 $('task-plan').addEventListener('change', () => {
   fillBucketSelect($('task-bucket'), value('task-plan'))
-  setOptions($('task-dependencies'), liveTasks().filter(task => task.planId === value('task-plan') && task.id !== value('task-id')).map(task => [task.id, task.title]))
-  for (const option of $('task-dependencies').options) option.selected = false
+  taskEditor.setDependencies(liveTasks().filter(task => task.planId === value('task-plan') && task.id !== value('task-id')))
 })
 $('task-form').addEventListener('submit', async event => {
   event.preventDefault()
@@ -813,13 +856,11 @@ $('task-form').addEventListener('submit', async event => {
     const previous = byId('tasks', value('task-id'))
     if (value('task-id') && !previous) throw new Error('Esta demanda não está mais disponível. Feche a janela e atualize a tela.')
     if (previous && String(previous.version) !== $('task-dialog').dataset.version) throw new Error('Esta demanda foi atualizada por outra pessoa. Feche e abra novamente antes de salvar.')
-    const oldChecks = previous?.checklist || []
-    const checklist = value('task-checklist').split('\n').map(line => line.trim()).filter(Boolean).map((line, index) => {
-      const done = /^\[x\]\s*/i.test(line)
-      const text = line.replace(/^\[(?:x| )\]\s*/i, '')
-      return { id: oldChecks[index]?.text === text ? oldChecks[index].id : newId(), text, done }
-    })
-    const task = { ...(previous || {}), id: previous?.id || newId(), title: value('task-title'), planId: value('task-plan'), bucketId: value('task-bucket'), team: value('task-team'), description: value('task-description'), assignees: parseAssignees(value('task-assignees')), startDate: value('task-start'), dueDate: value('task-due'), status: value('task-status'), priority: value('task-priority'), checklist, dependencyIds: [...$('task-dependencies').selectedOptions].map(option => option.value), eventId: value('task-event'), dateMode: value('task-date-mode'), dueOffsetDays: Number(value('task-offset')) }
+    const editorError = taskEditor.validate()
+    if (editorError) throw new Error(editorError)
+    const task = { ...(previous || {}), id: previous?.id || newId(), title: value('task-title'), planId: value('task-plan'), bucketId: value('task-bucket'), team: value('task-team'), description: value('task-description'), assignees: taskEditor.getAssignees(), startDate: value('task-start'), dueDate: value('task-due'), status: value('task-status'), priority: value('task-priority'), checklist: taskEditor.getChecklist(), dependencyIds: taskEditor.getDependencyIds(), eventId: value('task-event'), dateMode: value('task-date-mode'), dueOffsetDays: value('task-date-mode') === 'event' ? Number(value('task-offset')) : null }
+    const linkedEvent = liveEvents().find(event => event.id === task.eventId)
+    if (linkedEvent?.status === 'cancelled' && previous?.eventId !== task.eventId) throw new Error('Este evento foi cancelado. Escolha outro evento ou salve como demanda independente.')
     if (task.dateMode === 'event') {
       const linked = liveEvents().find(event => event.id === task.eventId)
       if (!linked?.startDate || !Number.isInteger(task.dueOffsetDays) || Math.abs(task.dueOffsetDays) > 365) throw new Error('Selecione um evento e um intervalo de até 365 dias para o prazo relativo.')
@@ -870,10 +911,10 @@ $('plan-form').addEventListener('submit', async event => {
     const plan = { ...(old || {}), id: old?.id || newId(), name: value('plan-name'), kind: value('plan-kind'), description: value('plan-description'), startDate: value('plan-start'), dueDate: value('plan-due') }
     if (!plan.name || plan.name.length > 120 || (plan.startDate && plan.dueDate && plan.startDate > plan.dueDate)) throw new Error('Confira o nome e as datas do plano.')
     const names = [...new Set(value('plan-buckets').split('\n').map(name => name.trim()).filter(Boolean))]
-    if (names.length > 30 || names.some(name => name.length > 80)) throw new Error('Use até 30 buckets, cada um com até 80 caracteres.')
+    if (names.length > 30 || names.some(name => name.length > 80)) throw new Error('Use até 30 colunas, cada uma com até 80 caracteres.')
     const existing = state.buckets.filter(bucket => bucket.planId === plan.id && !bucket.deleted)
     const removed = existing.filter(bucket => !names.includes(bucket.name))
-    if (removed.some(bucket => state.tasks.some(task => !task.deleted && task.bucketId === bucket.id) || state.routines.some(routine => routine.bucketId === bucket.id))) throw new Error('Mova as demandas e rotinas de um bucket antes de removê-lo ou alterar seu nome.')
+    if (removed.some(bucket => state.tasks.some(task => !task.deleted && task.bucketId === bucket.id) || state.routines.some(routine => routine.bucketId === bucket.id))) throw new Error('Mova as demandas e rotinas de uma coluna antes de removê-la ou alterar seu nome.')
     await action(async () => {
       const savedPlan = await save('plans', plan)
       $('plan-id').value = savedPlan.id
@@ -936,45 +977,12 @@ $('delete-routine-button').addEventListener('click', async () => {
   if (!routine || !await confirmAction('Excluir rotina?', 'A geração de novas ocorrências será encerrada. As demandas já criadas serão mantidas.')) return
   try { await action(() => store.remove('routines', routine.id, { expectedVersion: routine.version }), 'Rotina excluída.'); $('routine-dialog').close() } catch {}
 })
-function eventControls() {
-  const form = $('event-form')
-  const section = node('div', { class: 'integration-card', id: 'event-preparation' }, [
-    node('h3', { text: 'Preparação deste evento' }),
-    node('p', { class: 'muted', text: 'Crie uma demanda avulsa para este evento ou escolha um modelo completo. Projetos especiais podem começar quatro meses antes da data oficial.' }),
-    button('+ Nova demanda para este evento', () => {
-      const event = liveEvents().find(item => item.id === value('event-id'))
-      if (!event) return
-      $('event-dialog').close()
-      openEventTask(event)
-    }, 'button button-primary'),
-    node('label', { class: 'field' }, ['Modelo de preparação', node('select', { id: 'event-template' }, [
-      node('option', { value: 'standard', text: 'Preparação essencial · até 7 dias antes' }),
-      node('option', { value: 'special', text: 'Projeto especial · até 120 dias antes' })
-    ])]),
-    node('label', { class: 'field' }, ['Plano de preparação', node('select', { id: 'event-plan' })]),
-    button('Gerar demandas do modelo', async () => {
-      const event = liveEvents().find(item => item.id === value('event-id'))
-      if (!event) return
-      try {
-        let planId = value('event-plan')
-        let fallbackBucket = ''
-        if (!planId) {
-          const result = await ensureWorkPlan('events')
-          planId = result.plan.id
-          fallbackBucket = result.bucket.id
-        }
-        const lookup = { default: fallbackBucket }
-        for (const bucket of state.buckets.filter(bucket => bucket.planId === planId && !bucket.deleted)) lookup[bucket.name] = bucket.id
-        if (!lookup.default) lookup.default = state.buckets.find(bucket => bucket.planId === planId && !bucket.deleted)?.id || ''
-        const tasks = eventPreparationTasks(event, planId, lookup, state.tasks, value('event-template'))
-        await action(async () => { for (const task of tasks) await save('tasks', task) }, tasks.length ? tasks.length + ' demandas geradas. Abra cada uma para atribuir responsáveis.' : 'As demandas deste modelo já existem.')
-        $('event-feedback').textContent = tasks.length ? 'Modelo aplicado. ' + tasks.length + ' demandas aparecerão nas visões e poderão ser editadas.' : 'Esse modelo já foi aplicado; nenhuma demanda foi duplicada.'
-      } catch (error) { $('event-feedback').textContent = error.message }
-    })
-  ])
-  form.querySelector('.dialog-body').append(section)
-}
-eventControls()
+$('event-new-task-button').addEventListener('click', () => {
+  const event = liveEvents().find(item => item.id === value('event-id'))
+  if (!event) return
+  $('event-dialog').close()
+  openEventTask(event)
+})
 function openEvent(event = null) {
   $('event-form').reset()
   $('event-feedback').textContent = ''
@@ -988,8 +996,7 @@ function openEvent(event = null) {
   $('event-form').querySelector('[type=submit]').hidden = external
   $('delete-event-button').hidden = !event || (external && (event.sourceKey?.startsWith('public-ical:') || !session.isAdmin || !byId('events', event.id)))
   $('delete-event-button').textContent = external ? 'Ocultar no Planner' : 'Excluir evento'
-  $('event-preparation').hidden = !event || event.status === 'cancelled'
-  setOptions($('event-plan'), activePlans().map(plan => [plan.id, plan.name]), selectedPlan(), ['', 'Preparação de eventos (criar automaticamente)'])
+  $('event-new-task-button').hidden = !event || event.status === 'cancelled'
   if (external) $('event-feedback').textContent = (event.status === 'cancelled' ? 'Evento cancelado no Google. Revise as demandas vinculadas. ' : '') + 'Origem: ' + event.calendarName + '. Os dados são atualizados pelo Google Agenda.'
   $('event-dialog').showModal()
 }
@@ -1026,7 +1033,11 @@ document.querySelectorAll('[data-view]').forEach(control => control.addEventList
 }))
 for (const id of ['plan-filter', 'team-filter', 'assignee-filter', 'status-filter', 'event-filter']) $(id).addEventListener('change', render)
 $('search-filter').addEventListener('input', render)
-$('new-task-button').addEventListener('click', () => { if (activePlans().length) openTask(); else openIndependentTask() })
+$('new-task-button').addEventListener('click', () => {
+  if (activePlans().length) return openTask()
+  const event = liveEvents().find(item => item.id === value('event-filter'))
+  return event ? openEventTask(event) : openIndependentTask()
+})
 $('new-plan-button').addEventListener('click', () => openPlan())
 $('google-login').addEventListener('click', async () => {
   $('google-login').disabled = true
