@@ -2,4 +2,4 @@
 // ao domínio https://nucleoipcvt.github.io/* e à Google Calendar API.
 // Uma chave de API no navegador é pública: nunca use aqui senhas ou tokens OAuth.
 // Enquanto estiver vazio, as páginas mantêm o calendário sincronizado pelo GitHub.
-export const googleCalendarPublicApiKey = '';
+export const googleCalendarPublicApiKey = 'AIzaSyBXz8hgLVJalzxNRdwy2GC2lYpZ0QePv44';
