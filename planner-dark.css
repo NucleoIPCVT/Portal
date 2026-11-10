@@ -183,5 +183,24 @@
   :root[data-theme="dark"] .event-related-task { color: #b6c9bc; }
   :root[data-theme="dark"] .independent-task-link { background: #30383b; border-color: #49594f; }
   :root[data-theme="dark"] .event-year-label select { background: #30373d; border-color: #526069; color: #eef3ee; }
+
+  /* O editor e o contexto do evento compartilham a mesma hierarquia do tema claro. */
+  :root[data-theme="dark"] .board-context,
+  :root[data-theme="dark"] .task-event-context { background: #263d32; border-color: #41594a; }
+  :root[data-theme="dark"] .board-context { border-left-color: #85b798; }
+  :root[data-theme="dark"] .board-context h3,
+  :root[data-theme="dark"] .task-event-context { color: #d3e8d9; }
+  :root[data-theme="dark"] .task-editor-input,
+  :root[data-theme="dark"] .checklist-row-text,
+  :root[data-theme="dark"] .checklist-row-text input,
+  :root[data-theme="dark"] .dependency-picker { background: #1e2528; border-color: #4a565d; color: var(--ink); }
+  :root[data-theme="dark"] .task-editor-advanced { background: #24292e; }
+  :root[data-theme="dark"] .assignee-chip { background: #2b4135; border-color: #496052; }
+  :root[data-theme="dark"] .assignee-chip-avatar { background: #446d55; color: #eef5ef; }
+  :root[data-theme="dark"] .checklist-row input[type="text"] { background: transparent; border-color: transparent; }
+  :root[data-theme="dark"] .checklist-row input[type="text"]:hover { border-color: #4a565d; }
+  :root[data-theme="dark"] .checklist-row input[type="text"]:focus { background: #20282b; border-color: #85b798; }
+  :root[data-theme="dark"] .task-editor-input:focus { background: #20282b; border-color: #85b798; }
+  :root[data-theme="dark"] .dependency-option:hover { background: #2d4236; }
 }
 
