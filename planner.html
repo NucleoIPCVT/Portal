@@ -10,9 +10,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet">
     <script src="planner-theme.js"></script>
-    <link rel="stylesheet" href="planner.css?v=20261110-fluxos">
-    <link rel="stylesheet" href="planner-dark.css?v=20261110-fluxos">
-    <script type="module" src="planner.js?v=20261110-fluxos"></script>
+    <link rel="stylesheet" href="planner.css?v=20261110-profissional">
+    <link rel="stylesheet" href="planner-dark.css?v=20261110-profissional">
+    <script type="module" src="planner.js?v=20261110-profissional"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Ir para o conteúdo</a>
@@ -51,9 +51,9 @@
 
       <section id="planner-app" class="workspace" hidden aria-label="Área de trabalho do Planner">
         <div class="workspace-quickbar" role="toolbar" aria-label="Ações do Planner">
+          <div class="workspace-quickbar-title"><span>COMISSÃO IPCVT</span><strong>Área de trabalho</strong></div>
           <div class="workspace-actions">
             <button id="new-task-button" class="button button-primary" type="button"><span aria-hidden="true">＋</span> Nova demanda</button>
-            <button id="new-plan-button" class="button" type="button">Novo plano</button>
           </div>
           <div class="workspace-session">
             <span id="member-email" class="member-email"></span>
@@ -74,11 +74,11 @@
           <aside class="planner-sidebar" aria-label="Navegação do Planner">
             <nav class="view-nav" aria-label="Visões do Planner">
               <span class="nav-group-label">Área de trabalho</span>
-              <button type="button" data-view="home" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3zM9 20v-7h6v7"/></svg>Meu dia</button>
-              <button type="button" data-view="mine" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Minhas tarefas</button>
-              <button type="button" data-view="plans" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 9h18M8 3v4"/></svg>Meus planos</button>
+              <button type="button" data-view="home" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3zM9 20v-7h6v7"/></svg>Início</button>
+              <button type="button" data-view="mine" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Minhas demandas</button>
               <button type="button" data-view="calendar-all" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 11h18M8 16h3M15 16h2"/></svg>Calendário</button>
-              <span class="nav-group-label">Planos da Comissão</span>
+              <button type="button" data-view="plans" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 9h18M8 3v4"/></svg>Planos</button>
+              <div class="sidebar-plans-heading"><span class="nav-group-label">Planos da Comissão</span><button id="new-plan-button" type="button" aria-label="Criar novo plano" title="Novo plano">+</button></div>
               <div id="sidebar-plan-list" class="sidebar-plan-list" aria-label="Abrir um plano"></div>
               <button type="button" data-view="events" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 11h18M8 16h3M15 16h2"/></svg>Agenda da igreja</button>
               <details class="nav-extras" id="nav-extras">
@@ -89,6 +89,16 @@
               </details>
             </nav>
             <div class="sidebar-source"><span class="status-dot" aria-hidden="true"></span><span>Agenda IPCVT<br><small>Fonte oficial dos eventos</small></span></div>
+            <details class="mobile-more-menu" id="mobile-more-menu">
+              <summary>Mais</summary>
+              <div class="mobile-more-options">
+                <button type="button" data-view="events">Agenda da igreja</button>
+                <button type="button" data-view="list">Todas as demandas</button>
+                <button type="button" data-view="routines">Rotinas</button>
+                <button type="button" data-view="integrations">Google Agenda</button>
+                <button type="button" id="mobile-new-plan">Criar plano</button>
+              </div>
+            </details>
           </aside>
           <div class="planner-main">
             <div class="view-heading"><div><h2 id="view-title">Meus planos</h2><span class="view-heading-note">Escolha onde organizar suas tarefas.</span></div></div>
@@ -133,21 +143,24 @@
             <label class="field" for="task-due">Data de entrega<input id="task-due" type="date"></label>
             <label class="field" for="task-priority">Prioridade<select id="task-priority"><option value="low">Baixa</option><option value="normal" selected>Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option></select></label>
           </div>
-          <section class="task-editor-section" aria-labelledby="task-people-title">
-            <h3 id="task-people-title">Quem vai executar?</h3>
+          <section class="task-editor-section task-people-section" aria-labelledby="task-people-title">
+            <h3 id="task-people-title">Responsáveis</h3>
             <div id="task-assignees-editor" class="task-editor-roots"></div>
           </section>
           <section class="task-editor-section task-event-section" aria-labelledby="task-organization-title">
-            <h3 id="task-organization-title">Evento relacionado <span class="optional-tag">Opcional</span></h3>
-            <label class="field" for="task-event">Evento-alvo (opcional)<select id="task-event"><option value="">Sem evento-alvo</option></select><small>Referência da Agenda IPCVT. Não altera automaticamente os prazos da demanda.</small></label>
+            <h3 id="task-organization-title">Evento-alvo <span class="optional-tag">Opcional</span></h3>
+            <label class="field" for="task-event"><span class="field-visually-hidden">Evento-alvo (opcional)</span><select id="task-event"><option value="">Sem evento-alvo</option></select><small>Vincule a um evento da Agenda IPCVT, sem alterar o prazo de entrega.</small></label>
             <p class="task-event-context" id="task-event-hint"></p>
           </section>
-          <section class="task-editor-section" aria-labelledby="task-details-title">
-            <h3 id="task-details-title">Descrição e orientações</h3>
-            <label class="field" for="task-description">Descrição<textarea id="task-description" rows="3" maxlength="10000" placeholder="Informações, links e orientações para realizar a demanda"></textarea></label>
-            <h3 id="task-checklist-title">Etapas da demanda <span class="optional-tag">Checklist</span></h3>
-            <div id="task-checklist-editor" class="task-editor-roots" aria-labelledby="task-checklist-title"></div>
-          </section>
+          <details class="task-editor-details" id="task-details">
+            <summary>Descrição e checklist</summary>
+            <section class="task-editor-section" aria-labelledby="task-details-title">
+              <h3 id="task-details-title">Orientações</h3>
+              <label class="field" for="task-description">Descrição<textarea id="task-description" rows="3" maxlength="10000" placeholder="Informações, links e orientações para realizar a demanda"></textarea></label>
+              <h3 id="task-checklist-title">Checklist</h3>
+              <div id="task-checklist-editor" class="task-editor-roots" aria-labelledby="task-checklist-title"></div>
+            </section>
+          </details>
           <details id="task-advanced" class="task-editor-advanced">
             <summary>Mais opções: datas, colunas e dependências</summary>
             <div class="task-editor-grid task-extra-grid">
@@ -164,7 +177,7 @@
           </details>
           <p id="task-feedback" class="feedback" role="status" aria-live="polite"></p>
         </div>
-        <div class="dialog-footer"><button id="delete-task-button" class="button button-danger" type="button" hidden>Excluir demanda</button><span class="footer-spacer"></span><button class="button" type="button" data-close-dialog="task-dialog">Cancelar</button><button class="button button-primary" type="submit">Salvar demanda</button></div>
+        <div class="dialog-footer"><button id="delete-task-button" class="button button-danger" type="button" hidden>Excluir demanda</button><span class="footer-spacer"></span><button id="complete-task-button" class="button button-complete" type="button" hidden>Concluir demanda</button><button class="button button-quiet" type="button" data-close-dialog="task-dialog">Cancelar</button><button class="button button-primary" type="submit">Salvar</button></div>
       </form>
     </dialog>
 

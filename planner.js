@@ -16,6 +16,8 @@ let calendarDate = todayISO()
 let calendarMode = 'month'
 let selectedCalendarDay = todayISO()
 let calendarShowEvents = true
+let calendarShowTasks = true
+let boardGrouping = 'status'
 let googleClient = null
 let googleCalendars = []
 const calendarSelection = new Set()
@@ -210,17 +212,25 @@ function taskCard(task) {
       }
       catch { event.target.checked = task.status === 'done' }
     } })
+  if (task.eventId) {
+    const linkedTitle = liveEvents().find(item => item.id === task.eventId)?.title || 'Evento vinculado'
+    card.append(node('span', { class: 'task-event-tag', title: linkedTitle, text: '▧ ' + linkedTitle }))
+  }
   card.append(node('div', { class: 'task-heading' }, [toggle, title]))
-  if (!selectedPlan()) card.append(node('span', { class: 'task-label', text: planName(task.planId) }))
+  if (!selectedPlan() && currentView !== 'board') card.append(node('span', { class: 'task-label', text: planName(task.planId) }))
   const meta = node('div', { class: 'task-meta' })
   if (task.dueDate) meta.append(node('span', { class: 'task-due' + (isOverdue(task, todayISO()) ? ' is-late' : ''), text: '◷ ' + formatDate(task.dueDate) }))
   if (['high', 'urgent'].includes(task.priority)) meta.append(node('span', { class: 'priority priority-' + task.priority, text: labels[task.priority] }))
   if (task.team) meta.append(node('span', { class: 'task-team-chip', text: task.team }))
+  if (task.checklist?.length) meta.append(node('span', { class: 'task-checklist-count', text: '☑ ' + task.checklist.filter(item => item.done).length + '/' + task.checklist.length, title: 'Etapas concluídas' }))
+  if (task.assignees?.length) {
+    const assignees = node('span', { class: 'task-assignee-avatars', 'aria-label': 'Responsáveis: ' + task.assignees.map(person => person.name || person.email).join(', ') })
+    for (const person of task.assignees.slice(0, 3)) assignees.append(node('span', { class: 'task-avatar', title: person.name || person.email || 'Responsável', text: (person.name || person.email || '?').trim().slice(0, 1).toUpperCase() }))
+    if (task.assignees.length > 3) assignees.append(node('span', { class: 'task-avatar task-avatar-more', text: '+' + (task.assignees.length - 3) }))
+    meta.append(assignees)
+  }
   if (meta.childNodes.length) card.append(meta)
-  if (task.assignees?.length) card.append(node('p', { class: 'muted', text: task.assignees.map(person => person.name || person.email).join(', ') }))
   if (task.reviewRequired) card.append(node('span', { class: 'badge review-badge', title: task.reviewReason || '', text: 'Revisar prazo' }))
-  if (task.checklist?.length) card.append(node('span', { class: 'muted', text: task.checklist.filter(item => item.done).length + '/' + task.checklist.length + ' itens · ' + taskProgress(task) + '%' }))
-  if (task.eventId) card.append(node('span', { class: 'task-label', text: liveEvents().find(item => item.id === task.eventId)?.title || 'Evento vinculado' }))
   const unmet = (task.dependencyIds || []).filter(id => byId('tasks', id)?.status !== 'done')
   if (unmet.length) card.append(node('span', { class: 'badge', text: unmet.length + ' dependência(s) pendente(s)' }))
   card.addEventListener('dragstart', event => { draggedTask = task.id; event.dataTransfer.setData('text/plain', task.id); event.dataTransfer.effectAllowed = 'move' })
@@ -229,41 +239,68 @@ function taskCard(task) {
 }
 function viewActions() {
   const toolbar = node('div', { class: 'view-actions' })
-  if (currentView === 'board' && activePlans().length && !selectedPlan()) {
+  if (currentView === 'board' && activePlans().length > 1 && !selectedPlan()) {
     const select = node('select', { 'aria-label': 'Plano exibido no quadro', onChange: event => { $('plan-filter').value = event.target.value; render() } },
-      activePlans().map(plan => node('option', { value: plan.id, text: plan.name, selected: plan.id === selectedPlan() })))
+      activePlans().map((plan, i) => node('option', { value: plan.id, text: plan.name, selected: i === 0 })))
     toolbar.append(node('label', { class: 'board-plan-choice' }, ['Plano ', select]))
   }
   if (selectedPlan()) toolbar.append(button('Editar plano e colunas', () => openPlan(byId('plans', selectedPlan())), 'button button-small'))
   return toolbar
 }
+function quickAddTask(column, planId, bucketId, status) {
+  const form = node('form', { class: 'quick-task-form', onSubmit: async event => {
+    event.preventDefault()
+    const title = input.value.trim()
+    if (!title) return input.focus()
+    const candidate = { id: newId(), title, planId, bucketId, status, priority: 'normal', team: '', description: '', assignees: [], startDate: '', dueDate: '', checklist: [], dependencyIds: [], eventId: '', dateMode: 'manual', dueOffsetDays: null }
+    const errors = validateTask(candidate, state.tasks)
+    if (errors.length) return notice(errors.join(' '), true)
+    submit.disabled = true
+    try { await action(() => save('tasks', candidate), 'Demanda criada. Abra o cartão para completar os detalhes.'); render() }
+    catch { submit.disabled = false }
+  } })
+  const input = node('input', { type: 'text', required: true, maxLength: 160, placeholder: 'Nome da demanda', 'aria-label': 'Nome da nova demanda' })
+  const submit = node('button', { type: 'submit', class: 'button button-primary button-small', text: 'Adicionar' })
+  form.append(input, node('div', { class: 'quick-task-actions' }, [submit, button('Cancelar', () => form.replaceWith(addButton), 'button button-small button-quiet')]))
+  const addButton = button('+ Adicionar demanda', () => { addButton.replaceWith(form); input.focus() }, 'button button-small quick-add-button')
+  column.append(addButton)
+}
 function renderBoard(content, tasks) {
-  const grid = node('div', { class: 'board-grid' })
-  const plans = activePlans().filter(plan => (!selectedPlan() || plan.id === selectedPlan())
-    && (!value('event-filter') || tasks.some(task => task.planId === plan.id)))
-  for (const plan of plans) {
-    const buckets = state.buckets.filter(bucket => bucket.planId === plan.id && !bucket.deleted).sort((a, b) => a.order - b.order)
-    const groups = [...buckets]
-    if (tasks.some(task => task.planId === plan.id && !buckets.some(bucket => bucket.id === task.bucketId)) || !groups.length) groups.push({ id: '', name: 'Sem bucket', planId: plan.id })
-    for (const bucket of groups) {
-      const entries = tasks.filter(task => task.planId === plan.id && (bucket.id ? task.bucketId === bucket.id : !buckets.some(item => item.id === task.bucketId)))
-      const column = node('section', { class: 'bucket-column', 'data-bucket-id': bucket.id, 'aria-label': bucket.name })
-      column.append(node('div', { class: 'bucket-heading' }, [node('h3', { text: bucket.name }), node('span', { class: 'badge', text: entries.length })]))
-      if (!selectedPlan()) column.append(node('p', { class: 'muted', text: plan.name }))
-      column.append(...entries.map(taskCard), button('+ Adicionar demanda', () => openTask(null, { planId: plan.id, bucketId: bucket.id }), 'button button-small'))
-      column.addEventListener('dragover', event => { event.preventDefault(); event.dataTransfer.dropEffect = 'move' })
-      column.addEventListener('drop', async event => {
-        event.preventDefault()
-        const task = byId('tasks', event.dataTransfer.getData('text/plain') || draggedTask)
-        if (!task) return
-        if (task.planId !== plan.id) return notice('Para mover entre planos, abra a demanda e altere o plano.')
-        try { await action(() => save('tasks', { ...task, bucketId: bucket.id, status: bucketStatus(bucket.name) || task.status })) } catch {}
-      })
-      grid.append(column)
-    }
+  const plan = activePlans().find(item => item.id === selectedPlan()) || activePlans()[0]
+  if (!plan) return content.append(empty('Crie um plano para organizar demandas no quadro.'))
+  const buckets = state.buckets.filter(bucket => bucket.planId === plan.id && !bucket.deleted).sort((a, b) => a.order - b.order)
+  const groupChoices = [['status', 'Andamento'], ['bucket', 'Etapas do plano']]
+  const groupSelect = node('select', { 'aria-label': 'Agrupar quadro por', onChange: event => { boardGrouping = event.target.value; render() } }, groupChoices.map(([key, title]) => node('option', { value: key, text: title, selected: boardGrouping === key })))
+  const actions = viewActions()
+  actions.append(node('label', { class: 'board-group-choice' }, ['Agrupar por ', groupSelect]))
+  const planTasks = tasks.filter(task => task.planId === plan.id)
+  const statusGroups = [{ id: 'todo', name: 'A fazer' }, { id: 'doing', name: 'Em andamento' }, { id: 'done', name: 'Concluído' }]
+  const groups = boardGrouping === 'status' ? statusGroups : [...buckets]
+  if (boardGrouping === 'bucket' && (planTasks.some(task => !buckets.some(bucket => bucket.id === task.bucketId)) || !groups.length)) groups.push({ id: '', name: 'Outras demandas' })
+  const grid = node('div', { class: 'board-grid' + (boardGrouping === 'status' ? ' board-by-status' : '') })
+  for (const group of groups) {
+    const entries = planTasks.filter(task => boardGrouping === 'status' ? task.status === group.id : (group.id ? task.bucketId === group.id : !buckets.some(item => item.id === task.bucketId)))
+    const status = boardGrouping === 'status' ? group.id : (bucketStatus(group.name) || 'todo')
+    const bucketId = boardGrouping === 'status' ? (standardBucket(plan.id, group.id)?.id || '') : group.id
+    const column = node('section', { class: 'bucket-column bucket-' + status, 'data-bucket-id': bucketId, 'aria-label': group.name })
+    column.append(node('div', { class: 'bucket-heading' }, [node('h3', { text: group.name }), node('span', { class: 'badge', text: entries.length })]))
+    column.append(...entries.map(taskCard))
+    quickAddTask(column, plan.id, bucketId, status)
+    column.addEventListener('dragover', event => { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; column.classList.add('drag-over') })
+    column.addEventListener('dragleave', event => { if (!column.contains(event.relatedTarget)) column.classList.remove('drag-over') })
+    column.addEventListener('drop', async event => {
+      event.preventDefault()
+      column.classList.remove('drag-over')
+      const task = byId('tasks', event.dataTransfer.getData('text/plain') || draggedTask)
+      if (!task) return
+      if (task.planId !== plan.id) return notice('Para mover entre planos, abra a demanda e altere o plano.')
+      const targetBucket = boardGrouping === 'status' && !bucketId ? task.bucketId : bucketId
+      try { await action(() => save('tasks', { ...task, bucketId: targetBucket, status: boardGrouping === 'status' ? status : bucketStatus(group.name) || task.status })) } catch {}
+    })
+    grid.append(column)
   }
-  content.append(viewActions(), grid)
-  if (!tasks.length) content.append(node('p', { class: 'muted', text: 'Nenhuma demanda com estes filtros. Você pode criar uma demanda em qualquer bucket.' }))
+  content.append(actions, grid)
+  if (!planTasks.length) content.append(node('p', { class: 'board-empty-hint', text: 'Você ainda não tem demandas neste plano. Adicione a primeira diretamente no quadro.' }))
 }
 function renderList(content, tasks) {
   const table = node('table', { class: 'data-table' })
@@ -310,15 +347,17 @@ function renderCalendar(content, tasks) {
   const controls = node('div', { class: 'calendar-controls' })
   controls.append(button('‹', () => navigate(-1), 'calendar-arrow'), button('›', () => navigate(1), 'calendar-arrow'), button('Hoje', () => { calendarDate = todayISO(); selectedCalendarDay = calendarDate; render() }, 'button button-small'), mode)
   if (globalCalendar) {
+    const taskToggle = button(calendarShowTasks ? '✓ Demandas' : 'Demandas', () => { calendarShowTasks = !calendarShowTasks; render() }, 'button button-small calendar-task-toggle')
+    taskToggle.setAttribute('aria-pressed', String(calendarShowTasks))
     const eventToggle = button(calendarShowEvents ? '✓ Eventos da igreja' : 'Eventos da igreja', () => { calendarShowEvents = !calendarShowEvents; render() }, 'button button-small calendar-event-toggle')
     eventToggle.setAttribute('aria-pressed', String(calendarShowEvents))
-    controls.append(eventToggle)
+    controls.append(taskToggle, eventToggle)
   }
   header.append(heading, controls)
   const grid = node('div', { class: 'calendar-grid' })
   grid.append(...['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map(text => node('div', { class: 'calendar-weekday', text })))
   const datedTasks = new Map()
-  for (const task of tasks) {
+  for (const task of globalCalendar && !calendarShowTasks ? [] : tasks) {
     const date = task.dueDate || task.startDate
     if (!date) continue
     if (!datedTasks.has(date)) datedTasks.set(date, [])
@@ -378,7 +417,7 @@ function renderCalendar(content, tasks) {
     for (const event of dayEvents) dayDetails.append(node('div', { class: 'calendar-detail-row' }, [node('span', { class: 'calendar-detail-dot event-dot' }), button(event.title, () => openEvent(event), 'task-title'), node('small', { text: 'Agenda IPCVT' })]))
   }
   content.append(header, node('div', { class: 'calendar-wrap' }, grid), dayDetails)
-  const undated = tasks.filter(task => !task.dueDate && !task.startDate)
+  const undated = (globalCalendar && !calendarShowTasks ? [] : tasks).filter(task => !task.dueDate && !task.startDate)
   if (undated.length) content.append(node('h3', { text: 'Demandas sem data' }), node('div', { class: 'undated-tasks' }, undated.map(taskCard)))
 }
 function renderGantt(content, tasks) {
@@ -749,6 +788,7 @@ function changeView(view, { preserveFilters = false } = {}) {
   const previous = currentView
   if (!preserveFilters && (!taskViews.has(view) || !taskViews.has(previous))) clearTaskFilters()
   currentView = view
+  $('mobile-more-menu').open = false
   if (['integrations', 'routines'].includes(view) || (view === 'list' && !selectedPlan())) $('nav-extras').open = true
   render()
 }
@@ -783,7 +823,7 @@ function render() {
   if (!activePlans().length) sidebarPlans.append(node('span', { class: 'sidebar-plan-empty', text: 'Nenhum plano criado' }))
   $('search-filter').parentElement.querySelector('span').textContent = currentView === 'events' ? 'Buscar evento' : 'Buscar demanda'
   $('search-filter').placeholder = currentView === 'events' ? 'Encontre um evento pelo nome' : 'Nome, responsável ou equipe'
-  const title = { home: 'Meu dia', mine: 'Minhas tarefas', plans: 'Meus planos', events: 'Agenda da igreja', board: 'Quadro', list: 'Todas as demandas', calendar: 'Calendário', 'calendar-all': 'Calendário de demandas', gantt: 'Cronograma', summary: 'Gráficos', integrations: 'Google Agenda', routines: 'Rotinas semanais' }[currentView]
+  const title = { home: 'Início', mine: 'Minhas demandas', plans: 'Planos da Comissão', events: 'Agenda da igreja', board: 'Quadro', list: 'Todas as demandas', calendar: 'Calendário', 'calendar-all': 'Calendário', gantt: 'Cronograma', summary: 'Gráficos', integrations: 'Google Agenda', routines: 'Rotinas semanais' }[currentView]
   $('view-title').textContent = withinPlan ? selected.name : title
   $('view-title').parentElement.querySelector('.view-heading-note').textContent = withinPlan
     ? selected.description || 'Organize e acompanhe todas as tarefas deste plano.'
@@ -838,8 +878,11 @@ function openTask(task = null, defaults = {}) {
   $('task-offset').value = current.dueOffsetDays ?? 0
   $('legacy-relative-dates').hidden = current.dateMode !== 'event'
   $('task-advanced').open = !!current.dependencyIds?.length || current.dateMode === 'event' || (!!task && !bucketStatus(bucketName(current.bucketId)))
+  $('task-details').open = !!(current.description || current.checklist?.length)
   updateTaskEventFields()
   $('delete-task-button').hidden = !task
+  $('complete-task-button').hidden = !task
+  $('complete-task-button').textContent = current.status === 'done' ? 'Reabrir demanda' : 'Concluir demanda'
   $('task-dialog').showModal()
   $('task-title').focus()
 }
@@ -911,6 +954,13 @@ $('task-form').addEventListener('submit', async event => {
     $('task-dialog').close()
   } catch (error) { $('task-feedback').textContent = error.message }
   finally { submit.disabled = false }
+})
+$('complete-task-button').addEventListener('click', () => {
+  const status = value('task-status') === 'done' ? 'todo' : 'done'
+  $('task-status').value = status
+  const bucket = standardBucket(value('task-plan'), status)
+  if (bucket) $('task-bucket').value = bucket.id
+  $('task-form').requestSubmit()
 })
 async function deleteTask(task) {
   if (!task || !await confirmAction('Excluir demanda?', 'A demanda “' + task.title + '” deixará de aparecer nas visões. As tarefas que dependem dela precisarão de revisão.')) return
@@ -1058,6 +1108,7 @@ for (const id of ['plan-filter', 'team-filter', 'assignee-filter', 'status-filte
 $('search-filter').addEventListener('input', render)
 $('clear-filters').addEventListener('click', () => { clearTaskFilters(); render() })
 $('new-task-button').addEventListener('click', () => { if (requirePlan()) openTask() })
+$('mobile-new-plan').addEventListener('click', () => { $('mobile-more-menu').open = false; openPlan() })
 $('new-plan-button').addEventListener('click', () => openPlan())
 $('google-login').addEventListener('click', async () => {
   $('google-login').disabled = true

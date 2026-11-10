@@ -14,6 +14,7 @@
   font-weight: 600;
   white-space: nowrap;
 }
+
 .theme-toggle:hover { border-color: var(--gold); }
 .theme-toggle .theme-icon { font-size: 17px; line-height: 1; }
 @media (max-width: 760px) {
@@ -320,6 +321,67 @@
   @media(max-width:900px) {
     :root[data-theme="dark"] .view-nav button[aria-pressed=true] { box-shadow: inset 0 -3px #78b98e; }
     :root[data-theme="dark"] .nav-extras[open] { background: #24292e; }
+  }
+}
+
+/* A mesma hierarquia visual da versão clara, em grafite. */
+@media screen {
+  :root[data-theme="dark"] .site-header{background:#194d34;border-color:#225c3e}
+  :root[data-theme="dark"] .site-header .brand,
+  :root[data-theme="dark"] .site-header .brand small,
+  :root[data-theme="dark"] .site-header .portal-links a{color:#f2faf3}
+  :root[data-theme="dark"] .brand img{background:transparent}
+  :root[data-theme="dark"] .site-header .theme-toggle{background:#ffffff1c;border-color:#ffffff50;color:#fff}
+  :root[data-theme="dark"] .site-header .theme-toggle:hover{background:#ffffff28}
+  :root[data-theme="dark"] .access-mark{background:#315b40}
+  :root[data-theme="dark"] .workspace-quickbar-title>strong{color:#e5f1e7}
+  :root[data-theme="dark"] .workspace-quickbar-title>span{color:#a4c3ae}
+  :root[data-theme="dark"] .sidebar-plans-heading>button{color:#b0dfbd}
+  :root[data-theme="dark"] .sidebar-plans-heading>button:hover{background:#305442}
+  :root[data-theme="dark"] .sidebar-plan-list .sidebar-plan-link::before{color:#8dbb99}
+  :root[data-theme="dark"] .plans-intro{background:#26372b;border-color:#3d5342}
+  :root[data-theme="dark"] .plan-card{background:#252e29;border-color:#415648}
+  :root[data-theme="dark"] .plan-card:hover{border-color:#658974}
+  :root[data-theme="dark"] .board-plan-choice,
+  :root[data-theme="dark"] .board-group-choice{color:#c3d6c8}
+  :root[data-theme="dark"] .board-plan-choice select,
+  :root[data-theme="dark"] .board-group-choice select{background:#28352e;color:#e5f0e7;border-color:#4c6353}
+  :root[data-theme="dark"] .bucket-column{background:#252f2a;border-color:#405047}
+  :root[data-theme="dark"] .bucket-column.drag-over{background:#2d5039;border-color:#8acaa0}
+  :root[data-theme="dark"] .bucket-heading{border-color:#3e4d44}
+  :root[data-theme="dark"] .bucket-heading h3{color:#e3ece5}
+  :root[data-theme="dark"] .bucket-heading .badge{background:#35453b;color:#c5d8c9;border-color:#435b4a}
+  :root[data-theme="dark"] .task-card{background:#2c3730;border-color:#44564a;box-shadow:0 2px 9px #0002}
+  :root[data-theme="dark"] .task-card .task-title{color:#e2f1e5}
+  :root[data-theme="dark"] .task-card.done .task-title{color:#93a99b}
+  :root[data-theme="dark"] .task-event-tag{color:#b8d6a7}
+  :root[data-theme="dark"] .task-card .task-meta{border-color:#435247}
+  :root[data-theme="dark"] .task-checklist-count{color:#c1d1c4}
+  :root[data-theme="dark"] .task-avatar{border-color:#2c3730;background:#42634d;color:#e4f9e8}
+  :root[data-theme="dark"] .task-avatar:nth-child(2){background:#5c5340;color:#f4e5b7}
+  :root[data-theme="dark"] .task-avatar:nth-child(3){background:#434d69;color:#d6e0ff}
+  :root[data-theme="dark"] .task-avatar-more{background:#43534a;color:#e5eee5}
+  :root[data-theme="dark"] .quick-add-button{color:#bbdbbf}
+  :root[data-theme="dark"] .quick-add-button:hover{background:#354b3c;border-color:#638b6e}
+  :root[data-theme="dark"] .quick-task-form{background:#29372e;border-color:#547660}
+  :root[data-theme="dark"] .quick-task-form input{background:#202c24;border-color:#4a6351;color:#ecf4ed}
+  :root[data-theme="dark"] .board-empty-hint{color:#b4c3b7}
+  :root[data-theme="dark"] .calendar-task-toggle[aria-pressed=true]{background:#31543b;border-color:#578b64;color:#d7f2df}
+  :root[data-theme="dark"] .calendar-event-toggle[aria-pressed=true]{background:#4c4130;border-color:#8a744d;color:#f7dfa8}
+  :root[data-theme="dark"] #task-dialog::backdrop{background:#0006}
+  :root[data-theme="dark"] #task-dialog .task-editor-details{background:#27342b;border-color:#48604c}
+  :root[data-theme="dark"] #task-dialog .task-editor-details>summary{color:#cde7d0}
+  :root[data-theme="dark"] #task-dialog .task-editor-details[open]>summary{border-color:#465e4b}
+  :root[data-theme="dark"] .button-complete{background:#31563d;border-color:#4c8c60;color:#d9f2dc}
+  :root[data-theme="dark"] .button-complete:hover{background:#3e704d}
+  @media(max-width:760px){
+    :root[data-theme="dark"] .planner-sidebar{background:#202a24;border-color:#465c49;box-shadow:0 -8px 30px #0006}
+    :root[data-theme="dark"] .view-nav>button[aria-pressed=true]{background:#315840;box-shadow:none;color:#d4f3dc}
+    :root[data-theme="dark"] .mobile-more-menu>summary{color:#bdcfc1}
+    :root[data-theme="dark"] .mobile-more-menu[open]>summary{background:#315840;color:#e7f5e8}
+    :root[data-theme="dark"] .mobile-more-options{background:#27342b;border-color:#47604c}
+    :root[data-theme="dark"] .mobile-more-options button{color:#e1ede2}
+    :root[data-theme="dark"] .mobile-more-options button:hover{background:#355440}
   }
 }
 
