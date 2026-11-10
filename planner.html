@@ -49,7 +49,7 @@
         </div>
       </section>
 
-      <section id="planner-app" class="workspace" hidden aria-labelledby="workspace-title">
+      <section id="planner-app" class="workspace" hidden aria-label="Área de trabalho do Planner">
         <div class="workspace-quickbar" role="toolbar" aria-label="Ações do Planner">
           <div class="workspace-actions">
             <button id="new-task-button" class="button button-primary" type="button"><span aria-hidden="true">＋</span> Nova demanda</button>
@@ -68,14 +68,7 @@
           </div>
         </div>
 
-        <div class="workspace-heading">
-          <div>
-            <p class="eyebrow">Cultos · Rotinas · Projetos</p>
-            <h1 id="workspace-title">Planner <em>da Comissão.</em></h1>
-            <p class="workspace-description">Clareza para planejar. Compromisso para realizar.</p>
-          </div>
-          <p id="save-status" class="save-status" role="status" aria-live="polite">Carregando seus planos…</p>
-        </div>
+        <span id="save-status" hidden></span>
 
         <nav class="view-nav" aria-label="Visões do Planner">
           <button type="button" data-view="board" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="10" rx="1.5"/><rect x="17" y="4" width="4" height="13" rx="1.5"/></svg>Quadro</button>
