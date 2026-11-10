@@ -1,6 +1,5 @@
 import { createPlannerStore } from './planner-store.js'
 import { todayISO, addDays, formatDate, calendarCells, computeSummary, validateTask, isOverdue, taskProgress, generateWeeklyTasks } from './planner-core.js'
-import { taskCreationContext } from './planner-task-context.js'
 import { createTaskEditor } from './planner-task-editor.js'
 import { GoogleCalendarClient } from './planner-google.js'
 import { publicCalendar, readPublicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl, summarizeCalendarEvents, diffCalendarEvents } from './planner-public.js?v=20261110'
@@ -10,8 +9,8 @@ const labels = { todo: 'Não iniciada', doing: 'Em andamento', done: 'Concluída
 const teams = ['Louvor', 'Litúrgico', 'Técnica', 'Mídia', 'Comunicação', 'Comissão']
 let state = { plans: [], buckets: [], tasks: [], events: [], routines: [] }
 let session = { status: 'checking' }
-// A agenda oficial é a porta de entrada para a maior parte do trabalho da igreja.
-let currentView = 'events'
+// Os planos organizam o trabalho; o calendário é uma referência opcional.
+let currentView = 'plans'
 let eventsYear = Number(todayISO().slice(0, 4))
 let calendarDate = todayISO()
 let calendarMode = 'month'
@@ -53,7 +52,14 @@ function node(tag, attrs = {}, children = []) {
 const button = (text, handler, cls = 'button') => node('button', { type: 'button', class: cls, text, onClick: handler })
 const activePlans = () => state.plans.filter(plan => !plan.deleted)
 const planName = id => state.plans.find(plan => plan.id === id)?.name || 'Plano'
-const bucketName = id => state.buckets.find(bucket => bucket.id === id)?.name || 'Sem coluna'
+const bucketName = id => state.buckets.find(bucket => bucket.id === id)?.name || 'Sem bucket'
+function bucketStatus(name = '') {
+  const normalized = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
+  return { 'a fazer': 'todo', 'em andamento': 'doing', 'concluido': 'done' }[normalized] || null
+}
+function standardBucket(planId, status) {
+  return state.buckets.find(bucket => !bucket.deleted && bucket.planId === planId && bucketStatus(bucket.name) === status)
+}
 function liveTasks() {
   const visible = state.tasks.filter(task => !task.deleted && activePlans().some(plan => plan.id === task.planId))
   if (!publicSnapshot) return visible
@@ -149,12 +155,6 @@ function visibleTasks() {
     (!query || [task.title, task.description, task.team, planName(task.planId), eventTitles.get(task.eventId) || '', ...(task.assignees || []).map(person => person.name || person.email)].join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(query))
   ).sort((a, b) => (a.dueDate || '9999').localeCompare(b.dueDate || '9999') || a.title.localeCompare(b.title, 'pt-BR'))
 }
-function visibleEvents() {
-  if (value('event-filter') === '__independent__') return []
-  const linked = new Set(liveTasks().filter(task => !selectedPlan() || task.planId === selectedPlan()).map(task => task.eventId).filter(Boolean))
-  const allLinked = new Set(liveTasks().map(task => task.eventId).filter(Boolean))
-  return liveEvents().filter(event => (!value('event-filter') || event.id === value('event-filter')) && (!selectedPlan() || linked.has(event.id) || !allLinked.has(event.id)))
-}
 function requirePlan() {
   if (activePlans().length) return true
   notice('Crie um plano para organizar suas primeiras demandas.')
@@ -162,37 +162,6 @@ function requirePlan() {
   return false
 }
 
-// Os planos operacionais só são criados por uma ação explícita do integrante.
-// Não alteramos nem duplicamos os eventos do Google Agenda.
-async function ensureWorkPlan(category) {
-  const result = await store.ensureStandardPlan(category)
-  if (!state.plans.some(plan => plan.id === result.plan.id)) state.plans = [...state.plans, result.plan]
-  if (!state.buckets.some(bucket => bucket.id === result.bucket.id)) state.buckets = [...state.buckets, result.bucket]
-  return result
-}
-
-async function openIndependentTask() {
-  try {
-    const existing = activePlans().find(plan => plan.id === 'ipcvt-demandas-independentes')
-    const result = existing
-      ? { plan: existing, bucket: state.buckets.find(bucket => bucket.planId === existing.id && !bucket.deleted) }
-      : await action(() => ensureWorkPlan('independent'))
-    openTask(null, { planId: result.plan.id, bucketId: result.bucket?.id || '', eventId: '', dateMode: 'manual', dueOffsetDays: null })
-  } catch (error) { reportError(error) }
-}
-
-async function openEventTask(event) {
-  if (!event || event.status === 'cancelled' || !event.startDate) return notice('Esse evento não está disponível para novas demandas.', true)
-  try {
-    const relatedPlanId = liveTasks().find(task => task.eventId === event.id)?.planId
-    const selected = activePlans().find(plan => plan.id === selectedPlan())
-      || activePlans().find(plan => plan.id === relatedPlanId)
-    const result = selected
-      ? { plan: selected, bucket: state.buckets.find(bucket => bucket.planId === selected.id && !bucket.deleted) }
-      : await action(() => ensureWorkPlan('events'))
-    openTask(null, { planId: result.plan.id, bucketId: result.bucket?.id || '', eventId: event.id, dateMode: 'manual' })
-  } catch (error) { reportError(error) }
-}
 function parseAssignees(text) {
   const seen = new Set()
   return text.split(/\n/).map(line => line.trim()).filter(Boolean).map(line => {
@@ -232,11 +201,15 @@ function taskCard(task) {
   const title = button(task.title, () => openTask(task), 'task-title')
   const toggle = node('input', { type: 'checkbox', checked: task.status === 'done', 'aria-label': 'Concluir ' + task.title,
     onChange: async event => {
-      try { await action(() => save('tasks', { ...task, status: event.target.checked ? 'done' : 'todo' })) }
+      try {
+        const status = event.target.checked ? 'done' : 'todo'
+        const bucket = standardBucket(task.planId, status)
+        await action(() => save('tasks', { ...task, status, bucketId: bucket?.id || task.bucketId }))
+      }
       catch { event.target.checked = task.status === 'done' }
     } })
   card.append(node('div', { class: 'task-heading' }, [toggle, title]))
-  if (!selectedPlan() && currentView !== 'board') card.append(node('span', { class: 'task-label', text: planName(task.planId) }))
+  if (!selectedPlan()) card.append(node('span', { class: 'task-label', text: planName(task.planId) }))
   card.append(node('div', { class: 'task-meta' }, [
     node('span', { class: 'badge', text: task.team || 'Sem equipe' }),
     node('span', { class: 'priority priority-' + task.priority, text: labels[task.priority] || 'Normal' }),
@@ -255,36 +228,22 @@ function taskCard(task) {
 }
 function viewActions() {
   const toolbar = node('div', { class: 'view-actions' })
-  if (selectedPlan()) toolbar.append(button('Editar plano e colunas', () => openPlan(byId('plans', selectedPlan()))))
+  if (currentView === 'board' && activePlans().length && !selectedPlan()) {
+    const select = node('select', { 'aria-label': 'Plano exibido no quadro', onChange: event => { $('plan-filter').value = event.target.value; render() } },
+      activePlans().map(plan => node('option', { value: plan.id, text: plan.name, selected: plan.id === selectedPlan() })))
+    toolbar.append(node('label', { class: 'board-plan-choice' }, ['Plano ', select]))
+  }
+  if (selectedPlan()) toolbar.append(button('Editar plano e colunas', () => openPlan(byId('plans', selectedPlan())), 'button button-small'))
   return toolbar
 }
-function boardContext(content, tasks) {
-  const id = value('event-filter')
-  if (!id) return
-  const event = liveEvents().find(item => item.id === id)
-  const context = node('div', { class: 'board-context' })
-  const detail = node('div', {}, [
-    node('span', { class: 'eyebrow', text: event ? 'Demandas do evento' : 'Demandas independentes' }),
-    node('h3', { text: event?.title || 'Sem evento vinculado' }),
-    node('p', { class: 'muted', text: (event ? formatDate(event.startDate) + ' · ' : '') + tasks.length + ' demanda(s) nesta visão' })
-  ])
-  context.append(detail, button('Ver todas as demandas', () => { $('event-filter').value = ''; render() }, 'button button-small'))
-  content.append(context)
-}
 function renderBoard(content, tasks) {
-  boardContext(content, tasks)
   const grid = node('div', { class: 'board-grid' })
-  let plans = activePlans().filter(plan => !selectedPlan() || plan.id === selectedPlan())
-  if (!selectedPlan() && value('event-filter')) {
-    const related = liveTasks().filter(task => value('event-filter') === '__independent__' ? !task.eventId : task.eventId === value('event-filter'))
-    const ids = new Set(related.map(task => task.planId))
-    const fallback = taskCreationContext({ ...state, eventId: value('event-filter') }).planId
-    plans = plans.filter(plan => ids.size ? ids.has(plan.id) : plan.id === fallback)
-  }
+  const plans = activePlans().filter(plan => (!selectedPlan() || plan.id === selectedPlan())
+    && (!value('event-filter') || tasks.some(task => task.planId === plan.id)))
   for (const plan of plans) {
     const buckets = state.buckets.filter(bucket => bucket.planId === plan.id && !bucket.deleted).sort((a, b) => a.order - b.order)
     const groups = [...buckets]
-    if (tasks.some(task => task.planId === plan.id && !buckets.some(bucket => bucket.id === task.bucketId)) || !groups.length) groups.push({ id: '', name: 'Sem coluna', planId: plan.id })
+    if (tasks.some(task => task.planId === plan.id && !buckets.some(bucket => bucket.id === task.bucketId)) || !groups.length) groups.push({ id: '', name: 'Sem bucket', planId: plan.id })
     for (const bucket of groups) {
       const entries = tasks.filter(task => task.planId === plan.id && (bucket.id ? task.bucketId === bucket.id : !buckets.some(item => item.id === task.bucketId)))
       const column = node('section', { class: 'bucket-column', 'data-bucket-id': bucket.id, 'aria-label': bucket.name })
@@ -297,28 +256,24 @@ function renderBoard(content, tasks) {
         const task = byId('tasks', event.dataTransfer.getData('text/plain') || draggedTask)
         if (!task) return
         if (task.planId !== plan.id) return notice('Para mover entre planos, abra a demanda e altere o plano.')
-        try { await action(() => save('tasks', { ...task, bucketId: bucket.id })) } catch {}
+        try { await action(() => save('tasks', { ...task, bucketId: bucket.id, status: bucketStatus(bucket.name) || task.status })) } catch {}
       })
       grid.append(column)
     }
   }
   content.append(viewActions(), grid)
-  if (!plans.length) {
-    const event = liveEvents().find(item => item.id === value('event-filter'))
-    content.append(empty('Crie a primeira demanda para começar a organizar o trabalho.'), button('Nova demanda', () => event ? openEventTask(event) : openIndependentTask(), 'button button-primary'))
-  } else if (!tasks.length) content.append(node('p', { class: 'muted', text: 'Nenhuma demanda com estes filtros. Adicione uma demanda em uma das colunas.' }))
+  if (!tasks.length) content.append(node('p', { class: 'muted', text: 'Nenhuma demanda com estes filtros. Você pode criar uma demanda em qualquer bucket.' }))
 }
 function renderList(content, tasks) {
   const table = node('table', { class: 'data-table' })
-  table.append(node('thead', {}, node('tr', {}, ['Demanda', 'Plano / Coluna', 'Responsáveis', 'Equipe', 'Prazo', 'Andamento', 'Ações'].map(text => node('th', { scope: 'col', text })))))
+  table.append(node('thead', {}, node('tr', {}, ['Demanda', selectedPlan() ? 'Coluna' : 'Plano / Coluna', 'Responsáveis', 'Equipe', 'Prazo', 'Andamento'].map(text => node('th', { scope: 'col', text })))))
   table.append(node('tbody', {}, tasks.map(task => node('tr', {}, [
     node('td', {}, button(task.title, () => openTask(task), 'task-title')),
-    node('td', { text: planName(task.planId) + ' / ' + bucketName(task.bucketId) }),
+    node('td', { text: selectedPlan() ? bucketName(task.bucketId) : planName(task.planId) + ' / ' + bucketName(task.bucketId) }),
     node('td', { text: task.assignees?.map(person => person.name || person.email).join(', ') || 'Sem responsável' }),
     node('td', { text: task.team || '—' }),
     node('td', { class: isOverdue(task, todayISO()) ? 'overdue' : '', text: formatDate(task.dueDate) }),
-    node('td', { text: labels[task.status] }),
-    node('td', {}, [button('Editar', () => openTask(task), 'button button-small'), button('Excluir', () => deleteTask(task), 'button button-small button-danger')])
+    node('td', {}, node('span', { class: 'status-pill status-' + task.status, text: labels[task.status] }))
   ]))))
   content.append(viewActions(), node('div', { class: 'table-wrap' }, table))
   if (!tasks.length) content.append(empty('Nenhuma demanda encontrada.'))
@@ -347,16 +302,12 @@ function renderCalendar(content, tasks) {
     node('option', { value: 'month', text: 'Mês', selected: calendarMode === 'month' }),
     node('option', { value: 'week', text: 'Semana', selected: calendarMode === 'week' })
   ])
-  header.append(button('← Anterior', () => navigate(-1)), node('strong', { text: title }), button('Próximo →', () => navigate(1)), button('Hoje', () => { calendarDate = todayISO(); render() }), mode, button('+ Evento', () => openEvent()))
+  header.append(button('← Anterior', () => navigate(-1)), node('strong', { text: title }), button('Próximo →', () => navigate(1)), button('Hoje', () => { calendarDate = todayISO(); render() }), mode, button('+ Demanda', () => { if (requirePlan()) openTask() }, 'button button-small'))
   const grid = node('div', { class: 'calendar-grid' })
   grid.append(...['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map(text => node('div', { class: 'calendar-weekday', text })))
-  const events = visibleEvents()
   for (const date of calendarDates()) {
     const day = node('section', { class: 'calendar-day' + (date.slice(0, 7) !== calendarDate.slice(0, 7) ? ' other-month' : '') + (date === todayISO() ? ' today' : ''), 'aria-label': formatDate(date), 'data-calendar-date': date })
     day.append(button(String(Number(date.slice(-2))), () => { if (requirePlan()) openTask(null, { dueDate: date, startDate: date }) }, 'calendar-date'))
-    for (const event of events.filter(item => item.startDate <= date && (item.endDate || item.startDate) >= date)) {
-      day.append(button((event.status === 'cancelled' ? 'Cancelado · ' : '') + event.title, () => openEvent(event), 'calendar-event' + (event.status === 'cancelled' ? ' cancelled' : '')))
-    }
     for (const task of tasks.filter(item => (item.dueDate || item.startDate) === date)) {
       const entry = button(task.title, () => openTask(task), 'calendar-task' + (task.status === 'done' ? ' completed' : ''))
       entry.draggable = true
@@ -438,101 +389,79 @@ function eventDateLabel(event) {
     : 'Horário na agenda oficial'
 }
 
-function eventCard(event, tasks) {
-  const related = tasks.filter(task => task.eventId === event.id)
-  const finished = related.filter(task => task.status === 'done').length
-  const percentage = related.length ? Math.round(finished / related.length * 100) : 0
-  const month = new Intl.DateTimeFormat('pt-BR', { month: 'short', timeZone: 'UTC' }).format(new Date(event.startDate + 'T12:00:00Z')).replace('.', '')
-  const card = node('article', { class: 'planner-event-card' + (event.status === 'cancelled' ? ' is-cancelled' : '') })
-  const top = node('div', { class: 'planner-event-top' })
-  top.append(node('div', { class: 'event-day-badge' }, [
-    node('strong', { text: String(Number(event.startDate.slice(-2))) }),
-    node('small', { text: month })
+function openPlanBoard(planId) {
+  clearTaskFilters()
+  $('plan-filter').value = planId
+  changeView('board', { preserveFilters: true })
+}
+
+function renderPlans(content) {
+  const plans = activePlans().sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+  content.append(node('div', { class: 'plans-intro' }, [
+    node('div', {}, [node('h3', { text: 'O trabalho começa em um plano' }), node('p', { text: 'Abra um plano para visualizar suas tarefas em quadro, grade, calendário ou cronograma.' })]),
+    button('+ Novo plano', () => openPlan(), 'button button-primary')
   ]))
-  const detail = node('div', { class: 'planner-event-detail' })
-  detail.append(button(event.title, () => openEvent(event), 'event-card-title'))
-  detail.append(node('p', { class: 'muted', text: formatDate(event.startDate) + ' · ' + eventDateLabel(event) }))
-  detail.append(node('div', { class: 'event-card-tags' }, [
-    node('span', { class: 'event-source-tag', text: event.source === 'google' ? 'Google Agenda' : 'Evento interno' }),
-    ...(event.status === 'cancelled' ? [node('span', { class: 'event-cancelled-tag', text: 'Cancelado' })] : [])
-  ]))
-  top.append(detail)
-  card.append(top)
-  card.append(node('div', { class: 'event-progress-label' }, [
-    node('span', { text: related.length ? finished + ' de ' + related.length + ' demandas concluídas' : 'Nenhuma demanda cadastrada' }),
-    node('strong', { text: percentage + '%' })
-  ]))
-  card.append(node('div', { class: 'event-progress-track' }, node('span', { style: 'width:' + percentage + '%' })))
-  const pending = related.filter(task => task.status !== 'done').sort((a, b) => (a.dueDate || '9999').localeCompare(b.dueDate || '9999')).slice(0, 2)
-  if (pending.length) {
-    card.append(node('div', { class: 'event-related-tasks' }, pending.map(task => button(
-      (isOverdue(task) ? '● ' : '○ ') + task.title,
-      () => openTask(task), 'event-related-task'
-    ))))
+  if (!plans.length) {
+    content.append(empty('Você ainda não tem planos. Crie um plano, adicione colunas e distribua as tarefas da Comissão.'))
+    return
   }
-  const actions = node('div', { class: 'event-card-actions' })
-  if (event.status !== 'cancelled') actions.append(button('+ Demanda', () => openEventTask(event), 'button button-small button-primary'))
-  actions.append(button('Ver demandas', () => {
-    $('event-filter').value = event.id
-    currentView = 'board'
-    render()
-  }, 'button button-small'))
-  card.append(actions)
-  return card
+  const cards = node('div', { class: 'plans-grid' })
+  for (const plan of plans) {
+    const tasks = liveTasks().filter(task => task.planId === plan.id)
+    const finished = tasks.filter(task => task.status === 'done').length
+    const percentage = tasks.length ? Math.round(finished * 100 / tasks.length) : 0
+    const card = node('article', { class: 'plan-card' })
+    card.append(node('span', { class: 'plan-card-icon', 'aria-hidden': 'true', text: plan.name.slice(0, 1).toLocaleUpperCase('pt-BR') }))
+    card.append(button(plan.name, () => openPlanBoard(plan.id), 'plan-card-title'))
+    card.append(node('p', { class: 'plan-card-description', text: plan.description || (plan.kind === 'project' ? 'Projeto da Comissão' : 'Trabalho contínuo da Comissão') }))
+    card.append(node('div', { class: 'plan-card-progress-label' }, [node('span', { text: finished + ' de ' + tasks.length + ' concluídas' }), node('strong', { text: percentage + '%' })]))
+    card.append(node('div', { class: 'plan-card-progress' }, node('span', { style: 'width:' + percentage + '%' })))
+    card.append(node('div', { class: 'plan-card-footer' }, [
+      button('Abrir plano', () => openPlanBoard(plan.id), 'button button-small button-primary'),
+      button('+ Demanda', () => { openPlanBoard(plan.id); openTask(null, { planId: plan.id }) }, 'button button-small')
+    ]))
+    cards.append(card)
+  }
+  content.append(cards)
 }
 
 function renderEvents(content) {
-  const allTasks = liveTasks()
-  const linkedEventIds = new Set(allTasks.map(task => task.eventId).filter(Boolean))
-  const events = liveEvents().filter(event => event.startDate && (event.status !== 'cancelled' || linkedEventIds.has(event.id)))
-  const counts = { active: allTasks.filter(task => task.eventId && task.status !== 'done').length,
-    independent: allTasks.filter(task => !task.eventId && task.status !== 'done').length }
-  const intro = node('section', { class: 'event-hub-heading' })
-  intro.append(node('div', {}, [node('p', { class: 'event-hub-overline', text: 'Agenda oficial · Planejamento da Comissão' }), node('h3', { text: 'Eventos e preparativos' }), node('p', { class: 'muted', text: 'Planeje cada evento da igreja com antecedência. Eventos do Google são somente leitura; as demandas são administradas aqui.' })]))
-  const controls = node('div', { class: 'event-hub-controls' })
-  const years = [...new Set([eventsYear - 1, eventsYear, eventsYear + 1, ...events.map(event => Number(event.startDate.slice(0, 4)))] )].filter(year => Number.isInteger(year) && year > 2000 && year < 2200).sort((a, b) => a - b)
-  const picker = node('select', { 'aria-label': 'Ano dos eventos', onChange: e => { eventsYear = Number(e.target.value); render() } }, years.map(year => node('option', { value: year, text: String(year), selected: year === eventsYear })))
-  controls.append(node('label', { class: 'event-year-label' }, ['Ano ', picker]), button('+ Demanda independente', openIndependentTask, 'button button-small'), button('+ Evento interno', () => openEvent(), 'button button-small'))
-  intro.append(controls)
-  content.append(intro)
-  const yearEvents = events.filter(event => event.startDate.startsWith(String(eventsYear)))
-  content.append(node('div', { class: 'event-hub-stats' }, [
-    ['Eventos no ano', yearEvents.length], ['Demandas ligadas', counts.active], ['Demandas independentes', counts.independent]
-  ].map(([name, count]) => node('div', { class: 'event-hub-stat' }, [node('strong', { text: count }), node('span', { text: name })]))))
+  const events = liveEvents().filter(event => event.startDate)
+  content.append(node('div', { class: 'event-reference-heading' }, [
+    node('p', { text: 'Esta agenda serve de referência. As demandas são criadas dentro dos planos; ao editar uma tarefa, você pode selecionar o evento-alvo.' }),
+    button('Meus planos', () => changeView('plans'), 'button button-small')
+  ]))
+  const years = [...new Set([eventsYear - 1, eventsYear, eventsYear + 1, ...events.map(event => Number(event.startDate.slice(0, 4)))])]
+    .filter(year => Number.isInteger(year) && year > 2000 && year < 2200).sort((a, b) => a - b)
+  const picker = node('select', { 'aria-label': 'Ano dos eventos', onChange: event => { eventsYear = Number(event.target.value); render() } },
+    years.map(year => node('option', { value: year, text: String(year), selected: year === eventsYear })))
+  content.append(node('div', { class: 'event-hub-controls' }, node('label', { class: 'event-year-label' }, ['Ano ', picker])))
   const query = value('search-filter').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-  const selected = value('event-filter')
-  const relevant = yearEvents.filter(event =>
-    (!selected || selected === event.id) &&
-    (!query || [event.title, event.description || '', ...allTasks.filter(task => task.eventId === event.id).map(task => task.title)].join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(query))
-  ).sort((a, b) => a.startDate.localeCompare(b.startDate) || a.title.localeCompare(b.title, 'pt-BR'))
-  if (!relevant.length) {
-    content.append(empty(selected === '__independent__' ? 'Altere o filtro de vínculo para consultar a agenda oficial.' : 'Nenhum evento encontrado neste ano. Confira o filtro ou o link da Agenda IPCVT.'))
-  } else {
-    const byMonth = new Map()
-    for (const event of relevant) {
-      const key = event.startDate.slice(0, 7)
-      if (!byMonth.has(key)) byMonth.set(key, [])
-      byMonth.get(key).push(event)
-    }
-    for (const [month, items] of byMonth) {
-      const group = node('section', { class: 'planner-event-month' })
-      const label = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(month + '-01T12:00:00Z'))
-      group.append(node('div', { class: 'event-month-heading' }, [node('h3', { text: label }), node('span', { class: 'badge', text: items.length })]))
-      group.append(node('div', { class: 'planner-event-grid' }, items.map(event => eventCard(event, allTasks))))
-      content.append(group)
-    }
+  const relevant = events.filter(event => event.startDate.startsWith(String(eventsYear)) && (!query ||
+    [event.title, event.description || ''].join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(query)))
+    .sort((a, b) => a.startDate.localeCompare(b.startDate) || a.title.localeCompare(b.title, 'pt-BR'))
+  if (!relevant.length) return content.append(empty('Nenhum evento encontrado neste ano na Agenda IPCVT.'))
+  const months = new Map()
+  for (const event of relevant) {
+    const key = event.startDate.slice(0, 7)
+    if (!months.has(key)) months.set(key, [])
+    months.get(key).push(event)
   }
-  const independents = allTasks.filter(task => !task.eventId && task.status !== 'done')
-  if (independents.length) {
-    const aside = node('section', { class: 'independent-tasks' })
-    aside.append(node('div', { class: 'independent-tasks-heading' }, [node('div', {}, [node('h3', { text: 'Demandas independentes' }), node('p', { class: 'muted', text: 'Trabalho que não depende de um evento específico.' })]), button('Ver na lista', () => { $('event-filter').value = '__independent__'; currentView = 'list'; render() }, 'button button-small')]))
-    aside.append(node('div', { class: 'independent-task-list' }, independents.slice(0, 4).map(task => button(task.title + ' · ' + (task.dueDate ? formatDate(task.dueDate) : 'Sem prazo'), () => openTask(task), 'independent-task-link'))))
-    content.append(aside)
+  for (const [month, items] of months) {
+    const group = node('section', { class: 'planner-event-month' })
+    const label = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(month + '-01T12:00:00Z'))
+    group.append(node('div', { class: 'event-month-heading' }, [node('h3', { text: label }), node('span', { class: 'badge', text: String(items.length) })]))
+    group.append(node('div', { class: 'event-reference-list' }, items.map(event => node('div', { class: 'event-reference-row' }, [
+      node('div', { class: 'event-day-badge' }, [node('strong', { text: String(Number(event.startDate.slice(-2))) }), node('small', { text: new Intl.DateTimeFormat('pt-BR', { month: 'short', timeZone: 'UTC' }).format(new Date(event.startDate + 'T12:00:00Z')) })]),
+      node('div', {}, [button(event.title, () => openEvent(event), 'task-title'), node('small', { class: 'muted', text: eventDateLabel(event) + (event.status === 'cancelled' ? ' · Cancelado' : '') })]),
+      button('Detalhes', () => openEvent(event), 'button button-small')
+    ]))))
+    content.append(group)
   }
 }
 
 function renderMyDay(content, tasks) {
-  const mine = tasks.filter(task => (task.assignees || []).some(person => person.email?.toLowerCase() === session.email))
+  const mine = liveTasks().filter(task => (task.assignees || []).some(person => person.email?.toLowerCase() === session.email))
   const today = todayISO()
   const upcoming = addDays(today, 7)
   const groups = [
@@ -541,8 +470,10 @@ function renderMyDay(content, tasks) {
     ['Próximos 7 dias', mine.filter(task => task.status !== 'done' && task.dueDate > today && task.dueDate <= upcoming)],
     ['Outras demandas', mine.filter(task => task.status !== 'done' && (!task.dueDate || task.dueDate > upcoming))]
   ]
-  content.append(node('div', { class: 'my-day-heading' }, [node('div', {}, [node('h3', { text: 'Minhas demandas' }), node('p', { class: 'muted', text: 'Todas as entregas atribuídas ao seu e-mail, com prioridade para os prazos mais próximos.' })]), node('span', { class: 'badge', text: mine.filter(task => task.status !== 'done').length + ' pendente(s)' })]))
-  if (!mine.length) content.append(empty('Nenhuma demanda atribuída ao seu e-mail com os filtros atuais.'))
+  if (currentView === 'home') groups.splice(2)
+  content.append(node('div', { class: 'my-day-heading' }, [node('div', {}, [node('h3', { text: currentView === 'home' ? 'Prioridades do dia' : 'Minhas tarefas' }), node('p', { class: 'muted', text: 'Entregas atribuídas ao seu e-mail, organizadas por prazo.' })]), node('span', { class: 'badge', text: mine.filter(task => task.status !== 'done').length + ' pendente(s)' })]))
+  if (currentView === 'home' && !groups.some(([, entries]) => entries.length)) content.append(empty('Nenhuma tarefa sua vence hoje e não há pendências atrasadas.'))
+  else if (!mine.length) content.append(empty('Nenhuma tarefa atribuída ao seu e-mail.'))
   for (const [title, entries] of groups) if (entries.length) {
     const section = node('section', { class: 'my-day-group' })
     section.append(node('h3', { text: title + ' · ' + entries.length }))
@@ -554,9 +485,10 @@ function renderMyDay(content, tasks) {
     ]))))
     content.append(section)
   }
+  if (currentView === 'home') content.append(button('Ver todas as minhas tarefas', () => changeView('mine'), 'button button-small'))
 }
 function renderRoutines(content) {
-  content.append(node('p', { class: 'muted', text: 'Rotinas independentes geram uma demanda por semana. Para preparar cultos recorrentes, aplique o modelo no evento e acompanhe as mesmas tarefas na semana.' }), button('+ Nova rotina semanal', () => { if (requirePlan()) openRoutine() }, 'button button-primary'))
+  content.append(node('p', { class: 'muted', text: 'Rotinas semanais criam demandas recorrentes. Para um evento específico, crie demandas vinculadas à data oficial.' }), button('+ Nova rotina semanal', () => { if (requirePlan()) openRoutine() }, 'button button-primary'))
   const routines = state.routines.filter(routine => !routine.deleted && activePlans().some(plan => plan.id === routine.planId) && (!selectedPlan() || routine.planId === selectedPlan()))
   for (const routine of routines) {
     content.append(node('article', { class: 'routine-card' }, [
@@ -645,7 +577,7 @@ document.addEventListener('visibilitychange', () => {
 function renderPublicIntegration(content) {
   const section = node('section', { class: 'integration-card' }, [
     node('h3', { text: 'Agenda IPCVT · calendário oficial' }),
-    node('p', { text: 'Os eventos públicos aparecem automaticamente no calendário do Planner. Nenhum integrante precisa conectar a própria conta Google. O Planner não escreve na agenda da igreja.' }),
+    node('p', { text: 'Os eventos públicos aparecem na seção Agenda da igreja, para consulta e para vincular como evento-alvo de uma demanda. Nenhum integrante precisa conectar a própria conta Google. O Planner não escreve na agenda da igreja.' }),
     node('p', { class: 'calendar-sync-status', text: calendarLoadError
       ? calendarLoadError
       : publicSnapshot
@@ -758,59 +690,100 @@ async function updateRelativeDates(previous, next) {
   }
   return review
 }
+const taskFilterIds = ['plan-filter', 'team-filter', 'assignee-filter', 'status-filter', 'event-filter']
+const taskViews = new Set(['board', 'list', 'calendar', 'gantt', 'summary'])
+function clearTaskFilters() {
+  for (const id of taskFilterIds) $(id).value = ''
+  $('search-filter').value = ''
+}
+function changeView(view, { preserveFilters = false } = {}) {
+  const previous = currentView
+  if (!preserveFilters && (!taskViews.has(view) || !taskViews.has(previous))) clearTaskFilters()
+  currentView = view
+  if (['integrations', 'routines'].includes(view) || (view === 'list' && !selectedPlan())) $('nav-extras').open = true
+  render()
+}
+
+function chooseView(control) {
+  const insidePlan = !!control.closest('.plan-view-tabs')
+  if (control.dataset.view === 'list' && !insidePlan) {
+    clearTaskFilters()
+    changeView('list', { preserveFilters: true })
+    return
+  }
+  changeView(control.dataset.view, { preserveFilters: insidePlan })
+}
+
 function render() {
   if (session.status !== 'authorized') return
   refreshFilters()
-  $('search-filter').parentElement.querySelector('span').textContent = currentView === 'events' ? 'Buscar evento ou demanda' : 'Buscar demanda'
-  $('search-filter').placeholder = currentView === 'events' ? 'Nome do evento ou demanda' : 'O que você procura?'
-  const title = { events: 'Eventos da igreja', mine: 'Meu dia', board: 'Quadro de demandas', list: 'Lista de demandas', calendar: 'Calendário', gantt: 'Cronograma · Gantt', summary: 'Resumo da Comissão', integrations: 'Integrações', routines: 'Rotinas semanais' }[currentView]
-  $('view-title').textContent = title
-  $('view-title').parentElement.querySelector('.view-heading-note').textContent = currentView === 'events'
-    ? 'A agenda da igreja e suas demandas'
-    : currentView === 'mine' ? 'O que depende de você' : 'Cada entrega, um próximo passo.'
-  document.querySelectorAll('[data-view]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.view === currentView)))
+  const selected = activePlans().find(plan => plan.id === selectedPlan())
+  const withinPlan = !!selected && taskViews.has(currentView)
+  const sidebarPlans = $('sidebar-plan-list')
+  sidebarPlans.replaceChildren(...activePlans().sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')).map(plan => {
+    const entry = button(plan.name, () => openPlanBoard(plan.id), 'sidebar-plan-link')
+    entry.title = plan.name
+    entry.setAttribute('aria-current', withinPlan && selected.id === plan.id ? 'page' : 'false')
+    return entry
+  }))
+  if (!activePlans().length) sidebarPlans.append(node('span', { class: 'sidebar-plan-empty', text: 'Nenhum plano criado' }))
+  $('search-filter').parentElement.querySelector('span').textContent = currentView === 'events' ? 'Buscar evento' : 'Buscar demanda'
+  $('search-filter').placeholder = currentView === 'events' ? 'Encontre um evento pelo nome' : 'Nome, responsável ou equipe'
+  const title = { home: 'Meu dia', mine: 'Minhas tarefas', plans: 'Meus planos', events: 'Agenda da igreja', board: 'Quadro', list: 'Todas as demandas', calendar: 'Calendário', gantt: 'Cronograma', summary: 'Gráficos', integrations: 'Google Agenda', routines: 'Rotinas semanais' }[currentView]
+  $('view-title').textContent = withinPlan ? selected.name : title
+  $('view-title').parentElement.querySelector('.view-heading-note').textContent = withinPlan
+    ? selected.description || 'Organize e acompanhe todas as tarefas deste plano.'
+    : ({ home: 'O que você precisa acompanhar hoje.', mine: 'Suas tarefas, em todos os planos.', plans: 'Escolha um plano para começar a trabalhar.', events: 'Datas oficiais para consulta e referência das tarefas.', list: 'Todas as tarefas, de todos os planos.', integrations: 'Fonte oficial e sincronização do calendário.', routines: 'Demandas que se repetem semanalmente.' })[currentView] || ''
+  document.querySelectorAll('[data-view]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.view === currentView && (control.closest('.plan-view-tabs') || !withinPlan))))
+  $('plan-view-tabs').hidden = !withinPlan
+  $('plan-filter').closest('label').style.display = withinPlan ? 'none' : ''
+  const filterVisible = currentView === 'events' || taskViews.has(currentView)
+  $('workspace-filter-strip').hidden = !filterVisible
+  $('advanced-filters').hidden = currentView === 'events'
+  const filterCount = taskFilterIds.filter(id => $(id).value).length
+  $('filter-count').textContent = String(filterCount)
+  $('filter-count').hidden = !filterCount
+  $('clear-filters').hidden = !filterCount && !value('search-filter')
   const content = $('view-content')
   content.replaceChildren()
-  if (!activePlans().length && !['events', 'mine', 'board', 'calendar', 'integrations'].includes(currentView)) {
-    content.append(empty('Comece pelas demandas de um evento da agenda ou crie um plano para seu projeto.'), button('Ver eventos da igreja', () => { currentView = 'events'; render() }, 'button button-primary'), button('Criar plano', () => openPlan()))
+  if (!activePlans().length && taskViews.has(currentView)) {
+    content.append(empty('Crie um plano para reunir suas demandas e acompanhar o andamento.'), button('Criar plano', () => openPlan(), 'button button-primary'))
     return
   }
   const tasks = visibleTasks()
-  ;({ events: renderEvents, mine: renderMyDay, board: renderBoard, list: renderList, calendar: renderCalendar, gantt: renderGantt, summary: renderSummary, integrations: renderIntegrations, routines: renderRoutines }[currentView])(content, tasks)
+  ;({ home: renderMyDay, mine: renderMyDay, plans: renderPlans, events: renderEvents, board: renderBoard, list: renderList, calendar: renderCalendar, gantt: renderGantt, summary: renderSummary, integrations: renderIntegrations, routines: renderRoutines }[currentView])(content, tasks)
 }
 function fillBucketSelect(select, planId, current = '') {
-  setOptions(select, state.buckets.filter(bucket => bucket.planId === planId && !bucket.deleted).sort((a, b) => a.order - b.order).map(bucket => [bucket.id, bucket.name]), current, ['', 'Sem coluna'])
+  setOptions(select, state.buckets.filter(bucket => bucket.planId === planId && !bucket.deleted).sort((a, b) => a.order - b.order).map(bucket => [bucket.id, bucket.name]), current, ['', 'Sem bucket'])
 }
 function openTask(task = null, defaults = {}) {
   if (!task && !requirePlan()) return
-  const context = task ? {} : taskCreationContext({ ...state, planId: selectedPlan(), eventId: value('event-filter'), defaults })
-  if (!task && context.eventId && liveEvents().find(event => event.id === context.eventId)?.status === 'cancelled') {
-    return notice('Este evento foi cancelado. Crie uma demanda independente ou escolha outro evento.', true)
-  }
   $('task-form').reset()
   $('task-feedback').textContent = ''
   if (task?.reviewRequired) $('task-feedback').textContent = task.reviewReason
-  const current = task || { title: '', startDate: '', dueDate: '', status: 'todo', priority: 'normal', dateMode: 'manual', ...context }
+  const current = task || { title: '', planId: defaults.planId || selectedPlan() || activePlans()[0]?.id, bucketId: defaults.bucketId || '', startDate: defaults.startDate || '', dueDate: defaults.dueDate || '', status: 'todo', priority: 'normal', dateMode: 'manual', ...defaults }
   $('task-dialog-title').textContent = task ? 'Editar demanda' : 'Nova demanda'
   $('task-id').value = current.id || ''
   $('task-dialog').dataset.version = current.version ?? ''
   $('task-title').value = current.title || ''
   setOptions($('task-plan'), activePlans().map(plan => [plan.id, plan.name]), current.planId)
-  fillBucketSelect($('task-bucket'), current.planId, current.bucketId)
+  const firstBucket = state.buckets.filter(bucket => !bucket.deleted && bucket.planId === current.planId).sort((a, b) => a.order - b.order)[0]
+  fillBucketSelect($('task-bucket'), current.planId, current.bucketId || (!task ? firstBucket?.id : ''))
   for (const [field, key] of [['task-team', 'team'], ['task-start', 'startDate'], ['task-due', 'dueDate'], ['task-description', 'description']]) $(field).value = current[key] || ''
   $('task-status').value = current.status
   $('task-priority').value = current.priority
   const dependencies = state.tasks.filter(item => item.planId === current.planId && item.id !== current.id && (!item.deleted || current.dependencyIds?.includes(item.id)))
   const people = [...state.tasks.flatMap(item => item.assignees || []), { name: session.name || '', email: session.email || '' }]
   taskEditor.setTask(current, { people, dependencies })
-  const eventOptions = liveEvents().filter(event => event.status !== 'cancelled' || event.id === task?.eventId)
+  const eventOptions = liveEvents().filter(event => event.startDate && (event.status !== 'cancelled' || event.id === current.eventId))
     .sort((a, b) => a.startDate.localeCompare(b.startDate))
     .map(event => [event.id, event.title + ' · ' + formatDate(event.startDate) + (event.status === 'cancelled' ? ' · Cancelado' : '')])
   if (current.eventId && !eventOptions.some(([id]) => id === current.eventId)) eventOptions.push([current.eventId, 'Evento indisponível · vínculo preservado'])
-  setOptions($('task-event'), eventOptions, current.eventId || '', ['', 'Demanda independente (sem evento)'])
+  setOptions($('task-event'), eventOptions, current.eventId || '', ['', 'Sem evento-alvo'])
   $('task-date-mode').value = current.dateMode || 'manual'
   $('task-offset').value = current.dueOffsetDays ?? 0
-  $('task-advanced').open = current.dateMode === 'event' || Boolean(current.dependencyIds?.length)
+  $('legacy-relative-dates').hidden = current.dateMode !== 'event'
+  $('task-advanced').open = !!current.dependencyIds?.length || current.dateMode === 'event'
   updateTaskEventFields()
   $('delete-task-button').hidden = !task
   $('task-dialog').showModal()
@@ -824,8 +797,8 @@ function updateTaskEventFields(recalculate = false) {
   $('task-offset').disabled = !relative
   $('task-offset').closest('.field')?.classList.toggle('is-disabled', !relative)
   $('task-event-hint').textContent = event
-    ? 'Vinculada a “' + event.title + '” · ' + formatDate(event.startDate) + '. ' + (relative ? 'O prazo é calculado em relação ao evento.' : 'Defina o início e o prazo conforme a necessidade da demanda.')
-    : 'Sem evento vinculado: esta demanda pode ser criada para qualquer trabalho ou projeto independente.'
+    ? 'Evento-alvo: ' + event.title + ' · ' + formatDate(event.startDate) + '. ' + (relative ? 'Esta demanda antiga usa um prazo relacionado ao evento.' : 'O prazo desta demanda é independente da data do evento.')
+    : 'Sem evento-alvo. Você pode vincular um evento depois, se desejar.'
   if (recalculate && relative) {
     const oldDue = value('task-due')
     const proposed = addDays(event.startDate, Number(value('task-offset')))
@@ -848,6 +821,14 @@ $('task-plan').addEventListener('change', () => {
   fillBucketSelect($('task-bucket'), value('task-plan'))
   taskEditor.setDependencies(liveTasks().filter(task => task.planId === value('task-plan') && task.id !== value('task-id')))
 })
+$('task-bucket').addEventListener('change', () => {
+  const status = bucketStatus(bucketName(value('task-bucket')))
+  if (status) $('task-status').value = status
+})
+$('task-status').addEventListener('change', () => {
+  const bucket = standardBucket(value('task-plan'), value('task-status'))
+  if (bucket) $('task-bucket').value = bucket.id
+})
 $('task-form').addEventListener('submit', async event => {
   event.preventDefault()
   const submit = event.submitter || $('task-form').querySelector('[type=submit]')
@@ -860,7 +841,7 @@ $('task-form').addEventListener('submit', async event => {
     if (editorError) throw new Error(editorError)
     const task = { ...(previous || {}), id: previous?.id || newId(), title: value('task-title'), planId: value('task-plan'), bucketId: value('task-bucket'), team: value('task-team'), description: value('task-description'), assignees: taskEditor.getAssignees(), startDate: value('task-start'), dueDate: value('task-due'), status: value('task-status'), priority: value('task-priority'), checklist: taskEditor.getChecklist(), dependencyIds: taskEditor.getDependencyIds(), eventId: value('task-event'), dateMode: value('task-date-mode'), dueOffsetDays: value('task-date-mode') === 'event' ? Number(value('task-offset')) : null }
     const linkedEvent = liveEvents().find(event => event.id === task.eventId)
-    if (linkedEvent?.status === 'cancelled' && previous?.eventId !== task.eventId) throw new Error('Este evento foi cancelado. Escolha outro evento ou salve como demanda independente.')
+    if (linkedEvent?.status === 'cancelled' && previous?.eventId !== task.eventId) throw new Error('Este evento foi cancelado. Escolha outro evento ou salve como demanda sem evento-alvo.')
     if (task.dateMode === 'event') {
       const linked = liveEvents().find(event => event.id === task.eventId)
       if (!linked?.startDate || !Number.isInteger(task.dueOffsetDays) || Math.abs(task.dueOffsetDays) > 365) throw new Error('Selecione um evento e um intervalo de até 365 dias para o prazo relativo.')
@@ -893,13 +874,13 @@ function openPlan(plan = null) {
   $('plan-description').value = plan?.description || ''
   $('plan-start').value = plan?.startDate || ''
   $('plan-due').value = plan?.dueDate || ''
-  $('plan-buckets').value = plan ? state.buckets.filter(bucket => bucket.planId === plan.id && !bucket.deleted).sort((a, b) => a.order - b.order).map(bucket => bucket.name).join('\n') : 'Preparação musical\nLiturgia\nTécnica\nComunicação'
+  $('plan-buckets').value = plan ? state.buckets.filter(bucket => bucket.planId === plan.id && !bucket.deleted).sort((a, b) => a.order - b.order).map(bucket => bucket.name).join('\n') : 'A fazer\nEm andamento\nConcluído'
   $('delete-plan-button').hidden = !plan
   $('delete-plan-button').textContent = 'Arquivar plano'
   $('plan-dialog').showModal()
   $('plan-name').focus()
 }
-$('plan-kind').addEventListener('change', () => { if (!value('plan-id')) $('plan-buckets').value = value('plan-kind') === 'project' ? 'Planejamento\nExecução\nRevisão\nEntrega' : 'Preparação musical\nLiturgia\nTécnica\nComunicação' })
+$('plan-kind').addEventListener('change', () => { if (!value('plan-id')) $('plan-buckets').value = 'A fazer\nEm andamento\nConcluído' })
 $('plan-form').addEventListener('submit', async event => {
   event.preventDefault()
   const submit = event.submitter
@@ -911,10 +892,10 @@ $('plan-form').addEventListener('submit', async event => {
     const plan = { ...(old || {}), id: old?.id || newId(), name: value('plan-name'), kind: value('plan-kind'), description: value('plan-description'), startDate: value('plan-start'), dueDate: value('plan-due') }
     if (!plan.name || plan.name.length > 120 || (plan.startDate && plan.dueDate && plan.startDate > plan.dueDate)) throw new Error('Confira o nome e as datas do plano.')
     const names = [...new Set(value('plan-buckets').split('\n').map(name => name.trim()).filter(Boolean))]
-    if (names.length > 30 || names.some(name => name.length > 80)) throw new Error('Use até 30 colunas, cada uma com até 80 caracteres.')
+    if (names.length > 30 || names.some(name => name.length > 80)) throw new Error('Use até 30 buckets, cada um com até 80 caracteres.')
     const existing = state.buckets.filter(bucket => bucket.planId === plan.id && !bucket.deleted)
     const removed = existing.filter(bucket => !names.includes(bucket.name))
-    if (removed.some(bucket => state.tasks.some(task => !task.deleted && task.bucketId === bucket.id) || state.routines.some(routine => routine.bucketId === bucket.id))) throw new Error('Mova as demandas e rotinas de uma coluna antes de removê-la ou alterar seu nome.')
+    if (removed.some(bucket => state.tasks.some(task => !task.deleted && task.bucketId === bucket.id) || state.routines.some(routine => routine.bucketId === bucket.id))) throw new Error('Mova as demandas e rotinas de um bucket antes de removê-lo ou alterar seu nome.')
     await action(async () => {
       const savedPlan = await save('plans', plan)
       $('plan-id').value = savedPlan.id
@@ -927,7 +908,7 @@ $('plan-form').addEventListener('submit', async event => {
     }, 'Plano salvo.')
     $('plan-filter').value = plan.id
     $('plan-dialog').close()
-    render()
+    changeView('board', { preserveFilters: true })
   } catch (error) { $('plan-feedback').textContent = error.message }
   finally { submit.disabled = false }
 })
@@ -977,12 +958,6 @@ $('delete-routine-button').addEventListener('click', async () => {
   if (!routine || !await confirmAction('Excluir rotina?', 'A geração de novas ocorrências será encerrada. As demandas já criadas serão mantidas.')) return
   try { await action(() => store.remove('routines', routine.id, { expectedVersion: routine.version }), 'Rotina excluída.'); $('routine-dialog').close() } catch {}
 })
-$('event-new-task-button').addEventListener('click', () => {
-  const event = liveEvents().find(item => item.id === value('event-id'))
-  if (!event) return
-  $('event-dialog').close()
-  openEventTask(event)
-})
 function openEvent(event = null) {
   $('event-form').reset()
   $('event-feedback').textContent = ''
@@ -996,7 +971,6 @@ function openEvent(event = null) {
   $('event-form').querySelector('[type=submit]').hidden = external
   $('delete-event-button').hidden = !event || (external && (event.sourceKey?.startsWith('public-ical:') || !session.isAdmin || !byId('events', event.id)))
   $('delete-event-button').textContent = external ? 'Ocultar no Planner' : 'Excluir evento'
-  $('event-new-task-button').hidden = !event || event.status === 'cancelled'
   if (external) $('event-feedback').textContent = (event.status === 'cancelled' ? 'Evento cancelado no Google. Revise as demandas vinculadas. ' : '') + 'Origem: ' + event.calendarName + '. Os dados são atualizados pelo Google Agenda.'
   $('event-dialog').showModal()
 }
@@ -1024,20 +998,11 @@ $('delete-event-button').addEventListener('click', async () => {
   try { await action(() => save('events', { ...event, deleted: true }), 'Evento removido das visões.'); $('event-dialog').close() } catch {}
 })
 
-document.querySelectorAll('[data-view]').forEach(control => control.addEventListener('click', () => {
-  currentView = control.dataset.view
-  if (currentView === 'mine') $('assignee-filter').value = '__mine__'
-  else if (value('assignee-filter') === '__mine__') $('assignee-filter').value = ''
-  if (currentView === 'events') $('event-filter').value = ''
-  render()
-}))
+document.querySelectorAll('[data-view]').forEach(control => control.addEventListener('click', () => chooseView(control)))
 for (const id of ['plan-filter', 'team-filter', 'assignee-filter', 'status-filter', 'event-filter']) $(id).addEventListener('change', render)
 $('search-filter').addEventListener('input', render)
-$('new-task-button').addEventListener('click', () => {
-  if (activePlans().length) return openTask()
-  const event = liveEvents().find(item => item.id === value('event-filter'))
-  return event ? openEventTask(event) : openIndependentTask()
-})
+$('clear-filters').addEventListener('click', () => { clearTaskFilters(); render() })
+$('new-task-button').addEventListener('click', () => { if (requirePlan()) openTask() })
 $('new-plan-button').addEventListener('click', () => openPlan())
 $('google-login').addEventListener('click', async () => {
   $('google-login').disabled = true

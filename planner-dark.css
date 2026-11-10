@@ -184,12 +184,8 @@
   :root[data-theme="dark"] .independent-task-link { background: #30383b; border-color: #49594f; }
   :root[data-theme="dark"] .event-year-label select { background: #30373d; border-color: #526069; color: #eef3ee; }
 
-  /* O editor e o contexto do evento compartilham a mesma hierarquia do tema claro. */
-  :root[data-theme="dark"] .board-context,
-  :root[data-theme="dark"] .task-event-context { background: #263d32; border-color: #41594a; }
-  :root[data-theme="dark"] .board-context { border-left-color: #85b798; }
-  :root[data-theme="dark"] .board-context h3,
-  :root[data-theme="dark"] .task-event-context { color: #d3e8d9; }
+  /* Editor interativo da versão atual, mantendo contraste no modo noturno. */
+  :root[data-theme="dark"] .task-event-context { background: #263d32; border-color: #41594a; color: #d3e8d9; }
   :root[data-theme="dark"] .task-editor-input,
   :root[data-theme="dark"] .checklist-row-text,
   :root[data-theme="dark"] .checklist-row-text input,
@@ -202,5 +198,81 @@
   :root[data-theme="dark"] .checklist-row input[type="text"]:focus { background: #20282b; border-color: #85b798; }
   :root[data-theme="dark"] .task-editor-input:focus { background: #20282b; border-color: #85b798; }
   :root[data-theme="dark"] .dependency-option:hover { background: #2d4236; }
+
+  /* Área de trabalho renovada no modo noturno. */
+  :root[data-theme="dark"] .workspace-quickbar,
+  :root[data-theme="dark"] .planner-main .view-heading { border-color: #3b4844; }
+  :root[data-theme="dark"] .planner-sidebar,
+  :root[data-theme="dark"] .home-panel,
+  :root[data-theme="dark"] .home-stat,
+  :root[data-theme="dark"] .planner-event-row,
+  :root[data-theme="dark"] .filter-strip .search-field input,
+  :root[data-theme="dark"] .advanced-filters>summary,
+  :root[data-theme="dark"] .filter-strip .filters,
+  :root[data-theme="dark"] .task-extra-fields,
+  :root[data-theme="dark"] .event-detail-actions { background: #24292e; border-color: #405047; box-shadow: none; }
+  :root[data-theme="dark"] .planner-main .view-heading h2,
+  :root[data-theme="dark"] .home-panel-head h3,
+  :root[data-theme="dark"] .home-event-info .task-title,
+  :root[data-theme="dark"] .home-task-info .task-title,
+  :root[data-theme="dark"] .event-hub-heading>p { color: #dcecdf; }
+  :root[data-theme="dark"] .nav-group-label,
+  :root[data-theme="dark"] .home-panel-head p,
+  :root[data-theme="dark"] .home-event-info small,
+  :root[data-theme="dark"] .home-task-info small,
+  :root[data-theme="dark"] .planner-main .view-heading-note { color: #adbcb1; }
+  :root[data-theme="dark"] .view-nav button,
+  :root[data-theme="dark"] .nav-extras summary,
+  :root[data-theme="dark"] .sidebar-source { color: #c0d6c5; }
+  :root[data-theme="dark"] .view-nav button:hover,
+  :root[data-theme="dark"] .nav-extras summary:hover { background: #2f4238; }
+  :root[data-theme="dark"] .view-nav button[aria-pressed=true] { background: #30513d; color: #b9e6c6; box-shadow: inset 3px 0 #78b98e; }
+  :root[data-theme="dark"] .sidebar-source,
+  :root[data-theme="dark"] .nav-extras,
+  :root[data-theme="dark"] .home-panel-head,
+  :root[data-theme="dark"] .home-event-row,
+  :root[data-theme="dark"] .home-task-row { border-color: #3d4945; }
+  :root[data-theme="dark"] .home-panel-head { background: #292f33; }
+  :root[data-theme="dark"] .home-welcome { background: radial-gradient(circle at 86% 10%,#3c7553 0,transparent 42%),linear-gradient(110deg,#133e2b,#205c3c); }
+  :root[data-theme="dark"] .home-stat span,
+  :root[data-theme="dark"] .home-stat small { color: #bfcebf; }
+  :root[data-theme="dark"] .home-stat strong { color: #a9dbb7; }
+  :root[data-theme="dark"] .home-stat:nth-child(3) strong { color: #e3a38b; }
+  :root[data-theme="dark"] .home-event-date { background: #30513f; border-color: #456d51; color: #bfe8c9; }
+  :root[data-theme="dark"] .event-summary-line { background: #29332d; border-color: #405346; color: #c1dbca; }
+  :root[data-theme="dark"] .event-summary-line span:not(:first-child) { border-color: #425147; }
+  :root[data-theme="dark"] .advanced-filters>summary,
+  :root[data-theme="dark"] .task-extra-fields>summary { color: #c5e2cd; }
+  :root[data-theme="dark"] .filter-strip .search-field>span,
+  :root[data-theme="dark"] .filter-strip .filters label>span,
+  :root[data-theme="dark"] .filter-strip .search-field input { color: #d9e4de; }
+  :root[data-theme="dark"] .filter-strip .filters select { background: #30393b; color: #eaf0eb; border-color: #506057; }
+  :root[data-theme="dark"] .status-pill { background: #414a46; color: #d2ddd5; }
+  :root[data-theme="dark"] .status-pill.status-doing { background: #2b475e; color: #c4dff0; }
+  :root[data-theme="dark"] .status-pill.status-done { background: #2d523f; color: #b9e4c5; }
+  :root[data-theme="dark"] .sidebar-plan-link,
+  :root[data-theme="dark"] .plan-view-tabs button { color: #bfd0c2; }
+  :root[data-theme="dark"] .sidebar-plan-list .sidebar-plan-link:hover,
+  :root[data-theme="dark"] .plan-view-tabs button:hover { background: #31463a; color: #d3edda; }
+  :root[data-theme="dark"] .sidebar-plan-list .sidebar-plan-link[aria-current=page] { background: #30513d; color: #c9efcf; }
+  :root[data-theme="dark"] .plan-view-tabs { border-color: #48574c; }
+  :root[data-theme="dark"] .plan-view-tabs button[aria-pressed=true] { color: #9bd6ad; border-color: #86c49c; }
+  :root[data-theme="dark"] .plans-intro,
+  :root[data-theme="dark"] .event-reference-heading { background: linear-gradient(110deg,#2b4133,#28332c); border-color: #485d4b; }
+  :root[data-theme="dark"] .plans-intro h3,
+  :root[data-theme="dark"] .event-reference-heading p { color: #d9eadb; }
+  :root[data-theme="dark"] .plans-intro p { color: #b3c7ba; }
+  :root[data-theme="dark"] .plan-card,
+  :root[data-theme="dark"] .event-reference-row { background: #252c29; border-color: #44564a; }
+  :root[data-theme="dark"] .plan-card-icon { background: #34513d; color: #b3ebc5; }
+  :root[data-theme="dark"] .plan-card-title { color: #d1e9d7; }
+  :root[data-theme="dark"] .plan-card-description,
+  :root[data-theme="dark"] .plan-card-progress-label { color: #adbfaf; }
+  :root[data-theme="dark"] .plan-card-progress { background: #3c4b40; }
+  :root[data-theme="dark"] .plan-card-progress-label strong { color: #a4d9ae; }
+  @media(max-width:900px) {
+    :root[data-theme="dark"] .view-nav button[aria-pressed=true] { box-shadow: inset 0 -3px #78b98e; }
+    :root[data-theme="dark"] .nav-extras[open] { background: #24292e; }
+  }
 }
 
