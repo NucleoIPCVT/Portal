@@ -222,6 +222,55 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
   return {
     get session() { return { ...session } },
 
+    // Cria um espaço compartilhado somente quando um integrante solicita uma
+    // demanda diretamente a partir de um evento ou de uma tarefa independente.
+    // Identificadores fixos impedem que acessos simultâneos criem planos duplicados.
+    async ensureStandardPlan(category) {
+      const actor = requireSession()
+      const presets = {
+        events: { id: 'ipcvt-preparacao-eventos', name: 'Preparação de eventos', bucketId: 'ipcvt-preparacao-planejamento', bucketName: 'Planejamento' },
+        independent: { id: 'ipcvt-demandas-independentes', name: 'Demandas independentes', bucketId: 'ipcvt-independentes-geral', bucketName: 'A organizar' }
+      }
+      const preset = presets[category]
+      if (!preset) throw error('Tipo de plano inicial inválido.', 'planner-invalid-category')
+      const planRef = itemRef('plans', preset.id)
+      const bucketRef = itemRef('buckets', preset.bucketId)
+      try {
+        const plan = await runTransaction(db, async transaction => {
+          const existing = await transaction.get(planRef)
+          requireSession()
+          if (existing.exists()) {
+            if (existing.data().deleted) throw error('O plano padrão está arquivado. Restaure-o antes de criar novas demandas.', 'planner-plan-archived')
+            return { ...existing.data(), id: preset.id }
+          }
+          const record = {
+            ...DEFAULTS.plans, name: preset.name,
+            description: category === 'events' ? 'Demandas vinculadas à agenda oficial da IPCVT.' : 'Demandas sem vínculo obrigatório com eventos.',
+            version: 1, createdAt: serverTimestamp(), createdBy: actor.email,
+            updatedAt: serverTimestamp(), updatedBy: actor.email
+          }
+          transaction.set(planRef, record)
+          return { ...record, id: preset.id }
+        })
+        const bucket = await runTransaction(db, async transaction => {
+          const existing = await transaction.get(bucketRef)
+          requireSession()
+          if (existing.exists()) {
+            if (existing.data().deleted) throw error('A etapa padrão está arquivada. Atualize o plano antes de continuar.', 'planner-bucket-archived')
+            return { ...existing.data(), id: preset.bucketId }
+          }
+          const record = {
+            ...DEFAULTS.buckets, planId: preset.id, name: preset.bucketName, order: 0,
+            version: 1, createdAt: serverTimestamp(), createdBy: actor.email,
+            updatedAt: serverTimestamp(), updatedBy: actor.email
+          }
+          transaction.set(bucketRef, record)
+          return { ...record, id: preset.bucketId }
+        })
+        return { plan, bucket }
+      } catch (cause) { throw readableError(cause) }
+    },
+
     async login() {
       const provider = new GoogleAuthProvider()
       provider.setCustomParameters({ prompt: 'select_account' })
@@ -323,3 +372,4 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
     }
   }
 }
+

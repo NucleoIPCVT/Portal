@@ -155,4 +155,33 @@
   :root[data-theme="dark"] .confirm-dialog::backdrop { background: #05080bcc; }
   :root[data-theme="dark"] .site-footer { color: #a5b0b5; }
   :root[data-theme="dark"] .board-grid { scrollbar-color: #5c6a70 transparent; }
+
+  /* Novas visões do Planner orientado a eventos. */
+  :root[data-theme="dark"] .site-header { border-color: var(--line); }
+  :root[data-theme="dark"] .view-nav button[aria-pressed="true"] { background: #2e4939; color: #bee2c9; border-bottom-color: #81bc94; }
+  :root[data-theme="dark"] .filters { background: #24292e; border-color: var(--line); box-shadow: none; }
+  :root[data-theme="dark"] .view-heading h2,
+  :root[data-theme="dark"] .event-hub-heading h3,
+  :root[data-theme="dark"] .my-day-heading h3,
+  :root[data-theme="dark"] .my-day-group h3 { color: #e1eddf; }
+  :root[data-theme="dark"] .event-hub-overline { color: #98c7a7 !important; }
+  :root[data-theme="dark"] .event-hub-stat,
+  :root[data-theme="dark"] .planner-event-card,
+  :root[data-theme="dark"] .independent-tasks,
+  :root[data-theme="dark"] .my-day-list { background: #24292e; border-color: #3d4948; box-shadow: none; }
+  :root[data-theme="dark"] .event-hub-stat strong,
+  :root[data-theme="dark"] .event-progress-label strong { color: #a9d1b9; }
+  :root[data-theme="dark"] .event-month-heading,
+  :root[data-theme="dark"] .my-day-item { border-color: #3b4845; }
+  :root[data-theme="dark"] .event-day-badge { background: #2d4c3c; border-color: #42644e; color: #b9dfc3; }
+  :root[data-theme="dark"] .event-card-title,
+  :root[data-theme="dark"] .independent-task-link { color: #eef3ee; }
+  :root[data-theme="dark"] .event-source-tag { background: #2c4a39; color: #c0e2ca; }
+  :root[data-theme="dark"] .event-cancelled-tag { background: #503631; color: #ffbfb3; }
+  :root[data-theme="dark"] .event-progress-track { background: #3a4840; }
+  :root[data-theme="dark"] .event-progress-track span { background: #6baa81; }
+  :root[data-theme="dark"] .event-related-task { color: #b6c9bc; }
+  :root[data-theme="dark"] .independent-task-link { background: #30383b; border-color: #49594f; }
+  :root[data-theme="dark"] .event-year-label select { background: #30373d; border-color: #526069; color: #eef3ee; }
 }
+

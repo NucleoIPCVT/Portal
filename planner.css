@@ -44,3 +44,86 @@
   .workspace-quickbar .workspace-actions .button{min-height:32px;padding:6px 9px;font-size:10px}
   .workspace-quickbar .workspace-session{margin-left:0}
 }
+
+/* Planner IPCVT: quadro e organização inspirados no Microsoft Planner,
+   com a identidade verde, creme e dourada da Igreja Presbiteriana. */
+:root{--green:#17593d;--green-dark:#10442e;--green-light:#e6f2e9;--gold:#b99a59;--cream:#f5f7f3;--ink:#233a2d;--muted:#63766a;--line:#dfe9df}
+body{background:linear-gradient(160deg,#f3f8f2 0,#faf9f3 65%,#f6f7f3 100%);background-attachment:fixed}
+.site-header{border-bottom-color:#dbe8db;box-shadow:0 3px 15px #17452b08}
+.workspace{max-width:1850px}
+.workspace-quickbar{margin-bottom:10px}
+.view-nav{background:transparent;gap:3px}
+.view-nav button{font-weight:600;white-space:nowrap;border-radius:9px 9px 0 0;transition:background .15s,color .15s}
+.view-nav button:hover{background:#e7f0e6;color:var(--green)}
+.view-nav button[aria-pressed=true]{background:#e5f2e7;color:var(--green);border-bottom-color:var(--green)}
+.view-nav button svg{flex:0 0 auto}
+.filters{background:#fffdfd;border-color:#e3ebe2;box-shadow:0 2px 14px #173f3506;margin:15px 0 15px;padding:12px 15px}
+.view-heading{margin-bottom:15px}
+.view-heading h2{color:var(--green-dark);letter-spacing:-.025em}
+.board-grid{gap:14px}
+.bucket-column{background:#edf2ec;border-color:#dce6dc;border-radius:13px}
+.bucket-heading{border-bottom:1px solid #d9e4d8;padding-bottom:8px;margin-bottom:13px}
+.task-card{border:1px solid #dce7da;box-shadow:0 3px 11px #103b2b07;border-radius:10px;transition:transform .13s,box-shadow .13s}
+.task-card:hover{transform:translateY(-1px);box-shadow:0 6px 19px #103b2b16}
+.event-hub-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin:0 0 17px}
+.event-hub-heading h3,.my-day-heading h3{font-size:21px;line-height:1.18;letter-spacing:-.035em;margin:3px 0 6px;color:var(--green-dark)}
+.event-hub-heading p,.my-day-heading p{max-width:780px;margin:0;font-size:12px}
+.event-hub-overline{font-size:10px!important;letter-spacing:.13em;text-transform:uppercase;font-weight:800;color:var(--green)!important}
+.event-hub-controls{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px}
+.event-hub-controls .button{white-space:nowrap}
+.event-year-label{display:flex;gap:8px;align-items:center;font-size:11px;font-weight:700;color:var(--muted)}
+.event-year-label select{padding:8px 11px;border:1px solid var(--line);border-radius:8px;background:var(--white);color:var(--ink);font-weight:700}
+.event-hub-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 24px}
+.event-hub-stat{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid #e0e9df;background:#fffefa;border-radius:11px;min-width:0}
+.event-hub-stat strong{font-size:23px;line-height:1;color:var(--green)}
+.event-hub-stat span{font-size:11px;font-weight:600;color:var(--muted)}
+.planner-event-month{margin:0 0 25px}
+.event-month-heading{display:flex;align-items:center;gap:11px;padding:0 0 10px;margin-bottom:13px;border-bottom:1px solid #dde7dd}
+.event-month-heading h3{text-transform:capitalize;font-size:15px;font-weight:750;color:var(--ink);margin:0}
+.planner-event-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.planner-event-card{min-width:0;background:#fff;border:1px solid #dfe8df;border-radius:13px;box-shadow:0 4px 12px #14392308;padding:15px;display:flex;flex-direction:column;gap:10px;transition:border-color .14s,box-shadow .14s}
+.planner-event-card:hover{border-color:#b1cdb4;box-shadow:0 8px 24px #14392312}
+.planner-event-card.is-cancelled{opacity:.76;border-style:dashed}
+.planner-event-top{display:flex;align-items:flex-start;gap:12px;min-height:72px}
+.event-day-badge{flex:0 0 55px;height:63px;border:1px solid #d0e7d3;background:#edf6ed;color:var(--green);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.event-day-badge strong{font-size:26px;line-height:1.05;font-weight:800;letter-spacing:-.05em}
+.event-day-badge small{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em}
+.planner-event-detail{flex:1;min-width:0}
+.event-card-title{display:block;width:100%;padding:0;text-align:left;background:transparent;border:0;color:var(--ink);font-size:13px;font-weight:750;line-height:1.35;overflow-wrap:anywhere}
+.event-card-title:hover{color:var(--green);text-decoration:underline}
+.planner-event-detail .muted{margin:4px 0 6px;font-size:11px}
+.event-card-tags{display:flex;gap:5px;flex-wrap:wrap}
+.event-source-tag,.event-cancelled-tag{display:inline-block;border-radius:5px;background:#e9f4eb;color:#286448;font-size:9px;font-weight:700;padding:3px 6px}
+.event-cancelled-tag{background:#fff0ec;color:#ad4e3e}
+.event-progress-label{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--muted);font-size:10px}
+.event-progress-label strong{font-size:11px;color:var(--green)}
+.event-progress-track{height:5px;border-radius:12px;background:#e7eee6;overflow:hidden}
+.event-progress-track span{display:block;height:100%;background:#377e54;border-radius:12px;transition:width .2s}
+.event-related-tasks{display:grid;gap:2px;min-height:23px}
+.event-related-task{border:0;background:transparent;color:#41584a;text-align:left;padding:3px 1px;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%}
+.event-related-task:hover{text-decoration:underline;color:var(--green)}
+.event-card-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:5px}
+.event-card-actions .button{min-height:31px;padding:5px 10px;font-size:10px}
+.independent-tasks{border:1px solid #dbe7d9;background:#f9fbf7;border-radius:13px;padding:16px;margin:10px 0 12px}
+.independent-tasks-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.independent-tasks h3{font-size:15px;margin:0}
+.independent-tasks p{margin:2px 0 8px;font-size:11px}
+.independent-task-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.independent-task-link{display:block;padding:8px 10px;border:1px solid #e0e8df;text-align:left;color:var(--ink);background:#fff;border-radius:8px;font-size:11px}
+.independent-task-link:hover{border-color:var(--green);color:var(--green)}
+.my-day-heading{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:21px}
+.my-day-group{margin:0 0 22px}
+.my-day-group h3{margin:0 0 10px;color:var(--green-dark);font-size:13px;font-weight:750}
+.my-day-list{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.my-day-item{display:flex;align-items:center;gap:13px;padding:12px 16px;border-bottom:1px solid #e8eee6}
+.my-day-item:last-child{border-bottom:0}
+.my-day-indicator{width:9px;height:9px;flex:0 0 9px;border-radius:100%;background:#6b9f7d}
+.my-day-indicator.late{background:#c65f42}
+.my-day-item-detail{flex:1;min-width:0;display:grid;gap:2px}
+.my-day-item-detail .task-title{display:block;text-align:left}
+.my-day-item-detail small{color:var(--muted);font-size:10px}
+.field.is-disabled{opacity:.55}
+@media(max-width:1150px){.planner-event-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.event-hub-heading{align-items:flex-start;flex-direction:column}.event-hub-controls{justify-content:flex-start}}
+@media(max-width:760px){.event-hub-stats{gap:6px}.event-hub-stat{padding:10px;gap:7px;flex-wrap:wrap}.event-hub-stat strong{font-size:20px}.event-hub-stat span{font-size:10px}.planner-event-grid{grid-template-columns:1fr}.event-hub-heading h3{font-size:19px}.independent-task-list{grid-template-columns:1fr}.my-day-item{padding:11px;gap:8px}.my-day-item .priority{display:none}.event-hub-controls{width:100%}}
+@media print{.event-hub-controls,.event-card-actions,.event-related-tasks{display:none!important}.planner-event-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.planner-event-card{break-inside:avoid}}
+

@@ -12,7 +12,7 @@
     <script src="planner-theme.js"></script>
     <link rel="stylesheet" href="planner.css">
     <link rel="stylesheet" href="planner-dark.css">
-    <script type="module" src="planner.js?v=20261110-agenda"></script>
+    <script type="module" src="planner.js?v=20261110-eventos"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Ir para o conteúdo</a>
@@ -71,7 +71,9 @@
         <span id="save-status" hidden></span>
 
         <nav class="view-nav" aria-label="Visões do Planner">
-          <button type="button" data-view="board" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="10" rx="1.5"/><rect x="17" y="4" width="4" height="13" rx="1.5"/></svg>Quadro</button>
+          <button type="button" data-view="events" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 11h18M8 16h3M15 16h2"/></svg>Eventos</button>
+          <button type="button" data-view="mine" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Meu dia</button>
+          <button type="button" data-view="board" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="10" rx="1.5"/><rect x="17" y="4" width="4" height="13" rx="1.5"/></svg>Quadro</button>
           <button type="button" data-view="list" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h12M9 12h12M9 18h12M3 6h1M3 12h1M3 18h1"/></svg>Lista</button>
           <button type="button" data-view="calendar" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 11h18M7 15h1M12 15h1M17 15h1"/></svg>Calendário</button>
           <button type="button" data-view="gantt" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v18h17M7 6h7M10 11h8M15 16h6"/></svg>Gantt</button>
@@ -88,7 +90,7 @@
           <label for="status-filter"><span>Andamento</span><select id="status-filter"><option value="">Todos os status</option><option value="todo">Não iniciada</option><option value="doing">Em andamento</option><option value="done">Concluída</option></select></label>
         </div>
 
-        <label class="event-filter-label" for="event-filter">Evento relacionado <select id="event-filter"><option value="">Todos os eventos</option></select></label>
+        <label class="event-filter-label" for="event-filter">Vínculo com a agenda <select id="event-filter"><option value="">Todas as demandas</option><option value="__independent__">Sem evento vinculado</option></select></label>
         <p id="notice" class="notice" role="status" aria-live="polite" hidden></p>
         <div class="view-heading"><h2 id="view-title">Quadro de demandas</h2><span class="view-heading-note">Cada entrega, um próximo passo.</span></div>
         <div id="empty-start" class="empty-state" hidden><h3>O próximo projeto começa aqui.</h3><p>Crie um plano para reunir as primeiras demandas da Comissão.</p></div>
@@ -110,15 +112,16 @@
             <label class="field" for="task-start">Início<input id="task-start" type="date"></label>
             <label class="field" for="task-due">Prazo<input id="task-due" type="date"></label>
             <label class="field" for="task-priority">Prioridade<select id="task-priority"><option value="low">Baixa</option><option value="normal" selected>Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option></select></label>
-            <label class="field" for="task-event">Evento relacionado<select id="task-event"><option value="">Sem evento</option></select></label>
+            <label class="field" for="task-event">Evento da agenda oficial<select id="task-event"><option value="">Demanda independente (sem evento)</option></select></label>
           </div>
           <label class="field" for="task-assignees">Responsáveis<textarea id="task-assignees" rows="3" aria-describedby="assignees-help" placeholder="Nome &lt;email@exemplo.com&gt;&#10;ou email@exemplo.com"></textarea><small id="assignees-help">Uma pessoa por linha, com nome ou e-mail. Até 10 responsáveis por demanda.</small></label>
           <label class="field" for="task-description">Descrição<textarea id="task-description" rows="4" maxlength="10000" placeholder="Contexto, orientações e links úteis"></textarea></label>
           <label class="field" for="task-checklist">Checklist<textarea id="task-checklist" rows="4" aria-describedby="checklist-help" placeholder="Confirmar informações&#10;[x] Etapa já concluída"></textarea><small id="checklist-help">Até 20 itens, um por linha. Use [x] no início para marcar um item concluído.</small></label>
           <label class="field" for="task-dependencies">Depende de outras demandas<select id="task-dependencies" multiple size="4" aria-describedby="dependencies-help"></select><small id="dependencies-help">Selecione as demandas que precisam terminar antes desta. Use Ctrl ou ⌘ para selecionar mais de uma.</small></label>
+          <p class="field-note" id="task-event-hint">Você pode vincular esta demanda a um evento, inclusive para prepará-lo meses antes. Se não houver vínculo, ela permanece independente.</p>
           <div class="field-grid">
             <label class="field" for="task-date-mode">Como definir o prazo<select id="task-date-mode"><option value="manual">Data definida manualmente</option><option value="event">Em relação ao evento</option></select></label>
-            <label class="field" for="task-offset">Dias em relação ao evento<input id="task-offset" type="number" min="-365" max="365" step="1" value="0" aria-describedby="offset-help"><small id="offset-help">Ex.: −3 significa três dias antes; 0, no dia do evento.</small></label>
+            <label class="field" for="task-offset">Dias em relação ao evento<input id="task-offset" type="number" min="-365" max="365" step="1" value="0" aria-describedby="offset-help"><small id="offset-help">Ex.: −90 significa 90 dias antes; 0, no dia do evento.</small></label>
           </div>
           <p id="task-feedback" class="feedback" role="status" aria-live="polite"></p>
         </div>
@@ -208,3 +211,4 @@
     <footer class="site-footer">Comissão do Núcleo <span aria-hidden="true">·</span> Igreja Presbiteriana Central em Vilar dos Telles</footer>
   </body>
 </html>
+

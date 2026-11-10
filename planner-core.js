@@ -232,7 +232,21 @@ const EVENT_PREPARATION = [
   { key: 'technical', title: 'Preparar técnica', team: 'Técnica', offset: -1, buckets: ['tecnica', 'Técnica', 'Produção técnica'] },
 ];
 
-export function eventPreparationTasks(event, planId, bucketIdsByName = {}, existingTasks = []) {
+// Projetos especiais precisam começar muito antes da data oficial do evento.
+// Os dois modelos usam chaves determinísticas para não gerar a mesma demanda duas vezes.
+const SPECIAL_EVENT_PREPARATION = [
+  { key: 'special-concept', title: 'Definir proposta e programação do evento', team: 'Comissão', offset: -120, buckets: ['Planejamento', 'Comissão'] },
+  { key: 'special-script', title: 'Elaborar roteiro e programação detalhada', team: 'Litúrgico', offset: -90, buckets: ['Planejamento', 'Liturgia'] },
+  { key: 'special-people', title: 'Confirmar equipes e participantes', team: 'Comissão', offset: -75, buckets: ['Planejamento', 'Comissão'] },
+  { key: 'special-music', title: 'Preparar repertório e arranjos', team: 'Louvor', offset: -60, buckets: ['Preparação musical', 'Planejamento'] },
+  { key: 'special-promotion', title: 'Preparar comunicação e divulgação', team: 'Comunicação', offset: -45, buckets: ['Comunicação', 'Planejamento'] },
+  { key: 'special-production', title: 'Planejar estrutura, som e projeção', team: 'Técnica', offset: -30, buckets: ['Técnica', 'Planejamento'] },
+  { key: 'special-alignment', title: 'Alinhar programação final com as equipes', team: 'Comissão', offset: -14, buckets: ['Revisão', 'Planejamento'] },
+  { key: 'special-rehearsal', title: 'Realizar ensaio geral', team: 'Louvor', offset: -7, buckets: ['Execução', 'Preparação musical'] },
+  { key: 'special-check', title: 'Conferir os preparativos finais', team: 'Técnica', offset: -1, buckets: ['Revisão', 'Técnica'] },
+];
+
+export function eventPreparationTasks(event, planId, bucketIdsByName = {}, existingTasks = [], mode = 'standard') {
   if (!event || event.status === 'cancelled') return [];
   if (!event.id) throw new TypeError('O evento precisa de uma identificação.');
   if (!parseDate(event.startDate)) throw new RangeError('A data inicial do evento é inválida.');
@@ -240,7 +254,8 @@ export function eventPreparationTasks(event, planId, bucketIdsByName = {}, exist
   const ids = new Set(existing.map(task => task?.id));
   const templates = new Set(existing.filter(task => task?.eventId === event.id && task.templateKey).map(task => task.templateKey));
   const result = [];
-  for (const template of EVENT_PREPARATION) {
+  const definitions = mode === 'special' ? SPECIAL_EVENT_PREPARATION : EVENT_PREPARATION;
+  for (const template of definitions) {
     const id = deterministicId('event', event.id, template.key);
     if (ids.has(id) || templates.has(template.key)) continue;
     const bucketId = template.buckets.map(key => bucketIdsByName?.[key]).find(value => typeof value === 'string' && value)
@@ -263,3 +278,4 @@ export function eventPreparationTasks(event, planId, bucketIdsByName = {}, exist
   }
   return result;
 }
+
