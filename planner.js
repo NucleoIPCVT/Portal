@@ -1,7 +1,7 @@
 import { createPlannerStore } from './planner-store.js'
 import { todayISO, addDays, formatDate, calendarCells, computeSummary, validateTask, isOverdue, taskProgress, generateWeeklyTasks, eventPreparationTasks } from './planner-core.js'
 import { GoogleCalendarClient } from './planner-google.js'
-import { publicCalendar, readPublicCalendar, parseCalendarSourceUrl, calendarWebUrl, summarizeCalendarEvents, diffCalendarEvents } from './planner-public.js'
+import { publicCalendar, readPublicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl, summarizeCalendarEvents, diffCalendarEvents } from './planner-public.js'
 
 const $ = id => document.getElementById(id)
 const labels = { todo: 'Não iniciada', doing: 'Em andamento', done: 'Concluída', low: 'Baixa', normal: 'Normal', high: 'Alta', urgent: 'Urgente' }
@@ -431,7 +431,9 @@ async function refreshPublicCalendar() {
 function startCalendarPolling() {
   if (calendarTimer) return
   refreshPublicCalendar()
-  calendarTimer = setInterval(refreshPublicCalendar, 5 * 60 * 1000)
+  calendarTimer = setInterval(() => {
+    if (document.visibilityState === 'visible') refreshPublicCalendar()
+  }, hasDirectGoogleAccess() ? 2 * 60 * 1000 : 5 * 60 * 1000)
 }
 
 function stopCalendarPolling() {
@@ -447,7 +449,10 @@ function renderPublicIntegration(content) {
     node('p', { class: 'calendar-sync-status', text: calendarLoadError
       ? calendarLoadError
       : publicSnapshot
-        ? publicEvents.length + ' evento(s) carregado(s). Cópia gerada em ' + new Date(publicSnapshot.generatedAt).toLocaleString('pt-BR') + '.'
+        ? publicEvents.length + ' evento(s) carregado(s). '
+          + (publicSnapshot.sourceKind === 'google-api' ? 'Google consultado em ' : 'Cópia importada em ')
+          + new Date(publicSnapshot.generatedAt).toLocaleString('pt-BR') + '. '
+          + (publicSnapshot.warning || '')
         : 'Buscando os eventos da agenda pública…' }),
     node('a', { class: 'button button-small', href: calendarWebUrl(calendarConfig.calendarId), target: '_blank', rel: 'noopener noreferrer', text: 'Abrir agenda oficial ↗' }),
     button(calendarFetching ? 'Verificando…' : 'Verificar novidades agora', () => refreshPublicCalendar(), 'button button-small')
@@ -814,7 +819,8 @@ function openCalendarSettings() {
   $('open-calendar-url').href = calendarWebUrl(calendarConfig.calendarId)
   $('calendar-config-status').textContent = calendarConfigError
     ? 'A configuração remota não pôde ser lida: ' + calendarConfigError
-    : 'Origem oficial: ' + calendarConfig.calendarId + '. A publicação da nova origem pode levar cerca de 15 a 30 minutos.'
+    : 'Origem oficial: ' + calendarConfig.calendarId + '. '
+      + (hasDirectGoogleAccess() ? 'A atualização consulta diretamente o Google Agenda.' : 'A leitura depende da sincronização da cópia no GitHub até a ativação da API.')
   $('calendar-settings-dialog').showModal()
 }
 
@@ -838,7 +844,9 @@ $('calendar-settings-form').addEventListener('submit', async event => {
     submit.disabled = true
     $('calendar-settings-feedback').textContent = 'Salvando a fonte oficial…'
     await store.saveCalendarConfig(parsed)
-    $('calendar-settings-feedback').textContent = 'Link salvo. O Planner fará a leitura automática da nova agenda após a atualização do GitHub.'
+    $('calendar-settings-feedback').textContent = hasDirectGoogleAccess()
+      ? 'Link salvo. O Planner consultará essa agenda diretamente no Google.'
+      : 'Link salvo. O Planner consultará a nova agenda após a sincronização no GitHub.'
   } catch (error) {
     $('calendar-settings-feedback').textContent = error.code === 'permission-denied'
       ? 'O Firebase ainda precisa publicar as regras de acesso às configurações do Planner. O link não foi alterado.'

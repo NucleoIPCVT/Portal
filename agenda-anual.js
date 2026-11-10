@@ -1,4 +1,4 @@
-import { readPublicCalendar } from './planner-public.js';
+import { readPublicCalendar, hasDirectGoogleAccess } from './planner-public.js';
 
 const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -258,15 +258,20 @@ function render() {
   renderBooklet(year, groups, months, yearEvents.length);
   byId('print-area').hidden = false;
   printButton.disabled = false;
-  const fileDate = snapshot.generatedAt ? `Última alteração importada: ${formatDate(snapshot.generatedAt)}.` : '';
-  const verifiedDate = lastSuccessfulSync ? `Última consulta automática ao Google: ${formatDate(lastSuccessfulSync)}.` : '';
-  const overdue = lastSuccessfulSync && Date.now() - Date.parse(lastSuccessfulSync) > 45 * 60 * 1000;
-  const explanation = overdue
-    ? 'A sincronização automática está atrasada. Confira o Google Agenda para ver as alterações mais recentes.'
-    : 'O botão Atualizar consulta a última cópia sincronizada; a leitura do Google é feita automaticamente em segundo plano.';
+  const direct = snapshot.sourceKind === 'google-api';
+  const fileDate = snapshot.generatedAt
+    ? `${direct ? 'Consulta direta ao Google' : 'Última alteração importada'}: ${formatDate(snapshot.generatedAt)}.` : '';
+  const verifiedDate = !direct && lastSuccessfulSync
+    ? `Última consulta automática ao Google: ${formatDate(lastSuccessfulSync)}.` : '';
+  const overdue = !direct && lastSuccessfulSync && Date.now() - Date.parse(lastSuccessfulSync) > 45 * 60 * 1000;
+  const explanation = direct
+    ? 'Dados obtidos diretamente do Google Agenda. Atualizar consulta o Google novamente.'
+    : snapshot.warning || (overdue
+      ? 'A sincronização automática está atrasada. Confira o Google Agenda para ver as alterações mais recentes.'
+      : 'Atualizar consulta a cópia sincronizada no Portal; a integração direta ainda não está configurada.');
   status.textContent = `${yearEvents.length} eventos em ${year}. ${fileDate} ${verifiedDate} ${explanation}`;
   status.classList.remove('is-error');
-  status.classList.toggle('is-warning', Boolean(overdue));
+  status.classList.toggle('is-warning', Boolean(overdue || snapshot.warning));
 }
 
 // Exibe quando o servidor realmente consultou o Google, inclusive se não
@@ -312,7 +317,7 @@ async function loadCalendar({ checkWorkflow = true } = {}) {
     yearSelect.value = String(selectedYear);
     yearSelect.disabled = false;
     render();
-    if (checkWorkflow) void checkLatestSync();
+    if (checkWorkflow && fresh.sourceKind !== 'google-api') void checkLatestSync();
   } catch (error) {
     status.textContent = error.message || 'Não foi possível obter a agenda. Tente novamente.';
     status.classList.add('is-error');
@@ -337,7 +342,7 @@ loadCalendar();
 // Atualiza a tela enquanto ela estiver aberta e ao voltar para a aba.
 setInterval(() => {
   if (document.visibilityState === 'visible' && !refreshButton.disabled) void loadCalendar({ checkWorkflow: false });
-}, 5 * 60 * 1000);
+}, hasDirectGoogleAccess() ? 2 * 60 * 1000 : 5 * 60 * 1000);
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && Date.now() - lastCalendarLoad > 60 * 1000 && !refreshButton.disabled) {
     void loadCalendar({ checkWorkflow: false });
