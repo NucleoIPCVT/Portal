@@ -346,18 +346,18 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid
   gap: 2.5mm;
 }
 .single-page-event-column { min-width: 0; min-height: 0; overflow: hidden; }
-.single-event-month { margin-bottom: 1.3mm; }
+.single-event-month { margin-bottom: .7mm; }
 .single-event-month-title {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin: 1.1mm 0 .45mm;
-  padding: .3mm 0 .35mm;
+  margin: .7mm 0 .3mm;
+  padding: .2mm 0 .25mm;
   border-bottom: 1px solid #cbdcd0;
 }
 .single-event-month-title strong { color: #23553d; font: 700 calc(var(--single-event-font) + 1.1pt)/1.1 'DM Sans',Arial,sans-serif; text-transform: uppercase; }
 .single-event-month-title span { color: #809588; font: 600 calc(var(--single-event-font) - .8pt)/1 'DM Sans',Arial,sans-serif; }
-.single-event-row { margin: 0; padding: .33mm 0; color: #223b30; font-size: var(--single-event-font); line-height: 1.12; overflow-wrap: anywhere; }
+.single-event-row { margin: 0; padding: .08mm 0; color: #223b30; font-size: var(--single-event-font); line-height: 1.08; overflow-wrap: anywhere; }
 .single-event-date { display: inline; margin-right: .8mm; color: #276149; font-weight: 700; white-space: nowrap; }
 .single-event-detail { display: inline; }
 .single-event-name { font-weight: 600; }

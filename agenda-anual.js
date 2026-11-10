@@ -156,7 +156,11 @@ function compactMonth(monthIndex, events) {
     const detail = textElement('span', 'single-event-detail', '');
     detail.append(textElement('strong', 'single-event-name', event.title || 'Evento sem título'));
     if (!event.allDay && event.startAt) detail.append(textElement('span', 'single-event-time', ` · ${formatHour(event.startAt)}`));
-    if (event.location?.trim()) detail.append(textElement('span', 'single-event-location', ` · ${event.location.trim()}`));
+    if (event.location?.trim()) {
+      // O endereço completo da igreja aparece no cabeçalho; evita repetição em dezenas de linhas.
+      const place = event.location.trim().replace(/^Igreja Presbiteriana Central em Vilar dos Teles$/i, 'IPCVT');
+      detail.append(textElement('span', 'single-event-location', ` · ${place}`));
+    }
     row.append(detail);
     panel.append(row);
   }
