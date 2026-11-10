@@ -14,6 +14,8 @@ let currentView = 'plans'
 let eventsYear = Number(todayISO().slice(0, 4))
 let calendarDate = todayISO()
 let calendarMode = 'month'
+let selectedCalendarDay = todayISO()
+let calendarShowEvents = true
 let googleClient = null
 let googleCalendars = []
 const calendarSelection = new Set()
@@ -210,13 +212,12 @@ function taskCard(task) {
     } })
   card.append(node('div', { class: 'task-heading' }, [toggle, title]))
   if (!selectedPlan()) card.append(node('span', { class: 'task-label', text: planName(task.planId) }))
-  card.append(node('div', { class: 'task-meta' }, [
-    node('span', { class: 'badge', text: task.team || 'Sem equipe' }),
-    node('span', { class: 'priority priority-' + task.priority, text: labels[task.priority] || 'Normal' }),
-    node('span', { text: task.dueDate ? formatDate(task.dueDate) : 'Sem prazo' })
-  ]))
+  const meta = node('div', { class: 'task-meta' })
+  if (task.dueDate) meta.append(node('span', { class: 'task-due' + (isOverdue(task, todayISO()) ? ' is-late' : ''), text: '◷ ' + formatDate(task.dueDate) }))
+  if (['high', 'urgent'].includes(task.priority)) meta.append(node('span', { class: 'priority priority-' + task.priority, text: labels[task.priority] }))
+  if (task.team) meta.append(node('span', { class: 'task-team-chip', text: task.team }))
+  if (meta.childNodes.length) card.append(meta)
   if (task.assignees?.length) card.append(node('p', { class: 'muted', text: task.assignees.map(person => person.name || person.email).join(', ') }))
-  else card.append(button('Adicionar responsável', () => openTask(task), 'button button-small'))
   if (task.reviewRequired) card.append(node('span', { class: 'badge review-badge', title: task.reviewReason || '', text: 'Revisar prazo' }))
   if (task.checklist?.length) card.append(node('span', { class: 'muted', text: task.checklist.filter(item => item.done).length + '/' + task.checklist.length + ' itens · ' + taskProgress(task) + '%' }))
   if (task.eventId) card.append(node('span', { class: 'task-label', text: liveEvents().find(item => item.id === task.eventId)?.title || 'Evento vinculado' }))
@@ -287,7 +288,9 @@ function calendarDates() {
   return Array.from({ length: 7 }, (_, index) => addDays(monday, index))
 }
 function renderCalendar(content, tasks) {
-  const header = node('div', { class: 'view-actions' })
+  const globalCalendar = currentView === 'calendar-all'
+  const header = node('div', { class: 'calendar-toolbar' })
+  const heading = node('div', { class: 'calendar-toolbar-title' })
   const navigate = direction => {
     if (calendarMode === 'week') calendarDate = addDays(calendarDate, direction * 7)
     else {
@@ -295,25 +298,58 @@ function renderCalendar(content, tasks) {
       date.setUTCMonth(date.getUTCMonth() + direction)
       calendarDate = date.toISOString().slice(0, 10)
     }
+    selectedCalendarDay = calendarDate
     render()
   }
   const title = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(calendarDate + 'T12:00:00Z'))
-  const mode = node('select', { 'aria-label': 'Período do calendário', onChange: event => { calendarMode = event.target.value; render() } }, [
+  heading.append(node('strong', { text: title }), node('span', { text: globalCalendar ? 'Demandas e referências da Agenda IPCVT' : 'Prazos das demandas deste plano' }))
+  const mode = node('select', { 'aria-label': 'Período do calendário', onChange: event => { calendarMode = event.target.value; selectedCalendarDay = calendarDate; render() } }, [
     node('option', { value: 'month', text: 'Mês', selected: calendarMode === 'month' }),
     node('option', { value: 'week', text: 'Semana', selected: calendarMode === 'week' })
   ])
-  header.append(button('← Anterior', () => navigate(-1)), node('strong', { text: title }), button('Próximo →', () => navigate(1)), button('Hoje', () => { calendarDate = todayISO(); render() }), mode, button('+ Demanda', () => { if (requirePlan()) openTask() }, 'button button-small'))
+  const controls = node('div', { class: 'calendar-controls' })
+  controls.append(button('‹', () => navigate(-1), 'calendar-arrow'), button('›', () => navigate(1), 'calendar-arrow'), button('Hoje', () => { calendarDate = todayISO(); selectedCalendarDay = calendarDate; render() }, 'button button-small'), mode)
+  if (globalCalendar) {
+    const eventToggle = button(calendarShowEvents ? '✓ Eventos da igreja' : 'Eventos da igreja', () => { calendarShowEvents = !calendarShowEvents; render() }, 'button button-small calendar-event-toggle')
+    eventToggle.setAttribute('aria-pressed', String(calendarShowEvents))
+    controls.append(eventToggle)
+  }
+  header.append(heading, controls)
   const grid = node('div', { class: 'calendar-grid' })
   grid.append(...['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map(text => node('div', { class: 'calendar-weekday', text })))
+  const datedTasks = new Map()
+  for (const task of tasks) {
+    const date = task.dueDate || task.startDate
+    if (!date) continue
+    if (!datedTasks.has(date)) datedTasks.set(date, [])
+    datedTasks.get(date).push(task)
+  }
+  const datedEvents = new Map()
+  if (globalCalendar && calendarShowEvents) for (const event of liveEvents().filter(item => item.startDate && item.status !== 'cancelled')) {
+    if (!datedEvents.has(event.startDate)) datedEvents.set(event.startDate, [])
+    datedEvents.get(event.startDate).push(event)
+  }
   for (const date of calendarDates()) {
-    const day = node('section', { class: 'calendar-day' + (date.slice(0, 7) !== calendarDate.slice(0, 7) ? ' other-month' : '') + (date === todayISO() ? ' today' : ''), 'aria-label': formatDate(date), 'data-calendar-date': date })
-    day.append(button(String(Number(date.slice(-2))), () => { if (requirePlan()) openTask(null, { dueDate: date, startDate: date }) }, 'calendar-date'))
-    for (const task of tasks.filter(item => (item.dueDate || item.startDate) === date)) {
+    const dayTasks = datedTasks.get(date) || []
+    const dayEvents = datedEvents.get(date) || []
+    const day = node('section', { class: 'calendar-day' + (date.slice(0, 7) !== calendarDate.slice(0, 7) ? ' other-month' : '') + (date === todayISO() ? ' today' : '') + (date === selectedCalendarDay ? ' selected' : ''), 'aria-label': formatDate(date), 'data-calendar-date': date })
+    const dayButton = button(String(Number(date.slice(-2))), () => { selectedCalendarDay = date; render() }, 'calendar-date')
+    dayButton.setAttribute('aria-label', 'Ver compromissos de ' + formatDate(date))
+    dayButton.setAttribute('aria-pressed', String(date === selectedCalendarDay))
+    day.append(dayButton)
+    const counts = node('span', { class: 'calendar-day-count', 'aria-hidden': 'true' })
+    if (dayTasks.length) counts.append(node('span', { class: 'calendar-count-tasks', title: dayTasks.length + ' demandas' }))
+    if (dayEvents.length) counts.append(node('span', { class: 'calendar-count-events', title: dayEvents.length + ' eventos' }))
+    day.append(counts)
+    for (const task of dayTasks.slice(0, 3)) {
       const entry = button(task.title, () => openTask(task), 'calendar-task' + (task.status === 'done' ? ' completed' : ''))
       entry.draggable = true
       entry.addEventListener('dragstart', event => { draggedTask = task.id; event.dataTransfer.setData('text/plain', task.id) })
       day.append(entry)
     }
+    for (const event of dayEvents.slice(0, Math.max(0, 4 - Math.min(3, dayTasks.length)))) day.append(button(event.title, () => openEvent(event), 'calendar-source-event'))
+    const rest = dayTasks.length + dayEvents.length - Math.min(3, dayTasks.length) - Math.min(dayEvents.length, Math.max(0, 4 - Math.min(3, dayTasks.length)))
+    if (rest > 0) day.append(button('+' + rest + ' outros', () => { selectedCalendarDay = date; render() }, 'calendar-more'))
     day.addEventListener('dragover', event => event.preventDefault())
     day.addEventListener('drop', async event => {
       event.preventDefault()
@@ -328,7 +364,20 @@ function renderCalendar(content, tasks) {
     })
     grid.append(day)
   }
-  content.append(header, node('div', { class: 'calendar-wrap' }, grid))
+  const dayTasks = datedTasks.get(selectedCalendarDay) || []
+  const dayEvents = datedEvents.get(selectedCalendarDay) || []
+  const dayDetails = node('section', { class: 'calendar-day-details', 'aria-label': 'Compromissos do dia selecionado' })
+  const detailsHeader = node('div', { class: 'calendar-day-details-head' }, [
+    node('div', {}, [node('h3', { text: new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(selectedCalendarDay + 'T12:00:00Z')) }), node('p', { class: 'muted', text: dayTasks.length + ' demanda(s)' + (globalCalendar ? ' · ' + dayEvents.length + ' evento(s)' : '') })]),
+    button('+ Demanda neste dia', () => { if (requirePlan()) openTask(null, { dueDate: selectedCalendarDay }) }, 'button button-small button-primary')
+  ])
+  dayDetails.append(detailsHeader)
+  if (!dayTasks.length && !dayEvents.length) dayDetails.append(node('p', { class: 'calendar-day-details-empty', text: 'Nenhuma demanda ou evento para este dia.' }))
+  else {
+    for (const task of dayTasks) dayDetails.append(node('div', { class: 'calendar-detail-row' }, [node('span', { class: 'calendar-detail-dot task-dot' }), button(task.title, () => openTask(task), 'task-title'), node('small', { text: planName(task.planId) })]))
+    for (const event of dayEvents) dayDetails.append(node('div', { class: 'calendar-detail-row' }, [node('span', { class: 'calendar-detail-dot event-dot' }), button(event.title, () => openEvent(event), 'task-title'), node('small', { text: 'Agenda IPCVT' })]))
+  }
+  content.append(header, node('div', { class: 'calendar-wrap' }, grid), dayDetails)
   const undated = tasks.filter(task => !task.dueDate && !task.startDate)
   if (undated.length) content.append(node('h3', { text: 'Demandas sem data' }), node('div', { class: 'undated-tasks' }, undated.map(taskCard)))
 }
@@ -398,7 +447,7 @@ function openPlanBoard(planId) {
 function renderPlans(content) {
   const plans = activePlans().sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
   content.append(node('div', { class: 'plans-intro' }, [
-    node('div', {}, [node('h3', { text: 'O trabalho começa em um plano' }), node('p', { text: 'Abra um plano para visualizar suas tarefas em quadro, grade, calendário ou cronograma.' })]),
+    node('div', {}, [node('h3', { text: 'Espaços de trabalho da Comissão' }), node('p', { text: 'Organize demandas por equipe ou projeto. Um evento simples não precisa de um plano exclusivo.' })]),
     button('+ Novo plano', () => openPlan(), 'button button-primary')
   ]))
   if (!plans.length) {
@@ -691,7 +740,7 @@ async function updateRelativeDates(previous, next) {
   return review
 }
 const taskFilterIds = ['plan-filter', 'team-filter', 'assignee-filter', 'status-filter', 'event-filter']
-const taskViews = new Set(['board', 'list', 'calendar', 'gantt', 'summary'])
+const taskViews = new Set(['board', 'list', 'calendar', 'calendar-all', 'gantt', 'summary'])
 function clearTaskFilters() {
   for (const id of taskFilterIds) $(id).value = ''
   $('search-filter').value = ''
@@ -706,6 +755,11 @@ function changeView(view, { preserveFilters = false } = {}) {
 
 function chooseView(control) {
   const insidePlan = !!control.closest('.plan-view-tabs')
+  if (control.dataset.view === 'calendar-all') {
+    clearTaskFilters()
+    changeView('calendar-all', { preserveFilters: true })
+    return
+  }
   if (control.dataset.view === 'list' && !insidePlan) {
     clearTaskFilters()
     changeView('list', { preserveFilters: true })
@@ -718,7 +772,7 @@ function render() {
   if (session.status !== 'authorized') return
   refreshFilters()
   const selected = activePlans().find(plan => plan.id === selectedPlan())
-  const withinPlan = !!selected && taskViews.has(currentView)
+  const withinPlan = !!selected && taskViews.has(currentView) && currentView !== 'calendar-all'
   const sidebarPlans = $('sidebar-plan-list')
   sidebarPlans.replaceChildren(...activePlans().sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')).map(plan => {
     const entry = button(plan.name, () => openPlanBoard(plan.id), 'sidebar-plan-link')
@@ -729,11 +783,11 @@ function render() {
   if (!activePlans().length) sidebarPlans.append(node('span', { class: 'sidebar-plan-empty', text: 'Nenhum plano criado' }))
   $('search-filter').parentElement.querySelector('span').textContent = currentView === 'events' ? 'Buscar evento' : 'Buscar demanda'
   $('search-filter').placeholder = currentView === 'events' ? 'Encontre um evento pelo nome' : 'Nome, responsável ou equipe'
-  const title = { home: 'Meu dia', mine: 'Minhas tarefas', plans: 'Meus planos', events: 'Agenda da igreja', board: 'Quadro', list: 'Todas as demandas', calendar: 'Calendário', gantt: 'Cronograma', summary: 'Gráficos', integrations: 'Google Agenda', routines: 'Rotinas semanais' }[currentView]
+  const title = { home: 'Meu dia', mine: 'Minhas tarefas', plans: 'Meus planos', events: 'Agenda da igreja', board: 'Quadro', list: 'Todas as demandas', calendar: 'Calendário', 'calendar-all': 'Calendário de demandas', gantt: 'Cronograma', summary: 'Gráficos', integrations: 'Google Agenda', routines: 'Rotinas semanais' }[currentView]
   $('view-title').textContent = withinPlan ? selected.name : title
   $('view-title').parentElement.querySelector('.view-heading-note').textContent = withinPlan
     ? selected.description || 'Organize e acompanhe todas as tarefas deste plano.'
-    : ({ home: 'O que você precisa acompanhar hoje.', mine: 'Suas tarefas, em todos os planos.', plans: 'Escolha um plano para começar a trabalhar.', events: 'Datas oficiais para consulta e referência das tarefas.', list: 'Todas as tarefas, de todos os planos.', integrations: 'Fonte oficial e sincronização do calendário.', routines: 'Demandas que se repetem semanalmente.' })[currentView] || ''
+    : ({ home: 'O que você precisa acompanhar hoje.', mine: 'Suas tarefas, em todos os planos.', plans: 'Escolha um plano para começar a trabalhar.', events: 'Datas oficiais para consulta e referência das tarefas.', 'calendar-all': 'Visualize os prazos de todos os planos e os eventos oficiais da igreja.', list: 'Todas as tarefas, de todos os planos.', integrations: 'Fonte oficial e sincronização do calendário.', routines: 'Demandas que se repetem semanalmente.' })[currentView] || ''
   document.querySelectorAll('[data-view]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.view === currentView && (control.closest('.plan-view-tabs') || !withinPlan))))
   $('plan-view-tabs').hidden = !withinPlan
   $('plan-filter').closest('label').style.display = withinPlan ? 'none' : ''
@@ -746,12 +800,12 @@ function render() {
   $('clear-filters').hidden = !filterCount && !value('search-filter')
   const content = $('view-content')
   content.replaceChildren()
-  if (!activePlans().length && taskViews.has(currentView)) {
+  if (!activePlans().length && taskViews.has(currentView) && currentView !== 'calendar-all') {
     content.append(empty('Crie um plano para reunir suas demandas e acompanhar o andamento.'), button('Criar plano', () => openPlan(), 'button button-primary'))
     return
   }
   const tasks = visibleTasks()
-  ;({ home: renderMyDay, mine: renderMyDay, plans: renderPlans, events: renderEvents, board: renderBoard, list: renderList, calendar: renderCalendar, gantt: renderGantt, summary: renderSummary, integrations: renderIntegrations, routines: renderRoutines }[currentView])(content, tasks)
+  ;({ home: renderMyDay, mine: renderMyDay, plans: renderPlans, events: renderEvents, board: renderBoard, list: renderList, calendar: renderCalendar, 'calendar-all': renderCalendar, gantt: renderGantt, summary: renderSummary, integrations: renderIntegrations, routines: renderRoutines }[currentView])(content, tasks)
 }
 function fillBucketSelect(select, planId, current = '') {
   setOptions(select, state.buckets.filter(bucket => bucket.planId === planId && !bucket.deleted).sort((a, b) => a.order - b.order).map(bucket => [bucket.id, bucket.name]), current, ['', 'Sem bucket'])
@@ -783,7 +837,7 @@ function openTask(task = null, defaults = {}) {
   $('task-date-mode').value = current.dateMode || 'manual'
   $('task-offset').value = current.dueOffsetDays ?? 0
   $('legacy-relative-dates').hidden = current.dateMode !== 'event'
-  $('task-advanced').open = !!current.dependencyIds?.length || current.dateMode === 'event'
+  $('task-advanced').open = !!current.dependencyIds?.length || current.dateMode === 'event' || (!!task && !bucketStatus(bucketName(current.bucketId)))
   updateTaskEventFields()
   $('delete-task-button').hidden = !task
   $('task-dialog').showModal()
@@ -798,7 +852,7 @@ function updateTaskEventFields(recalculate = false) {
   $('task-offset').closest('.field')?.classList.toggle('is-disabled', !relative)
   $('task-event-hint').textContent = event
     ? 'Evento-alvo: ' + event.title + ' · ' + formatDate(event.startDate) + '. ' + (relative ? 'Esta demanda antiga usa um prazo relacionado ao evento.' : 'O prazo desta demanda é independente da data do evento.')
-    : 'Sem evento-alvo. Você pode vincular um evento depois, se desejar.'
+    : ''
   if (recalculate && relative) {
     const oldDue = value('task-due')
     const proposed = addDays(event.startDate, Number(value('task-offset')))
@@ -875,6 +929,7 @@ function openPlan(plan = null) {
   $('plan-start').value = plan?.startDate || ''
   $('plan-due').value = plan?.dueDate || ''
   $('plan-buckets').value = plan ? state.buckets.filter(bucket => bucket.planId === plan.id && !bucket.deleted).sort((a, b) => a.order - b.order).map(bucket => bucket.name).join('\n') : 'A fazer\nEm andamento\nConcluído'
+  $('plan-advanced').open = !!plan
   $('delete-plan-button').hidden = !plan
   $('delete-plan-button').textContent = 'Arquivar plano'
   $('plan-dialog').showModal()

@@ -270,6 +270,53 @@
   :root[data-theme="dark"] .plan-card-progress-label { color: #adbfaf; }
   :root[data-theme="dark"] .plan-card-progress { background: #3c4b40; }
   :root[data-theme="dark"] .plan-card-progress-label strong { color: #a4d9ae; }
+
+  /* Contraste da interface refinada e do calendário geral. */
+  :root[data-theme="dark"] .workspace-quickbar,
+  :root[data-theme="dark"] .planner-main,
+  :root[data-theme="dark"] .calendar-wrap,
+  :root[data-theme="dark"] .calendar-grid,
+  :root[data-theme="dark"] .calendar-day,
+  :root[data-theme="dark"] .calendar-arrow,
+  :root[data-theme="dark"] .calendar-controls select,
+  :root[data-theme="dark"] .calendar-day-details,
+  :root[data-theme="dark"] #task-dialog .dialog-heading,
+  :root[data-theme="dark"] #task-dialog .dialog-body { background:#242a29; border-color:#405048; color:#edf3ee; }
+  :root[data-theme="dark"] .planner-sidebar { background:#202824; border-color:#405048; }
+  :root[data-theme="dark"] .calendar-weekday,
+  :root[data-theme="dark"] .calendar-day.other-month,
+  :root[data-theme="dark"] #task-dialog .dialog-footer { background:#28312b; border-color:#405048; }
+  :root[data-theme="dark"] .calendar-day.today { background:#2b3d33; }
+  :root[data-theme="dark"] .calendar-day.selected { background:#304a39; outline-color:#7ab68f; }
+  :root[data-theme="dark"] .calendar-date { color:#c7dacb; }
+  :root[data-theme="dark"] .calendar-date[aria-pressed=true],
+  :root[data-theme="dark"] .calendar-date:hover { background:#40644a!important; color:#eefaf0; }
+  :root[data-theme="dark"] .calendar-toolbar-title strong,
+  :root[data-theme="dark"] .calendar-day-details-head h3,
+  :root[data-theme="dark"] .calendar-detail-row .task-title,
+  :root[data-theme="dark"] #task-dialog .dialog-heading h2,
+  :root[data-theme="dark"] #task-dialog .task-editor-section>h3,
+  :root[data-theme="dark"] #task-dialog .task-primary-title { color:#ddf0e1; }
+  :root[data-theme="dark"] .calendar-toolbar-title span,
+  :root[data-theme="dark"] .calendar-detail-row small,
+  :root[data-theme="dark"] .calendar-day-details-empty,
+  :root[data-theme="dark"] .calendar-day-details-head p { color:#b6c6ba; }
+  :root[data-theme="dark"] .calendar-detail-row,
+  :root[data-theme="dark"] .calendar-day,
+  :root[data-theme="dark"] #task-dialog .task-editor-section { border-color:#3c4b40; }
+  :root[data-theme="dark"] .calendar-day .calendar-task { background:#294734; border-color:#66a57c; color:#c7ecd1; }
+  :root[data-theme="dark"] .calendar-day .calendar-source-event { background:#4c4130; border-color:#c9a05d; color:#f5daa4; }
+  :root[data-theme="dark"] .calendar-event-toggle[aria-pressed=true] { background:#344d37; color:#d3e8d7; border-color:#537655; }
+  :root[data-theme="dark"] .calendar-arrow { color:#d4ebd9; }
+  :root[data-theme="dark"] .task-team-chip { background:#35433a; color:#c7dacb; }
+  :root[data-theme="dark"] .task-due { color:#b7c9bd; }
+  :root[data-theme="dark"] .task-due.is-late { color:#f0a59d; }
+  :root[data-theme="dark"] #task-dialog .field { color:#cadbcf; }
+  :root[data-theme="dark"] #task-dialog .field input,
+  :root[data-theme="dark"] #task-dialog .field select,
+  :root[data-theme="dark"] #task-dialog .field textarea { background:#202824; border-color:#4b5a50; color:#eef4ee; }
+  :root[data-theme="dark"] #task-dialog .task-editor-advanced { background:#27312b; border-color:#46584b; }
+  :root[data-theme="dark"] .plan-dialog-explain { background:#2b4134; border-color:#46634e; color:#cfe3d3; }
   @media(max-width:900px) {
     :root[data-theme="dark"] .view-nav button[aria-pressed=true] { box-shadow: inset 0 -3px #78b98e; }
     :root[data-theme="dark"] .nav-extras[open] { background: #24292e; }
