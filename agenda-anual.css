@@ -516,3 +516,76 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid
   .duplex-sheet { break-after: page; page-break-after: always; break-inside: avoid; page-break-inside: avoid; }
   .duplex-sheet:last-child { break-after: auto; page-break-after: auto; }
 }
+
+/* Celulares e tablets têm leitura própria. A composição A4 continua
+   mensurável fora da tela e só aparece durante a impressão. */
+@media screen and (max-width: 1190px) {
+  .booklet-print-area {
+    position: absolute;
+    top: 0;
+    left: -30000px;
+    width: 297mm;
+    margin: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .print-area:not([hidden]) { display: block !important; }
+  .print-sheet {
+    min-height: 0;
+    border-radius: 12px;
+    padding: clamp(16px, 3vw, 35px);
+    margin-bottom: 18px;
+  }
+  .calendar-grid { row-gap: 12px; }
+  .detail-foot { margin-top: 16px; }
+}
+
+@media screen and (max-width: 760px) {
+  .app-bar { padding: 12px 18px; min-height: 63px; }
+  .app-shell { padding: 24px 14px 28px; }
+  .page-toolbar { gap: 18px; margin-bottom: 17px; }
+  .page-intro { width: 100%; }
+  .page-intro h1 { font-size: clamp(30px, 7vw, 37px); }
+  .page-intro p { max-width: 100%; }
+  .toolbar-actions {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .toolbar-actions .year-control { min-width: 0; }
+  .toolbar-actions .year-control select { width: 100%; min-width: 0; }
+  .toolbar-actions .button { width: 100%; min-width: 0; min-height: 44px; height: auto; padding: 11px 10px; text-align: center; }
+  .toolbar-actions > a.button, .toolbar-actions > .button-primary { grid-column: 1 / -1; }
+  .load-status { margin-bottom: 16px; padding: 12px; }
+  .booklet-instructions { margin: 0 0 17px; padding: 0 2px; }
+  .sheet-masthead { gap: 8px; }
+  .church-identity { min-width: 0; }
+  .church-identity img { width: 36px; height: 39px; }
+  .cover-heading { gap: 12px; }
+  .cover-heading h2 { font-size: clamp(24px, 6vw, 30px); }
+  .cover-year { font-size: clamp(36px, 9vw, 48px); }
+  .event-row { padding: 10px 0; }
+  .event-details h4 { font-size: 13px; line-height: 1.35; }
+  .event-meta { font-size: 10.5px; margin-top: 4px; }
+  .month-panel-heading h3 { font-size: 21px; }
+  .month-panel + .month-panel { margin-top: 14px; }
+  .screen-footer { gap: 12px; }
+}
+
+@media screen and (max-width: 480px) {
+  .print-sheet { padding: 18px 15px; }
+  .sheet-masthead .church-identity strong { font-size: 9px; }
+  .cover-heading { align-items: flex-end; }
+  .cover-heading p { display: none; }
+  .calendar-grid { grid-template-columns: 1fr; gap: 11px; }
+  .mini-month { padding: 12px 14px; }
+  .mini-month-head { margin-bottom: 10px; padding-bottom: 8px; }
+  .mini-month-head strong { font-size: 20px; }
+  .mini-month-head span { font-size: 10px; }
+  .mini-month-grid { gap: 3px 2px; }
+  .mini-month-grid span, .mini-month-grid .weekday { height: 29px; font-size: 12px; }
+  .sheet-foot { gap: 6px; font-size: 10px; }
+  .detail-masthead h2 { font-size: 27px; }
+  .detail-year { font-size: 37px; }
+}
