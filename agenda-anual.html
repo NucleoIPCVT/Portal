@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="agenda-anual.css">
-    <script type="module" src="agenda-anual.js?v=20261110"></script>
+    <link rel="stylesheet" href="agenda-anual.css?v=20261110-onepage">
+    <script type="module" src="agenda-anual.js?v=20261110-onepage"></script>
   </head>
   <body>
     <header class="app-bar screen-only">
@@ -34,14 +34,14 @@
           </label>
           <button id="refresh-button" class="button button-secondary" type="button" title="Consultar os eventos mais recentes da Agenda IPCVT">↻ <span>Atualizar</span></button>
           <a class="button button-secondary" href="https://calendar.google.com/calendar/embed?src=0d88300041a5eeef838f5f57c87594ebbd4e2ae41b4f5745335825299acdc5de%40group.calendar.google.com&amp;ctz=America%2FSao_Paulo" target="_blank" rel="noopener noreferrer" title="Consultar a agenda original diretamente no Google">Ver no Google ↗</a>
-          <button id="print-button" class="button button-primary" type="button" disabled>▤ <span>Imprimir caderneta / Salvar PDF</span></button>
+          <button id="print-button" class="button button-primary" type="button" disabled>▤ <span>Imprimir 1 página / Salvar PDF</span></button>
         </div>
       </div>
 
       <div id="load-status" class="load-status screen-only" role="status" aria-live="polite">Buscando os eventos da Agenda IPCVT...</div>
       <p class="booklet-instructions screen-only">
-        <strong>Formato de caderneta:</strong> impressão em A4 paisagem, frente e verso, virando na borda curta.
-        As páginas já saem na ordem para dobrar cada folha ao meio e encaixar uma dentro da outra.
+        <strong>Formato compacto:</strong> uma folha A4 em paisagem, com os 12 meses à esquerda e a lista cronológica de eventos à direita.
+        Imprima apenas um lado da folha, em escala de 100%, ou salve em PDF.
         <span id="booklet-sheet-count"></span>
       </p>
 
@@ -76,7 +76,7 @@
       <div id="booklet-print-area" class="booklet-print-area" aria-hidden="true"></div>
       <footer class="screen-footer screen-only">
         <a href="index.html">← Voltar ao Portal</a>
-        <p>Os eventos vêm da Agenda IPCVT no Google. Quando a leitura direta estiver configurada, o Portal consultará a fonte oficial.</p>
+        <p>Os eventos vêm da Agenda IPCVT no Google e são consultados novamente ao clicar em Atualizar.</p>
       </footer>
     </main>
   </body>

@@ -137,104 +137,118 @@ function renderDetailSheet(year, monthIndexes, monthData, pageNumber, totalPages
   return sheet;
 }
 
-function bookletPage(className, label) {
-  const page = textElement('section', `booklet-page ${className}`, '');
-  page.setAttribute('aria-label', label);
-  return page;
+function compactDateLabel(event) {
+  if (event.startDate === event.endDate) return event.startDate.slice(8);
+  const shortDate = value => `${value.slice(8)}/${value.slice(5, 7)}`;
+  return `${shortDate(event.startDate)}–${shortDate(event.endDate)}`;
 }
 
-function bookletCover(year, totalEvents) {
-  const page = bookletPage('booklet-cover', `Capa da agenda de ${year}`);
-  const identity = textElement('div', 'booklet-cover-identity', '');
-  const logo = document.createElement('img');
-  logo.src = 'logo-igreja.png';
-  logo.alt = '';
-  identity.append(logo);
-  identity.append(textElement('p', '', 'Igreja Presbiteriana Central em Vilar dos Teles'));
-  page.append(identity);
-  const center = textElement('div', 'booklet-cover-center', '');
-  center.append(textElement('span', 'booklet-cover-kicker', 'Programação da igreja'));
-  center.append(textElement('h1', '', 'Agenda anual'));
-  center.append(textElement('strong', 'booklet-cover-year', String(year)));
-  center.append(textElement('p', '', 'Encontros, celebrações e atividades da nossa comunidade.'));
-  page.append(center);
-  const footer = textElement('div', 'booklet-cover-footer', '');
-  const societies = textElement('div', 'booklet-cover-societies', '');
-  const logos = [
+function compactMonth(monthIndex, events) {
+  const panel = textElement('section', 'single-event-month', '');
+  const title = textElement('header', 'single-event-month-title', '');
+  title.append(textElement('strong', '', MONTHS[monthIndex]));
+  title.append(textElement('span', '', `${events.length}`));
+  panel.append(title);
+
+  for (const event of events) {
+    const row = textElement('div', 'single-event-row', '');
+    row.append(textElement('span', 'single-event-date', compactDateLabel(event)));
+    const detail = textElement('span', 'single-event-detail', '');
+    detail.append(textElement('strong', 'single-event-name', event.title || 'Evento sem título'));
+    if (!event.allDay && event.startAt) detail.append(textElement('span', 'single-event-time', ` · ${formatHour(event.startAt)}`));
+    if (event.location?.trim()) detail.append(textElement('span', 'single-event-location', ` · ${event.location.trim()}`));
+    row.append(detail);
+    panel.append(row);
+  }
+  return panel;
+}
+
+function renderSinglePage(year, months, yearEvents) {
+  const sheet = textElement('section', 'single-page-sheet', '');
+  sheet.setAttribute('aria-label', `Calendário e eventos da IPCVT de ${year} em uma página`);
+
+  const calendar = textElement('section', 'single-page-calendar', '');
+  const calendarHeading = textElement('header', 'single-page-heading', '');
+  const brand = textElement('div', 'single-page-brand', '');
+  const churchLogo = document.createElement('img');
+  churchLogo.src = 'logo-igreja.png';
+  churchLogo.alt = '';
+  brand.append(churchLogo);
+  const title = textElement('div', '', '');
+  title.append(textElement('span', '', 'Igreja Presbiteriana Central em Vilar dos Teles'));
+  title.append(textElement('h2', '', 'Calendário anual'));
+  brand.append(title);
+  calendarHeading.append(brand, textElement('strong', 'single-page-year', String(year)));
+  calendar.append(calendarHeading);
+
+  const calendarGrid = textElement('div', 'single-page-calendar-grid', '');
+  for (let index = 0; index < 12; index += 1) calendarGrid.append(renderMiniMonth(year, index, months[index]));
+  calendar.append(calendarGrid);
+
+  const calendarFooter = textElement('footer', 'single-page-calendar-footer', '');
+  calendarFooter.append(textElement('span', '', '● Dias com eventos'));
+  const societies = textElement('div', 'single-page-societies', '');
+  for (const [name, label] of [
     ['saf', 'Sociedade Auxiliadora Feminina'],
     ['uph', 'União Presbiteriana de Homens'],
     ['ucp', 'União de Crianças Presbiterianas'],
     ['ump', 'União de Mocidade Presbiteriana'],
     ['upa', 'União Presbiteriana de Adolescentes'],
-  ];
-  for (const [name, label] of logos) {
+  ]) {
     const logo = document.createElement('img');
     logo.src = `logo-${name}.webp`;
     logo.alt = label;
     societies.append(logo);
   }
-  footer.append(societies);
-  footer.append(textElement('p', 'booklet-cover-bottom', `IPCVT  ·  ${totalEvents} eventos registrados`));
-  page.append(footer);
-  return page;
-}
+  calendarFooter.append(societies);
+  calendar.append(calendarFooter);
 
-function bookletMonthPage(year, indexes, months) {
-  const page = bookletPage('booklet-events-page', `Programação de ${indexes.map(index => MONTHS[index]).join(' e ')}`);
-  const header = textElement('header', 'booklet-events-header', '');
-  header.append(textElement('span', '', 'Agenda IPCVT'));
-  header.append(textElement('strong', '', String(year)));
-  page.append(header);
-  const list = textElement('div', 'booklet-month-list', '');
-  for (const index of indexes) list.append(renderMonthPanel(year, index, months[index]));
-  page.append(list);
-  return page;
-}
+  const details = textElement('section', 'single-page-events', '');
+  const heading = textElement('header', 'single-page-events-heading', '');
+  heading.append(textElement('h2', '', 'Programação de eventos'));
+  heading.append(textElement('span', '', `${yearEvents.length} eventos · ${year}`));
+  details.append(heading);
 
-function bookletCalendar(year, months) {
-  const page = bookletPage('booklet-calendar-page', `Calendário de ${year}`);
-  const heading = textElement('div', 'booklet-calendar-heading', '');
-  heading.append(textElement('span', '', 'IPCVT  ·  Calendário anual'));
-  heading.append(textElement('h2', '', String(year)));
-  page.append(heading);
-  const grid = textElement('div', 'booklet-calendar-grid', '');
-  for (let i = 0; i < 12; i += 1) grid.append(renderMiniMonth(year, i, months[i]));
-  page.append(grid);
-  page.append(textElement('div', 'booklet-calendar-legend', '● Dias com eventos na Agenda IPCVT'));
-  return page;
-}
-
-function renderBooklet(year, groups, months, totalEvents) {
-  // Uma folha dobrada contém quatro páginas. A frente da primeira folha
-  // mostra a última página à esquerda e a capa à direita.
-  const pages = [
-    bookletCover(year, totalEvents),
-    ...groups.map(indexes => bookletMonthPage(year, indexes, months)),
-    bookletCalendar(year, months),
-  ];
-  while (pages.length % 4 !== 0) {
-    pages.splice(pages.length - 1, 0, bookletPage('booklet-blank-page', 'Página de preenchimento'));
+  // Cada compromisso aparece uma única vez, inclusive quando ocupa mais de um mês.
+  const eventMonths = MONTHS.map((_, index) => yearEvents.filter(event => {
+    const month = event.startDate < `${year}-01-01` ? 1 : Number(event.startDate.slice(5, 7));
+    return month === index + 1;
+  }));
+  const estimate = items => items.reduce((sum, event) =>
+    sum + 1 + Math.max(0, (event.title?.length || 0) + (event.location?.length || 0) - 48) / 75, 0);
+  const weights = eventMonths.map(items => items.length ? 1.8 + estimate(items) : 0);
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+  let leftWeight = 0;
+  let bestSplit = 6;
+  let closest = Infinity;
+  for (let index = 1; index < 12; index += 1) {
+    leftWeight += weights[index - 1];
+    const difference = Math.abs(totalWeight - leftWeight * 2);
+    if (difference < closest) { closest = difference; bestSplit = index; }
   }
+  const columns = textElement('div', 'single-page-event-columns', '');
+  for (const [start, end] of [[0, bestSplit], [bestSplit, 12]]) {
+    const column = textElement('div', 'single-page-event-column', '');
+    for (let index = start; index < end; index += 1) {
+      if (eventMonths[index].length) column.append(compactMonth(index, eventMonths[index]));
+    }
+    columns.append(column);
+  }
+  details.append(columns);
+  details.append(textElement('footer', 'single-page-events-footer', 'Fonte: Agenda IPCVT no Google Agenda'));
+  sheet.append(calendar, details);
+  byId('booklet-print-area').replaceChildren(sheet);
+  byId('booklet-sheet-count').textContent = ` · ${yearEvents.length} eventos em uma página.`;
 
-  pages.forEach((page, index) => {
-    if (page.classList.contains('booklet-events-page')) {
-      page.append(textElement('footer', 'booklet-page-footer', `Igreja Presbiteriana Central em Vilar dos Teles  ·  ${index + 1} / ${pages.length}`));
+  // A folha de impressão é medida fora da tela para ajustar anos com mais eventos.
+  requestAnimationFrame(() => {
+    const eventColumns = sheet.querySelectorAll('.single-page-event-column');
+    let size = 6.7;
+    while (size > 4.8 && [...eventColumns].some(column => column.scrollHeight > column.clientHeight + 1)) {
+      size = Math.max(4.8, size - 0.2);
+      sheet.style.setProperty('--single-event-font', `${size.toFixed(1)}pt`);
     }
   });
-
-  const spreads = [];
-  for (let sheet = 0; sheet < pages.length / 4; sheet += 1) {
-    const front = textElement('div', 'booklet-spread', '');
-    front.append(pages[pages.length - 1 - sheet * 2], pages[sheet * 2]);
-    front.setAttribute('aria-label', `Folha ${sheet + 1}, frente`);
-    const back = textElement('div', 'booklet-spread', '');
-    back.append(pages[sheet * 2 + 1], pages[pages.length - 2 - sheet * 2]);
-    back.setAttribute('aria-label', `Folha ${sheet + 1}, verso`);
-    spreads.push(front, back);
-  }
-  byId('booklet-print-area').replaceChildren(...spreads);
-  const sheets = pages.length / 4;
-  byId('booklet-sheet-count').textContent = ` · ${sheets} folha${sheets === 1 ? '' : 's'} A4 (${spreads.length} páginas no PDF).`;
 }
 
 function render() {
@@ -255,7 +269,7 @@ function render() {
   for (let i = 0; i < activeIndexes.length; i += 2) groups.push(activeIndexes.slice(i, i + 2));
   const details = byId('detail-pages');
   details.replaceChildren(...groups.map((indexes, index) => renderDetailSheet(year, indexes, months, index + 2, groups.length + 1)));
-  renderBooklet(year, groups, months, yearEvents.length);
+  renderSinglePage(year, months, yearEvents);
   byId('print-area').hidden = false;
   printButton.disabled = false;
   const direct = snapshot.sourceKind === 'google-api';

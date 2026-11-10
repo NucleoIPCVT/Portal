@@ -252,3 +252,134 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid
   .booklet-calendar-page .mini-month-grid .day.has-event { color: #fff; background: #376a50; font-weight: 700; }
   .booklet-calendar-legend { margin-top: 3mm; text-align: center; font: 7pt 'DM Sans',Arial,sans-serif; color: #607d6b; }
 }
+
+/* Impressão em uma única folha A4 paisagem: calendário + programação. */
+.single-page-sheet {
+  --single-event-font: 6.7pt;
+  display: flex;
+  width: 297mm;
+  height: 210mm;
+  padding: 5mm 5mm 4mm;
+  background: #fffdfa;
+  color: #244433;
+  font-family: 'DM Sans', Arial, sans-serif;
+  overflow: hidden;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+.single-page-calendar {
+  display: flex;
+  flex: 0 0 44%;
+  min-width: 0;
+  flex-direction: column;
+  padding: 0 4mm 0 0;
+}
+.single-page-heading {
+  display: flex;
+  flex: 0 0 12mm;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2mm;
+  margin-bottom: 2mm;
+  border-bottom: .45mm solid #b49d68;
+}
+.single-page-brand { display: flex; align-items: center; gap: 2mm; min-width: 0; }
+.single-page-brand img { width: 10mm; height: 10mm; object-fit: contain; }
+.single-page-brand span { display: block; max-width: 72mm; color: #6c7d6b; font: 600 5.8pt/1.15 'DM Sans',Arial,sans-serif; }
+.single-page-brand h2 { margin: .4mm 0 0; color: #173f32; font: normal 14pt/1.05 'DM Serif Display',Georgia,serif; }
+.single-page-year { color: #b49a64; font: normal 19pt 'DM Serif Display',Georgia,serif; }
+.single-page-calendar-grid {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  grid-template-rows: repeat(4,minmax(0,1fr));
+  gap: 1.6mm;
+}
+.single-page-calendar-grid .mini-month { min-width: 0; padding: 1mm .8mm .7mm; background: #fff; border: 1px solid #dce5da; border-radius: .7mm; }
+.single-page-calendar-grid .mini-month-head { margin-bottom: .8mm; padding-bottom: .6mm; border-bottom: 1px solid #e0e7dd; }
+.single-page-calendar-grid .mini-month-head strong { font: normal 9pt/1 'DM Serif Display',Georgia,serif; }
+.single-page-calendar-grid .mini-month-head span { display: none; }
+.single-page-calendar-grid .mini-month-grid { gap: .1mm 0; }
+.single-page-calendar-grid .mini-month-grid span,
+.single-page-calendar-grid .mini-month-grid .weekday { height: 3.8mm; font: 6.6pt/1 'DM Sans',Arial,sans-serif; }
+.single-page-calendar-grid .mini-month-grid .weekday { font-weight: 700; color: #78917d; }
+.single-page-calendar-grid .mini-month-grid .day.has-event { color: white; background: #376a50; font-weight: 700; }
+.single-page-calendar-footer {
+  display: flex;
+  flex: 0 0 9mm;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3mm;
+  padding-top: 1.7mm;
+  color: #607d6a;
+  font: 6pt 'DM Sans',Arial,sans-serif;
+}
+.single-page-calendar-footer > span { white-space: nowrap; }
+.single-page-societies { display: flex; flex: 1; justify-content: flex-end; gap: 1.4mm; min-width: 0; }
+.single-page-societies img { width: 11mm; height: 7mm; object-fit: contain; }
+.single-page-events {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  padding-left: 4mm;
+  border-left: .4mm solid #d7e3d8;
+}
+.single-page-events-heading {
+  display: flex;
+  flex: 0 0 12mm;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2mm;
+  margin-bottom: 2mm;
+  padding-top: 2mm;
+  border-bottom: .45mm solid #b49d68;
+}
+.single-page-events-heading h2 { margin: 0; color: #173f32; font: normal 15pt/1 'DM Serif Display',Georgia,serif; }
+.single-page-events-heading span { color: #749080; font: 700 6.2pt 'DM Sans',Arial,sans-serif; white-space: nowrap; }
+.single-page-event-columns {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 2.5mm;
+}
+.single-page-event-column { min-width: 0; min-height: 0; overflow: hidden; }
+.single-event-month { margin-bottom: 1.3mm; }
+.single-event-month-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 1.1mm 0 .45mm;
+  padding: .3mm 0 .35mm;
+  border-bottom: 1px solid #cbdcd0;
+}
+.single-event-month-title strong { color: #23553d; font: 700 calc(var(--single-event-font) + 1.1pt)/1.1 'DM Sans',Arial,sans-serif; text-transform: uppercase; }
+.single-event-month-title span { color: #809588; font: 600 calc(var(--single-event-font) - .8pt)/1 'DM Sans',Arial,sans-serif; }
+.single-event-row { margin: 0; padding: .33mm 0; color: #223b30; font-size: var(--single-event-font); line-height: 1.12; overflow-wrap: anywhere; }
+.single-event-date { display: inline; margin-right: .8mm; color: #276149; font-weight: 700; white-space: nowrap; }
+.single-event-detail { display: inline; }
+.single-event-name { font-weight: 600; }
+.single-event-time { color: #a0844f; white-space: nowrap; font-weight: 600; }
+.single-event-location { color: #728578; }
+.single-page-events-footer { flex: 0 0 5mm; padding-top: 1.5mm; color: #8c9b90; font: 5.8pt 'DM Sans',Arial,sans-serif; text-align: right; }
+
+/* Mantém uma cópia mensurável fora da tela para caber em uma só página. */
+@media screen {
+  .booklet-print-area {
+    display: block;
+    position: absolute;
+    left: -30000px;
+    top: 0;
+    width: 297mm;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+@page { size: A4 landscape; margin: 0; }
+@media print {
+  .print-area { display: none !important; }
+  .booklet-print-area { display: block !important; position: static !important; visibility: visible !important; width: 297mm; margin: 0 !important; padding: 0 !important; }
+  .single-page-sheet { break-inside: avoid; break-after: auto; page-break-inside: avoid; margin: 0; box-shadow: none; }
+}
