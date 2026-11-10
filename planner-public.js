@@ -1,4 +1,4 @@
-import { googleCalendarPublicApiKey } from './google-calendar-public-config.js';
+import { googleCalendarPublicApiKey } from './google-calendar-public-config.js?v=20261110';
 
 // Fonte pública da igreja, sem OAuth dos integrantes do Planner.
 export const publicCalendar = Object.freeze({

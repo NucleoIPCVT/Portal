@@ -1,4 +1,4 @@
-import { readPublicCalendar, hasDirectGoogleAccess } from './planner-public.js';
+import { readPublicCalendar, hasDirectGoogleAccess } from './planner-public.js?v=20261110';
 
 const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
