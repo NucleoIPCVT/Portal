@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" role="img" aria-labelledby="title">
+  <title id="title">Quatro alianças entrelaçadas formando um quadrado</title>
+  <g stroke="#0d4733" stroke-width="5.5">
+    <circle cx="37" cy="37" r="25"/>
+    <circle cx="63" cy="37" r="25"/>
+    <circle cx="37" cy="63" r="25"/>
+    <circle cx="63" cy="63" r="25"/>
+  </g>
+</svg>
