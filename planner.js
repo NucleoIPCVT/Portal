@@ -25,6 +25,7 @@ let publicEvents = []
 let calendarLoadError = ''
 let calendarFetching = false
 let calendarTimer = null
+let calendarLastLoad = 0
 let calendarUnread = []
 
 function node(tag, attrs = {}, children = []) {
@@ -415,6 +416,7 @@ async function refreshPublicCalendar() {
     writeCalendarTracking(summary, calendarUnread)
     publicSnapshot = snapshot
     publicEvents = snapshot.events
+    calendarLastLoad = Date.now()
     calendarLoadError = ''
     updateCalendarBadge()
     render()
@@ -441,6 +443,12 @@ function stopCalendarPolling() {
   calendarTimer = null
   calendarFetching = false
 }
+
+// Assim como a agenda anual, busca as novidades ao retornar para a aba.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && session.status === 'authorized'
+    && Date.now() - calendarLastLoad > 60 * 1000) void refreshPublicCalendar()
+})
 
 function renderPublicIntegration(content) {
   const section = node('section', { class: 'integration-card' }, [
