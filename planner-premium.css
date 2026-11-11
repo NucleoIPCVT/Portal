@@ -56,7 +56,7 @@ body.pm-active .notice:not([hidden]){position:relative;margin:10px 0;padding:12p
 .pm-arrow-button:hover{background:#edf6ef}
 .pm-muted{color:#8b9d91;font-size:12px;line-height:1.6}
 .pm-week-top{display:grid;grid-template-columns:minmax(0,1.26fr) minmax(0,.92fr) minmax(0,.65fr);gap:16px;align-items:stretch;margin-bottom:20px}
-.pm-hero-card{position:relative;isolation:isolate;min-height:237px;padding:26px 28px;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:6px;color:#fff;border-radius:10px;overflow:hidden;background:linear-gradient(90deg,#0c3024dd,#1c4b2d44),url('portal-hero-aquarela.webp') center/cover}
+.pm-hero-card{position:relative;isolation:isolate;min-height:237px;padding:26px 28px;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:6px;color:#fff;border-radius:10px;overflow:hidden;background:linear-gradient(90deg,#0c3024dd,#1c4b2d44),url('planner-church-sm.webp') center/cover}
 .pm-hero-card::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#0a2c22ca 0%,#133b2860 64%,#14432917 100%);z-index:-1}
 .pm-hero-overline{font-size:12px;font-weight:640;color:#eaf6ec}
 .pm-hero-date{font-size:30px;font-weight:770;letter-spacing:-.05em;line-height:1.17}
@@ -193,7 +193,7 @@ body.pm-active .notice:not([hidden]){position:relative;margin:10px 0;padding:12p
 .pm-sunday-navitem:hover{background:#f2f8f1}
 .pm-sunday-navitem[aria-pressed=true]{background:#e4f0e3;color:#296648}
 .pm-sunday-overview-top{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(170px,.54fr) minmax(220px,.84fr);gap:14px}
-.pm-sunday-hero{min-height:238px;border-radius:9px;overflow:hidden;background:linear-gradient(90deg,#0f3026d1,#153b3026),url('portal-hero-mixhouse.webp') center/cover;padding:22px;color:white;display:flex;flex-direction:column;justify-content:flex-end;gap:8px}
+.pm-sunday-hero{min-height:238px;border-radius:9px;overflow:hidden;background:linear-gradient(90deg,#0f3026d1,#153b3026),url('planner-worship-sm.webp') center/cover;padding:22px;color:white;display:flex;flex-direction:column;justify-content:flex-end;gap:8px}
 .pm-sunday-hero .pm-hero-date{font-size:27px}
 .pm-sunday-progress,.pm-sunday-pending{border:1px solid #e3eae4;border-radius:9px;padding:16px;background:#fff}
 .pm-sunday-progress{display:grid;justify-items:center;align-content:start;gap:14px}
