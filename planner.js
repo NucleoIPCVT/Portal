@@ -1347,11 +1347,13 @@ function pmSetSession(next){
   const avatar=$('pm-avatar')
   if(avatar)avatar.textContent=pmInitials(next.name||next.email||'IP')
   if($('pm-account-name'))$('pm-account-name').textContent=next.name||next.email||''
+  if($('pm-settings'))$('pm-settings').hidden=!active||!next.isAdmin
 }
 $('pm-brand-home').addEventListener('click',()=>{calendarMode='week';calendarDate=todayISO();clearTaskFilters();changeView('calendar-all')})
 $('pm-search').addEventListener('input',e=>{$('search-filter').value=e.target.value;render()})
 $('pm-notifications').addEventListener('click',()=>$('planner-notifications-button').click())
 $('pm-theme').addEventListener('click',()=>{$('theme-toggle').click();$('pm-more').open=false})
+$('pm-settings').addEventListener('click',()=>{$('planner-settings-button').click();$('pm-more').open=false})
 $('pm-logout').addEventListener('click',()=>$('logout-button').click())
 
 function render() {
@@ -1376,7 +1378,7 @@ function render() {
     : ({ home: 'O que você precisa acompanhar hoje.', mine: 'Suas tarefas, em todos os planos.', plans: 'Escolha um plano para começar a trabalhar.', events: 'Datas oficiais para consulta e referência das tarefas.', 'calendar-all': calendarMode === 'week' ? 'Da preparação durante a semana ao culto de domingo, com a Agenda IPCVT como referência.' : 'Visualize os compromissos do mês, unindo a Agenda IPCVT às demandas.', list: 'Todas as tarefas, de todos os planos.', integrations: 'Fonte oficial e sincronização do calendário.', routines: 'Demandas que se repetem semanalmente.' })[currentView] || ''
   document.querySelectorAll('[data-view]').forEach(control => {
     const correctCalendarMode = !control.dataset.calendarMode || control.dataset.calendarMode === calendarMode
-    control.setAttribute('aria-pressed', String(control.dataset.view === currentView && correctCalendarMode && (control.closest('.plan-view-tabs') || !withinPlan)))
+    control.setAttribute('aria-pressed', String(control.dataset.view === currentView && correctCalendarMode && (control.closest('.plan-view-tabs') || control.closest('.pm-primary-nav') || !withinPlan)))
   })
   $('plan-view-tabs').hidden = !withinPlan
   $('plan-filter').closest('label').style.display = withinPlan ? 'none' : ''
@@ -1389,7 +1391,7 @@ function render() {
   $('clear-filters').hidden = !filterCount && !value('search-filter')
   const content = $('view-content')
   content.replaceChildren()
-  if (!activePlans().length && taskViews.has(currentView) && currentView !== 'calendar-all') {
+  if (!activePlans().length && ['calendar', 'summary'].includes(currentView)) {
     content.append(empty('Crie um plano para reunir suas demandas e acompanhar o andamento.'), button('Criar plano', () => openPlan(), 'button button-primary'))
     return
   }

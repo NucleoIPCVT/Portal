@@ -258,3 +258,8 @@ body.pm-active .notice:not([hidden]){position:relative;margin:10px 0;padding:12p
   :root[data-theme=dark] .pm-progress-ring strong{color:#d7efdd}
 }
 @media print{.pm-topbar,.pm-header-actions,.pm-more,.pm-toolbar{display:none!important}.pm-stage{padding:0}body.pm-active .planner-main{border:0;box-shadow:none}.pm-premium-board{grid-template-columns:repeat(4,1fr)}}
+
+.pm-more-menu .pm-menu-link{border-radius:5px;text-decoration:none;color:#355443;font-weight:560;font-size:12px;display:block;padding:10px}
+.pm-more-menu .pm-menu-link:hover{background:#edf4ed}
+.pm-more-menu button[hidden]{display:none!important}
+@media screen{:root[data-theme=dark] .pm-more-menu .pm-menu-link{color:#d1e8d6}:root[data-theme=dark] .pm-more-menu .pm-menu-link:hover{background:#345341}}
