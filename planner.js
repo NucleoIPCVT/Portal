@@ -871,6 +871,11 @@ function chooseView(control) {
     changeView('calendar-all', { preserveFilters: true })
     return
   }
+  if (control.closest('.pm-primary-nav') && ['board','gantt'].includes(control.dataset.view)) {
+    clearTaskFilters()
+    changeView(control.dataset.view,{preserveFilters:true})
+    return
+  }
   if (control.dataset.view === 'list' && !insidePlan) {
     clearTaskFilters()
     changeView('list', { preserveFilters: true })
@@ -976,7 +981,7 @@ function pmWeekView(content,tasks) {
   const mine=tasks.filter(task=>(task.assignees||[]).some(person=>person.email?.toLowerCase()===session.email) && task.status!=='done')
   const late=mine.filter(task=>isOverdue(task,todayISO())).length
   const priority=mine.filter(task=>['urgent','high'].includes(task.priority)).length
-  const top=pmGroup('div','pm-week-top')
+  const dashboard=pmGroup('div','pm-week-board')
   const hero=pmGroup('section','pm-hero-card pm-church-hero',[
     pmText('span','pm-hero-overline','Próximo Domingo'),
     pmText('strong','pm-hero-date',pmShort(sunday,{day:'numeric',month:'long',timeZone:'UTC'})),
@@ -988,7 +993,10 @@ function pmWeekView(content,tasks) {
   hero.setAttribute('role','group')
   hero.setAttribute('aria-label','Domingo '+formatDate(sunday))
   const stats=pmGroup('section','pm-stat-card',[
-    pmText('h3','pm-panel-caption','◉  Minhas Demandas'),
+    pmGroup('h3','pm-panel-caption',[
+      pmText('span','pm-check-icon','✓'),
+      pmText('span','','Minhas Demandas')
+    ]),
     pmGroup('div','pm-stat-main',[
       pmGroup('div','pm-stat-value',[pmText('strong','',String(mine.length)),pmText('span','','pendentes')]),
       pmGroup('div','pm-stat-tags',[
@@ -1010,7 +1018,7 @@ function pmWeekView(content,tasks) {
     featured.append(item)
   }
   featured.append(pmButton('Ver todas  →',()=>changeView('list'),'pm-text-link'))
-  top.append(hero,stats,featured)
+  dashboard.append(hero,stats,featured)
   const strip=pmGroup('div','pm-week-strip')
   for(const date of days){
     const day=pmGroup('button','pm-week-tile'+(date===sunday?' pm-week-sunday':'')+(date===todayISO()?' pm-week-today':''),[
@@ -1024,9 +1032,14 @@ function pmWeekView(content,tasks) {
     day.addEventListener('click',()=>{calendarMode='month';calendarDate=date;selectedCalendarDay=date;changeView('calendar-all')})
     strip.append(day)
   }
+  const schedule=pmGroup('section','pm-week-schedule',[
+    pmText('h3','pm-section-title','Programação da Semana'),
+    strip
+  ])
+  dashboard.append(schedule)
   content.append(pmHeader('Planejamento','Semana',pmShort(monday,{day:'numeric',month:'short',timeZone:'UTC'})+' a '+pmShort(sunday,{day:'numeric',month:'long',timeZone:'UTC'}),[
     pmPager('week'),pmButton('+  Nova demanda',()=>pmNewTask(),'pm-primary-button')
-  ]),top,pmText('h3','pm-section-title','Programação da Semana'),strip)
+  ]),dashboard)
   if(!weekTasks.length && !weekEvents.length)content.append(pmText('p','pm-week-hint','Os eventos oficiais e os prazos das demandas aparecerão nesta semana conforme forem cadastrados.'))
 }
 function pmMonthDates(date) {
@@ -1077,10 +1090,15 @@ function pmMonthView(content,tasks) {
     list.append(item)
   }
   aside.append(list,pmButton('+ Demanda neste dia',()=>pmNewTask(selectedCalendarDay),'pm-text-link'))
-  layout.append(calendar,aside)
-  content.append(pmHeader('Calendário',label.replace(/^./,x=>x.toUpperCase()),'',[
-    pmPager('month'),pmButton('Mensal  ▾',()=>{calendarMode='week';render()},'pm-light-button')
-  ]),layout)
+  const calendarMain=pmGroup('section','pm-month-main',[
+    pmHeader('Calendário',label.replace(/^./,x=>x.toUpperCase()),'',[
+      pmPager('month'),
+      pmButton('Mensal  ▾',()=>{calendarMode='week';render()},'pm-light-button')
+    ]),
+    calendar
+  ])
+  layout.append(calendarMain,aside)
+  content.append(layout)
 }
 function pmIsMine(task){return (task.assignees||[]).some(person=>person.email?.toLowerCase()===session.email)}
 function pmPriorityLabel(key){return ({urgent:'Urgente',high:'Alta',normal:'Média',low:'Baixa'})[key]||'Normal'}
@@ -1103,11 +1121,30 @@ function pmDemandView(content,tasks) {
     const b=pmButton(label,()=>{pmDemandTab=key;render()},'pm-demand-tab')
     b.setAttribute('aria-pressed',String(pmDemandTab===key));tabbar.append(b)
   }
+  const search=node('input',{
+    id:'pm-demand-search',
+    type:'search',
+    value:$('search-filter').value,
+    placeholder:'Buscar demanda...',
+    'aria-label':'Buscar demanda',
+    onInput:event=>{
+      const caret=event.target.selectionStart
+      $('search-filter').value=event.target.value
+      $('pm-search').value=event.target.value
+      render()
+      const replacement=$('pm-demand-search')
+      if(replacement){
+        replacement.focus({preventScroll:true})
+        try{replacement.setSelectionRange(caret,caret)}catch{}
+      }
+    }
+  })
   const actions=pmGroup('div','pm-list-actions',[
-    pmButton('⚲ Filtros',()=>{$('workspace-filter-strip').classList.toggle('pm-filters-open')},'pm-light-button'),
+    pmGroup('label','pm-demand-search',[pmText('span','pm-search-symbol','⌕'),search]),
+    pmButton('⚲',()=>{$('workspace-filter-strip').classList.toggle('pm-filters-open')},'pm-light-button pm-filter-button'),
     pmButton('+  Nova demanda',()=>pmNewTask(),'pm-primary-button')
   ])
-  const header=pmHeader('Controle de atividades','Demandas','', [actions])
+  const header=pmHeader('','Demandas','', [actions])
   const filtered=all.filter(task=>pmDemandTab==='mine'?pmIsMine(task):pmDemandTab==='done'?task.status==='done':true)
   let rows=filtered.map(task=>({task,label:''}))
   if(pmDemandTab==='team'||pmDemandTab==='event'){
@@ -1181,10 +1218,18 @@ function pmKanbanView(content,tasks) {
       const card=pmGroup('article','pm-kanban-task')
       card.draggable=true;card.setAttribute('data-task-id',task.id)
       card.addEventListener('dragstart',e=>{draggedTask=task.id;e.dataTransfer?.setData('text/plain',task.id)})
-      card.append(pmButton(task.title,()=>openTask(task),'pm-kanban-title'))
-      card.append(pmGroup('div','pm-kanban-card-foot',[
-        pmText('span','pm-team-tag',task.team||planName(task.planId)),pmAvatarFor(task)
-      ]))
+      if(status==='done'){
+        card.append(pmGroup('div','pm-kanban-done-line',[
+          pmText('span','pm-done-symbol','✓'),
+          pmButton(task.title,()=>openTask(task),'pm-kanban-title')
+        ]))
+      } else {
+        card.append(pmButton(task.title,()=>openTask(task),'pm-kanban-title'))
+        card.append(pmGroup('div','pm-kanban-card-foot',[
+          pmText('span','pm-team-tag',task.team||planName(task.planId)),
+          pmAvatarFor(task)
+        ]))
+      }
       stack.append(card)
     }
     if(!items.length)stack.append(pmText('p','pm-kanban-empty','Arraste demandas para esta coluna.'))
@@ -1198,46 +1243,65 @@ function pmKanbanView(content,tasks) {
     })
     board.append(col)
   }
-  content.append(pmHeader('Organização por andamento','Kanban','',[filterbar]),board)
+  content.append(pmHeader('','Kanban','',[filterbar]),board)
 }
 function pmGanttView(content,tasks){
-  const start=pmWeekStart(pmGanttCursor),dates=Array.from({length:35},(_,i)=>addDays(start,i))
-  const last=dates[dates.length-1]
-  const shown=tasks.filter(t=>t.startDate||t.dueDate).filter(t=>(t.dueDate||t.startDate)>=start&&(t.startDate||t.dueDate)<=last)
-  const grid=pmGroup('div','pm-gantt-view')
-  const left=pmGroup('div','pm-gantt-outline',[pmText('h3','','Planos')])
+  const start=pmWeekStart(pmGanttCursor)
+  const dates=Array.from({length:35},(_,i)=>addDays(start,i))
+  const end=dates[dates.length-1]
+  const shown=tasks.filter(task=>{
+    if(!task.startDate&&!task.dueDate)return false
+    const a=task.startDate||task.dueDate
+    const b=task.dueDate||task.startDate
+    return a<=end&&b>=start
+  })
+  const layout=pmGroup('div','pm-gantt-view')
+  const left=pmGroup('div','pm-gantt-outline',[pmText('h3','','Planos  /  Etapas')])
   const right=pmGroup('div','pm-gantt-chart')
-  const header=pmGroup('div','pm-gantt-dates')
-  for(const date of dates)header.append(pmText('span','pm-gantt-date'+(pmDayName(date)==='Dom'?' pm-gantt-sunday':''),String(Number(date.slice(-2)))))
-  right.append(header)
-  const plans=[...new Set(shown.map(t=>t.planId))]
-  if(!plans.length){
-    left.append(pmText('p','pm-muted','Sem demandas com datas neste período.'))
-    grid.append(left,right)
+  const datesRow=pmGroup('div','pm-gantt-dates')
+  for(const date of dates){
+    datesRow.append(pmText('span','pm-gantt-date'+(pmDayName(date)==='Dom'?' pm-gantt-sunday':''),String(Number(date.slice(-2)))))
+  }
+  right.append(datesRow)
+  const insertHeader=(title,kind)=>{
+    left.append(pmText('h4',kind==='plan'?'pm-gantt-plan':'pm-gantt-bucket',title))
+    right.append(pmGroup('div',kind==='plan'?'pm-gantt-plan-row':'pm-gantt-bucket-row'))
+  }
+  const insertTask=task=>{
+    left.append(pmButton(task.title,()=>openTask(task),'pm-gantt-label'))
+    const row=pmGroup('div','pm-gantt-row')
+    const a=task.startDate||task.dueDate
+    const b=task.dueDate||task.startDate
+    const first=Math.max(0,dayDiff(start,a)),last=Math.min(34,dayDiff(start,b))
+    if(last>=first){
+      const bar=pmButton('',()=>openTask(task),'pm-gantt-bar'+(task.status==='done'?' pm-gantt-done':''))
+      bar.style.left=(first/35*100)+'%'
+      bar.style.width=(Math.max(1,last-first+1)/35*100)+'%'
+      bar.title=task.title+' · '+formatDate(a)+' a '+formatDate(b)
+      row.append(bar)
+    }
+    right.append(row)
+  }
+  const planIds=[...new Set(shown.map(task=>task.planId))]
+  if(!planIds.length){
+    left.append(pmText('p','pm-muted','Nenhuma demanda com prazo neste período.'))
   }else{
-    for(const planId of plans){
+    for(const planId of planIds){
+      insertHeader(planName(planId),'plan')
       const entries=shown.filter(task=>task.planId===planId)
-      left.append(pmText('h4','pm-gantt-plan',planName(planId)))
-      right.append(pmGroup('div','pm-gantt-plan-row'))
-      for(const task of entries){
-        left.append(pmButton(task.title,()=>openTask(task),'pm-gantt-label'))
-        const row=pmGroup('div','pm-gantt-row')
-        const first=task.startDate||task.dueDate,finish=task.dueDate||task.startDate
-        const a=Math.max(0,dayDiff(start,first)),b=Math.min(34,dayDiff(start,finish))
-        if(b>=a){
-          const bar=pmButton('',()=>openTask(task),'pm-gantt-bar')
-          bar.style.left=(a/35*100)+'%'
-          bar.style.width=(Math.max(1,b-a+1)/35*100)+'%'
-          bar.title=task.title+' · '+formatDate(first)+' a '+formatDate(finish)
-          row.append(bar)
-        }
-        right.append(row)
+      const buckets=state.buckets.filter(bucket=>bucket.planId===planId&&!bucket.deleted)
+        .sort((a,b)=>a.order-b.order)
+      const groupKeys=[...new Set(entries.map(task=>task.bucketId||''))]
+      for(const bucketId of groupKeys){
+        const bucket=buckets.find(item=>item.id===bucketId)
+        insertHeader(bucket?.name||'Outras demandas','bucket')
+        for(const task of entries.filter(item=>(item.bucketId||'')===bucketId))insertTask(task)
       }
     }
-    grid.append(left,right)
   }
-  const period=pmShort(start,{day:'numeric',month:'short',timeZone:'UTC'})+' a '+pmShort(last,{day:'numeric',month:'short',timeZone:'UTC'})
-  content.append(pmHeader('Planos e etapas','Gantt',period,[pmPager('gantt'),pmButton('+  Nova demanda',()=>pmNewTask(),'pm-primary-button')]),grid)
+  layout.append(left,right)
+  const period=pmShort(start,{day:'numeric',month:'short',timeZone:'UTC'})+' a '+pmShort(end,{day:'numeric',month:'short',timeZone:'UTC'})
+  content.append(pmHeader('','Gantt',period,[pmPager('gantt')]),layout)
 }
 function pmSundayView(content,tasks){
   const day=pmSunday(pmSundayCursor),dates=Array.from({length:7},(_,i)=>addDays(day,-6+i))
@@ -1303,9 +1367,17 @@ function pmSundayView(content,tasks){
     }
     main.append(box)
   }
-  content.append(pmHeader('Domingo',pmShort(day,{day:'numeric',month:'long',timeZone:'UTC'}),'',[
-    pmPager('sunday'),pmButton('Selecionar data',()=>{calendarDate=day;selectedCalendarDay=day;calendarMode='month';changeView('calendar-all')},'pm-light-button')
-  ]),pmGroup('div','pm-sunday-layout',[aside,main]))
+  const sundayHeader=pmHeader('',pmShort(day,{day:'numeric',month:'long',timeZone:'UTC'}),'',[
+    pmPager('sunday'),
+    pmButton('Selecionar data',()=>{
+      calendarDate=day
+      selectedCalendarDay=day
+      calendarMode='month'
+      changeView('calendar-all')
+    },'pm-light-button')
+  ])
+  main.prepend(sundayHeader)
+  content.append(pmGroup('div','pm-sunday-layout',[aside,main]))
 }
 function pmTeamsView(content,tasks){
   const groups=[...new Set([...teams,...tasks.map(t=>t.team).filter(Boolean)])]
