@@ -78,3 +78,10 @@ footer { width:min(1140px,calc(100% - 64px)); margin:0 auto; border-top:1px soli
 @media(max-width:850px) { .member-form { grid-template-columns:repeat(2,minmax(0,1fr)); } .member-form .primary-button { width:100%; } }
 @media(max-width:700px) { .topbar,main,footer { width:calc(100% - 38px); } .topbar { padding:19px 0; } .dashboard { padding:38px 0 50px; } .dashboard-header { gap:20px; flex-direction:column; } .session-controls { width:100%; justify-content:space-between; } .member-email { text-align:left; } .tool-grid { grid-template-columns:1fr; } .tool-card { min-height:265px; padding:25px; } .access-card { padding:32px 25px; } .access-wrap { padding:40px 0; } .access-card h1 { font-size:39px; } .admin-section { padding:21px 17px; } .member-form { grid-template-columns:1fr; } .member-row { grid-template-columns:minmax(0,1fr) auto; } .member-badges { grid-column:1/-1; grid-row:2; } }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none!important; } }
+
+/* Ajuda contextual para autenticação em tablets e navegadores móveis. */
+.login-help{margin-top:16px;padding:12px 13px;border:1px solid #d9dfdc;border-radius:9px;background:#f8faf8;text-align:left}
+.login-help summary{cursor:pointer;color:#334d40;font-size:12px;font-weight:650;line-height:1.4}
+.login-help p{font-size:11px;color:#5b6d62;line-height:1.6;margin:9px 0 0}
+.login-help[open]{background:#f7faf8}
+@media(max-width:600px){.login-help{padding:11px}.login-help summary{font-size:12px}}

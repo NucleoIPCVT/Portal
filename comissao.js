@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'
 import {
   getAuth, GoogleAuthProvider, onAuthStateChanged,
-  signInWithPopup, signOut, setPersistence, browserLocalPersistence
+  signInWithPopup, signOut
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'
 import {
   getFirestore, collection, doc, onSnapshot,
@@ -89,11 +89,15 @@ function showDashboard(email, isAdmin) {
 
 function authErrorMessage(error) {
   switch (error?.code) {
-    case 'auth/popup-closed-by-user': return 'O login foi cancelado. Tente novamente quando quiser.'
-    case 'auth/popup-blocked': return 'O navegador bloqueou a janela do Google. Permita pop-ups ou abra este site no Chrome.'
+    case 'auth/popup-closed-by-user': return 'A aba do Google foi fechada antes de concluir o acesso. No tablet, abra a Comissão diretamente no Chrome e tente novamente.'
+    case 'auth/popup-blocked': return 'O navegador bloqueou a aba do Google. Permita pop-ups e redirecionamentos para este site, ou abra diretamente no Chrome.'
+    case 'auth/cancelled-popup-request': return 'Uma tentativa de login anterior foi interrompida. Toque novamente em Entrar com Google.'
+    case 'auth/operation-not-supported-in-this-environment': return 'Este navegador não permite o login Google. Abra a Comissão no Chrome ou Firefox, fora de aplicativos.'
+    case 'auth/web-storage-unsupported': return 'O armazenamento do navegador está bloqueado. Evite o modo anônimo e verifique as configurações de cookies.'
+    case 'auth/network-request-failed': return 'Não foi possível comunicar com o Google. Confira sua conexão e tente novamente.'
     case 'auth/unauthorized-domain': return 'O endereço do portal precisa ser autorizado no Firebase.'
     case 'auth/operation-not-allowed': return 'O login pelo Google ainda precisa ser ativado no Firebase.'
-    default: return 'Não foi possível entrar com Google. Tente novamente.'
+    default: return 'Não foi possível entrar com Google' + (error?.code ? ' (' + error.code + ')' : '') + '. Confira as dicas abaixo e tente novamente.'
   }
 }
 
@@ -112,7 +116,9 @@ ui['google-login'].addEventListener('click', async () => {
   ui['google-login'].disabled = true
   ui['auth-feedback'].textContent = 'Abrindo o Google...'
   try {
-    await setPersistence(auth, browserLocalPersistence)
+    // Chame a abertura do popup diretamente no gesto do usuário.
+    // A persistência local já é o padrão no Firebase Auth do navegador.
+    // Aguardar setPersistence antes deste passo pode perder a ativação no tablet.
     await signInWithPopup(auth, provider)
   } catch (error) {
     showGate(authErrorMessage(error))
