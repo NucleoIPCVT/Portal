@@ -1,4 +1,4 @@
-import { createPlannerStore } from './planner-store.js'
+import { createPlannerStore } from './planner-store.js?v=20261111-semanal'
 import { todayISO, addDays, formatDate, calendarCells, computeSummary, validateTask, isOverdue, taskProgress, generateWeeklyTasks } from './planner-core.js'
 import { createTaskEditor } from './planner-task-editor.js'
 import { GoogleCalendarClient } from './planner-google.js'
@@ -10,10 +10,10 @@ const teams = ['Louvor', 'Litúrgico', 'Técnica', 'Mídia', 'Comunicação', 'C
 let state = { plans: [], buckets: [], tasks: [], events: [], routines: [] }
 let session = { status: 'checking' }
 // Os planos organizam o trabalho; o calendário é uma referência opcional.
-let currentView = 'plans'
+let currentView = 'calendar-all'
 let eventsYear = Number(todayISO().slice(0, 4))
 let calendarDate = todayISO()
-let calendarMode = 'month'
+let calendarMode = 'week'
 let selectedCalendarDay = todayISO()
 let calendarShowEvents = true
 let calendarShowTasks = true
@@ -324,6 +324,72 @@ function calendarDates() {
   const monday = addDays(calendarDate, -((day + 6) % 7))
   return Array.from({ length: 7 }, (_, index) => addDays(monday, index))
 }
+function renderWeeklyCalendar(content, header, datedTasks, datedEvents, tasks, globalCalendar) {
+  const dates = calendarDates()
+  const sunday = dates[6]
+  const weekTasks = dates.flatMap(date => datedTasks.get(date) || [])
+  const weekEvents = dates.flatMap(date => datedEvents.get(date) || [])
+  const done = weekTasks.filter(task => task.status === 'done').length
+  const summary = node('div', { class: 'week-summary', 'aria-label': 'Resumo da semana' }, [
+    node('div', { class: 'week-summary-intro' }, [
+      node('strong', { text: 'Preparação para domingo' }),
+      node('span', { text: 'Domingo, ' + formatDate(sunday) })
+    ]),
+    node('div', { class: 'week-summary-stats' }, [
+      node('span', { text: weekTasks.length + ' demanda(s) · ' + done + ' concluída(s)' }),
+      node('span', { text: weekEvents.length + ' evento(s) oficial(is)' })
+    ])
+  ])
+  function dayCard(date, spotlight = false) {
+    const index = dates.indexOf(date)
+    const name = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'][index]
+    const dayTasks = datedTasks.get(date) || []
+    const dayEvents = datedEvents.get(date) || []
+    const card = node('section', {
+      class: 'week-day-card' + (spotlight ? ' week-sunday' : '') + (date === todayISO() ? ' week-today' : ''),
+      'aria-label': name + ', ' + formatDate(date)
+    })
+    const head = node('div', { class: 'week-day-head' }, [
+      node('div', {}, [
+        node('span', { class: 'week-day-name', text: name }),
+        node('strong', { class: 'week-day-date', text: formatDate(date) })
+      ]),
+      node('span', { class: 'week-day-count', text: dayTasks.length + ' demanda(s)' })
+    ])
+    card.append(head)
+    if (spotlight) card.append(node('p', { class: 'week-sunday-description', text: 'Eventos e entregas do domingo em um só lugar.' }))
+    const entries = node('div', { class: 'week-day-entries' })
+    for (const event of dayEvents) {
+      const entry = button(event.title, () => openEvent(event), 'week-event-item')
+      entry.prepend(node('span', { class: 'week-entry-kind', text: 'Evento' }))
+      entry.append(node('small', { text: eventDateLabel(event) }))
+      entries.append(entry)
+    }
+    for (const task of dayTasks) {
+      const entry = button(task.title, () => openTask(task), 'week-task-item' + (task.status === 'done' ? ' completed' : '') + (isOverdue(task, todayISO()) ? ' overdue' : ''))
+      entry.prepend(node('span', { class: 'week-entry-kind', text: task.status === 'done' ? 'Concluída' : 'Demanda' }))
+      entry.append(node('small', { text: globalCalendar ? planName(task.planId) : (task.team || labels[task.status]) }))
+      entries.append(entry)
+    }
+    if (!dayTasks.length && !dayEvents.length) entries.append(node('p', { class: 'week-day-empty', text: spotlight ? 'Nenhum evento ou prazo registrado para domingo.' : 'Sem eventos ou entregas neste dia.' }))
+    card.append(entries)
+    card.append(button('+ Nova demanda', () => { if (requirePlan()) openTask(null, { dueDate: date }) }, 'week-add-task'))
+    return card
+  }
+  const workdays = node('div', { class: 'week-workdays' })
+  for (const date of dates.slice(0, 6)) workdays.append(dayCard(date))
+  const layout = node('div', { class: 'week-layout' })
+  layout.append(workdays, dayCard(sunday, true))
+  content.append(header, summary, layout)
+  const undated = (globalCalendar && !calendarShowTasks ? [] : tasks).filter(task => !task.dueDate && !task.startDate)
+  if (undated.length) {
+    content.append(node('div', { class: 'week-undated' }, [
+      node('h3', { text: 'Demandas sem prazo definido' }),
+      node('p', { text: undated.length + ' demanda(s) sem data. Defina os prazos para que apareçam nas semanas correspondentes.' }),
+      button('Ver demandas', () => changeView('list'), 'button button-small')
+    ]))
+  }
+}
 function renderCalendar(content, tasks) {
   const globalCalendar = currentView === 'calendar-all'
   const header = node('div', { class: 'calendar-toolbar' })
@@ -338,11 +404,13 @@ function renderCalendar(content, tasks) {
     selectedCalendarDay = calendarDate
     render()
   }
-  const title = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(calendarDate + 'T12:00:00Z'))
+  const title = calendarMode === 'week'
+    ? 'Semana de ' + formatDate(calendarDates()[0]) + ' a ' + formatDate(calendarDates()[6])
+    : new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(calendarDate + 'T12:00:00Z'))
   heading.append(node('strong', { text: title }), node('span', { text: globalCalendar ? 'Demandas e referências da Agenda IPCVT' : 'Prazos das demandas deste plano' }))
   const mode = node('select', { 'aria-label': 'Período do calendário', onChange: event => { calendarMode = event.target.value; selectedCalendarDay = calendarDate; render() } }, [
-    node('option', { value: 'month', text: 'Mês', selected: calendarMode === 'month' }),
-    node('option', { value: 'week', text: 'Semana', selected: calendarMode === 'week' })
+    node('option', { value: 'week', text: 'Semana', selected: calendarMode === 'week' }),
+    node('option', { value: 'month', text: 'Mês', selected: calendarMode === 'month' })
   ])
   const controls = node('div', { class: 'calendar-controls' })
   controls.append(button('‹', () => navigate(-1), 'calendar-arrow'), button('›', () => navigate(1), 'calendar-arrow'), button('Hoje', () => { calendarDate = todayISO(); selectedCalendarDay = calendarDate; render() }, 'button button-small'), mode)
@@ -368,10 +436,11 @@ function renderCalendar(content, tasks) {
     if (!datedEvents.has(event.startDate)) datedEvents.set(event.startDate, [])
     datedEvents.get(event.startDate).push(event)
   }
+  if (calendarMode === 'week') return renderWeeklyCalendar(content, header, datedTasks, datedEvents, tasks, globalCalendar)
   for (const date of calendarDates()) {
     const dayTasks = datedTasks.get(date) || []
     const dayEvents = datedEvents.get(date) || []
-    const day = node('section', { class: 'calendar-day' + (date.slice(0, 7) !== calendarDate.slice(0, 7) ? ' other-month' : '') + (date === todayISO() ? ' today' : '') + (date === selectedCalendarDay ? ' selected' : ''), 'aria-label': formatDate(date), 'data-calendar-date': date })
+    const day = node('section', { class: 'calendar-day' + (date.slice(0, 7) !== calendarDate.slice(0, 7) ? ' other-month' : '') + (date === todayISO() ? ' today' : '') + (new Date(date + 'T12:00:00Z').getUTCDay() === 0 ? ' sunday' : '') + (date === selectedCalendarDay ? ' selected' : ''), 'aria-label': formatDate(date), 'data-calendar-date': date })
     const dayButton = button(String(Number(date.slice(-2))), () => { selectedCalendarDay = date; render() }, 'calendar-date')
     dayButton.setAttribute('aria-label', 'Ver compromissos de ' + formatDate(date))
     dayButton.setAttribute('aria-pressed', String(date === selectedCalendarDay))
@@ -796,6 +865,7 @@ function changeView(view, { preserveFilters = false } = {}) {
 function chooseView(control) {
   const insidePlan = !!control.closest('.plan-view-tabs')
   if (control.dataset.view === 'calendar-all') {
+    calendarMode = control.dataset.calendarMode || calendarMode
     clearTaskFilters()
     changeView('calendar-all', { preserveFilters: true })
     return
@@ -823,12 +893,15 @@ function render() {
   if (!activePlans().length) sidebarPlans.append(node('span', { class: 'sidebar-plan-empty', text: 'Nenhum plano criado' }))
   $('search-filter').parentElement.querySelector('span').textContent = currentView === 'events' ? 'Buscar evento' : 'Buscar demanda'
   $('search-filter').placeholder = currentView === 'events' ? 'Encontre um evento pelo nome' : 'Nome, responsável ou equipe'
-  const title = { home: 'Início', mine: 'Minhas demandas', plans: 'Planos da Comissão', events: 'Agenda da igreja', board: 'Quadro', list: 'Todas as demandas', calendar: 'Calendário', 'calendar-all': 'Calendário', gantt: 'Cronograma', summary: 'Gráficos', integrations: 'Google Agenda', routines: 'Rotinas semanais' }[currentView]
+  const title = { home: 'Início', mine: 'Minhas demandas', plans: 'Planos da Comissão', events: 'Agenda da igreja', board: 'Quadro', list: 'Demandas', calendar: 'Calendário', 'calendar-all': calendarMode === 'week' ? 'Semana de culto' : 'Visão mensal', gantt: 'Cronograma', summary: 'Gráficos', integrations: 'Google Agenda', routines: 'Rotinas semanais' }[currentView]
   $('view-title').textContent = withinPlan ? selected.name : title
   $('view-title').parentElement.querySelector('.view-heading-note').textContent = withinPlan
     ? selected.description || 'Organize e acompanhe todas as tarefas deste plano.'
-    : ({ home: 'O que você precisa acompanhar hoje.', mine: 'Suas tarefas, em todos os planos.', plans: 'Escolha um plano para começar a trabalhar.', events: 'Datas oficiais para consulta e referência das tarefas.', 'calendar-all': 'Visualize os prazos de todos os planos e os eventos oficiais da igreja.', list: 'Todas as tarefas, de todos os planos.', integrations: 'Fonte oficial e sincronização do calendário.', routines: 'Demandas que se repetem semanalmente.' })[currentView] || ''
-  document.querySelectorAll('[data-view]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.view === currentView && (control.closest('.plan-view-tabs') || !withinPlan))))
+    : ({ home: 'O que você precisa acompanhar hoje.', mine: 'Suas tarefas, em todos os planos.', plans: 'Escolha um plano para começar a trabalhar.', events: 'Datas oficiais para consulta e referência das tarefas.', 'calendar-all': calendarMode === 'week' ? 'Da preparação durante a semana ao culto de domingo, com a Agenda IPCVT como referência.' : 'Visualize os compromissos do mês, unindo a Agenda IPCVT às demandas.', list: 'Todas as tarefas, de todos os planos.', integrations: 'Fonte oficial e sincronização do calendário.', routines: 'Demandas que se repetem semanalmente.' })[currentView] || ''
+  document.querySelectorAll('[data-view]').forEach(control => {
+    const correctCalendarMode = !control.dataset.calendarMode || control.dataset.calendarMode === calendarMode
+    control.setAttribute('aria-pressed', String(control.dataset.view === currentView && correctCalendarMode && (control.closest('.plan-view-tabs') || !withinPlan)))
+  })
   $('plan-view-tabs').hidden = !withinPlan
   $('plan-filter').closest('label').style.display = withinPlan ? 'none' : ''
   const filterVisible = currentView === 'events' || taskViews.has(currentView)

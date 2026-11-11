@@ -385,3 +385,27 @@
   }
 }
 
+
+@media screen {
+  :root[data-theme="dark"] .week-summary{background:#283e30;border-color:#496b4f}
+  :root[data-theme="dark"] .week-summary-intro strong{color:#c5e7cc}
+  :root[data-theme="dark"] .week-summary-intro span{color:#a4c5ac}
+  :root[data-theme="dark"] .week-summary-stats span{background:#25332b;color:#b5d6bd;border-color:#496b4f}
+  :root[data-theme="dark"] .week-day-card{background:#252c29;border-color:#405047;box-shadow:none}
+  :root[data-theme="dark"] .week-day-head{border-bottom-color:#405047}
+  :root[data-theme="dark"] .week-day-name,:root[data-theme="dark"] .week-day-date{color:#c5e5cc}
+  :root[data-theme="dark"] .week-day-count,:root[data-theme="dark"] .week-day-empty{color:#a3b6a8}
+  :root[data-theme="dark"] .week-event-item{background:#3c3729;border-color:#62543b;border-left-color:#c6a05a;color:#f1dab1}
+  :root[data-theme="dark"] .week-task-item{background:#2d4234;border-color:#47654e;border-left-color:#72b38a;color:#d3edd9}
+  :root[data-theme="dark"] .week-task-item small,:root[data-theme="dark"] .week-event-item small{color:#b4c5b4}
+  :root[data-theme="dark"] .week-sunday{background:#2b4032;border-color:#60846a}
+  :root[data-theme="dark"] .week-sunday-description{color:#c4d6c6}
+  :root[data-theme="dark"] .week-add-task{color:#b9e1c3;border-color:#5c7762}
+  :root[data-theme="dark"] .week-add-task:hover{background:#365440}
+  :root[data-theme="dark"] .week-undated{border-color:#405047}
+  :root[data-theme="dark"] .week-undated h3{color:#c9e2ce}
+  :root[data-theme="dark"] .week-undated p{color:#afc2b2}
+  :root[data-theme="dark"] .calendar-day.sunday{background:#2c3b30;border-left-color:#6a9b75}
+  :root[data-theme="dark"] .login-help{border-color:#405047;color:#b8c9bc}
+  :root[data-theme="dark"] .login-help summary,:root[data-theme="dark"] .login-help a{color:#a9dcb7}
+}

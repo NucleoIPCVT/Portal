@@ -1,7 +1,7 @@
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'
 import {
   getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup,
-  reauthenticateWithPopup, signOut, setPersistence, browserLocalPersistence
+  reauthenticateWithPopup, signOut
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'
 import {
   getFirestore, collection, doc, onSnapshot, runTransaction, serverTimestamp, setDoc
@@ -41,9 +41,11 @@ function readableError(cause) {
   const messages = {
     'permission-denied': 'O acesso aos dados do Planner foi negado. Confira sua autorização e as regras do Firestore.',
     'unavailable': 'O Planner está sem conexão com o servidor. Tente salvar novamente quando a conexão voltar.',
-    'auth/popup-closed-by-user': 'O login foi cancelado.',
+    'auth/popup-closed-by-user': 'A janela do Google foi fechada antes de concluir o login. No tablet, tente abrir o Planner diretamente no Chrome e permitir pop-ups.',
     'auth/cancelled-popup-request': 'A janela anterior de login foi cancelada.',
-    'auth/popup-blocked': 'Permita a janela do Google neste navegador para continuar.',
+    'auth/popup-blocked': 'O navegador bloqueou a janela do Google. Abra o Planner no Chrome ou Firefox, fora de outros aplicativos, e permita pop-ups.',
+    'auth/operation-not-supported-in-this-environment': 'Este navegador não permite o login do Google. Abra o link diretamente no Chrome ou Firefox.',
+    'auth/web-storage-unsupported': 'O armazenamento deste navegador está bloqueado. Use uma aba comum no Chrome ou Firefox, fora do modo anônimo.',
     'auth/unauthorized-domain': 'Este endereço precisa ser autorizado no Firebase Authentication.',
     'auth/operation-not-allowed': 'O login Google precisa ser habilitado no Firebase.',
     'auth/user-mismatch': 'Conecte a mesma conta Google usada para entrar na Comissão.',
@@ -274,10 +276,11 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
     async login() {
       const provider = new GoogleAuthProvider()
       provider.setCustomParameters({ prompt: 'select_account' })
-      // Open immediately from the click, before awaiting persistence (mobile popup activation).
+      // O Auth do navegador já utiliza persistência local por padrão.
+      // Não altere a persistência durante o popup: a troca concorrente pode interromper o fluxo.
+      // Iniciar na própria ação do clique mantém a ativação de usuário em tablets.
       try {
-        const signIn = signInWithPopup(auth, provider)
-        await Promise.all([signIn, setPersistence(auth, browserLocalPersistence)])
+        await signInWithPopup(auth, provider)
       } catch (cause) {
         throw readableError(cause)
       }

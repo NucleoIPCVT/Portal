@@ -682,3 +682,58 @@ body{background:var(--cream)}
 @media(max-width:390px){#task-dialog .task-primary-grid{grid-template-columns:1fr}.workspace-quickbar .workspace-actions .button-primary{padding:8px 9px;font-size:10px}#task-dialog .dialog-footer .button{padding:8px 9px;font-size:10px}.view-nav>button[data-view=mine]{font-size:8px}}
 @media print{.mobile-more-menu{display:none!important}}
 
+
+/* Semana como eixo de planejamento: seis dias de preparo e o domingo em evidência. */
+.calendar-day.sunday{background:#f6faf3;border-left:2px solid #c5dcc5}
+.week-summary{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;background:#eaf3eb;border:1px solid #d5e7d8;border-radius:11px;padding:15px 19px;margin:0 0 16px}
+.week-summary-intro{display:grid;gap:2px}
+.week-summary-intro strong{font-size:15px;color:#205f3e}
+.week-summary-intro span{font-size:12px;color:#4c755a}
+.week-summary-stats{display:flex;flex-wrap:wrap;gap:8px}
+.week-summary-stats span{font-size:11px;color:#42614a;background:#fff;border:1px solid #d4e3d6;border-radius:20px;padding:6px 10px}
+.week-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(255px,1fr);gap:16px;align-items:start}
+.week-workdays{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.week-day-card{border:1px solid #e0e9df;border-radius:11px;min-width:0;background:#fff;padding:15px;display:flex;flex-direction:column;gap:11px;box-shadow:0 1px 5px #183b2306}
+.week-day-card.week-today{outline:2px solid #9accaa;outline-offset:-2px}
+.week-day-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;padding-bottom:10px;border-bottom:1px solid #edf0eb}
+.week-day-head>div{display:grid;gap:2px}
+.week-day-name{font-size:12px;color:#54705b;font-weight:700}
+.week-day-date{font-size:17px;color:#213d2b;letter-spacing:-.03em}
+.week-day-count{font-size:10px;color:#7b8b7d;white-space:nowrap}
+.week-day-entries{display:grid;gap:7px;align-content:start;flex:1}
+.week-event-item,.week-task-item{display:grid;gap:4px;width:100%;text-align:left;border:1px solid #e7ebe5;border-left:3px solid #4f9873;border-radius:7px;background:#f8fbf8;padding:9px 10px;color:#26422f;font-size:12px;font-weight:650;line-height:1.35;overflow-wrap:anywhere;cursor:pointer}
+.week-event-item{background:#fffaf0;border-left-color:#c6a05a;color:#786033}
+.week-event-item:hover,.week-task-item:hover{filter:brightness(.97)}
+.week-event-item small,.week-task-item small{font-size:10px;color:#8a978b;font-weight:500}
+.week-entry-kind{font-size:9px;letter-spacing:.045em;text-transform:uppercase;font-weight:800;color:#6b9479}
+.week-event-item .week-entry-kind{color:#ab8342}
+.week-task-item.completed{opacity:.66;text-decoration:line-through}
+.week-task-item.overdue:not(.completed){border-left-color:#bd6e57}
+.week-day-empty{margin:8px 0;font-size:11px;color:#97a196;font-style:italic}
+.week-add-task{border:1px dashed #d1e0d1;border-radius:7px;padding:8px;text-align:center;font-size:11px;font-weight:650;color:#4f8061;background:transparent;cursor:pointer}
+.week-add-task:hover{background:#edf5ee;border-color:#90bda0}
+.week-sunday{background:linear-gradient(180deg,#edf6ed 0%,#fff 44%);border:1px solid #bdd9c3;position:sticky;top:12px;min-height:350px;padding:20px}
+.week-sunday .week-day-head{border-bottom-color:#cde2ce}
+.week-sunday .week-day-name{font-size:14px;color:#236b42}
+.week-sunday .week-day-date{font-size:24px;color:#154a2c}
+.week-sunday-description{margin:-2px 0 0;color:#6e8b75;font-size:11px}
+.week-undated{border-top:1px solid #e7ede7;margin:20px 0 0;padding:16px 2px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.week-undated h3{font-size:13px;margin:0;color:#506854}
+.week-undated p{flex:1;margin:0;min-width:190px;color:#809082;font-size:11px}
+.login-help{margin:12px 0 0;text-align:left;border-top:1px solid #e4eae3;padding:12px 2px 0;color:#63766a;font-size:11px}
+.login-help summary{cursor:pointer;font-weight:700;color:#346d4b}
+.login-help p{margin:7px 0;line-height:1.55}
+.login-help a{color:#1c7549;font-weight:650}
+@media(max-width:1100px){.week-layout{grid-template-columns:minmax(0,1.3fr) minmax(235px,1fr)}.week-workdays{grid-template-columns:1fr}}
+@media(max-width:760px){
+  .week-layout{display:flex;flex-direction:column}
+  .week-sunday{order:-1;position:static;min-height:0;width:100%;padding:16px}
+  .week-workdays{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
+  .week-summary{padding:12px 14px}
+  .view-nav>button[data-view="calendar-all"][data-calendar-mode],
+  .view-nav>button[data-view="list"],
+  .view-nav>button[data-view="mine"]{display:flex;width:100%;min-width:0;min-height:53px;padding:6px 2px;gap:3px;flex-direction:column;align-items:center;justify-content:center;font-size:9px;line-height:1.2;white-space:normal;text-align:center;border-radius:9px}
+  .view-nav>button[data-view="plans"]{display:none!important}
+}
+@media(max-width:510px){.week-workdays{grid-template-columns:1fr}.week-day-card{padding:13px}.week-day-head{align-items:center}.week-sunday .week-day-date{font-size:22px}}
+@media print{.week-layout{display:block}.week-sunday{position:static;margin-top:14px}.week-workdays{grid-template-columns:repeat(2,minmax(0,1fr))}.week-add-task{display:none}}
