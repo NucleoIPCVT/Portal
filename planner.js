@@ -903,10 +903,37 @@ function pmWeekStart(date) {
 function pmSunday(date) { return addDays(pmWeekStart(date),6) }
 function pmEvents(date) { return liveEvents().filter(event=>event.startDate===date && event.status!=='cancelled') }
 function pmTasks(date,tasks) { return tasks.filter(task=>(task.dueDate || task.startDate)===date) }
-function pmNewTask(date='') { if(requirePlan()) openTask(null,date?{dueDate:date}:{}) }
+function pmNewTask(date='', defaults={}) { if(requirePlan()) openTask(null,{...(date?{dueDate:date}:{}),...defaults}) }
 function pmGroup(tag,cls,children=[]) { return node(tag,{class:cls},children) }
 function pmText(tag,cls,text) { return node(tag,{class:cls,text}) }
 function pmButton(label,handler,cls='pm-light-button') { return button(label,handler,cls) }
+function pmIcon(kind='calendar') {
+  const paths={
+    clock:'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0',
+    search:'M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13m5-2 5 6',
+    filter:'M4 4h16v3l-6 6v6l-4 2v-8L4 7z',
+    flag:'M8 21V4m0 1c5-4 7 4 12 0v10c-5 4-7-4-12 0',
+    team:'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M2 21v-2a7 7 0 0 1 14 0v2m1-17a4 4 0 0 1 0 8m3 3a6 6 0 0 1 2 5v1',
+    music:'M9 18V5l11-2v13M9 5l11-2M9 8l11-2M9 18c0 2-6 3-6 0s6-3 6 0m11-2c0 2-6 3-6 0s6-3 6 0',
+    screen:'M3 4h18v13H3zM8 21h8m-4-4v4M7 2v4m10-4v4',
+    church:'M3 21V10l9-7 9 7v11H3m6 0v-7h6v7M12 2v7m-3-4h6',
+    checklist:'M8 4h13v17H3V4h3m2-2h8v4H8zM7 11l2 2 3-4m2 3h4M7 17h11',
+    resource:'M3 7h18v14H3zM5 3h14v4M3 11h18m-12 3h6',
+    document:'M6 2h9l4 4v16H6zM14 2v5h5M9 12h7m-7 4h7',
+    circle:'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0',
+    calendar:'M4 5h16v16H4zM8 2v6m8-6v6M4 10h16m-11 4h6m-6 3h3'
+  }
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg')
+  svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('class','pm-icon');svg.setAttribute('aria-hidden','true')
+  const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d',paths[kind]||paths.calendar);svg.append(path)
+  return svg
+}
+function pmTeamIcon(team='') {
+  return pmIcon(/louvor/i.test(team)?'music':/m[ií]dia|t[eé]cnica/i.test(team)?'screen':/lit[uú]rg|celebra/i.test(team)?'church':'team')
+}
+function pmEventLine(event) {
+  return pmGroup('span','',[pmIcon('clock'),pmText('span','',pmEventText(event))])
+}
 function pmHeader(kicker,title,meta='',actions=[]) {
   return pmGroup('div','pm-page-header',[
     pmGroup('div','pm-page-heading',[
@@ -987,8 +1014,8 @@ function pmWeekView(content,tasks) {
     pmText('strong','pm-hero-date',pmShort(sunday,{day:'numeric',month:'long',timeZone:'UTC'})),
     pmText('span','pm-hero-label',sundayEvents.length?'Programação da igreja':'Preparação para o culto'),
     pmGroup('div','pm-hero-events',sundayEvents.length
-      ? sundayEvents.slice(0,3).map(event=>pmText('span','', '◷  '+pmEventText(event)))
-      : [pmText('span','','◷  Confira a Agenda IPCVT')])
+      ? sundayEvents.slice(0,3).map(pmEventLine)
+      : [pmGroup('span','',[pmIcon('clock'),pmText('span','','Confira a Agenda IPCVT')])])
   ])
   hero.setAttribute('role','group')
   hero.setAttribute('aria-label','Domingo '+formatDate(sunday))
@@ -1011,7 +1038,7 @@ function pmWeekView(content,tasks) {
   for(const task of highlights) {
     const item=pmButton('',()=>openTask(task),'pm-featured-item')
     item.append(
-      pmText('span','pm-featured-dot '+(task.priority==='urgent'||task.priority==='high'?'pm-priority':'pm-normal'),'◎'),
+      pmGroup('span','pm-featured-dot',[pmIcon(['urgent','high'].includes(task.priority)?'flag':'circle')]),
       pmGroup('span','pm-featured-copy',[pmText('strong','',task.title),pmText('small','',pmPerson(task))]),
       pmText('time','',task.dueDate?pmShort(task.dueDate):'Sem prazo')
     )
@@ -1021,12 +1048,14 @@ function pmWeekView(content,tasks) {
   dashboard.append(hero,stats,featured)
   const strip=pmGroup('div','pm-week-strip')
   for(const date of days){
+    const events=pmEvents(date),dayTasks=pmTasks(date,tasks)
+    const extra=events.length>1?' +'+(events.length-1):''
     const day=pmGroup('button','pm-week-tile'+(date===sunday?' pm-week-sunday':'')+(date===todayISO()?' pm-week-today':''),[
       pmText('span','pm-week-day-name',pmDayName(date).toUpperCase()),
       pmText('strong','pm-week-day-number',String(Number(date.slice(-2)))),
       pmText('span','pm-week-event-dot',pmEvents(date).length?'●':''),
-      pmText('span','pm-week-tile-event',pmEvents(date)[0]?.title || (pmTasks(date,tasks)[0]?.title || '')),
-      pmText('span','pm-week-tile-time',pmEvents(date)[0]&&eventDateLabel(pmEvents(date)[0])!=='Dia inteiro'?eventDateLabel(pmEvents(date)[0]):pmTasks(date,tasks).length?pmTasks(date,tasks).length+' demanda(s)':'')
+      pmText('span','pm-week-tile-event',events[0]?.title || dayTasks[0]?.title || ''),
+      pmText('span','pm-week-tile-time',(events[0]&&eventDateLabel(events[0])!=='Dia inteiro'?eventDateLabel(events[0]):dayTasks.length?dayTasks.length+' demanda(s)':'')+extra)
     ])
     day.type='button'
     day.addEventListener('click',()=>{calendarMode='month';calendarDate=date;selectedCalendarDay=date;changeView('calendar-all')})
@@ -1037,9 +1066,11 @@ function pmWeekView(content,tasks) {
     strip
   ])
   dashboard.append(schedule)
-  content.append(pmHeader('Planejamento','Semana',pmShort(monday,{day:'numeric',month:'short',timeZone:'UTC'})+' a '+pmShort(sunday,{day:'numeric',month:'long',timeZone:'UTC'}),[
+  const heading=pmHeader('Planejamento','Semana',(monday.slice(0,7)===sunday.slice(0,7)?Number(monday.slice(-2)):pmShort(monday))+' a '+pmShort(sunday,{day:'numeric',month:'long',timeZone:'UTC'}),[
     pmPager('week'),pmButton('+  Nova demanda',()=>pmNewTask(),'pm-primary-button')
-  ]),dashboard)
+  ])
+  heading.classList.add('pm-week-header')
+  content.append(heading,dashboard)
   if(!weekTasks.length && !weekEvents.length)content.append(pmText('p','pm-week-hint','Os eventos oficiais e os prazos das demandas aparecerão nesta semana conforme forem cadastrados.'))
 }
 function pmMonthDates(date) {
@@ -1078,18 +1109,19 @@ function pmMonthView(content,tasks) {
   if(!selectedEvents.length)eventList.append(pmText('p','pm-muted','Nenhum evento oficial neste dia.'))
   for(const event of selectedEvents){
     const card=pmButton('',()=>openEvent(event),'pm-aside-event')
-    card.append(pmText('strong','',event.title),pmText('small','',eventDateLabel(event)))
+    card.append(pmGroup('strong','',[pmText('span','pm-check-icon','✓'),pmText('span','',event.title)]),pmText('small','',eventDateLabel(event)))
     eventList.append(card)
   }
   aside.append(eventList,pmText('h3','pm-aside-subtitle','Demandas do dia'))
   const list=pmGroup('div','pm-aside-tasks')
   if(!selectedTasks.length)list.append(pmText('p','pm-muted','Nenhuma demanda com prazo neste dia.'))
   for(const task of selectedTasks){
-    const item=pmButton('',()=>openTask(task),'pm-aside-task')
-    item.append(pmText('span','pm-aside-check',task.status==='done'?'✓':''),pmGroup('span','',[pmText('strong','',task.title),pmText('small','',pmPerson(task))]))
+    const item=pmGroup('div','pm-aside-task')
+    const check=node('input',{type:'checkbox',class:'pm-aside-check',checked:task.status==='done','aria-label':'Concluir '+task.title,onChange:async e=>{try{await pmComplete(task,e.target.checked)}catch{e.target.checked=task.status==='done'}}})
+    item.append(check,pmGroup('span','pm-aside-task-copy',[pmButton(task.title,()=>openTask(task),'pm-aside-task-title'),pmText('small','',pmPerson(task))]),pmText('span','pm-aside-priority pm-priority-'+task.priority,''))
     list.append(item)
   }
-  aside.append(list,pmButton('+ Demanda neste dia',()=>pmNewTask(selectedCalendarDay),'pm-text-link'))
+  aside.append(list,pmButton('Ver detalhes  →',()=>pmDayDetails(selectedCalendarDay,tasks),'pm-text-link'))
   const calendarMain=pmGroup('section','pm-month-main',[
     pmHeader('Calendário',label.replace(/^./,x=>x.toUpperCase()),'',[
       pmPager('month'),
@@ -1100,12 +1132,30 @@ function pmMonthView(content,tasks) {
   layout.append(calendarMain,aside)
   content.append(layout)
 }
+function pmDayDetails(date,tasks) {
+  const dialog=pmGroup('dialog','editor-dialog compact-dialog')
+  const heading=pmGroup('div','dialog-heading',[
+    pmGroup('div','',[pmText('p','eyebrow','Agenda IPCVT'),pmText('h2','',pmShort(date,{day:'numeric',month:'long',timeZone:'UTC'}))]),
+    pmButton('×',()=>dialog.close(),'icon-button')
+  ])
+  heading.querySelector('button').setAttribute('aria-label','Fechar detalhes do dia')
+  const body=pmGroup('div','dialog-body')
+  const events=pmEvents(date),dayTasks=pmTasks(date,tasks)
+  body.append(pmText('h3','pm-section-title','Eventos do dia'))
+  body.append(...(events.length?events.map(event=>pmEventButton(event)):[pmText('p','pm-muted','Nenhum evento oficial neste dia.')]))
+  body.append(pmText('h3','pm-section-title','Demandas do dia'))
+  body.append(...(dayTasks.length?dayTasks.map(task=>pmTaskButton(task)):[pmText('p','pm-muted','Nenhuma demanda com prazo neste dia.')]))
+  dialog.setAttribute('aria-label','Detalhes de '+formatDate(date))
+  dialog.append(heading,body,pmGroup('div','dialog-footer',[pmButton('+ Nova demanda',()=>{dialog.close();pmNewTask(date)},'pm-primary-button')]))
+  dialog.addEventListener('close',()=>dialog.remove(),{once:true})
+  document.body.append(dialog);dialog.showModal()
+}
 function pmIsMine(task){return (task.assignees||[]).some(person=>person.email?.toLowerCase()===session.email)}
 function pmPriorityLabel(key){return ({urgent:'Urgente',high:'Alta',normal:'Média',low:'Baixa'})[key]||'Normal'}
 function pmComplete(task,checked){
   const status=checked?'done':'todo'
   const bucket=standardBucket(task.planId,status)
-  return action(()=>save('tasks',{...task,status,bucketId:bucket?.id||task.bucketId}),checked?'Demanda concluída.':'Demanda reaberta.')
+  return action(()=>save('tasks',{...task,status,bucketId:bucket?.id||(pmIsReview(task)?'':task.bucketId)}),checked?'Demanda concluída.':'Demanda reaberta.')
 }
 function pmDemandView(content,tasks) {
   const all=tasks
@@ -1140,10 +1190,12 @@ function pmDemandView(content,tasks) {
     }
   })
   const actions=pmGroup('div','pm-list-actions',[
-    pmGroup('label','pm-demand-search',[pmText('span','pm-search-symbol','⌕'),search]),
-    pmButton('⚲',()=>{$('workspace-filter-strip').classList.toggle('pm-filters-open')},'pm-light-button pm-filter-button'),
+    pmGroup('label','pm-demand-search',[pmIcon('search'),search]),
+    pmButton('',()=>{$('workspace-filter-strip').classList.toggle('pm-filters-open');$('advanced-filters').open=true},'pm-light-button pm-filter-button'),
     pmButton('+  Nova demanda',()=>pmNewTask(),'pm-primary-button')
   ])
+  const filterButton=actions.querySelector('.pm-filter-button')
+  filterButton.append(pmIcon('filter'));filterButton.setAttribute('aria-label','Filtrar demandas')
   const header=pmHeader('','Demandas','', [actions])
   const filtered=all.filter(task=>pmDemandTab==='mine'?pmIsMine(task):pmDemandTab==='done'?task.status==='done':true)
   let rows=filtered.map(task=>({task,label:''}))
@@ -1189,7 +1241,7 @@ async function pmMoveTo(task,group) {
       bucket=entry
     }
   }else bucket=standardBucket(task.planId,status)
-  await save('tasks',{...task,status,bucketId:bucket?.id||task.bucketId})
+  await save('tasks',{...task,status,bucketId:bucket?.id||(pmIsReview(task)?'':task.bucketId)})
 }
 function pmFilterSelect(id,label) {
   const source=$(id)
@@ -1233,7 +1285,11 @@ function pmKanbanView(content,tasks) {
       stack.append(card)
     }
     if(!items.length)stack.append(pmText('p','pm-kanban-empty','Arraste demandas para esta coluna.'))
-    col.append(stack,pmButton('+  Adicionar demanda',()=>pmNewTask(),'pm-kanban-add'))
+    col.append(stack,pmButton('+  Adicionar demanda',()=>{
+      const planId=selectedPlan()||activePlans()[0]?.id
+      const nextStatus=status==='review'?'doing':status
+      pmNewTask('',{planId,status:nextStatus,bucketId:(status==='review'?pmReviewBucket(planId):standardBucket(planId,nextStatus))?.id||''})
+    },'pm-kanban-add'))
     col.addEventListener('dragover',e=>{e.preventDefault();col.classList.add('pm-drag-over')})
     col.addEventListener('dragleave',e=>{if(!col.contains(e.relatedTarget))col.classList.remove('pm-drag-over')})
     col.addEventListener('drop',async e=>{
@@ -1256,14 +1312,14 @@ function pmGanttView(content,tasks){
     return a<=end&&b>=start
   })
   const layout=pmGroup('div','pm-gantt-view')
-  const left=pmGroup('div','pm-gantt-outline',[pmText('h3','','Planos  /  Etapas')])
+  const left=pmGroup('div','pm-gantt-outline',[pmGroup('h3','',[pmText('span','','Planos'),pmText('small','','Etapas e demandas')])])
   const right=pmGroup('div','pm-gantt-chart')
   const ganttBars=new Map()
   const datesRow=pmGroup('div','pm-gantt-dates')
   for(const date of dates){
     datesRow.append(pmText('span','pm-gantt-date'+(pmDayName(date)==='Dom'?' pm-gantt-sunday':''),String(Number(date.slice(-2)))))
   }
-  right.append(datesRow)
+  right.append(pmGroup('div','pm-gantt-toolbar',[pmText('span','',pmShort(start,{month:'long',timeZone:'UTC'})),pmPager('gantt')]),datesRow)
   const insertHeader=(title,kind)=>{
     left.append(pmText('h4',kind==='plan'?'pm-gantt-plan':'pm-gantt-bucket',title))
     right.append(pmGroup('div',kind==='plan'?'pm-gantt-plan-row':'pm-gantt-bucket-row'))
@@ -1279,6 +1335,7 @@ function pmGanttView(content,tasks){
       bar.style.left=(first/35*100)+'%'
       bar.style.width=(Math.max(1,last-first+1)/35*100)+'%'
       bar.title=task.title+' · '+formatDate(a)+' a '+formatDate(b)
+      bar.setAttribute('aria-label',bar.title)
       row.append(bar)
       ganttBars.set(task.id,{task,bar,row})
     }
@@ -1302,8 +1359,7 @@ function pmGanttView(content,tasks){
     }
   }
   layout.append(left,right)
-  const period=pmShort(start,{day:'numeric',month:'short',timeZone:'UTC'})+' a '+pmShort(end,{day:'numeric',month:'short',timeZone:'UTC'})
-  content.append(pmHeader('','Gantt',period,[pmPager('gantt')]),layout)
+  content.append(layout)
   // Desenhar somente dependências reais entre as barras que estão visíveis.
   requestAnimationFrame(()=>{
     if(!right.isConnected||!ganttBars.size)return
@@ -1333,10 +1389,12 @@ function pmGanttView(content,tasks){
         const y1=predecessor.row.offsetTop+predecessor.row.offsetHeight/2
         const x2=entry.bar.offsetLeft
         const y2=entry.row.offsetTop+entry.row.offsetHeight/2
-        if(x2<=x1+15)continue
-        const elbow=x1+Math.min(20,(x2-x1)/2)
         const path=document.createElementNS(ns,'path')
-        path.setAttribute('d','M'+x1+' '+y1+' H'+elbow+' V'+y2+' H'+(x2-3))
+        const elbow=x1+Math.min(18,Math.max(9,(x2-x1)/2))
+        const route=x2>x1+15
+          ? 'M'+x1+' '+y1+' H'+elbow+' V'+y2+' H'+(x2-3)
+          : 'M'+x1+' '+y1+' H'+elbow+' V'+(y1+12)+' H'+Math.max(2,x2-9)+' V'+y2+' H'+(x2-3)
+        path.setAttribute('d',route)
         path.setAttribute('marker-end','url(#pm-gantt-dependency-arrow)')
         overlay.append(path)
       }
@@ -1354,16 +1412,17 @@ function pmSundayView(content,tasks){
   const done=work.filter(task=>task.status==='done').length
   const percent=work.length?Math.round(done/work.length*100):0
   const aside=pmGroup('aside','pm-sunday-navigation')
-  for(const [id,name,symbol] of [['overview','Visão Geral','◫'],['liturgia','Liturgia','▤'],['equipes','Equipes','♧'],['recursos','Recursos','▣'],['checklist','Check-list','☑']]){
-    const b=pmButton(symbol+'  '+name,()=>{pmSundayTab=id;render()},'pm-sunday-navitem')
+  for(const [id,name,symbol] of [['overview','Visão Geral','calendar'],['liturgia','Liturgia','church'],['equipes','Equipes','team'],['recursos','Recursos','resource'],['checklist','Check-list','checklist']]){
+    const b=pmButton('',()=>{pmSundayTab=id;render()},'pm-sunday-navitem')
+    b.append(pmIcon(symbol),pmText('span','',name))
     b.setAttribute('aria-pressed',String(pmSundayTab===id));aside.append(b)
   }
   const main=pmGroup('div','pm-sunday-main')
   if(pmSundayTab==='overview'){
     const hero=pmGroup('div','pm-sunday-hero',[
-      pmText('span','pm-hero-overline','IPCVT  ·  Domingo'),
+      pmGroup('span','pm-hero-overline',[pmIcon('church')]),
       pmText('strong','pm-hero-date',event?.title||'Cultos e celebrações'),
-      pmGroup('div','pm-hero-events',events.length?events.map(item=>pmText('span','','◷  '+pmEventText(item))):[pmText('span','','Sem eventos oficiais para esta data')])
+      pmGroup('div','pm-hero-events',events.length?events.map(pmEventLine):[pmText('span','','Sem eventos oficiais para esta data')])
     ])
     const ring=pmGroup('div','pm-sunday-progress',[
       pmText('strong','','Preparação'),
@@ -1385,7 +1444,7 @@ function pmSundayView(content,tasks){
     for(const group of groups){
       const groupTasks=work.filter(t=>(t.team||'Sem equipe')===group)
       const people=new Set(groupTasks.flatMap(t=>(t.assignees||[]).map(p=>p.email||p.name).filter(Boolean)))
-      tiles.append(pmGroup('div','pm-team-tile',[pmText('span','pm-team-icon','♧'),pmGroup('div','',[pmText('strong','',group),pmText('small','',people.size+' integrante(s) em demandas')])]))
+      tiles.append(pmGroup('div','pm-team-tile',[pmGroup('span','pm-team-icon',[pmTeamIcon(group)]),pmGroup('div','',[pmText('strong','',group),pmText('small','',people.size+' responsáveis em demandas')])]))
     }
     if(!groups.length)tiles.append(pmText('p','pm-muted','As equipes aparecerão quando houver demandas vinculadas.'))
     teamsView.append(tiles);main.append(teamsView)
@@ -1428,7 +1487,7 @@ function pmTeamsView(content,tasks){
     const people=[...new Set(members.flatMap(t=>(t.assignees||[]).map(p=>p.name||p.email).filter(Boolean)))]
     const done=members.filter(t=>t.status==='done').length
     const card=pmGroup('article','pm-team-card',[
-      pmGroup('div','pm-team-card-top',[pmText('span','pm-team-card-icon','♧'),pmText('h3','',group)]),
+      pmGroup('div','pm-team-card-top',[pmGroup('span','pm-team-card-icon',[pmTeamIcon(group)]),pmText('h3','',group)]),
       pmGroup('div','pm-team-stats',[
         pmText('strong','',String(members.length)),
         pmText('span','','demandas'),
@@ -1491,7 +1550,7 @@ function render() {
     : ({ home: 'O que você precisa acompanhar hoje.', mine: 'Suas tarefas, em todos os planos.', plans: 'Escolha um plano para começar a trabalhar.', events: 'Datas oficiais para consulta e referência das tarefas.', 'calendar-all': calendarMode === 'week' ? 'Da preparação durante a semana ao culto de domingo, com a Agenda IPCVT como referência.' : 'Visualize os compromissos do mês, unindo a Agenda IPCVT às demandas.', list: 'Todas as tarefas, de todos os planos.', integrations: 'Fonte oficial e sincronização do calendário.', routines: 'Demandas que se repetem semanalmente.' })[currentView] || ''
   document.querySelectorAll('[data-view]').forEach(control => {
     const correctCalendarMode = !control.dataset.calendarMode || control.dataset.calendarMode === calendarMode
-    control.setAttribute('aria-pressed', String(control.dataset.view === currentView && correctCalendarMode && (control.closest('.plan-view-tabs') || control.closest('.pm-primary-nav') || !withinPlan)))
+    control.setAttribute('aria-pressed', String(Boolean(control.dataset.view === currentView && correctCalendarMode && (control.closest('.plan-view-tabs') || control.closest('.pm-primary-nav') || !withinPlan))))
   })
   $('plan-view-tabs').hidden = !withinPlan
   $('plan-filter').closest('label').style.display = withinPlan ? 'none' : ''
