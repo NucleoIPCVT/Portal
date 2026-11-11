@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Verificação de acesso IPCVT</title>
+<script src="https://accounts.google.com/gsi/client" async defer onload="document.getElementById('open').disabled=false;document.getElementById('status').textContent='Pronto para verificar a abertura do Google.'"></script>
+<style>body{font:16px Arial;margin:50px;max-width:650px;color:#234c3b}button{padding:14px;border:1px solid #bad0be;border-radius:8px;background:#e8f0e2;color:#234c3b}</style></head>
+<body><h1>Verificação de acesso IPCVT</h1><button id="open" disabled>Verificar escolha da conta Google</button><p id="status" role="status">Carregando o Google...</p>
+<script>
+document.getElementById('open').addEventListener('click',()=>{
+  const status=document.getElementById('status');
+  const client=google.accounts.oauth2.initTokenClient({
+    client_id:'774659782213-7bvortfkfrr9af5opk9mmtat9l695o64.apps.googleusercontent.com',
+    scope:'openid email profile',include_granted_scopes:false,prompt:'select_account',
+    callback:r=>{status.textContent=r.error?'O Google retornou: '+r.error:'O Google respondeu corretamente.'},
+    error_callback:e=>{status.textContent='Abertura da janela: '+e.type}
+  });
+  status.textContent='Abrindo o Google...';
+  client.requestAccessToken({prompt:'select_account'});
+});
+</script></body></html>
