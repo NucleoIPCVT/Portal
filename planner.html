@@ -12,7 +12,8 @@
     <script src="planner-theme.js"></script>
     <link rel="stylesheet" href="planner.css?v=20261111-semanal">
     <link rel="stylesheet" href="planner-dark.css?v=20261111-semanal">
-    <script type="module" src="planner.js?v=20261111-semanal"></script>
+    <link rel="stylesheet" href="planner-premium.css?v=20261111-painel-premium">
+    <script type="module" src="planner.js?v=20261111-painel-premium"></script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Ir para o conteúdo</a>
@@ -51,6 +52,38 @@
       </section>
 
       <section id="planner-app" class="workspace" hidden aria-label="Área de trabalho do Planner">
+      <header class="pm-topbar" aria-label="Barra principal do Planner">
+        <button type="button" class="pm-brand" id="pm-brand-home" aria-label="Abrir semana do Planner IPCVT">
+          <svg class="pm-brand-icon" viewBox="0 0 40 40" fill="none" aria-hidden="true"><rect x="7" y="9" width="26" height="25" rx="4" stroke="currentColor" stroke-width="2.3"/><path d="M13 6v7M27 6v7M8 17h24M13 23h4M13 28h4M22 23h5M22 28h5" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/></svg>
+          <span>IPCVT<br><strong>Planner</strong></span>
+        </button>
+        <nav class="pm-primary-nav" aria-label="Principais visualizações">
+          <button type="button" data-view="calendar-all" data-calendar-mode="week" class="pm-nav-link" aria-pressed="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M8 14h3M8 17h3"/></svg>Semana</button>
+          <button type="button" data-view="calendar-all" data-calendar-mode="month" class="pm-nav-link" aria-pressed="false"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M8 14h3M14 14h3M8 17h3M14 17h3"/></svg>Mês</button>
+          <button type="button" data-view="list" class="pm-nav-link" aria-pressed="false"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>Demandas</button>
+          <button type="button" data-view="board" class="pm-nav-link" aria-pressed="false"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16M5.5 8h1M11.5 8h1M17.5 8h1"/></svg>Kanban</button>
+          <button type="button" data-view="gantt" class="pm-nav-link" aria-pressed="false"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h7M10 12h10M7 16h8"/></svg>Gantt</button>
+          <button type="button" data-view="sunday" class="pm-nav-link" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7v10H3zM9 21v-7h6v7"/></svg>Domingo</button>
+          <button type="button" data-view="teams" class="pm-nav-link" aria-pressed="false"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 21v-2a6 6 0 0 1 12 0v2M17 5a3 3 0 0 1 0 6M19 15a5 5 0 0 1 3 5v1"/></svg>Equipes</button>
+        </nav>
+        <div class="pm-toolbar">
+          <label class="pm-global-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="pm-search" type="search" placeholder="Buscar..." aria-label="Buscar demandas e eventos"></label>
+          <button id="pm-notifications" class="pm-tool-icon" type="button" aria-label="Notificações da agenda"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 8-3 9h18c0-1-3-2-3-9M10 21h4"/></svg></button>
+          <details class="pm-more" id="pm-more"><summary id="pm-account" aria-label="Conta e mais opções"><span id="pm-avatar">IP</span></summary>
+            <div class="pm-more-menu">
+              <span id="pm-account-name" class="pm-account-name"></span>
+              <button type="button" data-view="plans">Planos da Comissão</button>
+              <button type="button" data-view="events">Agenda oficial</button>
+              <button type="button" data-view="mine">Minhas demandas</button>
+              <button type="button" data-view="routines">Rotinas semanais</button>
+              <button type="button" data-view="integrations">Google Agenda</button>
+              <button type="button" id="pm-theme">Alternar tema</button>
+              <button type="button" id="pm-logout">Sair</button>
+            </div>
+          </details>
+        </div>
+      </header>
+      <div class="pm-stage">
         <div class="workspace-quickbar" role="toolbar" aria-label="Ações do Planner">
           <div class="workspace-quickbar-title"><span>COMISSÃO IPCVT</span><strong>Área de trabalho</strong></div>
           <div class="workspace-actions">
@@ -131,6 +164,7 @@
             <div id="view-content" aria-live="polite"></div>
           </div>
         </div>
+      </div>
       </section>
     </main>
 
