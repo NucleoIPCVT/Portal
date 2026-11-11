@@ -730,3 +730,10 @@ body.pm-active .notice:not([hidden]) {background:#edf3ee;border-radius:7px}
   body.pm-active .planner-main{border:0;box-shadow:none;padding:0}
   .pm-primary-nav,.pm-more,.pm-header-actions{display:none!important}
 }
+
+/* Conectores de dependências confirmadas entre demandas no Gantt. */
+.pm-gantt-chart{position:relative}
+.pm-gantt-dependencies{position:absolute;inset:0;pointer-events:none;overflow:visible;z-index:3}
+.pm-gantt-dependencies path{fill:none;stroke:#69a38e;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.pm-gantt-dependencies marker path{fill:#69a38e;stroke:none}
+@media screen{:root[data-theme=dark] .pm-gantt-dependencies path{stroke:#8dc8a6}}

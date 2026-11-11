@@ -1258,6 +1258,7 @@ function pmGanttView(content,tasks){
   const layout=pmGroup('div','pm-gantt-view')
   const left=pmGroup('div','pm-gantt-outline',[pmText('h3','','Planos  /  Etapas')])
   const right=pmGroup('div','pm-gantt-chart')
+  const ganttBars=new Map()
   const datesRow=pmGroup('div','pm-gantt-dates')
   for(const date of dates){
     datesRow.append(pmText('span','pm-gantt-date'+(pmDayName(date)==='Dom'?' pm-gantt-sunday':''),String(Number(date.slice(-2)))))
@@ -1279,6 +1280,7 @@ function pmGanttView(content,tasks){
       bar.style.width=(Math.max(1,last-first+1)/35*100)+'%'
       bar.title=task.title+' · '+formatDate(a)+' a '+formatDate(b)
       row.append(bar)
+      ganttBars.set(task.id,{task,bar,row})
     }
     right.append(row)
   }
@@ -1302,6 +1304,45 @@ function pmGanttView(content,tasks){
   layout.append(left,right)
   const period=pmShort(start,{day:'numeric',month:'short',timeZone:'UTC'})+' a '+pmShort(end,{day:'numeric',month:'short',timeZone:'UTC'})
   content.append(pmHeader('','Gantt',period,[pmPager('gantt')]),layout)
+  // Desenhar somente dependências reais entre as barras que estão visíveis.
+  requestAnimationFrame(()=>{
+    if(!right.isConnected||!ganttBars.size)return
+    const ns='http://www.w3.org/2000/svg'
+    const overlay=document.createElementNS(ns,'svg')
+    overlay.setAttribute('class','pm-gantt-dependencies')
+    overlay.setAttribute('width',String(right.scrollWidth))
+    overlay.setAttribute('height',String(right.scrollHeight))
+    overlay.setAttribute('viewBox','0 0 '+right.scrollWidth+' '+right.scrollHeight)
+    overlay.setAttribute('aria-hidden','true')
+    const defs=document.createElementNS(ns,'defs')
+    const marker=document.createElementNS(ns,'marker')
+    marker.setAttribute('id','pm-gantt-dependency-arrow')
+    marker.setAttribute('markerWidth','6')
+    marker.setAttribute('markerHeight','6')
+    marker.setAttribute('refX','5')
+    marker.setAttribute('refY','3')
+    marker.setAttribute('orient','auto')
+    const arrow=document.createElementNS(ns,'path')
+    arrow.setAttribute('d','M0 0 L6 3 L0 6 Z')
+    marker.append(arrow);defs.append(marker);overlay.append(defs)
+    for(const entry of ganttBars.values()){
+      for(const dependencyId of entry.task.dependencyIds||[]){
+        const predecessor=ganttBars.get(dependencyId)
+        if(!predecessor)continue
+        const x1=predecessor.bar.offsetLeft+predecessor.bar.offsetWidth
+        const y1=predecessor.row.offsetTop+predecessor.row.offsetHeight/2
+        const x2=entry.bar.offsetLeft
+        const y2=entry.row.offsetTop+entry.row.offsetHeight/2
+        if(x2<=x1+15)continue
+        const elbow=x1+Math.min(20,(x2-x1)/2)
+        const path=document.createElementNS(ns,'path')
+        path.setAttribute('d','M'+x1+' '+y1+' H'+elbow+' V'+y2+' H'+(x2-3))
+        path.setAttribute('marker-end','url(#pm-gantt-dependency-arrow)')
+        overlay.append(path)
+      }
+    }
+    if(overlay.childNodes.length>1)right.append(overlay)
+  })
 }
 function pmSundayView(content,tasks){
   const day=pmSunday(pmSundayCursor),dates=Array.from({length:7},(_,i)=>addDays(day,-6+i))
