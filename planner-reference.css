@@ -1,0 +1,732 @@
+
+/**
+ * IPCVT Planner | reprodução da referência visual 11/11/2026
+ * A referência define a geometria e as cores; os dados continuam no Firebase.
+ * Carregado APÓS planner.css, planner-dark.css e planner-premium.css.
+ */
+:root {
+  --ref-sage-1:#d5ded1;
+  --ref-sage-2:#cad7ca;
+  --ref-forest:#235b49;
+  --ref-ink:#203734;
+  --ref-dim:#75877f;
+  --ref-canvas:#f8f7f5;
+  --ref-card:#f9f8f6;
+  --ref-border:#e2e5e1;
+  --ref-shade:0 1px 3px rgb(33 57 41 / .035);
+  --ref-radius:8px;
+}
+body.pm-active {
+  background:#e9ede7;
+  color:var(--ref-ink);
+  font-family:Inter,Arial,sans-serif;
+  font-size:12px;
+  letter-spacing:-.005em;
+}
+body.pm-active #planner-app.workspace {
+  background:#e9ede7;
+  color:var(--ref-ink);
+  min-height:100vh;
+}
+body.pm-active .pm-topbar {
+  min-height:63px;
+  background:linear-gradient(100deg,#d7ded2 0%,#d5ddd1 40%,#cbd9cb 100%);
+  border-bottom:1px solid #c8d7c9;
+  box-shadow:none;
+  padding-left:clamp(22px,2.5vw,42px);
+  padding-right:clamp(22px,2.5vw,42px);
+  gap:clamp(20px,2.9vw,54px);
+}
+body.pm-active .pm-brand {
+  gap:9px;
+  min-width:160px;
+  color:#25483d;
+}
+.pm-brand-icon {width:32px;height:32px;flex-basis:32px;stroke-width:1.6}
+.pm-brand>span {font-size:15px;line-height:.99;letter-spacing:-.03em;font-weight:690}
+.pm-brand>span strong {font-size:14px;font-weight:500}
+.pm-primary-nav {height:63px;gap:clamp(6px,1.1vw,20px);justify-content:space-between}
+.pm-primary-nav .pm-nav-link {
+  color:#3c5c51;
+  font-size:11px;
+  font-weight:630;
+  gap:8px;
+  border-bottom:3px solid transparent;
+  padding:4px 9px 0;
+}
+.pm-primary-nav .pm-nav-link[aria-pressed=true] {
+  color:#1f493e;
+  background:transparent;
+  border-bottom-color:#225443;
+  font-weight:760;
+}
+.pm-primary-nav .pm-nav-link svg {width:16px;height:16px;stroke-width:1.75}
+.pm-primary-nav .pm-nav-link:hover {background:#fff6}
+.pm-toolbar {gap:13px}
+.pm-global-search {
+  height:30px;
+  min-width:110px;
+  max-width:176px;
+  border:1px solid #e1e9de;
+  border-radius:25px;
+  background:#f5f8f2;
+  box-shadow:0 1px 2px #132c1c08;
+}
+.pm-global-search input::placeholder {color:#94a49b}
+.pm-tool-icon{width:27px;color:#395e4e}
+#pm-avatar {
+  width:29px;height:29px;
+  border:2px solid #dce8da;
+  background:#143f31;
+  color:#fff;
+  font-size:10px;
+}
+/* A imagem é praticamente de ponta a ponta: sem a segunda margem
+   horizontal que a versão anterior adicionava ao palco inteiro. */
+body.pm-active .pm-stage {
+  max-width:none;
+  width:100%;
+  margin:0 auto;
+  padding:0 4px 25px;
+}
+body.pm-active .planner-main {
+  background:var(--ref-canvas);
+  border:1px solid #e8eae6;
+  border-radius:10px;
+  margin:0;
+  min-height:calc(100vh - 65px);
+  padding:24px clamp(20px,2.2vw,36px) 30px;
+  box-shadow:0 1px 5px #213f2408;
+}
+body.pm-active .notice:not([hidden]) {background:#edf3ee;border-radius:7px}
+.pm-page-header {margin:0 0 20px;gap:12px}
+.pm-kicker {
+  display:block;margin:0 0 3px;
+  color:#927c5e;
+  font-size:12px;font-weight:480;
+  letter-spacing:0;
+}
+.pm-kicker:empty {display:none}
+.pm-heading-title {
+  color:#142d2d;
+  font-size:29px;
+  font-weight:770;
+  letter-spacing:-.055em;
+  line-height:1.16;
+}
+.pm-heading-meta {font-size:11px;font-weight:500;color:#748780}
+.pm-heading-line {align-items:baseline;gap:12px}
+.pm-header-actions {gap:10px}
+.pm-primary-button,.pm-light-button,.pm-arrow-button {
+  font-family:inherit;
+  border-radius:7px;
+  font-size:11px;
+  min-height:35px;
+  box-shadow:none;
+}
+.pm-primary-button {
+  background:#275e4b;
+  border-color:#275e4b;
+  color:white;
+  padding:8px 15px;
+  font-weight:700;
+}
+.pm-primary-button:hover {background:#1d4c3b;border-color:#1d4c3b}
+.pm-light-button {
+  background:#fafbf9;
+  color:#395e51;
+  border-color:#e2e7e1;
+  padding:8px 13px;
+}
+.pm-light-button:hover {background:#f0f4ee}
+.pm-arrow-button {
+  min-width:32px;
+  font-size:20px;
+  color:#375e50;
+}
+.pm-pager {gap:7px}
+/* SEMANA. A referência contém duas linhas à esquerda e um painel de
+   destaques que atravessa ambas as linhas. */
+.pm-week-board {
+  display:grid;
+  grid-template-columns:minmax(0,1.23fr) minmax(0,1fr) minmax(0,.68fr);
+  grid-template-rows:minmax(220px,auto) minmax(147px,auto);
+  grid-template-areas:"hero stats featured" "schedule schedule featured";
+  gap:12px;
+  align-items:stretch;
+  width:100%;
+}
+.pm-week-board>.pm-hero-card {grid-area:hero}
+.pm-week-board>.pm-stat-card {grid-area:stats}
+.pm-week-board>.pm-featured-card {grid-area:featured}
+.pm-week-schedule {grid-area:schedule;min-width:0;display:flex;flex-direction:column}
+.pm-hero-card {
+  border-radius:7px;
+  min-height:220px;
+  padding:24px 26px;
+  box-shadow:none;
+  background-position:center center;
+}
+.pm-hero-card::before {
+  background:linear-gradient(90deg,rgba(13,41,30,.91) 0%,rgba(15,43,32,.67) 37%,rgba(28,45,27,.10) 100%);
+}
+.pm-hero-overline {font-size:12px;font-weight:600;color:#e5eee5}
+.pm-hero-date {
+  color:#f7f9f1;
+  font-weight:740;
+  font-size:31px;
+  line-height:1.15;
+  letter-spacing:-.04em;
+}
+.pm-hero-label {color:#f1dba2;font-size:16px;font-weight:600}
+.pm-hero-events {gap:4px;margin-top:8px}
+.pm-hero-events span {color:#f3f6ef;font-size:11px;font-weight:570}
+.pm-stat-card,.pm-featured-card {
+  background:#f9f8f6;
+  border:1px solid #e0e4df;
+  border-radius:8px;
+  box-shadow:var(--ref-shade);
+}
+.pm-stat-card {padding:22px 22px;min-height:220px}
+.pm-panel-caption {
+  margin:0 0 20px;
+  color:#2c4b40;
+  font-size:12px;
+  font-weight:760;
+  letter-spacing:0;
+}
+.pm-stat-card .pm-panel-caption {
+  display:flex;align-items:center;gap:11px;
+}
+.pm-check-icon {
+  display:inline-grid;place-items:center;
+  width:22px;height:22px;flex:0 0 22px;
+  border:2px solid #43965c;border-radius:50%;
+  color:#43965c;font-size:14px;font-weight:750;
+}
+.pm-stat-main {grid-template-columns:minmax(0,.82fr) minmax(0,1fr);gap:11px}
+.pm-stat-value strong {
+  color:#152f2d;
+  font-size:47px;
+  line-height:1.05;
+  font-weight:760;
+}
+.pm-stat-value span {font-size:12px;color:#42584f}
+.pm-stat-tags {gap:8px}
+.pm-stat-chip {
+  min-height:31px;
+  display:grid;grid-template-columns:20px 1fr;
+  align-items:center;gap:8px;
+  font-size:11px;font-weight:680;
+  padding:7px 10px;
+  border-radius:8px;
+}
+.pm-stat-chip strong {font-size:13px}
+.pm-stat-chip.pm-priority {background:#f9ecec;color:#bd4347}
+.pm-stat-chip.pm-ontime {background:#eaf2e9;color:#458456}
+.pm-stat-chip.pm-late {background:#f0f1ef;color:#526c66}
+.pm-featured-card {
+  padding:17px 16px 11px;
+  display:flex;flex-direction:column;min-height:379px;
+}
+.pm-featured-card .pm-panel-caption {margin:0 0 9px;color:#344e43}
+.pm-featured-item {
+  grid-template-columns:24px minmax(0,1fr) auto;
+  gap:6px;
+  min-height:56px;
+  padding:9px 2px;
+  border-bottom:1px solid #eff0ec;
+  color:#334c43;
+}
+.pm-featured-item:hover {background:#f4f7f1}
+.pm-featured-dot {font-size:20px;line-height:1.2;text-align:center;color:#4991ad}
+.pm-featured-dot.pm-priority{color:#cc5b51}
+.pm-featured-copy strong {font-size:11px;font-weight:750;line-height:1.35}
+.pm-featured-copy small,.pm-featured-item time {font-size:10px;color:#87938c}
+.pm-featured-card .pm-text-link {padding:12px 4px 4px;color:#386b54;font-size:11px;margin-top:auto}
+.pm-week-schedule .pm-section-title {margin:0 0 11px}
+.pm-section-title {
+  color:#305749;
+  font-size:13px;
+  font-weight:750;
+}
+.pm-week-strip {
+  display:grid;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  gap:7px;
+  min-width:0;
+  flex:1;
+}
+.pm-week-tile {
+  min-height:129px;
+  gap:4px;
+  padding:12px 12px 10px;
+  border:1px solid #e3e7e2;
+  border-radius:8px;
+  background:#fbfaf8;
+  box-shadow:0 1px 2px #324a3705;
+}
+.pm-week-tile:hover {border-color:#b4cdb8;background:#f5f8f3}
+.pm-week-tile.pm-week-sunday {
+  background:linear-gradient(140deg,#dae7d8 0%,#d2e0d0 100%);
+  border-color:#d0dfcc;
+}
+.pm-week-day-name {font-size:10px;font-weight:790;color:#455c54}
+.pm-week-day-number {font-size:18px;font-weight:780;color:#203b35}
+.pm-week-event-dot{font-size:10px;color:#38805a}
+.pm-week-tile-event {font-size:10px;color:#405c50;line-height:1.4}
+.pm-week-tile-time {font-size:10px;color:#65786b}
+.pm-week-hint {color:#829189}
+/* MÊS: título do calendário somente na coluna principal.
+   O painel dos eventos começa alinhado ao título. */
+.pm-month-layout {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) clamp(235px,22vw,291px);
+  gap:18px;
+  align-items:start;
+}
+.pm-month-main {min-width:0}
+.pm-month-main>.pm-page-header {margin:0 0 16px;min-height:54px}
+.pm-month-calendar {
+  background:#fbfaf8;
+  border:1px solid #e2e8e2;
+  border-radius:8px;
+  box-shadow:none;
+}
+.pm-month-weekday-row span {
+  background:#f5f7f5;
+  padding:12px 4px;
+  font-size:10px;
+  font-weight:780;
+  color:#354f48;
+  border-right:1px solid #e8eae7;
+}
+.pm-month-grid {background:#e9ece9}
+.pm-month-cell {
+  min-height:88px;
+  background:#fcfbfa;
+  border-right:1px solid #e3e8e3;
+  border-bottom:1px solid #e3e8e3;
+  color:#31544a;
+  padding:10px 9px;
+  gap:3px;
+}
+.pm-month-cell.pm-other-month {background:#f7f7f5;color:#a3ada6}
+.pm-month-cell.pm-dom {background:#edf4ed}
+.pm-month-cell.pm-selected {
+  background:linear-gradient(130deg,#245f4c,#2b7054);
+  color:#fff;
+  box-shadow:none;
+  border:1px solid #1d5e47;
+  border-radius:7px;
+  z-index:1;
+}
+.pm-month-cell.pm-selected .pm-date-number {color:#fff}
+.pm-month-cell.pm-selected .pm-month-entry {color:#effcf0}
+.pm-month-cell.pm-selected .pm-month-entry::before {color:#a7dcb1}
+.pm-date-number {font-size:12px;font-weight:690}
+.pm-month-entry {font-size:10px;color:#476f5d}
+.pm-month-event::before {color:#348453}
+.pm-month-task {color:#536c8f}
+.pm-month-task::before {color:#7767cb}
+.pm-month-aside {
+  background:#faf9f6;
+  min-height:440px;
+  padding:17px 15px 15px;
+  border:1px solid #e2e5e1;
+  border-radius:8px;
+  box-shadow:none;
+}
+.pm-month-aside h3 {font-size:12px;color:#315044;font-weight:770}
+.pm-month-aside .pm-aside-date {color:#527267;font-size:11px;margin-bottom:14px}
+.pm-month-aside .pm-aside-subtitle {margin:22px 0 10px}
+.pm-aside-event {
+  background:linear-gradient(125deg,#e8f0e8,#e0e9df);
+  padding:13px;
+  border-radius:8px;
+  color:#2f694c;
+}
+.pm-aside-event strong {font-size:12px}
+.pm-aside-event small {font-size:10px;line-height:1.6}
+.pm-aside-task {
+  background:#fdfbf9;
+  border-color:#ecece7;
+  border-radius:8px;
+  padding:11px 9px;
+}
+.pm-aside-task strong {font-size:11px}
+.pm-aside-task small {font-size:10px}
+.pm-aside-check{border-color:#a3b4ad}
+/* DEMANDAS: nenhuma barra decorativa acima do título, somente tabela
+   compacta, abas retas, chips em cores pastéis. */
+.pm-demand-tabs {
+  margin:-12px 0 14px;
+  gap:25px;
+  border-bottom:1px solid #e3e7e3;
+}
+.pm-demand-tab {
+  padding:9px 2px 10px;
+  color:#5f766a;
+  font-size:11px;
+  font-weight:740;
+  border-bottom-width:2px;
+}
+.pm-demand-tab[aria-pressed=true] {border-bottom-color:#236a50;color:#1d5941}
+.pm-list-actions {gap:9px}
+.pm-demand-search {
+  height:35px;
+  width:200px;
+  display:flex;align-items:center;gap:7px;
+  padding:0 10px;
+  border:1px solid #e2e7e3;
+  background:#fbfaf8;
+  border-radius:7px;
+  color:#8a9f93;
+}
+.pm-demand-search .pm-search-symbol{font-size:21px;color:#728c7f}
+.pm-demand-search input {
+  min-width:0;width:100%;
+  border:0;outline:none;background:transparent;
+  color:#294c3e;font-family:inherit;font-size:11px;
+}
+.pm-filter-button{font-size:18px;width:36px;padding:0}
+.pm-demand-table-wrap {
+  border:1px solid #e1e6e1;
+  border-radius:8px;
+  background:#faf9f7;
+  box-shadow:0 1px 2px #16352306;
+}
+.pm-demand-table {
+  border-collapse:collapse;
+  background:#faf9f7;
+  width:100%;
+  font-size:11px;
+}
+.pm-demand-table thead {background:#f3f5f3}
+.pm-demand-table th {
+  padding:11px 11px;
+  border-bottom:1px solid #e2e6e2;
+  color:#405c51;
+  font-size:10px;font-weight:740;
+}
+.pm-demand-table td {
+  padding:10px 11px;
+  border-bottom:1px solid #e9ede9;
+  color:#50665d;
+  font-size:11px;
+}
+.pm-demand-table tbody tr:hover {background:#f3f7f2}
+.pm-table-task {font-size:11px;color:#27493d;font-weight:740}
+.pm-table-person {gap:9px}
+.pm-mini-avatar {
+  width:22px;height:22px;flex-basis:22px;
+  background:#dbe7d8;color:#2b6448;font-size:8px;
+}
+.pm-team-tag {
+  background:#eff1ee;
+  color:#576b61;
+  border-radius:9px;
+  padding:4px 8px;
+  font-size:10px;
+}
+.pm-status-chip,.pm-priority-chip {
+  padding:5px 9px;
+  font-size:10px;
+  font-weight:700;
+  border-radius:9px;
+}
+.pm-status-todo{background:#f8ecdc;color:#976a2c}
+.pm-status-doing{background:#ddedf2;color:#2c7591}
+.pm-status-done{background:#e4f1e5;color:#2e8258}
+.pm-priority-high,.pm-priority-urgent{background:#fae6e2;color:#c34b49}
+.pm-priority-normal{background:#fff1d8;color:#a77530}
+.pm-priority-low{background:#e1f0e5;color:#3b885a}
+.pm-table-menu {font-size:17px;color:#5e8172}
+/* KANBAN: áreas suaves cinza, azul, areia e verde; cartões quase brancos. */
+.pm-premium-board {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:13px;
+  align-items:stretch;
+}
+.pm-kanban-column {
+  border:1px solid #e4e8e3;
+  border-radius:9px;
+  min-height:430px;
+  padding:10px 10px 11px;
+  box-shadow:0 1px 2px #24362405;
+}
+.pm-column-todo{background:#eff0ef}
+.pm-column-doing{background:#eaf2f6}
+.pm-column-review{background:#faf0e4}
+.pm-column-done{background:#eaf2e8}
+.pm-kanban-heading {
+  padding:3px 4px 12px;
+  margin-bottom:2px;
+  border-bottom:0;
+}
+.pm-kanban-heading h3 {
+  font-size:13px;
+  font-weight:760;
+  color:#415a5b;
+}
+.pm-column-todo .pm-kanban-heading h3{color:#415666}
+.pm-column-doing .pm-kanban-heading h3{color:#327f9d}
+.pm-column-review .pm-kanban-heading h3{color:#b17a36}
+.pm-column-done .pm-kanban-heading h3{color:#306e51}
+.pm-kanban-heading span {font-size:11px;color:#7d998a}
+.pm-kanban-stack {gap:7px}
+.pm-kanban-task {
+  border-radius:8px;
+  background:#fbfaf8;
+  padding:11px 12px;
+  border:1px solid #e6e8e4;
+  box-shadow:0 1px 3px #364b3808;
+}
+.pm-kanban-task:hover {box-shadow:0 3px 8px #334a3812}
+.pm-kanban-title {
+  color:#304b45;
+  font-size:11px;
+  font-weight:730;
+  line-height:1.42;
+}
+.pm-kanban-card-foot {margin-top:8px}
+.pm-kanban-card-foot .pm-team-tag {font-size:10px;padding:4px 8px}
+.pm-kanban-card-foot .pm-mini-avatar {width:22px;height:22px}
+.pm-kanban-add {margin-top:auto;font-size:11px;color:#547967;min-height:32px}
+.pm-kanban-done-line {display:flex;align-items:center;gap:10px}
+.pm-done-symbol {
+  display:inline-grid;place-items:center;
+  width:19px;height:19px;flex:0 0 19px;
+  border-radius:50%;
+  background:#379953;color:#fff;
+  font-size:12px;font-weight:800;
+}
+/* GANTT: a árvore de Planos/Etapas e a linha temporal partilham
+   exatamente a altura de cada registro. */
+.pm-gantt-view {
+  grid-template-columns:270px minmax(720px,1fr);
+  min-height:380px;
+  border-radius:8px;
+  border-color:#e4e8e2;
+  background:#faf9f7;
+}
+.pm-gantt-outline {background:#fbfaf7;border-right-color:#e5e9e3}
+.pm-gantt-outline>h3 {
+  margin:0;height:44px;
+  padding:13px;
+  font-size:11px;font-weight:780;
+  color:#395246;background:#f7f7f3;
+}
+.pm-gantt-dates {height:44px;background:#f7f7f3}
+.pm-gantt-date {font-size:10px;color:#647c6e}
+.pm-gantt-plan,.pm-gantt-plan-row {
+  height:35px;
+  background:#f5f8f4;
+  color:#2e5848;
+}
+.pm-gantt-plan {font-size:11px;font-weight:760}
+.pm-gantt-bucket,.pm-gantt-bucket-row {
+  height:34px;
+  margin:0;
+  background:#faf9f7;
+  border-bottom:1px solid #ebeee9;
+}
+.pm-gantt-bucket {
+  padding:8px 11px 7px 29px;
+  font-size:11px;
+  font-weight:740;
+  color:#3c5d4f;
+}
+.pm-gantt-bucket::before {content:'⌄';margin-right:9px;color:#416e55;font-size:14px}
+.pm-gantt-label {
+  height:34px;
+  padding:7px 14px 7px 48px;
+  background:#fbfaf7;
+  color:#5d7266;
+  font-size:11px;
+  font-weight:500;
+}
+.pm-gantt-row,.pm-gantt-plan-row,.pm-gantt-bucket-row {
+  background-size:auto;
+  background-image:repeating-linear-gradient(to right,transparent 0,transparent calc(100% / 35 - 1px),#e7ebe7 calc(100% / 35 - 1px),#e7ebe7 calc(100% / 35));
+}
+.pm-gantt-row {height:34px;background-color:#fbfaf9}
+.pm-gantt-plan-row{background-color:#f5f9f5}
+.pm-gantt-bucket-row{background-color:#faf9f7}
+.pm-gantt-bar {
+  top:8px;height:18px;
+  border-radius:6px;
+  background:linear-gradient(90deg,#71a99c,#a2ceb3);
+  box-shadow:none;
+}
+.pm-gantt-bar.pm-gantt-done {background:linear-gradient(90deg,#599b86,#7cae94)}
+.pm-gantt-bar:hover {background:#397f69}
+/* DOMINGO: navegação interna do mesmo tom dos cartões e hero alinhado
+   com o progresso e as pendências. */
+.pm-sunday-layout {grid-template-columns:160px minmax(0,1fr);gap:15px}
+.pm-sunday-navigation {padding-right:12px;border-right:1px solid #e7e9e5}
+.pm-sunday-navitem {
+  color:#5d7869;
+  font-size:11px;
+  border-radius:7px;
+  padding:12px 11px;
+}
+.pm-sunday-navitem[aria-pressed=true] {background:#e1ece0;color:#326e4f}
+.pm-sunday-main {min-width:0}
+.pm-sunday-main>.pm-page-header {min-height:31px;margin-bottom:10px}
+.pm-sunday-main .pm-heading-title {font-size:16px;font-weight:760}
+.pm-sunday-main .pm-header-actions .pm-pager .pm-light-button {min-height:32px}
+.pm-sunday-overview-top {
+  grid-template-columns:minmax(0,1.32fr) minmax(175px,.55fr) minmax(225px,.9fr);
+  gap:12px;
+}
+.pm-sunday-hero {
+  min-height:212px;
+  border-radius:8px;
+  background-position:center;
+  padding:20px 22px;
+}
+.pm-sunday-hero .pm-hero-date {font-size:22px}
+.pm-sunday-progress,.pm-sunday-pending {
+  border:1px solid #e2e8e2;
+  background:#fbfaf8;
+  padding:16px;
+  border-radius:8px;
+}
+.pm-sunday-progress>strong,.pm-sunday-pending>strong {color:#315144;font-size:12px}
+.pm-progress-ring {
+  width:105px;height:105px;
+  background:conic-gradient(#2a7455 var(--progress),#e3ecdf var(--progress));
+}
+.pm-progress-ring::before {background:#fbfaf8}
+.pm-progress-ring strong {color:#2f5d45;font-size:20px}
+.pm-pending-item {padding:10px 2px;gap:8px;border-color:#e8ece7}
+.pm-pending-item strong {font-size:11px}
+.pm-sunday-teams {
+  background:#fbfaf8;
+  margin-top:14px;
+  padding:13px 15px;
+  border-color:#e2e8e2;
+  border-radius:8px;
+}
+.pm-sunday-teams .pm-section-title{margin:0 0 12px}
+.pm-sunday-team-grid{gap:9px}
+.pm-team-tile {background:#f0f5ef;border-radius:7px;padding:11px}
+.pm-team-tile strong {font-size:11px;color:#42634f}
+.pm-team-tile small{font-size:10px}
+.pm-sunday-detail {background:#fbfaf8;border-color:#e5e9e4}
+/* Equipes foi a única área não mostrada isoladamente no modelo:
+   reaproveita rigorosamente os mesmos tokens, sem criar outra estética. */
+.pm-team-card {background:#faf9f7;border-color:#e2e7e2;border-radius:8px;box-shadow:var(--ref-shade)}
+.pm-team-card h3{color:#305c48}
+.pm-team-tile,.pm-team-tag{box-shadow:none}
+@media (max-width:1280px) {
+  .pm-primary-nav {gap:2px}
+  .pm-primary-nav .pm-nav-link {padding:4px 6px 0;gap:5px;font-size:10px}
+  body.pm-active .pm-brand {min-width:112px}
+  .pm-week-board {grid-template-columns:minmax(0,1.18fr) minmax(0,.97fr) minmax(0,.73fr)}
+  .pm-stat-card {padding:17px}
+  .pm-stat-main {gap:7px}
+}
+@media (max-width:1090px) {
+  body.pm-active .pm-topbar {height:auto;flex-wrap:wrap;padding:8px 16px 0;gap:6px}
+  body.pm-active .pm-brand {min-width:140px}
+  .pm-primary-nav {order:3;flex:1 1 100%;height:46px;justify-content:flex-start;gap:4px;overflow-x:auto}
+  .pm-primary-nav .pm-nav-link {flex-shrink:0;min-height:46px;font-size:11px;padding:3px 11px 0}
+  .pm-week-board {grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);grid-template-rows:auto;grid-template-areas:"hero stats" "schedule schedule" "featured featured"}
+  .pm-featured-card{min-height:0}
+  .pm-featured-item{display:inline-grid;width:calc(50% - 9px);margin-right:8px}
+  .pm-month-layout{grid-template-columns:minmax(0,1fr) 225px;gap:10px}
+  .pm-premium-board{grid-template-columns:repeat(4,minmax(215px,1fr));overflow-x:auto}
+  .pm-sunday-overview-top{grid-template-columns:minmax(0,1.2fr) minmax(180px,.7fr)}
+  .pm-sunday-pending{grid-column:1/-1}
+}
+@media (max-width:760px) {
+  body.pm-active .pm-topbar {padding:8px 10px 0}
+  .pm-toolbar{gap:6px}
+  body.pm-active .pm-stage{padding:0 3px 16px}
+  body.pm-active .planner-main{padding:17px 12px 25px}
+  .pm-page-header{gap:12px;margin-bottom:15px}
+  .pm-heading-title{font-size:23px}
+  .pm-week-board{display:flex;flex-direction:column;gap:11px}
+  .pm-hero-card,.pm-stat-card{min-height:190px}
+  .pm-featured-card{order:3}
+  .pm-week-schedule{order:2}
+  .pm-featured-item{display:grid;width:100%;margin:0}
+  .pm-week-strip{display:flex;overflow-x:auto;gap:7px;padding:0 0 5px}
+  .pm-week-tile{flex:0 0 118px;min-width:118px;min-height:129px}
+  .pm-month-layout{display:flex;flex-direction:column}
+  .pm-month-main,.pm-month-aside{width:100%}
+  .pm-month-cell{min-height:72px;padding:6px 4px}
+  .pm-month-weekday-row span{font-size:9px;padding:9px 0}
+  .pm-month-entry{font-size:9px}
+  .pm-month-aside{min-height:0}
+  .pm-demand-search{width:152px}
+  .pm-demand-table-wrap{overflow-x:auto}
+  .pm-demand-table{min-width:760px}
+  .pm-premium-board{display:flex;overflow-x:auto;gap:10px}
+  .pm-kanban-column{flex:0 0 240px;min-width:240px}
+  .pm-gantt-view{grid-template-columns:180px minmax(560px,1fr)}
+  .pm-gantt-bucket{padding-left:20px}
+  .pm-gantt-label{padding-left:27px}
+  .pm-sunday-layout{display:flex;flex-direction:column}
+  .pm-sunday-navigation{display:flex;gap:4px;overflow-x:auto;padding:0 0 8px;border-right:0;border-bottom:1px solid #e2e8e2}
+  .pm-sunday-navitem{flex:0 0 auto;width:auto}
+  .pm-sunday-overview-top{display:flex;flex-direction:column}
+  .pm-sunday-hero{min-height:205px}
+  .pm-sunday-team-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:450px) {
+  .pm-global-search{max-width:100px}
+  .pm-primary-nav .pm-nav-link{font-size:10px;padding:3px 8px 0}
+  .pm-header-actions{width:100%;justify-content:space-between}
+  .pm-demand-search{width:125px}
+  .pm-week-board .pm-hero-card{min-height:195px}
+  .pm-month-cell .pm-month-entry{display:none}
+  .pm-month-cell:has(.pm-month-entry)::after{content:'•';font-size:12px;color:#3b8963}
+  .pm-sunday-team-grid{grid-template-columns:1fr}
+}
+@media screen {
+  :root[data-theme=dark] body.pm-active,
+  :root[data-theme=dark] body.pm-active #planner-app.workspace{background:#1a211d;color:#e1efe4}
+  :root[data-theme=dark] body.pm-active .pm-topbar{
+    background:linear-gradient(100deg,#26392f,#2b4234);border-bottom-color:#476151
+  }
+  :root[data-theme=dark] body.pm-active .planner-main,
+  :root[data-theme=dark] .pm-stat-card,
+  :root[data-theme=dark] .pm-featured-card,
+  :root[data-theme=dark] .pm-week-tile,
+  :root[data-theme=dark] .pm-month-aside,
+  :root[data-theme=dark] .pm-kanban-task,
+  :root[data-theme=dark] .pm-demand-table,
+  :root[data-theme=dark] .pm-team-card {background:#262f29;border-color:#3e5344;color:#d7e8dc}
+  :root[data-theme=dark] .pm-heading-title,
+  :root[data-theme=dark] .pm-panel-caption,
+  :root[data-theme=dark] .pm-stat-value strong,
+  :root[data-theme=dark] .pm-kanban-title,
+  :root[data-theme=dark] .pm-table-task,
+  :root[data-theme=dark] .pm-week-day-number{color:#d7e8dc}
+  :root[data-theme=dark] .pm-month-main .pm-month-calendar,
+  :root[data-theme=dark] .pm-month-cell{background:#262f29;color:#d9e7df;border-color:#3c5244}
+  :root[data-theme=dark] .pm-month-cell.pm-selected {background:#2b7054}
+  :root[data-theme=dark] .pm-month-cell.pm-dom,
+  :root[data-theme=dark] .pm-week-tile.pm-week-sunday{background:#314638}
+  :root[data-theme=dark] .pm-sunday-progress,
+  :root[data-theme=dark] .pm-sunday-pending,
+  :root[data-theme=dark] .pm-sunday-teams,
+  :root[data-theme=dark] .pm-gantt-view{background:#262f29;border-color:#3e5344}
+  :root[data-theme=dark] .pm-gantt-outline,
+  :root[data-theme=dark] .pm-gantt-plan,
+  :root[data-theme=dark] .pm-gantt-bucket,
+  :root[data-theme=dark] .pm-gantt-label{background:#2b3930;color:#cfe4d3}
+  :root[data-theme=dark] .pm-column-todo{background:#303634}
+  :root[data-theme=dark] .pm-column-doing{background:#2d414c}
+  :root[data-theme=dark] .pm-column-review{background:#443b30}
+  :root[data-theme=dark] .pm-column-done{background:#304535}
+}
+@media print {
+  body.pm-active .pm-stage{padding:0}
+  body.pm-active .planner-main{border:0;box-shadow:none;padding:0}
+  .pm-primary-nav,.pm-more,.pm-header-actions{display:none!important}
+}
