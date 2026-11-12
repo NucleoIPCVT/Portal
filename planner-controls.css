@@ -1,0 +1,53 @@
+/* Ações de criação, escalas do calendário e agrupamentos do quadro. */
+.pm-create-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap}
+.pm-create-button .pm-icon{width:16px;height:16px;flex:0 0 16px}
+.pm-create-plan{background:#e5eee1;border:1px solid #bdcdb8;color:#34583c;font-weight:700}
+.pm-create-plan:hover{background:#d9e6d3;border-color:#a5bca0}
+.pm-create-demand{background:#275e4b;border:1px solid #275e4b;color:#fff}
+.pm-create-demand:hover{background:#1d4c3b;border-color:#1d4c3b}
+.pm-calendar-mode{min-height:35px;border:1px solid #d6e0d3;border-radius:7px;background:#fafbf9;color:#395e51;font:inherit;font-size:11px;font-weight:600;padding:8px 28px 8px 11px;cursor:pointer}
+.pm-header-actions{flex-wrap:wrap}
+.pm-week-header .pm-header-actions{width:auto;justify-content:flex-end;gap:8px}
+.pm-year-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.pm-year-month{padding:16px;background:#fbfcf9;border:1px solid #dfe7db;border-radius:10px;min-width:0}
+.pm-year-month-name{display:block;border:0;background:transparent;color:#315848;font:inherit;font-size:15px;font-weight:700;padding:0 0 12px;text-align:left}
+.pm-year-month-name:hover{text-decoration:underline;text-underline-offset:3px}
+.pm-year-weekdays,.pm-year-dates{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
+.pm-year-weekdays{font-size:10px;color:#7a8b7d;text-align:center;padding-bottom:7px}
+.pm-year-day{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;min-height:32px;padding:3px 0;border:1px solid transparent;border-radius:6px;background:transparent;color:#3e594b;font-size:11px}
+.pm-year-day:hover{background:#edf3e8;border-color:#c7d8c1}
+.pm-year-today{background:#e2eedb;border-color:#b4cba9;font-weight:800}
+.pm-year-marks{display:flex;gap:3px;height:4px}
+.pm-year-marks i{width:4px;height:4px;border-radius:50%;background:#5b936c}
+.pm-year-marks .pm-year-task-dot{background:#ba9652}
+.pm-year-legend,.pm-board-note{font-size:11px;color:#667e6d;line-height:1.6;margin:0 0 16px}
+.pm-board-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;max-width:100%}
+.pm-board-controls .pm-dropdown{min-width:110px;max-width:240px;flex:0 1 auto}
+.pm-board-controls .pm-dropdown select{min-width:0;max-width:160px;width:auto;flex:1}
+.pm-board-controls .pm-board-grouping{min-width:210px}
+.pm-premium-board{grid-template-columns:repeat(var(--board-columns,4),minmax(0,1fr))}
+.pm-premium-board.pm-board-many{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(240px,280px);overflow-x:auto;padding-bottom:12px;scrollbar-width:thin}
+.pm-kanban-column{display:flex;flex-direction:column;min-width:0}
+.pm-column-neutral{background:#eef2e9}
+.pm-column-urgent,.pm-column-high{background:#f8ece8}
+.pm-column-normal{background:#faf1e0}
+.pm-column-low{background:#eaf2e8}
+.pm-kanban-plan{display:block;font-size:10px;line-height:1.4;color:#7a897c;margin-top:7px}
+.pm-kanban-heading h3{overflow-wrap:anywhere}
+.pm-kanban-add{background:transparent;border:0;padding:12px 2px 0;justify-content:flex-start;color:#547967}
+.pm-kanban-add .pm-icon{width:14px;height:14px;flex-basis:14px}
+:root[data-theme=dark] .pm-create-plan{background:#354c39;border-color:#59745b;color:#e4eddb}
+:root[data-theme=dark] .pm-create-plan:hover{background:#405d44}
+:root[data-theme=dark] .pm-calendar-mode{background:#293c32;border-color:#48604b;color:#d8e8d6}
+:root[data-theme=dark] .pm-year-month{background:#25372d;border-color:#405440}
+:root[data-theme=dark] .pm-year-day,:root[data-theme=dark] .pm-year-month-name{color:#d8e8d6}
+:root[data-theme=dark] .pm-year-day:hover,:root[data-theme=dark] .pm-year-today{background:#38513c;border-color:#5b7758}
+:root[data-theme=dark] .pm-year-legend,:root[data-theme=dark] .pm-board-note,:root[data-theme=dark] .pm-kanban-plan{color:#b0c3ac}
+:root[data-theme=dark] .pm-column-neutral{background:#2b3d31}
+:root[data-theme=dark] .pm-column-urgent,:root[data-theme=dark] .pm-column-high{background:#43352f}
+:root[data-theme=dark] .pm-column-normal{background:#403b2d}
+:root[data-theme=dark] .pm-column-low{background:#2b4031}
+@media(max-width:1100px){.pm-week-header{align-items:flex-start}.pm-week-header .pm-header-actions{max-width:540px}.pm-board-controls .pm-dropdown{max-width:none}}
+@media(max-width:950px){.pm-year-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.pm-year-grid{grid-template-columns:1fr}.pm-header-actions .pm-create-button{min-height:37px}.pm-week-header .pm-header-actions{max-width:none}.pm-board-controls .pm-create-button{flex:1 1 auto}.pm-premium-board{display:flex;overflow-x:auto;padding-bottom:12px}.pm-kanban-column{flex:0 0 240px;min-width:240px}}
+@media print{.pm-create-button,.pm-calendar-mode{display:none}.pm-year-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.pm-year-month{break-inside:avoid;padding:8px}}

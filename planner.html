@@ -15,7 +15,8 @@
     <link rel="stylesheet" href="planner.css?v=20261111-verde-creme-01">
     <link rel="stylesheet" href="planner-dark.css?v=20261111-verde-creme-01">
     <link rel="stylesheet" href="planner-premium.css?v=20261111-verde-creme-01">
-    <script type="module" src="planner.js?v=20261112-google-direto-02"></script>
+    <link rel="stylesheet" href="planner-controls.css?v=20261112-workflow-01">
+    <script type="module" src="planner.js?v=20261112-workflow-01"></script>
   </head>
   <body data-interface="planner-ipcvt-verde-creme" data-revisao="20261111-verde-creme-01">
     <a class="skip-link" href="#main-content">Ir para o conteúdo</a>
@@ -91,7 +92,8 @@
         <div class="workspace-quickbar" role="toolbar" aria-label="Ações do Planner">
           <div class="workspace-quickbar-title"><span>COMISSÃO IPCVT</span><strong>Área de trabalho</strong></div>
           <div class="workspace-actions">
-            <button id="new-task-button" class="button button-primary" type="button"><span aria-hidden="true">＋</span> Nova demanda</button>
+            <button id="quick-new-plan" class="button pm-create-plan pm-create-button" type="button"><svg class="pm-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h7l2-3h9v17H3zM15 11v6m-3-3h6"/></svg>Novo plano</button>
+            <button id="new-task-button" class="button button-primary pm-create-demand pm-create-button" type="button"><svg class="pm-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h16v18H4zM8 8l2 2 4-4M8 15h8m-8 3h5"/></svg>Nova demanda</button>
           </div>
           <div class="workspace-session">
             <span id="member-email" class="member-email"></span>
@@ -308,4 +310,5 @@
     <footer class="site-footer">Comissão do Núcleo <span aria-hidden="true">·</span> Igreja Presbiteriana Central em Vilar dos Telles</footer>
   </body>
 </html>
+
 
