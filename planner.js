@@ -1,4 +1,4 @@
-import { createPlannerStore } from './planner-store.js?v=20261111-semanal'
+import { createPlannerStore } from './planner-store.js?v=20261111-google-direto-01'
 import { todayISO, addDays, formatDate, calendarCells, computeSummary, validateTask, isOverdue, taskProgress, generateWeeklyTasks } from './planner-core.js'
 import { createTaskEditor } from './planner-task-editor.js'
 import { GoogleCalendarClient } from './planner-google.js'
@@ -1836,6 +1836,7 @@ $('mobile-new-plan').addEventListener('click', () => { $('mobile-more-menu').ope
 $('new-plan-button').addEventListener('click', () => openPlan())
 $('google-login').addEventListener('click', async () => {
   $('google-login').disabled = true
+  $('auth-feedback').textContent = 'Abrindo o Google…'
   try { await store.login() } catch (error) { $('auth-feedback').textContent = error.message } finally { $('google-login').disabled = false }
 })
 for (const id of ['logout-button', 'switch-account']) $(id).addEventListener('click', async () => { try { await store.logout() } catch (error) { reportError(error) } })
