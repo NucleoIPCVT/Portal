@@ -1,11 +1,23 @@
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'
 import {
-  getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup,
+  getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signInWithCredential,
   reauthenticateWithPopup, signOut
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'
 import {
   getFirestore, collection, doc, onSnapshot, runTransaction, serverTimestamp, setDoc
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'
+import { createGoogleLogin } from './ipcvt-google-login.js?v=20261112-google-direto-02'
+
+const googleLogin = createGoogleLogin({
+  getAccounts: () => window.google?.accounts,
+  credentialFromAccessToken: token => GoogleAuthProvider.credential(null, token),
+  signInWithCredential,
+  fallback: auth => {
+    const provider = new GoogleAuthProvider()
+    provider.setCustomParameters({ prompt: 'select_account' })
+    return signInWithPopup(auth, provider)
+  }
+})
 
 const firebaseConfig = {
   apiKey: 'AIzaSyAg9w5QohkcmXUFRgLfSI5Sh1chnCD1Owc',
@@ -274,13 +286,8 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
     },
 
     async login() {
-      const provider = new GoogleAuthProvider()
-      provider.setCustomParameters({ prompt: 'select_account' })
-      // O Auth do navegador já utiliza persistência local por padrão.
-      // Não altere a persistência durante o popup: a troca concorrente pode interromper o fluxo.
-      // Iniciar na própria ação do clique mantém a ativação de usuário em tablets.
       try {
-        await signInWithPopup(auth, provider)
+        await googleLogin(auth)
       } catch (cause) {
         throw readableError(cause)
       }
