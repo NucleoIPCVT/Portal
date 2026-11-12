@@ -97,7 +97,7 @@ function authErrorMessage(error) {
     case 'auth/network-request-failed': return 'Não foi possível comunicar com o Google. Confira sua conexão e tente novamente.'
     case 'auth/unauthorized-domain': return 'O endereço do portal precisa ser autorizado no Firebase.'
     case 'auth/operation-not-allowed': return 'O login pelo Google ainda precisa ser ativado no Firebase.'
-    default: return 'Não foi possível entrar com Google' + (error?.code ? ' (' + error.code + ')' : '') + '. Confira as dicas abaixo e tente novamente.'
+    default: return 'Não foi possível entrar com Google' + (error?.code ? ' (' + error.code + ')' : '') + '. Tente novamente.'
   }
 }
 
