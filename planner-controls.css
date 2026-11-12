@@ -1,5 +1,6 @@
 /* Ações de criação, escalas do calendário e agrupamentos do quadro. */
 .pm-create-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap}
+.plan-card-footer{flex-wrap:wrap}
 .pm-create-button .pm-icon{width:16px;height:16px;flex:0 0 16px}
 .pm-create-plan{background:#e5eee1;border:1px solid #bdcdb8;color:#34583c;font-weight:700}
 .pm-create-plan:hover{background:#d9e6d3;border-color:#a5bca0}

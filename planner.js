@@ -578,6 +578,7 @@ function renderPlans(content) {
     card.append(node('div', { class: 'plan-card-progress' }, node('span', { style: 'width:' + percentage + '%' })))
     card.append(node('div', { class: 'plan-card-footer' }, [
       button('Abrir plano', () => openPlanBoard(plan.id), 'button button-small button-primary'),
+      button('Editar plano', () => openPlan(plan), 'button button-small'),
       button('+ Demanda', () => { openPlanBoard(plan.id); openTask(null, { planId: plan.id }) }, 'button button-small')
     ]))
     cards.append(card)
@@ -1316,6 +1317,7 @@ function pmFilterSelect(id,label) {
 }
 function pmKanbanView(content,tasks) {
   const groups=groupBoardTasks({grouping:boardGrouping,tasks,plans:state.plans,buckets:state.buckets,events:liveEvents(),teams,planId:selectedPlan(),eventId:value('event-filter')})
+  const editingPlan=activePlans().find(plan=>plan.id===selectedPlan())
   const grouping=node('label',{class:'pm-dropdown pm-board-grouping'},[
     pmText('span','pm-dropdown-caption','Organizar por'),
     node('select',{'aria-label':'Organizar Kanban por',onChange:event=>{boardGrouping=event.target.value;render()}},
@@ -1324,6 +1326,7 @@ function pmKanbanView(content,tasks) {
   const filterbar=pmGroup('div','pm-board-controls',[
     grouping,
     pmFilterSelect('plan-filter','Plano'),
+    editingPlan?pmButton('Editar plano e etapas',()=>{openPlan(editingPlan);$('plan-buckets').focus()},'pm-light-button'):null,
     pmFilterSelect('event-filter','Evento'),
     pmFilterSelect('team-filter','Equipe'),
     pmCreationButton('plan',()=>pmNewPlan()),
