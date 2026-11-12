@@ -1,13 +1,12 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'
 import {
   getAuth, GoogleAuthProvider, onAuthStateChanged,
-  signInWithPopup, signInWithCredential, signOut
+  signInWithPopup, signOut
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'
 import {
   getFirestore, collection, doc, onSnapshot,
   setDoc, updateDoc, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'
-import { createGoogleLogin } from './ipcvt-google-login.js?v=20261111-google-direto-01'
 
 const firebaseConfig = {
   apiKey: 'AIzaSyAg9w5QohkcmXUFRgLfSI5Sh1chnCD1Owc',
@@ -33,12 +32,6 @@ const auth = getAuth(app)
 const db = getFirestore(app)
 const provider = new GoogleAuthProvider()
 provider.setCustomParameters({ prompt: 'select_account' })
-const googleLogin = createGoogleLogin({
-  getAccounts: () => window.google?.accounts,
-  credentialFromAccessToken: token => GoogleAuthProvider.credential(null, token),
-  signInWithCredential,
-  fallback: auth => signInWithPopup(auth, provider)
-})
 
 const ui = Object.fromEntries([
   'access-gate', 'google-login', 'auth-feedback', 'access-pending',
@@ -123,7 +116,10 @@ ui['google-login'].addEventListener('click', async () => {
   ui['google-login'].disabled = true
   ui['auth-feedback'].textContent = 'Abrindo o Google...'
   try {
-    await googleLogin(auth)
+    // Chame a abertura do popup diretamente no gesto do usuário.
+    // A persistência local já é o padrão no Firebase Auth do navegador.
+    // Aguardar setPersistence antes deste passo pode perder a ativação no tablet.
+    await signInWithPopup(auth, provider)
   } catch (error) {
     showGate(authErrorMessage(error))
   } finally {
