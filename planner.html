@@ -15,8 +15,8 @@
     <link rel="stylesheet" href="planner.css?v=20261111-verde-creme-01">
     <link rel="stylesheet" href="planner-dark.css?v=20261111-verde-creme-01">
     <link rel="stylesheet" href="planner-premium.css?v=20261111-verde-creme-01">
-    <link rel="stylesheet" href="planner-controls.css?v=20261112-buckets-01">
-    <script type="module" src="planner.js?v=20261112-buckets-01"></script>
+    <link rel="stylesheet" href="planner-controls.css?v=20261112-repetir-01">
+    <script type="module" src="planner.js?v=20261112-repetir-01"></script>
   </head>
   <body data-interface="planner-ipcvt-verde-creme" data-revisao="20261111-verde-creme-01">
     <a class="skip-link" href="#main-content">Ir para o conteúdo</a>
@@ -186,6 +186,16 @@
             <label class="field" for="task-due">Data de entrega<input id="task-due" type="date"></label>
             <label class="field" for="task-priority">Prioridade<select id="task-priority"><option value="low">Baixa</option><option value="normal" selected>Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option></select></label>
           </div>
+          <section class="task-editor-section task-repeat-section" aria-labelledby="task-repeat-title">
+            <h3 id="task-repeat-title">Repetição <span class="optional-tag">Opcional</span></h3>
+            <label class="field" for="task-repeat-mode"><span class="field-visually-hidden">Repetição da demanda</span><select id="task-repeat-mode" aria-label="Repetição da demanda" aria-describedby="task-repeat-hint"><option value="none">Não repetir</option><option value="repeat">Repetir</option></select></label>
+            <div id="task-repeat-options" class="task-repeat-options" hidden>
+              <span>Repetir a cada</span>
+              <label class="field" for="task-repeat-interval"><span class="field-visually-hidden">Intervalo da repetição</span><input id="task-repeat-interval" type="number" min="1" max="999" step="1" value="1" inputmode="numeric" aria-label="Intervalo da repetição" disabled></label>
+              <label class="field" for="task-repeat-unit"><span class="field-visually-hidden">Unidade da repetição</span><select id="task-repeat-unit" aria-label="Unidade da repetição" disabled><option value="day">Dia</option><option value="week" selected>Semana</option><option value="month">Mês</option></select></label>
+            </div>
+            <p id="task-repeat-hint" class="task-repeat-hint" aria-live="polite">Esta demanda acontece uma única vez.</p>
+          </section>
           <section class="task-editor-section task-people-section" aria-labelledby="task-people-title">
             <h3 id="task-people-title">Responsáveis</h3>
             <div id="task-assignees-editor" class="task-editor-roots"></div>

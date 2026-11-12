@@ -1,4 +1,16 @@
 /* Ações de criação, escalas do calendário e agrupamentos do quadro. */
+.task-repeat-options{display:grid;grid-template-columns:auto minmax(64px,90px) minmax(100px,1fr);gap:10px;align-items:center;margin:12px 0 0}
+.task-repeat-options[hidden]{display:none}
+.task-repeat-options>.field{margin:0;min-width:0}
+.task-repeat-options>span{font-size:13px;color:var(--text-muted,#657366)}
+.task-repeat-options input,.task-repeat-options select{width:100%;min-width:0;box-sizing:border-box}
+.task-repeat-hint{margin:10px 0 0;font-size:12px;line-height:1.6;color:var(--text-muted,#657366)}
+.task-repeat-hint.is-error{color:#a23c30}
+.task-repeat-badge{color:#456b51;font-size:11px}
+.pm-demand-table .task-repeat-badge,.pm-kanban-task .task-repeat-badge{display:block;margin-top:4px;font-size:10px;font-weight:500}
+:root[data-theme=dark] .task-repeat-hint,:root[data-theme=dark] .task-repeat-options>span,:root[data-theme=dark] .task-repeat-badge{color:#b0c3ac}
+:root[data-theme=dark] .task-repeat-hint.is-error{color:#f0a89b}
+@media(max-width:420px){.task-repeat-options{grid-template-columns:minmax(64px,84px) minmax(100px,1fr)}.task-repeat-options>span{grid-column:1/-1}}
 .pm-create-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap}
 .plan-card-footer{flex-wrap:wrap}
 .pm-create-button .pm-icon{width:16px;height:16px;flex:0 0 16px}

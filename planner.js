@@ -1,4 +1,5 @@
-import { createPlannerStore } from './planner-store.js?v=20261112-google-direto-02'
+import { createPlannerStore } from './planner-store.js?v=20261112-repetir-01'
+import { taskRecurrence, setTaskRecurrence, recurrenceLabel, nextRecurrenceDate } from './planner-recurrence.js?v=20261112-repetir-01'
 import { todayISO, addDays, formatDate, calendarCells, computeSummary, validateTask, isOverdue, taskProgress, generateWeeklyTasks } from './planner-core.js'
 import { createTaskEditor } from './planner-task-editor.js'
 import { taskCreationContext } from './planner-task-context.js'
@@ -223,6 +224,7 @@ function taskCard(task) {
   if (!selectedPlan() && currentView !== 'board') card.append(node('span', { class: 'task-label', text: planName(task.planId) }))
   const meta = node('div', { class: 'task-meta' })
   if (task.dueDate) meta.append(node('span', { class: 'task-due' + (isOverdue(task, todayISO()) ? ' is-late' : ''), text: '◷ ' + formatDate(task.dueDate) }))
+  if (taskRecurrence(task)) meta.append(node('span', { class: 'task-repeat-badge', text: '↻ ' + recurrenceLabel(task) }))
   if (['high', 'urgent'].includes(task.priority)) meta.append(node('span', { class: 'priority priority-' + task.priority, text: labels[task.priority] }))
   if (task.team) meta.append(node('span', { class: 'task-team-chip', text: task.team }))
   if (task.checklist?.length) meta.append(node('span', { class: 'task-checklist-count', text: '☑ ' + task.checklist.filter(item => item.done).length + '/' + task.checklist.length, title: 'Etapas concluídas' }))
@@ -1020,6 +1022,7 @@ function pmTaskButton(task,compact=false) {
   const line=pmButton(task.title,()=>openTask(task),compact?'pm-task-line pm-compact':'pm-task-line')
   line.classList.toggle('pm-done',task.status==='done')
   if(isOverdue(task,todayISO()))line.classList.add('pm-overdue')
+  if(taskRecurrence(task))line.title=recurrenceLabel(task)
   return line
 }
 function pmEventText(event) {
@@ -1275,7 +1278,7 @@ function pmDemandView(content,tasks) {
     const check=node('input',{type:'checkbox',checked:task.status==='done','aria-label':'Concluir '+task.title,onChange:async e=>{try{await pmComplete(task,e.target.checked)}catch{e.target.checked=task.status==='done'}}})
     body.append(node('tr',{},[
       node('td',{},check),
-      node('td',{},pmButton(task.title,()=>openTask(task),'pm-table-task')),
+      node('td',{},[pmButton(task.title,()=>openTask(task),'pm-table-task'),taskRecurrence(task)?pmText('small','task-repeat-badge','↻ '+recurrenceLabel(task)):null]),
       node('td',{},pmText('span','pm-team-tag',task.team||'Sem equipe')),
       node('td',{},pmGroup('div','pm-table-person',[pmAvatarFor(task),pmText('span','',pmPerson(task))])),
       node('td',{class:isOverdue(task,todayISO())?'pm-overdue':'' ,text:task.dueDate?pmShort(task.dueDate):'Sem prazo'}),
@@ -1353,6 +1356,7 @@ function pmKanbanView(content,tasks) {
       } else {
         card.append(pmButton(task.title,()=>openTask(task),'pm-kanban-title'))
       }
+      if(taskRecurrence(task))card.append(pmText('small','task-repeat-badge','↻ '+recurrenceLabel(task)))
       card.append(pmText('small','pm-kanban-plan',planName(task.planId)),pmGroup('div','pm-kanban-card-foot',[
         pmText('span','pm-team-tag',task.team||pmPriorityLabel(task.priority)),pmAvatarFor(task)
       ]))
@@ -1687,6 +1691,10 @@ function openTask(task = null, defaults = {}) {
   for (const [field, key] of [['task-team', 'team'], ['task-start', 'startDate'], ['task-due', 'dueDate'], ['task-description', 'description']]) $(field).value = current[key] || ''
   $('task-status').value = current.status
   $('task-priority').value = current.priority
+  const repeat = taskRecurrence(current)
+  $('task-repeat-mode').value = repeat ? 'repeat' : 'none'
+  $('task-repeat-interval').value = repeat?.interval || 1
+  $('task-repeat-unit').value = repeat?.unit || 'week'
   const dependencies = state.tasks.filter(item => item.planId === current.planId && item.id !== current.id && (!item.deleted || current.dependencyIds?.includes(item.id)))
   const people = [...state.tasks.flatMap(item => item.assignees || []), { name: session.name || '', email: session.email || '' }]
   taskEditor.setTask(current, { people, dependencies })
@@ -1725,7 +1733,43 @@ function updateTaskEventFields(recalculate = false) {
       $('task-due').value = proposed
     }
   }
+  updateTaskRepeatFields()
 }
+function taskRepeatDraft() {
+  const previous = byId('tasks', value('task-id'))
+  return setTaskRecurrence({
+    ...(previous || {}), id: previous?.id || 'preview',
+    dueDate: value('task-due'), dateMode: value('task-date-mode')
+  }, value('task-repeat-mode') === 'repeat'
+    ? { interval: Number(value('task-repeat-interval')), unit: value('task-repeat-unit') } : null)
+}
+function updateTaskRepeatFields() {
+  const enabled = value('task-repeat-mode') === 'repeat'
+  $('task-repeat-options').hidden = !enabled
+  $('task-repeat-interval').disabled = !enabled
+  $('task-repeat-unit').disabled = !enabled
+  $('task-repeat-interval').required = enabled
+  $('task-repeat-unit').required = enabled
+  for (const option of $('task-repeat-unit').options) {
+    const names = { day: ['Dia', 'Dias'], week: ['Semana', 'Semanas'], month: ['Mês', 'Meses'] }[option.value]
+    option.textContent = names[Number(value('task-repeat-interval')) === 1 ? 0 : 1]
+  }
+  const hint = $('task-repeat-hint')
+  hint.classList.remove('is-error')
+  if (!enabled) {
+    hint.textContent = 'Esta demanda acontece uma única vez.'
+    return
+  }
+  try {
+    const next = nextRecurrenceDate(taskRepeatDraft())
+    if (!next) throw new Error('Confira a data de entrega e o intervalo da repetição.')
+    hint.textContent = 'Ao concluir esta demanda, a próxima será criada para ' + formatDate(next) + ', com o checklist reiniciado. Para encerrar, escolha “Não repetir” na ocorrência pendente.'
+  } catch (error) {
+    hint.textContent = error.message
+    hint.classList.add('is-error')
+  }
+}
+for (const id of ['task-repeat-mode', 'task-repeat-interval', 'task-repeat-unit']) $(id).addEventListener('input', updateTaskRepeatFields)
 $('task-event').addEventListener('change', () => updateTaskEventFields(true))
 $('task-date-mode').addEventListener('change', () => updateTaskEventFields(true))
 $('task-offset').addEventListener('input', () => updateTaskEventFields(true))
@@ -1734,6 +1778,7 @@ $('task-due').addEventListener('input', () => {
     $('task-date-mode').value = 'manual'
     updateTaskEventFields()
   }
+  updateTaskRepeatFields()
 })
 $('task-plan').addEventListener('change', () => {
   fillBucketSelect($('task-bucket'), value('task-plan'))
@@ -1757,7 +1802,7 @@ $('task-form').addEventListener('submit', async event => {
     if (previous && String(previous.version) !== $('task-dialog').dataset.version) throw new Error('Esta demanda foi atualizada por outra pessoa. Feche e abra novamente antes de salvar.')
     const editorError = taskEditor.validate()
     if (editorError) throw new Error(editorError)
-    const task = { ...(previous || {}), id: previous?.id || newId(), title: value('task-title'), planId: value('task-plan'), bucketId: value('task-bucket'), team: value('task-team'), description: value('task-description'), assignees: taskEditor.getAssignees(), startDate: value('task-start'), dueDate: value('task-due'), status: value('task-status'), priority: value('task-priority'), checklist: taskEditor.getChecklist(), dependencyIds: taskEditor.getDependencyIds(), eventId: value('task-event'), dateMode: value('task-date-mode'), dueOffsetDays: value('task-date-mode') === 'event' ? Number(value('task-offset')) : null }
+    let task = { ...(previous || {}), id: previous?.id || newId(), title: value('task-title'), planId: value('task-plan'), bucketId: value('task-bucket'), team: value('task-team'), description: value('task-description'), assignees: taskEditor.getAssignees(), startDate: value('task-start'), dueDate: value('task-due'), status: value('task-status'), priority: value('task-priority'), checklist: taskEditor.getChecklist(), dependencyIds: taskEditor.getDependencyIds(), eventId: value('task-event'), dateMode: value('task-date-mode'), dueOffsetDays: value('task-date-mode') === 'event' ? Number(value('task-offset')) : null }
     const linkedEvent = liveEvents().find(event => event.id === task.eventId)
     if (linkedEvent?.status === 'cancelled' && previous?.eventId !== task.eventId) throw new Error('Este evento foi cancelado. Escolha outro evento ou salve como demanda sem evento-alvo.')
     if (task.dateMode === 'event') {
@@ -1765,6 +1810,8 @@ $('task-form').addEventListener('submit', async event => {
       if (!linked?.startDate || !Number.isInteger(task.dueOffsetDays) || Math.abs(task.dueOffsetDays) > 365) throw new Error('Selecione um evento e um intervalo de até 365 dias para o prazo relativo.')
       task.dueDate = addDays(linked.startDate, task.dueOffsetDays)
     }
+    task = setTaskRecurrence(task, value('task-repeat-mode') === 'repeat'
+      ? { interval: Number(value('task-repeat-interval')), unit: value('task-repeat-unit') } : null)
     const errors = validateTask(task, state.tasks)
     if (errors.length) throw new Error(errors.join(' '))
     if (task.assignees.length > 10 || task.checklist.length > 20 || task.dependencyIds.length > 20) throw new Error('Use até 10 responsáveis, 20 itens de checklist e 20 dependências.')

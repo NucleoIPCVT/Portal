@@ -7,6 +7,7 @@ import {
   getFirestore, collection, doc, onSnapshot, runTransaction, serverTimestamp, setDoc
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'
 import { createGoogleLogin } from './ipcvt-google-login.js?v=20261112-google-direto-02'
+import { nextRecurringTask } from './planner-recurrence.js?v=20261112-repetir-01'
 
 const googleLogin = createGoogleLogin({
   getAccounts: () => window.google?.accounts,
@@ -304,10 +305,16 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
       const actor = requireSession()
       const ref = itemRef(kind, item.id)
       const fields = payloadFor(kind, item)
+      const nextTask = kind === 'tasks' ? nextRecurringTask({ ...fields, id: item.id }, data.buckets) : null
+      const nextRef = nextTask ? itemRef('tasks', nextTask.id) : null
       if (kind === 'events' && fields.source === 'google' && !actor.isAdmin) throw error('Somente um administrador pode importar eventos do Google Agenda.', 'planner-admin-required')
       try {
         return await runTransaction(db, async transaction => {
           const previous = await transaction.get(ref)
+          // Read both documents before writing. Completing an occurrence and
+          // creating its successor succeed together, including on retries.
+          const continues = nextRef && (!previous.exists() || previous.data().status !== 'done')
+          const nextSnapshot = continues ? await transaction.get(nextRef) : null
           requireSession()
           if (previous.exists() && (!Number.isInteger(expectedVersion) || previous.data().version !== expectedVersion)) {
             throw error('Outra pessoa atualizou este registro. Abra novamente para conferir as alterações antes de salvar.', 'conflict')
@@ -321,6 +328,14 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
             updatedAt: serverTimestamp(), updatedBy: actor.email
           }
           transaction.set(ref, record)
+          if (continues && !nextSnapshot.exists()) {
+            const nextFields = payloadFor('tasks', nextTask)
+            transaction.set(nextRef, {
+              ...nextFields, version: 1,
+              createdAt: serverTimestamp(), createdBy: actor.email,
+              updatedAt: serverTimestamp(), updatedBy: actor.email
+            })
+          }
           return { ...fields, id: item.id, version }
         })
       } catch (cause) { throw readableError(cause) }
