@@ -2268,7 +2268,7 @@ function render() {
   const filterVisible = currentView === 'events' || taskViews.has(currentView)
   $('workspace-filter-strip').hidden = !filterVisible
   $('advanced-filters').hidden = currentView === 'events'
-  const filterCount = taskFilterIds.filter(id => $(id).value).length
+  const filterCount = taskFilterIds.filter(id => (currentView !== 'gantt' || id !== 'plan-filter') && $(id).value).length
   $('filter-count').textContent = String(filterCount)
   $('filter-count').hidden = !filterCount
   $('clear-filters').hidden = !filterCount && !value('search-filter')
