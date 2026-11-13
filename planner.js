@@ -2255,6 +2255,12 @@ for(const item of document.querySelectorAll('#pm-planner-sidebar .pm-side-link, 
 $('nav-extras').querySelector('summary').title='Outras ferramentas'
 $('pm-sidebar-theme').title='Alternar modo claro/escuro'
 pmSyncSidebarToggle()
+$('planner-app').querySelector('.planner-shell').addEventListener('transitionend',event=>{
+  if(event.propertyName==='grid-template-columns'){
+    // Reposiciona as conexões do Gantt quando a largura termina de mudar.
+    window.dispatchEvent(new Event('resize'))
+  }
+})
 $('pm-sidebar-backdrop').addEventListener('click',pmSidebarClose)
 document.addEventListener('keydown',event=>{if(event.key==='Escape')pmSidebarClose()})
 function pmSyncThemeButton(){
