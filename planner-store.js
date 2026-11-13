@@ -9,7 +9,7 @@ import {
 import { createGoogleLogin } from './ipcvt-google-login.js?v=20261112-google-direto-02'
 import { nextRecurringTask, taskRecurrence, rotationConfigId, rotationConfigRecord,
   parseRotationConfig, recurrenceOccurrenceAt, scheduledUpcomingDates
-} from './planner-recurrence.js?v=20261113-rodizio-v1'
+} from './planner-recurrence.js?v=20261113-unified-v1'
 
 const googleLogin = createGoogleLogin({
   getAccounts: () => window.google?.accounts,
@@ -162,11 +162,24 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
       const target=itemRef('tasks',occurrence.id)
       const setting=itemRef('tasks',config.id||rotationConfigId(config.sourceId))
       const original=itemRef('tasks',template.id)
+      // Rotinas migradas preservam as ocorrências legadas e seus IDs.
+      // Consulte também a chave semanal antiga para jamais duplicar a semana.
+      const dateUTC=new Date(date+'T12:00:00Z')
+      const dayOfWeek=dateUTC.getUTCDay()
+      const weekStart=new Date(dateUTC.getTime()-((dayOfWeek+6)%7)*86400000)
+        .toISOString().slice(0,10)
+      const oldId=template.routineId
+        ? 'routine_'+encodeURIComponent(template.routineId)+'_'+weekStart : ''
+      const oldOccurrence=oldId&&oldId!==occurrence.id?itemRef('tasks',oldId):null
+      if(data.tasks.some(task=>task.routineId===template.routineId&&
+        !!template.routineId&&!task.deleted&&
+        (task.dueDate===date||task.cycleKey===weekStart)))continue
       await runTransaction(db,async tx=>{
         const currentSetting=await tx.get(setting)
         const currentOriginal=await tx.get(original)
         const exists=await tx.get(target)
-        if(exists.exists()||!currentSetting.exists()||!currentOriginal.exists()||currentOriginal.data().deleted)return
+        const legacy=oldOccurrence?await tx.get(oldOccurrence):null
+        if(exists.exists()||legacy?.exists()||!currentSetting.exists()||!currentOriginal.exists()||currentOriginal.data().deleted)return
         const latestConfig=parseRotationConfig({...currentSetting.data(),id:config.id})
         if(!latestConfig||latestConfig.advance!=='scheduled'||latestConfig.templateId!==template.id||
           currentOriginal.data().recurrenceId!==template.recurrenceId)return

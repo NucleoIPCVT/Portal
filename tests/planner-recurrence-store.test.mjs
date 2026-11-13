@@ -146,3 +146,39 @@ test('rotating scheduled tasks preserve the chosen person and do not wait for co
   assert.equal(records.get(path('tasks',original.id)).status,'todo')
   assert.equal(records.size,6,'original, hidden config and four future occurrences')
 })
+
+
+test('a migração de Rotinas não duplica ocorrências antigas já programadas',async()=>{
+  const {store,records,original}=await fixture()
+  const day=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo',
+    year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())
+  const upcoming=scheduledUpcomingDates(original,day,4)
+  assert.ok(upcoming.length>=2)
+  const first=upcoming[0]
+  const date=new Date(first+'T12:00:00Z')
+  date.setUTCDate(date.getUTCDate()-((date.getUTCDay()+6)%7))
+  const cycleKey=date.toISOString().slice(0,10)
+  const routineId='weekly-before-migration'
+  const legacyId='routine_'+routineId+'_'+cycleKey
+  const older={
+    ...original,id:legacyId,version:undefined,recurrenceId:'',
+    sourceTaskId:'',routineId,cycleKey,dueDate:first,status:'todo'
+  }
+  delete older.version
+  await store.save('tasks',older)
+  await store.save('tasks',{...original,routineId},{
+    expectedVersion:1,rotationConfig:{
+      mode:'fixed',advance:'scheduled',people:[],groups:[]
+    }
+  })
+  for(let attempt=0;attempt<50;attempt++){
+    const repeated=[...records.keys()].filter(key=>key.includes('repeat_original_'))
+    if(repeated.length>=upcoming.length-1)break
+    await new Promise(resolve=>setTimeout(resolve,0))
+  }
+  assert.ok(records.has(path('tasks',legacyId)))
+  assert.equal(records.has(path('tasks','repeat_original_'+first)),false,
+    'ocorrência legada não pode reaparecer com um segundo ID')
+  const regular=[...records.keys()].filter(key=>key.includes('repeat_original_'))
+  assert.equal(regular.length,upcoming.length-1)
+})

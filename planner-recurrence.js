@@ -37,7 +37,7 @@ export function setTaskRecurrence(task, rule = null) {
   const previous = taskRecurrence(task)
   const sameRule = previous?.unit === rule.unit && previous.interval === rule.interval
   const sourceId = previous?.sourceId || task.id
-  const anchor = sameRule ? previous.anchor : task.dueDate
+  const anchor = sameRule && !rule.resetAnchor ? previous.anchor : task.dueDate
   const recurrenceId = [PREFIX, encodeURIComponent(sourceId), rule.unit, rule.interval, anchor].join(':')
   if (!sourceId || sourceId.length > 160 || sourceId.includes('/') || recurrenceId.length > 200) {
     throw new Error('Não foi possível identificar esta repetição. Crie uma nova demanda.')

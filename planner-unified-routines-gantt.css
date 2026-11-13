@@ -1,0 +1,67 @@
+/* IPCVT Planner | Repetições unificadas e conexões Gantt agrupadas
+   13/11/2026. Camada final após planner-cards-dependencies.css. */
+.pm-legacy-routines-banner{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:15px;flex-wrap:wrap;
+  background:#eef5ed;border:1px solid #cfe2d1;
+  border-radius:9px;padding:14px 17px;margin:0 0 17px;
+}
+.pm-legacy-routines-message{display:flex;align-items:center;gap:12px;min-width:0}
+.pm-legacy-routines-message>.pm-icon{
+  width:22px;height:22px;flex:0 0 22px;color:#447b55;
+}
+.pm-legacy-routines-message>div{display:grid;gap:5px;min-width:0}
+.pm-legacy-routines-message strong{font-size:12px;font-weight:750;color:#305f42}
+.pm-legacy-routines-message small{font-size:11px;color:#708e79;line-height:1.5}
+.pm-legacy-convert{
+  min-height:34px;border-color:#b2d0b7;
+  background:#fff;color:#2e7049;font-weight:730;
+}
+.pm-legacy-convert:hover{background:#e0efe2}
+.task-repeat-weekday[hidden]{display:none!important}
+.task-repeat-weekday{
+  display:flex;align-items:center;flex-wrap:wrap;gap:12px;
+  margin:10px 0 4px;padding:10px 12px;
+  background:#f2f7ef;border:1px solid #dcead9;
+  border-radius:8px;
+}
+.task-repeat-weekday>span{font-size:11px;font-weight:730;color:#476851}
+.task-repeat-weekday select{
+  min-height:35px;min-width:145px;max-width:100%;
+  padding:7px 10px;border:1px solid #cddfcf;border-radius:6px;
+  background:#fff;color:#335940;font:600 11px/1.3 Inter,Arial,sans-serif;
+}
+.task-repeat-weekday select:disabled{opacity:.6;cursor:not-allowed}
+.pm-gantt-dependencies .pm-gantt-link.is-branch{
+  stroke-width:1.55;stroke-linejoin:round;
+}
+.pm-gantt-dependencies .pm-gantt-link.is-trunk{
+  stroke:#377e59;stroke-width:2.15;
+  opacity:.87;stroke-linecap:round;stroke-linejoin:round;
+}
+.pm-gantt-dependencies .pm-gantt-link.is-trunk.is-active{
+  stroke:#246c45;stroke-width:2.6;opacity:1;
+}
+.pm-gantt-dependencies .pm-gantt-link.is-trunk.is-muted{opacity:.18}
+.pm-gantt-dependencies .pm-gantt-link.is-branch.is-muted{opacity:.12}
+.pm-gantt-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+:root[data-theme=dark] .pm-legacy-routines-banner{
+  background:#304b38;border-color:#4f7155;
+}
+:root[data-theme=dark] .pm-legacy-routines-message strong{color:#d3ead6}
+:root[data-theme=dark] .pm-legacy-routines-message small{color:#bad1bd}
+:root[data-theme=dark] .pm-legacy-routines-message>.pm-icon{color:#a9d4af}
+:root[data-theme=dark] .pm-legacy-convert{
+  background:#314c3a;border-color:#64846b;color:#d9f1de;
+}
+:root[data-theme=dark] .task-repeat-weekday{background:#2b4333;border-color:#45624b}
+:root[data-theme=dark] .task-repeat-weekday>span{color:#c6e3cb}
+:root[data-theme=dark] .task-repeat-weekday select{
+  background:#2c4032;color:#d4ead6;border-color:#597861;
+}
+:root[data-theme=dark] .pm-gantt-dependencies .pm-gantt-link.is-trunk{stroke:#93cfa5}
+:root[data-theme=dark] .pm-gantt-dependencies .pm-gantt-link.is-trunk.is-active{stroke:#b5efc0}
+@media(max-width:720px){
+  .pm-legacy-routines-banner{align-items:stretch;gap:10px}
+  .pm-legacy-convert{width:100%}
+}

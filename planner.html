@@ -21,9 +21,10 @@
     <link rel="stylesheet" href="planner-rotation.css?v=20261113-rodizio-v1">
     <link rel="stylesheet" href="planner-gantt-clean.css?v=20261113-gantt-clean-v1">
     <link rel="stylesheet" href="planner-cards-dependencies.css?v=20261113-cards-deps-v1">
-    <script type="module" src="planner.js?v=20261113-cards-deps-v1"></script>
+    <link rel="stylesheet" href="planner-unified-routines-gantt.css?v=20261113-unified-v1">
+    <script type="module" src="planner.js?v=20261113-unified-v1"></script>
   </head>
-  <body data-interface="planner-ipcvt-verde-creme" data-revisao="20261113-cards-deps-v1">
+  <body data-interface="planner-ipcvt-verde-creme" data-revisao="20261113-unified-v1">
     <a class="skip-link" href="#main-content">Ir para o conteúdo</a>
     <header class="site-header">
       <a class="brand" href="planner.html" aria-label="Início do Planner da Comissão">
@@ -75,7 +76,6 @@
               <button type="button" data-view="plans">Planos da Comissão</button>
               <button type="button" data-view="events">Agenda oficial</button>
               <button type="button" data-view="list">Minhas tarefas</button>
-              <button type="button" data-view="routines">Rotinas semanais</button>
               <button type="button" data-view="integrations">Google Agenda</button>
               <button type="button" id="pm-settings" hidden>Configurações da agenda</button>
               <button type="button" id="pm-theme">Alternar tema</button>
@@ -125,7 +125,6 @@
                   
                   <button type="button" data-view="teams"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 21v-2a6 6 0 0 1 12 0v2M17 5a3 3 0 0 1 0 6m2 3a6 6 0 0 1 3 6"/></svg>Equipes</button>
                   <button type="button" data-view="events"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 11h18M8 3v4m8-4v4"/></svg>Agenda oficial</button>
-                  <button type="button" data-view="routines"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7h-7V1M4 17h7v6M4.5 8a8 8 0 0 1 13.3-4L20 7M4 17l2.2 3A8 8 0 0 0 19.5 16"/></svg>Rotinas</button>
                   <button type="button" data-view="integrations"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 15l6-6M8 17l-1 1a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0m10-1 1-1a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0" transform="translate(0 -1) scale(.95)"/></svg>Google Agenda</button>
                 </details>
               </nav>
@@ -139,7 +138,6 @@
                 <button type="button" data-view="events">Agenda da igreja</button>
                 <button type="button" data-view="plans">Planos da Comissão</button>
                 <button type="button" data-view="home">Início</button>
-                <button type="button" data-view="routines">Rotinas</button>
                 <button type="button" data-view="integrations">Google Agenda</button>
                 <button type="button" id="mobile-new-plan">Criar plano</button>
               </div>
@@ -197,6 +195,18 @@
               <label class="field" for="task-repeat-interval"><span class="field-visually-hidden">Intervalo da repetição</span><input id="task-repeat-interval" type="number" min="1" max="999" step="1" value="1" inputmode="numeric" aria-label="Intervalo da repetição" disabled></label>
               <label class="field" for="task-repeat-unit"><span class="field-visually-hidden">Unidade da repetição</span><select id="task-repeat-unit" aria-label="Unidade da repetição" disabled><option value="day">Dia</option><option value="week" selected>Semana</option><option value="month">Mês</option></select></label>
             </div>
+            <label id="task-repeat-weekday-wrap" class="field task-repeat-weekday" for="task-repeat-weekday" hidden>
+              <span>Repetir toda</span>
+              <select id="task-repeat-weekday" aria-label="Dia da semana da repetição">
+                <option value="0">Domingo</option>
+                <option value="1">Segunda-feira</option>
+                <option value="2">Terça-feira</option>
+                <option value="3">Quarta-feira</option>
+                <option value="4">Quinta-feira</option>
+                <option value="5">Sexta-feira</option>
+                <option value="6">Sábado</option>
+              </select>
+            </label>
             <div id="task-rotation-settings" class="task-rotation-settings" hidden>
               <label class="field" for="task-repeat-advance"><span>Criar próxima ocorrência</span>
                 <select id="task-repeat-advance">

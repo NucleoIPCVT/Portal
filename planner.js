@@ -1,11 +1,12 @@
-import { createPlannerStore } from './planner-store.js?v=20261113-rodizio-v1'
-import { ganttLinkRoutes } from './planner-gantt-links.js?v=20261113-gantt-clean-v1'
+import { createPlannerStore } from './planner-store.js?v=20261113-unified-v1'
+import { ganttLinkRoutes } from './planner-gantt-links.js?v=20261113-fanin-v1'
+import { routineMigrationPlan } from './planner-routine-migration.js?v=20261113-unified-v1'
 import { resolveGanttDependencies } from './planner-gantt-dependencies.js?v=20261113-recurring-links-v1'
 import {
   taskRecurrence,setTaskRecurrence,recurrenceLabel,nextRecurrenceDate,
   rotationConfigId,parseRotationConfig,rotationConfigRecord,rotationAssigneesForDate,
   recurrenceDateAt,recurrenceCycleIndex
-} from './planner-recurrence.js?v=20261113-rodizio-v1'
+} from './planner-recurrence.js?v=20261113-unified-v1'
 import { todayISO, addDays, formatDate, calendarCells, computeSummary, validateTask, isOverdue, taskProgress, generateWeeklyTasks } from './planner-core.js'
 import { createTaskEditor } from './planner-task-editor.js?v=20261113-rodizio-v1'
 import { taskCreationContext } from './planner-task-context.js'
@@ -45,6 +46,8 @@ let calendarTimer = null
 let calendarLastLoad = 0
 let calendarUnread = []
 let rotationEditorReady=false
+let taskRepeatWeekdayChanged=false
+let migratingRoutines=false
 let rotationGroupsByPerson=new Map()
 const taskEditor = createTaskEditor({
   assigneesRoot: $('task-assignees-editor'),
@@ -1357,8 +1360,58 @@ function pmMenuSection(title,icon,items){
   group.append(summary,pmGroup('div','pm-filter-choices',items))
   return group
 }
+async function migrateLegacyRoutines(){
+  if(migratingRoutines)return
+  const items=state.routines.filter(routine=>routine.active!==false&&
+    activePlans().some(plan=>plan.id===routine.planId))
+  if(!items.length)return
+  if(!await confirmAction('Converter rotinas antigas?',
+    'As rotinas serão transformadas em demandas recorrentes semanais. Os registros e as ocorrências antigas serão preservados, sem duplicar tarefas.'))return
+  migratingRoutines=true
+  let converted=0
+  try{
+    for(const routine of items){
+      // A migração é retomável: nenhuma rotina é desativada antes de a
+      // nova série ser gravada com sucesso.
+      const plan=routineMigrationPlan(routine,state.tasks,todayISO())
+      if(!plan)continue
+      if(plan.mode!=='already'){
+        await save('tasks',plan.template,{
+          rotationConfig:{
+            mode:'fixed',advance:'scheduled',
+            people:(plan.template.assignees||[]).map(person=>({...person}))
+          }
+        })
+      }
+      await save('routines',{...routine,active:false})
+      converted++
+    }
+    notice(converted+' rotina(s) convertida(s). Você pode acompanhar tudo em Minhas tarefas.')
+  }catch(error){
+    notice(converted+' rotina(s) convertida(s). Não foi possível concluir as demais: '+
+      (error?.message||'verifique sua conexão.'),true)
+  }finally{
+    migratingRoutines=false
+    if(session.status==='authorized')render()
+  }
+}
 function pmTaskTools(content,tasks,mode){
   content.append(pmHeader('Trabalho da Comissão','Minhas tarefas','',[pmCreationButton('task',()=>pmNewTask())]))
+  const legacy=state.routines.filter(routine=>routine.active!==false&&
+    activePlans().some(plan=>plan.id===routine.planId))
+  if(legacy.length){
+    const banner=pmGroup('section','pm-legacy-routines-banner',[
+      pmGroup('div','pm-legacy-routines-message',[
+        pmIcon('checklist'),
+        pmGroup('div','',[
+          pmText('strong','','Unificar '+legacy.length+' rotina(s) antiga(s)'),
+          pmText('small','','Converter para demandas recorrentes sem perder as tarefas ou o histórico existente.')
+        ])
+      ]),
+      pmButton('Converter rotinas',()=>migrateLegacyRoutines(),'pm-light-button pm-legacy-convert')
+    ])
+    content.append(banner)
+  }
   const toggle=pmGroup('div','pm-task-mode')
   for(const [id,label,icon] of [['list','Grade','document'],['board','Quadro','plan']]){
     const option=pmButton('',()=>changeView(id,{preserveFilters:true}),'pm-mode-button')
@@ -1692,8 +1745,10 @@ function pmGanttView(content,tasks){
   const insertTask=task=>{
     const item=pmGroup('div','pm-gantt-item')
     const copy=pmGroup('div','pm-gantt-task-copy')
-    const title=pmButton(task.title,()=>openTask(task),'pm-gantt-label')
-    title.title=task.title
+    const occurrenceSuffix=taskRecurrence(task)||task.routineId
+      ? ' · '+(task.dueDate?formatDate(task.dueDate):'sem prazo'):''
+    const title=pmButton(task.title+occurrenceSuffix,()=>openTask(task),'pm-gantt-label')
+    title.title=task.title+occurrenceSuffix
     title.addEventListener('mouseenter',()=>{hoveredId=task.id;drawGanttLinks()})
     title.addEventListener('mouseleave',()=>{hoveredId='';drawGanttLinks()})
     title.addEventListener('focus',()=>{hoveredId=task.id;drawGanttLinks()})
@@ -1774,11 +1829,17 @@ function pmGanttView(content,tasks){
     const width=right.scrollWidth
     const height=right.scrollHeight
     if(!width||!height)return
-    const nodes=[...bars.values()].map(({task,bar,row})=>({
-      id:task.id,title:task.title+' ('+formatDate(task.dueDate)+')',
-      left:bar.offsetLeft,right:bar.offsetLeft+bar.offsetWidth,
-      y:row.offsetTop+row.offsetHeight/2
-    }))
+    // Medir tudo relativo ao mesmo contêiner corrige desalinhamentos
+    // provocados por barras, cabeçalhos e rolagem horizontal.
+    const chartBounds=right.getBoundingClientRect()
+    const nodes=[...bars.values()].map(({task,bar})=>{
+      const bounds=bar.getBoundingClientRect()
+      return {
+        id:task.id,title:task.title+' ('+formatDate(task.dueDate)+')',
+        left:bounds.left-chartBounds.left,right:bounds.right-chartBounds.left,
+        y:(bounds.top+bounds.bottom)/2-chartBounds.top
+      }
+    })
     const id=hoveredId||
       (bars.has(pmGanttSelectedTaskId)?pmGanttSelectedTaskId:'')||
       (dependencyLinks.length>6?dependencyLinks[0]?.to:'')
@@ -1812,18 +1873,27 @@ function pmGanttView(content,tasks){
     marker.append(arrow)
     defs.append(marker)
     svg.append(defs)
-    for(const route of result.routes){
+    const addRoute=(route,bundle=false)=>{
       const path=document.createElementNS(ns,'path')
       path.setAttribute('d',route.d)
       path.setAttribute('class',
-        'pm-gantt-link'+(route.active?' is-active':'')+
+        'pm-gantt-link'+(bundle?' is-trunk':'')+
+        (route.bundled?' is-branch':'')+
+        (route.active?' is-active':'')+
         (id&&!route.active?' is-muted':'')+
         (route.backward?' is-backward':''))
-      path.setAttribute('marker-end','url(#pm-gantt-arrow-clean)')
+      if(route.markerEnd!==false)path.setAttribute('marker-end','url(#pm-gantt-arrow-clean)')
       const caption=document.createElementNS(ns,'title')
       caption.textContent=route.title
       path.append(caption)
       svg.append(path)
+    }
+    for(const route of result.routes)addRoute(route)
+    for(const bundle of result.bundles||[]){
+      // Dois caminhos separados: um tronco sem ponta e uma saída com
+      // UMA única ponta em direção à demanda dependente.
+      addRoute({...bundle,d:bundle.trunk,markerEnd:false},true)
+      addRoute({...bundle,d:bundle.exit,markerEnd:true},true)
     }
     right.append(svg)
   }
@@ -2094,6 +2164,8 @@ function openTask(task = null, defaults = {}) {
   $('task-repeat-mode').value = repeat ? 'repeat' : 'none'
   $('task-repeat-interval').value = repeat?.interval || 1
   $('task-repeat-unit').value = repeat?.unit || 'week'
+  $('task-repeat-weekday').value=String(new Date((current.dueDate||todayISO())+'T12:00:00Z').getUTCDay())
+  taskRepeatWeekdayChanged=false
   $('task-repeat-advance').value = storedRotation?.advance || 'completion'
   $('task-rotation-mode').value = storedRotation?.mode || 'fixed'
   const dependencies = state.tasks.filter(item => item.planId === current.planId && item.id !== current.id && (!item.deleted || current.dependencyIds?.includes(item.id)))
@@ -2236,7 +2308,8 @@ function taskRepeatDraft() {
     ...(previous || {}), id: previous?.id || 'preview',
     dueDate: value('task-due'), dateMode: value('task-date-mode')
   }, value('task-repeat-mode') === 'repeat'
-    ? { interval: Number(value('task-repeat-interval')), unit: value('task-repeat-unit') } : null)
+    ? { interval: Number(value('task-repeat-interval')), unit: value('task-repeat-unit'),
+      resetAnchor:taskRepeatWeekdayChanged } : null)
 }
 function updateTaskRepeatFields() {
   const enabled = value('task-repeat-mode') === 'repeat'
@@ -2248,6 +2321,14 @@ function updateTaskRepeatFields() {
   $('task-repeat-unit').disabled = !enabled
   $('task-repeat-interval').required = enabled
   $('task-repeat-unit').required = enabled
+  const weekly=enabled&&value('task-repeat-unit')==='week'
+  const saved=byId('tasks',value('task-id'))
+  const generated=saved?.sourceTaskId&&saved.sourceTaskId!==saved.id
+  $('task-repeat-weekday-wrap').hidden=!weekly
+  $('task-repeat-weekday').disabled=!weekly||Boolean(generated)
+  $('task-repeat-weekday').title=generated
+    ? 'Para alterar o dia de toda a série, edite a demanda original.'
+    : 'Dia da semana em que a demanda se repetirá'
   for (const option of $('task-repeat-unit').options) {
     const names = { day: ['Dia', 'Dias'], week: ['Semana', 'Semanas'], month: ['Mês', 'Meses'] }[option.value]
     option.textContent = names[Number(value('task-repeat-interval')) === 1 ? 0 : 1]
@@ -2272,11 +2353,25 @@ function updateTaskRepeatFields() {
   updateRotationEditor()
 }
 for (const id of ['task-repeat-mode', 'task-repeat-interval', 'task-repeat-unit']) $(id).addEventListener('input', updateTaskRepeatFields)
+$('task-repeat-weekday').addEventListener('change',()=>{
+  const date=value('task-due')||todayISO()
+  const monday=pmWeekStart(date)
+  const selected=Number(value('task-repeat-weekday'))
+  const next=addDays(monday,(selected+6)%7)
+  if(next&&next!==date){
+    $('task-due').value=next
+    if(value('task-start')&&value('task-start')>next)$('task-start').value=next
+  }
+  taskRepeatWeekdayChanged=true
+  updateTaskRepeatFields()
+})
 for (const id of ['task-repeat-advance','task-rotation-mode']) $(id).addEventListener('change', updateRotationEditor)
 $('task-event').addEventListener('change', () => updateTaskEventFields(true))
 $('task-date-mode').addEventListener('change', () => updateTaskEventFields(true))
 $('task-offset').addEventListener('input', () => updateTaskEventFields(true))
 $('task-due').addEventListener('input', () => {
+  if(value('task-due'))$('task-repeat-weekday').value=
+    String(new Date(value('task-due')+'T12:00:00Z').getUTCDay())
   if (value('task-date-mode') === 'event') {
     $('task-date-mode').value = 'manual'
     updateTaskEventFields()
@@ -2314,7 +2409,8 @@ $('task-form').addEventListener('submit', async event => {
       task.dueDate = addDays(linked.startDate, task.dueOffsetDays)
     }
     task = setTaskRecurrence(task, value('task-repeat-mode') === 'repeat'
-      ? { interval: Number(value('task-repeat-interval')), unit: value('task-repeat-unit') } : null)
+      ? { interval: Number(value('task-repeat-interval')), unit: value('task-repeat-unit'),
+        resetAnchor:taskRepeatWeekdayChanged } : null)
     const config=taskRecurrence(task)?currentRotationSettings():null
     if(config){
       rotationConfigRecord(task,config)

@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { setTaskRecurrence } from '../planner-recurrence.js'
+import { setTaskRecurrence,nextRecurringTask } from '../planner-recurrence.js'
+import { ganttLinkRoutes } from '../planner-gantt-links.js'
 import { resolveGanttDependencies } from '../planner-gantt-dependencies.js'
 
 const task=(id,date,dependencies=[])=>({
@@ -83,4 +84,60 @@ test('Nunca cria seta para a própria ocorrência',()=>{
   const self={...B1,dependencyIds:['B1']}
   const result=resolveGanttDependencies([...all.filter(task=>task.id!=='B1'),self],[self])
   assert.equal(result.links.length,0)
+})
+
+
+test('cenário real A+B→C: reabrir A e B não conecta C às cópias da próxima semana',()=>{
+  const A=setTaskRecurrence(task('A','2026-11-15'),{unit:'week',interval:1})
+  const B=setTaskRecurrence(task('B','2026-11-15'),{unit:'week',interval:1})
+  const C=task('C','2026-11-18',['A','B'])
+  const A2=nextRecurringTask({...A,status:'done'})
+  const B2=nextRecurringTask({...B,status:'done'})
+  assert.equal(A2.dueDate,'2026-11-22')
+  assert.equal(B2.dueDate,'2026-11-22')
+  const reopenedA={...A,status:'todo'}
+  const reopenedB={...B,status:'doing'}
+  const history=[reopenedA,reopenedB,C,A2,B2]
+  const resolved=resolveGanttDependencies(history,history)
+  assert.deepEqual(resolved.links.map(link=>[link.from,link.to]).sort(),[
+    ['A','C'],['B','C']
+  ])
+  assert.ok(!resolved.links.some(link=>link.from===A2.id||link.from===B2.id))
+  const nodes=[
+    {id:'A',title:'A (15/11)',left:32,right:100,y:100},
+    {id:'B',title:'B (15/11)',left:36,right:110,y:148},
+    {id:'C',title:'C (18/11)',left:230,right:275,y:196},
+    {id:A2.id,title:'A (22/11)',left:352,right:410,y:244},
+    {id:B2.id,title:'B (22/11)',left:356,right:425,y:292}
+  ]
+  const routes=ganttLinkRoutes(nodes,resolved.links,{width:490})
+  assert.equal(routes.total,2)
+  assert.equal(routes.bundles.length,1)
+  assert.equal(routes.bundles[0].target,'C')
+  assert.deepEqual(routes.bundles[0].sources.sort(),['A','B'])
+  assert.equal(routes.routes.filter(route=>route.markerEnd).length,0)
+  assert.equal(routes.bundles.filter(bundle=>bundle.markerEnd).length,1)
+})
+
+test('se a demanda A antiga tiver o prazo alterado ao reabrir, C continua ligado ao ID A',()=>{
+  const A=setTaskRecurrence(task('A','2026-11-15'),{unit:'week',interval:1})
+  const B=setTaskRecurrence(task('B','2026-11-15'),{unit:'week',interval:1})
+  const C=task('C','2026-11-18',['A','B'])
+  const A2=nextRecurringTask({...A,status:'done'})
+  const B2=nextRecurringTask({...B,status:'done'})
+  const moved={...A,status:'todo',dueDate:'2026-11-29'}
+  const result=resolveGanttDependencies([moved,B,C,A2,B2],[moved,B,C,A2,B2])
+  assert.deepEqual(result.links.map(l=>[l.from,l.to]).sort(),[
+    ['A','C'],['B','C']
+  ])
+  const routes=ganttLinkRoutes([
+    {id:'A',left:350,right:440,y:100},
+    {id:'B',left:60,right:145,y:148},
+    {id:'C',left:220,right:280,y:196},
+    {id:A2.id,left:310,right:390,y:244},
+    {id:B2.id,left:310,right:390,y:292}
+  ],result.links,{width:510})
+  assert.equal(routes.bundles.length,1)
+  assert.equal(routes.bundles[0].backward,true)
+  assert.equal(routes.bundles[0].target,'C')
 })
