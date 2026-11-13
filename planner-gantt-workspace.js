@@ -294,8 +294,11 @@ export function renderGanttWorkspace(ctx){
   resize.setAttribute('aria-valuemax',String(maximumOutline))
   resize.title='Arraste para ajustar os nomes. Duplo clique para restaurar.'
   const measuredWidth=()=>Math.round(tree.getBoundingClientRect().width)||290
+  let latestWidth=savedWidth
+  const currentWidth=()=>latestWidth??measuredWidth()
   const setWidth=(width,persist=false)=>{
     const next=clampOutline(width)
+    latestWidth=next
     grid.style.setProperty('--pg-outline-width',next+'px')
     resize.setAttribute('aria-valuenow',String(next))
     resize.setAttribute('aria-valuetext',next+' pixels')
@@ -303,12 +306,12 @@ export function renderGanttWorkspace(ctx){
     // A atualização das ligações é feita após a redistribuição das colunas.
     requestAnimationFrame(()=>drawCurrent?.())
   }
-  resize.setAttribute('aria-valuenow',String(savedWidth??290))
+  resize.setAttribute('aria-valuenow',String(currentWidth()))
   let resizing=false,originX=0,originWidth=0
   resize.addEventListener('pointerdown',event=>{
     if(event.pointerType==='mouse'&&event.button!==0)return
     event.preventDefault()
-    resizing=true;originX=event.clientX;originWidth=measuredWidth()
+    resizing=true;originX=event.clientX;originWidth=currentWidth()
     resize.setPointerCapture?.(event.pointerId)
     document.body.classList.add('pg-column-resizing')
   })
@@ -319,7 +322,7 @@ export function renderGanttWorkspace(ctx){
     if(!resizing)return
     resizing=false
     document.body.classList.remove('pg-column-resizing')
-    setWidth(measuredWidth(),true)
+    setWidth(currentWidth(),true)
   }
   resize.addEventListener('pointerup',finishResize)
   resize.addEventListener('pointercancel',finishResize)
@@ -332,7 +335,7 @@ export function renderGanttWorkspace(ctx){
     if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return
     event.preventDefault()
     const delta=(event.shiftKey?40:20)*(event.key==='ArrowLeft'?-1:1)
-    setWidth(event.key==='Home'?minimumOutline:event.key==='End'?maximumOutline:measuredWidth()+delta,true)
+    setWidth(event.key==='Home'?minimumOutline:event.key==='End'?maximumOutline:currentWidth()+delta,true)
   })
   tree.append(resize)
   const timeline=element('div','pg-timeline')
