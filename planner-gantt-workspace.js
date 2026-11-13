@@ -269,10 +269,72 @@ export function renderGanttWorkspace(ctx){
   scroller.setAttribute('aria-label','Linha do tempo do Gantt; role para os lados para ver mais datas')
   scroller.tabIndex=0
   const grid=element('div','pg-grid')
+  const outlineKey='ipcv-planner-gantt-outline-width'
+  const minimumOutline=210,maximumOutline=600
+  const clampOutline=width=>Math.max(minimumOutline,Math.min(maximumOutline,Math.round(width)))
+  const savedWidth=(()=>{
+    try{
+      const value=window.localStorage.getItem(outlineKey)
+      if(value===null)return null
+      const parsed=Number(value)
+      return Number.isFinite(parsed)?clampOutline(parsed):null
+    }catch{return null}
+  })()
+  if(savedWidth!==null)grid.style.setProperty('--pg-outline-width',savedWidth+'px')
   const tree=element('div','pg-tree')
   const treeHeader=element('div','pg-tree-header')
   treeHeader.append(element('span','','PLANO / BUCKET / DEMANDA'),element('span','','RESP.'),element('span','','AVANÇO'))
   tree.append(treeHeader)
+  const resize=element('div','pg-outline-resizer')
+  resize.tabIndex=0
+  resize.setAttribute('role','separator')
+  resize.setAttribute('aria-orientation','vertical')
+  resize.setAttribute('aria-label','Ajustar largura da coluna de nomes do Gantt')
+  resize.setAttribute('aria-valuemin',String(minimumOutline))
+  resize.setAttribute('aria-valuemax',String(maximumOutline))
+  resize.title='Arraste para ajustar os nomes. Duplo clique para restaurar.'
+  const measuredWidth=()=>Math.round(tree.getBoundingClientRect().width)||290
+  const setWidth=(width,persist=false)=>{
+    const next=clampOutline(width)
+    grid.style.setProperty('--pg-outline-width',next+'px')
+    resize.setAttribute('aria-valuenow',String(next))
+    resize.setAttribute('aria-valuetext',next+' pixels')
+    if(persist)try{window.localStorage.setItem(outlineKey,String(next))}catch{}
+    // A atualização das ligações é feita após a redistribuição das colunas.
+    requestAnimationFrame(()=>drawCurrent?.())
+  }
+  resize.setAttribute('aria-valuenow',String(savedWidth??290))
+  let resizing=false,originX=0,originWidth=0
+  resize.addEventListener('pointerdown',event=>{
+    if(event.pointerType==='mouse'&&event.button!==0)return
+    event.preventDefault()
+    resizing=true;originX=event.clientX;originWidth=measuredWidth()
+    resize.setPointerCapture?.(event.pointerId)
+    document.body.classList.add('pg-column-resizing')
+  })
+  resize.addEventListener('pointermove',event=>{
+    if(resizing)setWidth(originWidth+event.clientX-originX)
+  })
+  const finishResize=()=>{
+    if(!resizing)return
+    resizing=false
+    document.body.classList.remove('pg-column-resizing')
+    setWidth(measuredWidth(),true)
+  }
+  resize.addEventListener('pointerup',finishResize)
+  resize.addEventListener('pointercancel',finishResize)
+  resize.addEventListener('lostpointercapture',finishResize)
+  resize.addEventListener('dblclick',()=>{
+    const defaultWidth=window.innerWidth<=650?215:window.innerWidth<=1040?265:290
+    setWidth(defaultWidth,true)
+  })
+  resize.addEventListener('keydown',event=>{
+    if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return
+    event.preventDefault()
+    const delta=(event.shiftKey?40:20)*(event.key==='ArrowLeft'?-1:1)
+    setWidth(event.key==='Home'?minimumOutline:event.key==='End'?maximumOutline:measuredWidth()+delta,true)
+  })
+  tree.append(resize)
   const timeline=element('div','pg-timeline')
   const dateHead=element('div','pg-date-head')
   const monthHead=element('div','pg-month-head')
