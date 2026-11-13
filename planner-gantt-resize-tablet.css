@@ -20,11 +20,11 @@
   background:transparent;transition:background .15s ease;
 }
 .pg-workspace .pg-outline-resizer::after{
-  content:"⋮⋮";position:sticky;top:105px;margin:105px auto 0;
+  content:"↔";position:absolute;top:72px;left:0;
   display:grid;place-items:center;
-  width:19px;height:48px;border:1px solid #b7cdbb;border-radius:7px;
-  background:#e8f2e8;color:#648d70;font:700 13px/1 Inter,Arial,sans-serif;
-  letter-spacing:-3px;box-shadow:0 1px 4px #365c3d18;
+  width:19px;height:38px;border:1px solid #b7cdbb;border-radius:7px;
+  background:#e8f2e8;color:#648d70;font:700 16px/1 Inter,Arial,sans-serif;
+  box-shadow:0 1px 4px #365c3d18;
 }
 .pg-workspace .pg-outline-resizer:hover::before,
 .pg-workspace .pg-outline-resizer:focus-visible::before,
