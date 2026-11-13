@@ -25,7 +25,8 @@
     <link rel="stylesheet" href="planner-team-management.css?v=20261113-teams-v1">
     <link rel="stylesheet" href="planner-gantt-workspace.css?v=20261113-premium-v1">
     <link rel="stylesheet" href="planner-sidebar-collapse.css?v=20261113-sidebar-v1">
-    <script type="module" src="planner.js?v=20261113-sidebar-collapse-v1"></script>
+    <link rel="stylesheet" href="planner-gantt-resize-tablet.css?v=20261113-gantt-resize-tablet-v1">
+    <script type="module" src="planner.js?v=20261113-gantt-resize-tablet-v1"></script>
   </head>
   <body data-interface="planner-ipcvt-verde-creme" data-revisao="20261113-teatro-v1">
     <a class="skip-link" href="#main-content">Ir para o conteúdo</a>
@@ -114,6 +115,10 @@
         <div class="planner-shell">
           <button class="pm-sidebar-backdrop" id="pm-sidebar-backdrop" type="button" aria-label="Fechar navegação" tabindex="-1"></button>
           <aside id="pm-planner-sidebar" class="planner-sidebar" aria-label="Navegação do Planner">
+            <div class="pm-sidebar-drawer-head">
+              <div class="pm-sidebar-drawer-title"><strong>IPCVT Planner</strong><small>MENU DE NAVEGAÇÃO</small></div>
+              <button id="pm-sidebar-close" class="pm-sidebar-close" type="button" aria-label="Fechar menu de navegação" title="Fechar menu">×</button>
+            </div>
             <nav class="view-nav" aria-label="Navegação principal">
                 <span class="nav-group-label">ÁREA DE TRABALHO</span>
                 <button class="pm-side-link" type="button" data-view="home" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v9H4zM9 20v-7h6v7"/></svg>Meu dia</button>
