@@ -2210,15 +2210,51 @@ function pmSetSession(next){
   if($('pm-settings'))$('pm-settings').hidden=!active||!next.isAdmin
 }
 $('pm-brand-home').addEventListener('click',()=>{clearTaskFilters();changeView('home')})
+// Desktop: trilho compacto de ícones. Tablet e celular: gaveta existente.
+const pmSidebarDesktop=window.matchMedia('(min-width: 1121px)')
+const pmSidebarStorageKey='ipcv-planner-sidebar-collapsed'
+try{
+  document.body.classList.toggle('pm-sidebar-collapsed',
+    window.localStorage.getItem(pmSidebarStorageKey)==='1')
+}catch{}
+function pmSyncSidebarToggle(){
+  const desktop=pmSidebarDesktop.matches
+  const expanded=desktop
+    ?!document.body.classList.contains('pm-sidebar-collapsed')
+    :document.body.classList.contains('pm-sidebar-open')
+  const toggle=$('pm-sidebar-toggle')
+  toggle.setAttribute('aria-expanded',String(expanded))
+  toggle.setAttribute('aria-label',desktop
+    ?(expanded?'Recolher barra lateral':'Expandir barra lateral')
+    :(expanded?'Fechar navegação':'Abrir navegação'))
+  toggle.title=toggle.getAttribute('aria-label')
+}
 function pmSidebarClose(){
   document.body.classList.remove('pm-sidebar-open')
-  $('pm-sidebar-toggle').setAttribute('aria-expanded','false')
+  pmSyncSidebarToggle()
 }
 $('pm-sidebar-toggle').addEventListener('click',()=>{
-  const next=!document.body.classList.contains('pm-sidebar-open')
-  document.body.classList.toggle('pm-sidebar-open',next)
-  $('pm-sidebar-toggle').setAttribute('aria-expanded',String(next))
+  if(pmSidebarDesktop.matches){
+    const collapsed=document.body.classList.toggle('pm-sidebar-collapsed')
+    try{window.localStorage.setItem(pmSidebarStorageKey,collapsed?'1':'0')}catch{}
+    // O Gantt recalcula a posição das setas ao ganhar largura útil.
+    window.dispatchEvent(new Event('resize'))
+  }else{
+    document.body.classList.toggle('pm-sidebar-open')
+  }
+  pmSyncSidebarToggle()
 })
+if(pmSidebarDesktop.addEventListener){
+  pmSidebarDesktop.addEventListener('change',()=>{document.body.classList.remove('pm-sidebar-open');pmSyncSidebarToggle()})
+}else if(pmSidebarDesktop.addListener){
+  pmSidebarDesktop.addListener(()=>{document.body.classList.remove('pm-sidebar-open');pmSyncSidebarToggle()})
+}
+for(const item of document.querySelectorAll('#pm-planner-sidebar .pm-side-link, #pm-planner-sidebar .nav-extras button')){
+  item.title=item.textContent.trim()
+}
+$('nav-extras').querySelector('summary').title='Outras ferramentas'
+$('pm-sidebar-theme').title='Alternar modo claro/escuro'
+pmSyncSidebarToggle()
 $('pm-sidebar-backdrop').addEventListener('click',pmSidebarClose)
 document.addEventListener('keydown',event=>{if(event.key==='Escape')pmSidebarClose()})
 function pmSyncThemeButton(){
