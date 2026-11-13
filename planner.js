@@ -2194,7 +2194,7 @@ function pmRenderMain(content,tasks){
   if(currentView==='gantt')return renderGanttWorkspace({
     content,tasks,allTasks:liveTasks(),plans:activePlans(),buckets:state.buckets,
     recurrence:taskRecurrence,openTask,resolveDependencies:resolveGanttDependencies,
-    routeDependencies:ganttLinkRoutes,render,today:todayISO(),globalPlanId:selectedPlan()
+    routeDependencies:ganttLinkRoutes,render,today:todayISO(),globalPlanId:selectedPlan(),progressOf:taskProgress
   })
   if(currentView==='sunday')return pmSundayView(content,tasks)
   if(currentView==='teams')return pmTeamsView(content,tasks)
