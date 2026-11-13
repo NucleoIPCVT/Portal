@@ -115,3 +115,7 @@
 .pg-bar.is-doing .pg-task-fill{background:#3a7784;opacity:.58}
 .pg-bar.is-late .pg-task-fill{background:#a56e44;opacity:.55}
 .pg-task-percent{position:relative;z-index:1;color:#fff;text-shadow:0 1px 2px #31544277;font-size:9px;font-weight:800;pointer-events:none}
+
+/* Oculta apenas o cabeçalho antigo da rota Gantt; os demais continuam intactos. */
+body.pm-active.pm-gantt-active .planner-main>.view-heading{display:none}
+body.pm-active.pm-gantt-active #view-content{max-width:none}
