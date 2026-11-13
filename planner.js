@@ -1,4 +1,5 @@
 import { createPlannerStore } from './planner-store.js?v=20261113-rodizio-v1'
+import { ganttLinkRoutes } from './planner-gantt-links.js?v=20261113-gantt-clean-v1'
 import {
   taskRecurrence,setTaskRecurrence,recurrenceLabel,nextRecurrenceDate,
   rotationConfigId,parseRotationConfig,rotationConfigRecord,rotationAssigneesForDate,
@@ -1594,6 +1595,10 @@ function pmKanbanView(content,tasks) {
   if(boardGrouping==='assignee')content.append(pmText('p','pm-board-note','Demandas com mais de um responsável aparecem na coluna de cada pessoa.'))
   content.append(board)
 }
+let pmGanttResizeDraw=null
+window.addEventListener('resize',()=>pmGanttResizeDraw?.())
+let pmGanttShowAllLinks=false
+let pmGanttSelectedTaskId=''
 function pmGanttView(content,tasks){
   const start=pmWeekStart(pmGanttCursor)
   const dates=Array.from({length:35},(_,i)=>addDays(start,i))
@@ -1604,47 +1609,111 @@ function pmGanttView(content,tasks){
     const b=task.dueDate||task.startDate
     return a<=end&&b>=start
   })
+  const sorted=shown.slice().sort((a,b)=>
+    (a.startDate||a.dueDate).localeCompare(b.startDate||b.dueDate)||
+    (a.dueDate||'').localeCompare(b.dueDate||'')||
+    a.title.localeCompare(b.title,'pt-BR'))
+  const shownIds=new Set(sorted.map(task=>task.id))
+  const dependencyLinks=sorted.flatMap(task=>
+    (task.dependencyIds||[]).filter(id=>shownIds.has(id))
+      .map(id=>({from:id,to:task.id})))
+  const linkedIds=new Set(dependencyLinks.flatMap(link=>[link.from,link.to]))
   const layout=pmGroup('div','pm-gantt-view')
-  const left=pmGroup('div','pm-gantt-outline',[pmGroup('h3','',[pmText('span','','Planos'),pmText('small','','Etapas e demandas')])])
+  const left=pmGroup('div','pm-gantt-outline',[
+    pmGroup('h3','',[pmText('span','','Planos'),pmText('small','','Etapas e demandas')])
+  ])
   const right=pmGroup('div','pm-gantt-chart')
-  const ganttBars=new Map()
+  const bars=new Map()
   const datesRow=pmGroup('div','pm-gantt-dates')
   for(const date of dates){
-    datesRow.append(pmText('span','pm-gantt-date'+(pmDayName(date)==='Dom'?' pm-gantt-sunday':''),String(Number(date.slice(-2)))))
+    datesRow.append(pmText('span','pm-gantt-date'+
+      (pmDayName(date)==='Dom'?' pm-gantt-sunday':''),
+      String(Number(date.slice(-2)))))
   }
-  right.append(pmGroup('div','pm-gantt-toolbar',[pmText('span','',pmShort(start,{month:'long',timeZone:'UTC'})),pmPager('gantt')]),datesRow)
+
+  const toolbar=pmGroup('div','pm-gantt-toolbar')
+  const month=pmText('span','pm-gantt-month',pmShort(start,{month:'long',timeZone:'UTC'}))
+  const controls=pmGroup('div','pm-gantt-toolbar-actions')
+  const linkCount=pmText('span','pm-gantt-link-count',
+    dependencyLinks.length+(dependencyLinks.length===1?' dependência':' dependências'))
+  controls.append(linkCount)
+  if(dependencyLinks.length>6){
+    const toggle=pmButton(pmGanttShowAllLinks?'Mostrar apenas em foco':'Exibir todas',
+      ()=>{pmGanttShowAllLinks=!pmGanttShowAllLinks;render()},
+      'pm-gantt-toggle')
+    toggle.setAttribute('aria-pressed',String(pmGanttShowAllLinks))
+    toggle.title=pmGanttShowAllLinks
+      ? 'Ocultar conexões extras para evitar sobreposição'
+      : 'Exibir todas as dependências simultaneamente'
+    controls.append(toggle)
+  }
+  controls.append(pmPager('gantt'))
+  toolbar.append(month,controls)
+  right.append(toolbar,datesRow)
+
+  let hoveredId=''
+  const focusButtons=new Map()
+  const updateFocus=(id)=>{
+    pmGanttSelectedTaskId=pmGanttSelectedTaskId===id?'':id
+    drawGanttLinks()
+  }
   const insertHeader=(title,kind)=>{
     left.append(pmText('h4',kind==='plan'?'pm-gantt-plan':'pm-gantt-bucket',title))
     right.append(pmGroup('div',kind==='plan'?'pm-gantt-plan-row':'pm-gantt-bucket-row'))
   }
   const insertTask=task=>{
-    left.append(pmButton(task.title,()=>openTask(task),'pm-gantt-label'))
+    const item=pmGroup('div','pm-gantt-item')
+    const title=pmButton(task.title,()=>openTask(task),'pm-gantt-label')
+    title.title=task.title
+    title.addEventListener('mouseenter',()=>{hoveredId=task.id;drawGanttLinks()})
+    title.addEventListener('mouseleave',()=>{hoveredId='';drawGanttLinks()})
+    title.addEventListener('focus',()=>{hoveredId=task.id;drawGanttLinks()})
+    title.addEventListener('blur',()=>{hoveredId='';drawGanttLinks()})
+    item.append(title)
+    if(linkedIds.has(task.id)){
+      const pin=pmButton('↗',()=>updateFocus(task.id),'pm-gantt-focus')
+      pin.setAttribute('aria-label','Destacar dependências de '+task.title)
+      pin.title='Mostrar dependências de '+task.title
+      focusButtons.set(task.id,pin)
+      item.append(pin)
+    }
+    left.append(item)
     const row=pmGroup('div','pm-gantt-row')
     const a=task.startDate||task.dueDate
     const b=task.dueDate||task.startDate
     const first=Math.max(0,dayDiff(start,a)),last=Math.min(34,dayDiff(start,b))
     if(last>=first){
-      const bar=pmButton('',()=>openTask(task),'pm-gantt-bar'+(task.status==='done'?' pm-gantt-done':''))
+      const bar=pmButton('',()=>openTask(task),
+        'pm-gantt-bar'+(task.status==='done'?' pm-gantt-done':''))
       bar.style.left=(first/35*100)+'%'
       bar.style.width=(Math.max(1,last-first+1)/35*100)+'%'
       bar.title=task.title+' · '+formatDate(a)+' a '+formatDate(b)
       bar.setAttribute('aria-label',bar.title)
+      bar.addEventListener('mouseenter',()=>{hoveredId=task.id;drawGanttLinks()})
+      bar.addEventListener('mouseleave',()=>{hoveredId='';drawGanttLinks()})
+      bar.addEventListener('focus',()=>{hoveredId=task.id;drawGanttLinks()})
+      bar.addEventListener('blur',()=>{hoveredId='';drawGanttLinks()})
       row.append(bar)
-      ganttBars.set(task.id,{task,bar,row})
+      bars.set(task.id,{task,bar,row})
     }
     right.append(row)
   }
-  const planIds=[...new Set(shown.map(task=>task.planId))]
+  const planIds=[...new Set(sorted.map(task=>task.planId))]
   if(!planIds.length){
     left.append(pmText('p','pm-muted','Nenhuma demanda com prazo neste período.'))
   }else{
     for(const planId of planIds){
       insertHeader(planName(planId),'plan')
-      const entries=shown.filter(task=>task.planId===planId)
+      const entries=sorted.filter(task=>task.planId===planId)
       const buckets=state.buckets.filter(bucket=>bucket.planId===planId&&!bucket.deleted)
         .sort((a,b)=>a.order-b.order)
-      const groupKeys=[...new Set(entries.map(task=>task.bucketId||''))]
-      for(const bucketId of groupKeys){
+      const keys=[...new Set(entries.map(task=>task.bucketId||''))]
+        .sort((a,b)=>{
+          const ai=buckets.findIndex(bucket=>bucket.id===a)
+          const bi=buckets.findIndex(bucket=>bucket.id===b)
+          return (ai<0?10000:ai)-(bi<0?10000:bi)
+        })
+      for(const bucketId of keys){
         const bucket=buckets.find(item=>item.id===bucketId)
         insertHeader(bucket?.name||'Outras demandas','bucket')
         for(const task of entries.filter(item=>(item.bucketId||'')===bucketId))insertTask(task)
@@ -1653,47 +1722,72 @@ function pmGanttView(content,tasks){
   }
   layout.append(left,right)
   content.append(layout)
-  // Desenhar somente dependências reais entre as barras que estão visíveis.
-  requestAnimationFrame(()=>{
-    if(!right.isConnected||!ganttBars.size)return
+  if(dependencyLinks.length>6&&!pmGanttShowAllLinks){
+    content.append(pmText('p','pm-gantt-help',
+      'Para evitar linhas sobrepostas, as dependências aparecem em foco. Passe o mouse sobre uma barra ou use ↗ ao lado da demanda para destacar suas conexões.'))
+  }
+
+  function drawGanttLinks(){
+    if(!right.isConnected)return
+    right.querySelector('.pm-gantt-dependencies')?.remove()
+    const width=right.scrollWidth
+    const height=right.scrollHeight
+    if(!width||!height)return
+    const nodes=[...bars.values()].map(({task,bar,row})=>({
+      id:task.id,title:task.title,
+      left:bar.offsetLeft,right:bar.offsetLeft+bar.offsetWidth,
+      y:row.offsetTop+row.offsetHeight/2
+    }))
+    const id=hoveredId||
+      (bars.has(pmGanttSelectedTaskId)?pmGanttSelectedTaskId:'')||
+      (dependencyLinks.length>6?dependencyLinks[0]?.to:'')
+    for(const [taskId,pin] of focusButtons){
+      pin.setAttribute('aria-pressed',String(taskId===id))
+    }
+    for(const [taskId,entry] of bars){
+      entry.bar.classList.toggle('pm-gantt-bar-focused',taskId===id)
+    }
+    const result=ganttLinkRoutes(nodes,dependencyLinks,{
+      width,focusedId:id,showAll:pmGanttShowAllLinks
+    })
+    if(!result.routes.length)return
     const ns='http://www.w3.org/2000/svg'
-    const overlay=document.createElementNS(ns,'svg')
-    overlay.setAttribute('class','pm-gantt-dependencies')
-    overlay.setAttribute('width',String(right.scrollWidth))
-    overlay.setAttribute('height',String(right.scrollHeight))
-    overlay.setAttribute('viewBox','0 0 '+right.scrollWidth+' '+right.scrollHeight)
-    overlay.setAttribute('aria-hidden','true')
+    const svg=document.createElementNS(ns,'svg')
+    svg.setAttribute('class','pm-gantt-dependencies')
+    svg.setAttribute('width',String(width))
+    svg.setAttribute('height',String(height))
+    svg.setAttribute('viewBox','0 0 '+width+' '+height)
+    svg.setAttribute('aria-hidden','true')
     const defs=document.createElementNS(ns,'defs')
     const marker=document.createElementNS(ns,'marker')
-    marker.setAttribute('id','pm-gantt-dependency-arrow')
-    marker.setAttribute('markerWidth','6')
-    marker.setAttribute('markerHeight','6')
-    marker.setAttribute('refX','5')
-    marker.setAttribute('refY','3')
+    marker.setAttribute('id','pm-gantt-arrow-clean')
+    marker.setAttribute('markerWidth','7')
+    marker.setAttribute('markerHeight','7')
+    marker.setAttribute('refX','6')
+    marker.setAttribute('refY','3.5')
     marker.setAttribute('orient','auto')
     const arrow=document.createElementNS(ns,'path')
-    arrow.setAttribute('d','M0 0 L6 3 L0 6 Z')
-    marker.append(arrow);defs.append(marker);overlay.append(defs)
-    for(const entry of ganttBars.values()){
-      for(const dependencyId of entry.task.dependencyIds||[]){
-        const predecessor=ganttBars.get(dependencyId)
-        if(!predecessor)continue
-        const x1=predecessor.bar.offsetLeft+predecessor.bar.offsetWidth
-        const y1=predecessor.row.offsetTop+predecessor.row.offsetHeight/2
-        const x2=entry.bar.offsetLeft
-        const y2=entry.row.offsetTop+entry.row.offsetHeight/2
-        const path=document.createElementNS(ns,'path')
-        const elbow=x1+Math.min(18,Math.max(9,(x2-x1)/2))
-        const route=x2>x1+15
-          ? 'M'+x1+' '+y1+' H'+elbow+' V'+y2+' H'+(x2-3)
-          : 'M'+x1+' '+y1+' H'+elbow+' V'+(y1+12)+' H'+Math.max(2,x2-9)+' V'+y2+' H'+(x2-3)
-        path.setAttribute('d',route)
-        path.setAttribute('marker-end','url(#pm-gantt-dependency-arrow)')
-        overlay.append(path)
-      }
+    arrow.setAttribute('d','M0 0 L7 3.5 L0 7 Z')
+    marker.append(arrow)
+    defs.append(marker)
+    svg.append(defs)
+    for(const route of result.routes){
+      const path=document.createElementNS(ns,'path')
+      path.setAttribute('d',route.d)
+      path.setAttribute('class',
+        'pm-gantt-link'+(route.active?' is-active':'')+
+        (id&&!route.active?' is-muted':'')+
+        (route.backward?' is-backward':''))
+      path.setAttribute('marker-end','url(#pm-gantt-arrow-clean)')
+      const caption=document.createElementNS(ns,'title')
+      caption.textContent=route.title
+      path.append(caption)
+      svg.append(path)
     }
-    if(overlay.childNodes.length>1)right.append(overlay)
-  })
+    right.append(svg)
+  }
+  requestAnimationFrame(drawGanttLinks)
+  pmGanttResizeDraw=drawGanttLinks
 }
 function pmSundayView(content,tasks){
   const day=pmSunday(pmSundayCursor),dates=Array.from({length:7},(_,i)=>addDays(day,-6+i))

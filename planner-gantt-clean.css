@@ -1,0 +1,137 @@
+/* Gantt IPCVT | Alinhamento e ligações legíveis
+   Regras carregadas depois das camadas de design anteriores. */
+body.pm-active #planner-app .pm-gantt-view{
+  align-items:start;
+  grid-template-columns:270px minmax(720px,1fr);
+  background:#fafbf8;
+}
+body.pm-active #planner-app .pm-gantt-outline{
+  background:#fafbf8;
+}
+/* O cabeçalho da árvore deve ter exatamente a altura da barra de navegação
+   (39px) + linha dos dias (44px), antes da primeira linha de planos. */
+body.pm-active #planner-app .pm-gantt-outline>h3{
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
+  gap:3px;
+  height:83px;
+  min-height:83px;
+  padding:10px 14px;
+  margin:0;
+  border-bottom:1px solid #e2e9e0;
+  color:#395348;
+  line-height:1.2;
+}
+body.pm-active #planner-app .pm-gantt-outline>h3>span{font-size:12px;font-weight:760}
+body.pm-active #planner-app .pm-gantt-outline>h3>small{font-size:10px;color:#788d7c}
+body.pm-active #planner-app .pm-gantt-toolbar{height:39px;min-height:39px;padding:4px 10px;gap:10px}
+body.pm-active #planner-app .pm-gantt-dates{height:44px;min-height:44px}
+.pm-gantt-toolbar-actions{display:flex;align-items:center;gap:8px;min-width:0}
+.pm-gantt-month{font-size:12px;text-transform:capitalize;color:#5b7662;font-weight:680}
+.pm-gantt-link-count{
+  display:inline-block;color:#75907b;white-space:nowrap;
+  font-size:10px;font-weight:600;
+}
+.pm-gantt-toggle{
+  border:1px solid #c7ddcd;background:#e9f3e9;color:#2d6847;
+  border-radius:6px;padding:6px 9px;min-height:28px;
+  font-size:10px;font-weight:700;white-space:nowrap;cursor:pointer;
+}
+.pm-gantt-toggle:hover{background:#dcebdc;border-color:#9fc9aa}
+.pm-gantt-toggle[aria-pressed=true]{background:#e1eee3;color:#25583b}
+.pm-gantt-item{
+  display:flex;align-items:center;width:100%;height:34px;min-height:34px;
+  border-bottom:1px solid #e7eae5;background:#fbfaf8;
+}
+.pm-gantt-item .pm-gantt-label{
+  min-width:0;min-height:33px;height:33px;flex:1 1 auto;width:auto;
+  padding:6px 7px 6px 34px;border:0;border-radius:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:#526a5a;font-size:11px;font-weight:500;text-align:left;background:transparent;
+}
+.pm-gantt-item:hover,.pm-gantt-item:focus-within{background:#eef5ed}
+.pm-gantt-item .pm-gantt-label:hover{background:transparent;text-decoration:underline}
+.pm-gantt-item .pm-gantt-label:focus-visible,.pm-gantt-focus:focus-visible{
+  outline:2px solid #5e9b78;outline-offset:-2px;
+}
+.pm-gantt-focus{
+  flex:0 0 27px;width:27px;height:27px;min-height:27px;margin-right:5px;
+  display:grid;place-items:center;border:1px solid transparent;border-radius:6px;
+  color:#72997d;background:transparent;cursor:pointer;font-size:16px;
+}
+.pm-gantt-focus:hover{background:#deeee0;border-color:#b9d2bc;color:#2d7850}
+.pm-gantt-focus[aria-pressed=true]{background:#dcefe0;color:#267448;border-color:#a7cfb2}
+.pm-gantt-bar{
+  z-index:1;
+  transition:box-shadow .14s ease, background .14s ease;
+}
+.pm-gantt-bar.pm-gantt-bar-focused{
+  z-index:2;
+  outline:2px solid #317c58;
+  outline-offset:1px;
+  box-shadow:0 0 0 3px #a0cfaf44;
+}
+.pm-gantt-dependencies{
+  z-index:3;
+  pointer-events:none;
+  overflow:hidden;
+}
+.pm-gantt-dependencies .pm-gantt-link{
+  fill:none;stroke:#598e72;stroke-width:1.6;opacity:.58;
+  stroke-linecap:round;stroke-linejoin:round;
+  vector-effect:non-scaling-stroke;
+}
+.pm-gantt-dependencies .pm-gantt-link.is-active{
+  stroke:#277b50;stroke-width:2.5;opacity:1;
+}
+.pm-gantt-dependencies .pm-gantt-link.is-muted{opacity:.15;stroke-width:1.2}
+.pm-gantt-dependencies .pm-gantt-link.is-backward{stroke-dasharray:5 4}
+.pm-gantt-dependencies marker path{fill:#39845b;stroke:none}
+.pm-gantt-help{
+  display:flex;align-items:center;gap:5px;
+  font-size:11px;color:#68816f;line-height:1.6;
+  background:#eff5ed;border:1px solid #e0eae0;
+  border-radius:7px;padding:9px 13px;margin:10px 0 0;
+}
+:root[data-theme=dark] body.pm-active #planner-app .pm-gantt-view,
+:root[data-theme=dark] body.pm-active #planner-app .pm-gantt-outline{
+  background:#25372d;border-color:#405745;
+}
+:root[data-theme=dark] body.pm-active #planner-app .pm-gantt-outline>h3{
+  border-color:#415a46;color:#d2e7d5;
+}
+:root[data-theme=dark] body.pm-active #planner-app .pm-gantt-outline>h3>small{color:#a4bba7}
+:root[data-theme=dark] .pm-gantt-item{background:#2b3930;border-color:#405647}
+:root[data-theme=dark] .pm-gantt-item:hover,
+:root[data-theme=dark] .pm-gantt-item:focus-within{background:#345040}
+:root[data-theme=dark] .pm-gantt-item .pm-gantt-label{color:#cfe0cf}
+:root[data-theme=dark] .pm-gantt-focus{color:#a8c5ad}
+:root[data-theme=dark] .pm-gantt-focus:hover,
+:root[data-theme=dark] .pm-gantt-focus[aria-pressed=true]{
+  color:#d3efd7;background:#375c43;border-color:#658b6b;
+}
+:root[data-theme=dark] .pm-gantt-link-count{color:#a7bcab}
+:root[data-theme=dark] .pm-gantt-month{color:#bfd7c3}
+:root[data-theme=dark] .pm-gantt-toggle{
+  background:#355440;color:#d1e8d6;border-color:#5a805e;
+}
+:root[data-theme=dark] .pm-gantt-dependencies .pm-gantt-link{stroke:#93c6a5}
+:root[data-theme=dark] .pm-gantt-dependencies .pm-gantt-link.is-active{stroke:#ade7b9}
+:root[data-theme=dark] .pm-gantt-dependencies marker path{fill:#a8d7b0}
+:root[data-theme=dark] .pm-gantt-help{
+  background:#2b4030;color:#aecab4;border-color:#435b47;
+}
+@media(max-width:760px){
+  body.pm-active #planner-app .pm-gantt-view{grid-template-columns:180px minmax(560px,1fr)}
+  .pm-gantt-toolbar-actions{gap:4px}
+  .pm-gantt-link-count{display:none}
+  .pm-gantt-item .pm-gantt-label{padding-left:10px}
+  .pm-gantt-toggle{font-size:10px;padding:5px 7px}
+}
+@media print{
+  .pm-gantt-focus,.pm-gantt-toggle,.pm-gantt-help{display:none!important}
+  .pm-gantt-dependencies .pm-gantt-link{opacity:.7}
+}
