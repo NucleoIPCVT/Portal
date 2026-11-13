@@ -905,6 +905,10 @@ function chooseView(control) {
 let pmDemandTab = 'all'
 let pmFiltersOpen = false
 let pmPriorityFilter = ''
+let pmDateStartFilter = ''
+let pmDateDueFilter = ''
+let pmSearchOpen = false
+let pmGroupMenuOpen = false
 let pmShowAllPlans = false
 let pmSundayTab = 'overview'
 let pmSundayCursor = todayISO()
@@ -936,11 +940,20 @@ function pmCreationButton(kind, handler, label='') {
   return control
 }
 function pmCalendarSelector() {
-  return node('select',{
-    class:'pm-calendar-mode', 'aria-label':'Visualização do calendário',
-    onChange:event=>{calendarDate=selectedCalendarDay||calendarDate;calendarMode=event.target.value;render()}
-  },[['week','Semanal'],['month','Mensal'],['year','Anual']].map(([mode,label])=>
-    node('option',{value:mode,text:label,selected:calendarMode===mode})))
+  const selector=pmGroup('div','pm-calendar-switch')
+  selector.setAttribute('role','group')
+  selector.setAttribute('aria-label','Visualização do calendário')
+  for(const [id,label] of [['week','Semana'],['month','Mês'],['year','Ano']]){
+    const item=pmButton('',()=>{
+      calendarMode=id
+      render()
+    },'pm-calendar-choice')
+    item.append(pmIcon(id),pmText('span','',label))
+    item.setAttribute('aria-pressed',String(calendarMode===id))
+    item.setAttribute('title','Exibir calendário por '+label.toLowerCase())
+    selector.append(item)
+  }
+  return selector
 }
 function pmGroup(tag,cls,children=[]) { return node(tag,{class:cls},children) }
 function pmText(tag,cls,text) { return node(tag,{class:cls,text}) }
@@ -961,7 +974,10 @@ function pmIcon(kind='calendar') {
     resource:'M3 7h18v14H3zM5 3h14v4M3 11h18m-12 3h6',
     document:'M6 2h9l4 4v16H6zM14 2v5h5M9 12h7m-7 4h7',
     circle:'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0',
-    calendar:'M4 5h16v16H4zM8 2v6m8-6v6M4 10h16m-11 4h6m-6 3h3'
+    calendar:'M4 5h16v16H4zM8 2v6m8-6v6M4 10h16m-11 4h6m-6 3h3',
+    week:'M3 5h18v16H3zM7 3v4m10-4v4M3 10h18M9 11v10m6-10v10',
+    month:'M3 5h18v16H3zM7 3v4m10-4v4M3 10h18M9 10v11m6-11v11M3 15h18',
+    year:'M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18'
   }
   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg')
   svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('class','pm-icon');svg.setAttribute('aria-hidden','true')
@@ -1040,82 +1056,86 @@ function pmEventText(event) {
   return eventDateLabel(event)==='Dia inteiro'?event.title:eventDateLabel(event)+' · '+event.title
 }
 function pmWeekView(content,tasks) {
-  const monday=pmWeekStart(calendarDate),sunday=addDays(monday,6)
-  const days=Array.from({length:7},(_,index)=>addDays(monday,index))
-  const weekTasks=days.flatMap(date=>pmTasks(date,tasks))
-  const weekEvents=days.flatMap(pmEvents)
-  const sundayEvents=pmEvents(sunday)
-  const highlights=weekTasks.filter(task=>task.status!=='done')
-    .sort((a,b)=>(['urgent','high','normal','low'].indexOf(a.priority)-['urgent','high','normal','low'].indexOf(b.priority))||(a.dueDate||'9999').localeCompare(b.dueDate||'9999')).slice(0,4)
-  const mine=tasks.filter(task=>(task.assignees||[]).some(person=>person.email?.toLowerCase()===session.email) && task.status!=='done')
-  const late=mine.filter(task=>isOverdue(task,todayISO())).length
-  const priority=mine.filter(task=>['urgent','high'].includes(task.priority)).length
-  const dashboard=pmGroup('div','pm-week-board')
-  const hero=pmGroup('section','pm-hero-card pm-church-hero',[
-    pmText('span','pm-hero-overline','Próximo Domingo'),
-    pmText('strong','pm-hero-date',pmShort(sunday,{day:'numeric',month:'long',timeZone:'UTC'})),
-    pmText('span','pm-hero-label',sundayEvents.length?'Programação da igreja':'Preparação para o culto'),
-    pmGroup('div','pm-hero-events',sundayEvents.length
-      ? sundayEvents.slice(0,3).map(pmEventLine)
-      : [pmGroup('span','',[pmIcon('clock'),pmText('span','','Confira a Agenda IPCVT')])])
-  ])
-  hero.setAttribute('role','group')
-  hero.setAttribute('aria-label','Domingo '+formatDate(sunday))
-  const stats=pmGroup('section','pm-stat-card',[
-    pmGroup('h3','pm-panel-caption',[
-      pmText('span','pm-check-icon','✓'),
-      pmText('span','','Minhas Demandas')
-    ]),
-    pmGroup('div','pm-stat-main',[
-      pmGroup('div','pm-stat-value',[pmText('strong','',String(mine.length)),pmText('span','','pendentes')]),
-      pmGroup('div','pm-stat-tags',[
-        pmGroup('div','pm-stat-chip pm-priority',[pmText('strong','',String(priority)),pmText('span','','com prioridade')]),
-        pmGroup('div','pm-stat-chip pm-ontime',[pmText('strong','',String(Math.max(0,mine.length-late))),pmText('span','','no prazo')]),
-        pmGroup('div','pm-stat-chip pm-late',[pmText('strong','',String(late)),pmText('span','','atrasadas')])
-      ])
+  const monday=pmWeekStart(calendarDate)
+  const sunday=addDays(monday,6)
+  const dates=Array.from({length:7},(_,i)=>addDays(monday,i))
+  const events=dates.flatMap(pmEvents)
+  const pending=tasks.filter(task=>task.status!=='done'&&task.dueDate>=monday&&task.dueDate<=sunday)
+    .sort((a,b)=>(a.dueDate||'').localeCompare(b.dueDate||'')||
+      (['urgent','high','normal','low'].indexOf(a.priority)-['urgent','high','normal','low'].indexOf(b.priority)))
+  const header=pmHeader('PLANEJAMENTO SEMANAL','Semana',
+    pmShort(monday,{day:'numeric',month:'long',timeZone:'UTC'})+' a '+pmShort(sunday,{day:'numeric',month:'long',timeZone:'UTC'}),[
+      pmPager('week'),
+      pmCalendarSelector(),
+      pmCreationButton('plan',()=>pmNewPlan()),
+      pmCreationButton('task',()=>pmNewTask())
     ])
-  ])
-  const featured=pmGroup('section','pm-featured-card',[pmText('h3','pm-panel-caption','Demandas em destaque')])
-  if(!highlights.length)featured.append(pmText('p','pm-muted','Nenhuma demanda pendente com prazo nesta semana.'))
-  for(const task of highlights) {
-    const item=pmButton('',()=>openTask(task),'pm-featured-item')
-    item.append(
-      pmGroup('span','pm-featured-dot',[pmIcon(['urgent','high'].includes(task.priority)?'flag':'circle')]),
-      pmGroup('span','pm-featured-copy',[pmText('strong','',task.title),pmText('small','',pmPerson(task))]),
-      pmText('time','',task.dueDate?pmShort(task.dueDate):'Sem prazo')
-    )
-    featured.append(item)
+  const agenda=pmGroup('section','pm-week-agenda')
+  agenda.append(pmGroup('div','pm-week-section-heading',[
+    pmText('h3','','Agenda da semana'),
+    pmText('span','',events.length+' evento(s) registrado(s)')
+  ]))
+  const columns=pmGroup('div','pm-week-columns')
+  for(const date of dates){
+    const isSunday=new Date(date+'T12:00:00Z').getUTCDay()===0
+    const dayEvents=pmEvents(date)
+    const col=pmGroup('div','pm-week-column'+(isSunday?' pm-week-column-sunday':'')+(date===todayISO()?' pm-week-column-today':''))
+    const dayHead=pmButton('',()=>pmDayDetails(date,tasks),'pm-week-column-head')
+    dayHead.setAttribute('aria-label','Detalhes de '+formatDate(date))
+    dayHead.append(pmText('span','pm-week-column-name',pmDayName(date).toUpperCase()),
+      pmText('strong','pm-week-column-date',String(Number(date.slice(-2)))))
+    col.append(dayHead)
+    const entries=pmGroup('div','pm-week-column-events')
+    for(const event of dayEvents){
+      const card=pmButton('',()=>openEvent(event),'pm-week-event-card')
+      card.append(pmText('span','pm-week-event-time',eventDateLabel(event)),
+        pmText('strong','pm-week-event-title',event.title))
+      entries.append(card)
+    }
+    if(!dayEvents.length)entries.append(pmText('span','pm-week-empty','Sem eventos'))
+    col.append(entries)
+    const count=pmTasks(date,tasks).filter(task=>task.status!=='done').length
+    if(count)col.append(pmButton(count+' demanda(s)',()=>pmDayDetails(date,tasks),'pm-week-day-tasks'))
+    columns.append(col)
   }
-  featured.append(pmButton('Ver todas  →',()=>changeView('list'),'pm-text-link'))
-  dashboard.append(hero,stats,featured)
-  const strip=pmGroup('div','pm-week-strip')
-  for(const date of days){
-    const events=pmEvents(date),dayTasks=pmTasks(date,tasks)
-    const extra=events.length>1?' +'+(events.length-1):''
-    const day=pmGroup('button','pm-week-tile'+(date===sunday?' pm-week-sunday':'')+(date===todayISO()?' pm-week-today':''),[
-      pmText('span','pm-week-day-name',pmDayName(date).toUpperCase()),
-      pmText('strong','pm-week-day-number',String(Number(date.slice(-2)))),
-      pmText('span','pm-week-event-dot',pmEvents(date).length?'●':''),
-      pmText('span','pm-week-tile-event',events[0]?.title || dayTasks[0]?.title || ''),
-      pmText('span','pm-week-tile-time',(events[0]&&eventDateLabel(events[0])!=='Dia inteiro'?eventDateLabel(events[0]):dayTasks.length?dayTasks.length+' demanda(s)':'')+extra)
+  const scroll=pmGroup('div','pm-week-columns-scroll',[columns])
+  scroll.setAttribute('tabindex','0')
+  scroll.setAttribute('aria-label','Agenda de segunda-feira a domingo')
+  agenda.append(scroll)
+  const aside=pmGroup('aside','pm-week-pending')
+  const pendingTitle=pmGroup('div','pm-week-section-heading',[
+    pmGroup('div','pm-pending-title',[pmIcon('checklist'),pmText('h3','','Pendências')]),
+    pmButton('Ver todas',()=>changeView('list'),'pm-week-see-all')
+  ])
+  aside.append(pendingTitle,pmText('p','pm-week-pending-sub','Demandas com prazo nesta semana'))
+  const list=pmGroup('div','pm-week-pending-list')
+  if(!pending.length)list.append(pmText('p','pm-week-pending-empty','Nenhuma demanda pendente nesta semana.'))
+  for(const task of pending){
+    const checkbox=node('input',{
+      type:'checkbox',
+      'aria-label':'Concluir '+task.title,
+      onChange:async event=>{
+        try{await pmComplete(task,event.target.checked)}catch{event.target.checked=false}
+      }
+    })
+    const entry=pmGroup('div','pm-week-pending-row',[
+      checkbox,
+      pmGroup('div','pm-week-pending-copy',[
+        pmButton(task.title,()=>openTask(task),'pm-week-pending-task'),
+        pmText('span','',pmPerson(task))
+      ]),
+      pmText('time','pm-week-pending-due',task.dueDate?pmShort(task.dueDate):'')
     ])
-    day.type='button'
-    day.setAttribute('aria-label','Ver detalhes de '+formatDate(date)+': '+events.length+' eventos e '+dayTasks.length+' demandas')
-    day.setAttribute('aria-haspopup','dialog')
-    day.addEventListener('click',()=>{selectedCalendarDay=date;pmDayDetails(date,tasks)})
-    strip.append(day)
+    list.append(entry)
   }
-  const schedule=pmGroup('section','pm-week-schedule',[
-    pmText('h3','pm-section-title','Programação da Semana'),
-    strip
-  ])
-  dashboard.append(schedule)
-  const heading=pmHeader('Planejamento','Semana',(monday.slice(0,7)===sunday.slice(0,7)?Number(monday.slice(-2)):pmShort(monday))+' a '+pmShort(sunday,{day:'numeric',month:'long',timeZone:'UTC'}),[
-    pmPager('week'),pmCalendarSelector(),pmCreationButton('plan',()=>pmNewPlan()),pmCreationButton('task',()=>pmNewTask())
-  ])
-  heading.classList.add('pm-week-header')
-  content.append(heading,dashboard)
-  if(!weekTasks.length && !weekEvents.length)content.append(pmText('p','pm-week-hint','Os eventos oficiais e os prazos das demandas aparecerão nesta semana conforme forem cadastrados.'))
+  aside.append(list)
+  const sundayCard=pmButton('',()=>pmDayDetails(sunday,tasks),'pm-week-sunday-summary')
+  sundayCard.append(pmIcon('church'),pmGroup('span','',[
+    pmText('strong','','Domingo, '+pmShort(sunday,{day:'numeric',month:'long',timeZone:'UTC'})),
+    pmText('small','','Ver os detalhes dos cultos e suas demandas')
+  ]))
+  aside.append(sundayCard)
+  content.append(header,pmGroup('div','pm-week-planner-layout',[agenda,aside]))
 }
 function pmMonthDates(date) {
   const first=date.slice(0,7)+'-01'
@@ -1258,7 +1278,9 @@ function pmIsMyPlan(plan) {
 }
 function pmTaskListItems(tasks){
   return tasks.filter(task=>(pmDemandTab!=='mine'||pmIsMine(task))&&
-    (!pmPriorityFilter||task.priority===pmPriorityFilter))
+    (!pmPriorityFilter||task.priority===pmPriorityFilter)&&
+    pmMatchesDate(task,'startDate',pmDateStartFilter)&&
+    pmMatchesDate(task,'dueDate',pmDateDueFilter))
 }
 function pmPriorityLabel(key){return ({urgent:'Urgente',high:'Alta',normal:'Média',low:'Baixa'})[key]||'Normal'}
 function pmComplete(task,checked){
@@ -1266,60 +1288,172 @@ function pmComplete(task,checked){
   const bucket=standardBucket(task.planId,status)
   return action(()=>save('tasks',{...task,status,bucketId:bucket?.id||(pmIsReview(task)?'':task.bucketId)}),checked?'Demanda concluída.':'Demanda reaberta.')
 }
-function pmTaskTools(content,tasks,mode) {
-  const countAll=tasks.filter(task=>!pmPriorityFilter||task.priority===pmPriorityFilter).length
-  const countMine=tasks.filter(task=>pmIsMine(task)&&(!pmPriorityFilter||task.priority===pmPriorityFilter)).length
+function pmMatchesDate(task,field,rule){
+  if(!rule)return true
+  const date=task[field]||''
+  const today=todayISO()
+  if(rule==='none')return !date
+  if(!date)return false
+  if(rule==='today')return date===today
+  if(rule==='week')return date>=pmWeekStart(today)&&date<=addDays(pmWeekStart(today),6)
+  if(rule==='next7')return date>=today&&date<=addDays(today,7)
+  if(rule==='past')return date<today
+  return true
+}
+function pmDueCategory(task){
+  if(task.status==='done')return 'done'
+  if(!task.dueDate)return 'none'
+  if(task.dueDate<todayISO())return 'late'
+  if(task.dueDate===todayISO())return 'today'
+  if(task.dueDate<=addDays(todayISO(),7))return 'soon'
+  return 'future'
+}
+const pmDueCategories=[
+  ['late','Atrasadas'],['today','Hoje'],['soon','Próximos 7 dias'],
+  ['future','Mais adiante'],['none','Sem prazo'],['done','Concluídas']
+]
+function pmGroupTaskLabel(task){
+  if(boardGrouping==='plan')return planName(task.planId)
+  if(boardGrouping==='priority')return pmPriorityLabel(task.priority)
+  if(boardGrouping==='dueDate')return pmDueCategories.find(([id])=>id===pmDueCategory(task))?.[1]||'Sem prazo'
+  if(boardGrouping==='team')return task.team||'Sem equipe'
+  if(boardGrouping==='event')return liveEvents().find(event=>event.id===task.eventId)?.title||'Sem evento-alvo'
+  if(boardGrouping==='bucket')return bucketName(task.bucketId)
+  if(boardGrouping==='assignee')return pmPerson(task)
+  return pmIsReview(task)?'Em revisão':(labels[task.status]||'Não iniciada')
+}
+function pmDueGroups(tasks){
+  const columns=pmDueCategories.map(([id,label])=>({
+    id,label,defaults:{},tone:id==='done'?'done':id==='late'?'urgent':'neutral',
+    tasks:tasks.filter(task=>pmDueCategory(task)===id)
+  })).filter(group=>group.tasks.length)
+  return columns.length?columns:[{id:'none',label:'Sem prazo',defaults:{},tone:'neutral',tasks:[]}]
+}
+function pmMenuOption(label,active,onSelect){
+  const item=pmButton('',onSelect,'pm-popover-option')
+  item.setAttribute('aria-pressed',String(active))
+  item.append(pmText('span','pm-popover-check',active?'✓':''),pmText('span','',label))
+  return item
+}
+function pmMenuSection(title,icon,items){
+  const group=pmGroup('details','pm-filter-category')
+  const summary=pmGroup('summary','pm-filter-category-title',[
+    pmIcon(icon),pmText('span','',title),pmText('span','pm-filter-chevron','›')
+  ])
+  group.append(summary,pmGroup('div','pm-filter-choices',items))
+  return group
+}
+function pmTaskTools(content,tasks,mode){
   content.append(pmHeader('Trabalho da Comissão','Minhas tarefas','',[pmCreationButton('task',()=>pmNewTask())]))
+  const toggle=pmGroup('div','pm-task-mode')
+  for(const [id,label,icon] of [['list','Grade','document'],['board','Quadro','plan']]){
+    const option=pmButton('',()=>changeView(id,{preserveFilters:true}),'pm-mode-button')
+    option.append(pmIcon(icon),pmText('span','',label))
+    option.setAttribute('aria-pressed',String(mode===id))
+    toggle.append(option)
+  }
+  const countAll=tasks.filter(task=>(!pmPriorityFilter||task.priority===pmPriorityFilter)&&pmMatchesDate(task,'startDate',pmDateStartFilter)&&pmMatchesDate(task,'dueDate',pmDateDueFilter)).length
+  const countMine=tasks.filter(task=>pmIsMine(task)&&(!pmPriorityFilter||task.priority===pmPriorityFilter)&&pmMatchesDate(task,'startDate',pmDateStartFilter)&&pmMatchesDate(task,'dueDate',pmDateDueFilter)).length
   const scope=pmGroup('div','pm-task-scopes')
   for(const [id,label,count] of [['all','Todos',countAll],['mine','Atribuídos a mim',countMine]]){
-    const control=pmButton(label+' ('+count+')',()=>{pmDemandTab=id;render()},'pm-scope-button')
-    control.setAttribute('aria-pressed',String(pmDemandTab===id));scope.append(control)
+    const option=pmButton(label+(count?' ('+count+')':''),()=>{pmDemandTab=id;render()},'pm-scope-button')
+    option.setAttribute('aria-pressed',String(pmDemandTab===id));scope.append(option)
   }
-  const modeSwitch=pmGroup('div','pm-task-mode')
-  for(const [id,label,icon] of [['list','Grade','document'],['board','Quadro','plan']]){
-    const control=pmButton('',()=>changeView(id,{preserveFilters:true}),'pm-mode-button')
-    control.append(pmIcon(icon),pmText('span','',label))
-    control.setAttribute('aria-pressed',String(mode===id));modeSwitch.append(control)
-  }
-  const search=node('input',{
+  const input=node('input',{
     id:'pm-demand-search',type:'search',value:$('search-filter').value,
-    placeholder:'Pesquisar demandas...','aria-label':'Pesquisar demandas',
+    placeholder:'Pesquisar tarefas','aria-label':'Pesquisar tarefas',
     onInput:event=>{
-      const position=event.target.selectionStart
-      $('search-filter').value=event.target.value;$('pm-search').value=event.target.value
+      const pos=event.target.selectionStart
+      $('search-filter').value=event.target.value
+      $('pm-search').value=event.target.value
       render()
       const next=$('pm-demand-search')
-      if(next){next.focus({preventScroll:true});try{next.setSelectionRange(position,position)}catch{}}
+      if(next){next.focus({preventScroll:true});try{next.setSelectionRange(pos,pos)}catch{}}
     }
   })
-  const filter=pmButton('',()=>{pmFiltersOpen=!pmFiltersOpen;render()},'pm-light-button pm-task-filter-button')
-  filter.append(pmIcon('filter'))
-  filter.setAttribute('aria-label',pmFiltersOpen?'Fechar filtros':'Abrir filtros')
-  filter.setAttribute('aria-expanded',String(pmFiltersOpen))
-  content.append(pmGroup('div','pm-task-controls',[
-    scope,pmGroup('div','pm-task-actions',[
-      pmGroup('label','pm-demand-search',[pmIcon('search'),search]),filter,modeSwitch
+  const searchBox=pmGroup('div','pm-task-search')
+  const searchToggle=pmButton('',()=>{
+    pmSearchOpen=!pmSearchOpen
+    render()
+    if(pmSearchOpen)$('pm-demand-search')?.focus({preventScroll:true})
+  },'pm-toolbar-icon')
+  searchToggle.setAttribute('aria-label',pmSearchOpen?'Fechar pesquisa':'Pesquisar tarefas')
+  searchToggle.setAttribute('aria-expanded',String(pmSearchOpen))
+  searchToggle.append(pmIcon('search'))
+  searchBox.append(searchToggle)
+  if(pmSearchOpen||value('search-filter'))searchBox.append(input)
+  const filterMenu=pmGroup('details','pm-filter-menu')
+  filterMenu.open=pmFiltersOpen
+  filterMenu.addEventListener('toggle',()=>{if(filterMenu.isConnected)pmFiltersOpen=filterMenu.open})
+  const summary=pmGroup('summary','pm-toolbar-icon pm-filter-summary',[pmIcon('filter')])
+  summary.setAttribute('aria-label','Filtrar tarefas')
+  summary.setAttribute('title','Filtrar tarefas')
+  const active=!!(pmPriorityFilter||pmDateStartFilter||pmDateDueFilter||
+    ['plan-filter','team-filter','status-filter','assignee-filter','event-filter'].some(id=>$(id).value))
+  if(active)summary.append(pmText('span','pm-filter-indicator',''))
+  const popup=pmGroup('div','pm-task-popover',[
+    pmGroup('div','pm-task-popover-head',[
+      pmText('strong','','Filtrar por'),
+      pmButton('Limpar tudo',()=>{
+        clearTaskFilters();pmPriorityFilter='';pmDateStartFilter='';pmDateDueFilter='';pmFiltersOpen=false;render()
+      },'pm-popover-clear')
     ])
+  ])
+  const makeChoices=(kind,options,read,write)=>pmMenuSection(kind,kind==='Prioridade'?'flag':kind==='Status'?'circle':'calendar',
+    options.map(([id,label])=>pmMenuOption(label,read()===id,()=>{write(id);pmFiltersOpen=false;render()})))
+  popup.append(
+    makeChoices('Prioridade',[['','Todas'],['urgent','Urgente'],['high','Alta'],['normal','Normal'],['low','Baixa']],()=>pmPriorityFilter,v=>pmPriorityFilter=v),
+    makeChoices('Status',[['','Todos'],['todo','Não iniciada'],['doing','Em andamento'],['done','Concluída']],()=>value('status-filter'),v=>$('status-filter').value=v),
+    makeChoices('Data de início',[['','Qualquer data'],['today','Hoje'],['week','Esta semana'],['next7','Próximos 7 dias'],['past','Antes de hoje'],['none','Sem data']],()=>pmDateStartFilter,v=>pmDateStartFilter=v),
+    makeChoices('Data de conclusão',[['','Qualquer data'],['today','Hoje'],['week','Esta semana'],['next7','Próximos 7 dias'],['past','Antes de hoje'],['none','Sem prazo']],()=>pmDateDueFilter,v=>pmDateDueFilter=v)
+  )
+  popup.append(pmMenuSection('Outros filtros','plan',[
+    pmFilterSelect('plan-filter','Plano'),
+    pmFilterSelect('team-filter','Equipe'),
+    pmFilterSelect('assignee-filter','Responsável'),
+    pmFilterSelect('event-filter','Evento-alvo')
   ]))
-  if(pmFiltersOpen){
-    content.append(pmGroup('div','pm-task-filters',[
-      pmFilterSelect('plan-filter','Plano'),
-      pmFilterSelect('team-filter','Equipe'),
-      pmFilterSelect('assignee-filter','Responsável'),
-      pmFilterSelect('status-filter','Situação'),
-      pmFilterSelect('event-filter','Evento-alvo'),
-      node('label',{class:'pm-dropdown pm-priority-dropdown'},[
-        pmText('span','pm-dropdown-caption','Prioridade'),
-        node('select',{value:pmPriorityFilter,'aria-label':'Prioridade',onChange:event=>{pmPriorityFilter=event.target.value;render()}},
-          [['','Todas'],['urgent','Urgente'],['high','Alta'],['normal','Normal'],['low','Baixa']].map(([value,label])=>node('option',{value,text:label,selected:pmPriorityFilter===value})))
-      ]),
-      pmButton('Limpar filtros',()=>{clearTaskFilters();pmPriorityFilter='';pmDemandTab='all';render()},'pm-light-button pm-filter-clear')
-    ]))
+  filterMenu.append(summary,popup)
+  const groupingLabels=[
+    ['status','Status','checklist'],['dueDate','Data de conclusão','calendar'],
+    ['plan','Plano','plan'],['priority','Prioridade','flag'],
+    ['team','Equipe','team'],['bucket','Etapa (bucket)','checklist'],
+    ['event','Evento-alvo','calendar'],['assignee','Responsável','team']
+  ]
+  const name=groupingLabels.find(([id])=>id===boardGrouping)?.[1]||'Status'
+  const grouping=pmGroup('details','pm-group-menu')
+  grouping.open=pmGroupMenuOpen
+  grouping.addEventListener('toggle',()=>{if(grouping.isConnected)pmGroupMenuOpen=grouping.open})
+  const groupSummary=pmGroup('summary','pm-group-summary',[
+    pmIcon('checklist'),pmText('span','','Agrupar por: '+name),pmText('span','pm-group-chevron','⌄')
+  ])
+  const groupOptions=pmGroup('div','pm-group-popover')
+  for(const [id,label,icon] of groupingLabels){
+    const option=pmButton('',()=>{
+      boardGrouping=id;pmGroupMenuOpen=false;render()
+    },'pm-group-option')
+    option.setAttribute('aria-pressed',String(boardGrouping===id))
+    option.append(pmIcon(icon),pmText('span','',label),pmText('span','pm-group-check',boardGrouping===id?'✓':''))
+    groupOptions.append(option)
   }
+  grouping.append(groupSummary,groupOptions)
+  content.append(pmGroup('div','pm-task-toolbar',[
+    pmGroup('div','pm-task-toolbar-start',[
+      toggle,pmText('span','pm-task-toolbar-divider',''),scope,
+      pmGroup('div','pm-task-toolbar-icons',[searchBox,filterMenu])
+    ]),
+    grouping
+  ]))
 }
+
 function pmDemandView(content,tasks) {
   pmTaskTools(content,tasks,'list')
-  const rows=pmTaskListItems(tasks).map(task=>({task,label:''}))
+  const sorted=pmTaskListItems(tasks).sort((a,b)=>
+    pmGroupTaskLabel(a).localeCompare(pmGroupTaskLabel(b),'pt-BR')||
+    (a.dueDate||'9999').localeCompare(b.dueDate||'9999'))
+  const rows=sorted.map((task,i)=>({
+    task,label:i===0||pmGroupTaskLabel(sorted[i-1])!==pmGroupTaskLabel(task)?pmGroupTaskLabel(task):''
+  }))
   const table=pmGroup('table','pm-demand-table')
   table.append(node('thead',{},node('tr',{},['','Demanda','Equipe','Responsável','Prazo','Status','Prioridade',''].map(x=>node('th',{scope:'col',text:x})))))
   const body=node('tbody')
@@ -1371,15 +1505,10 @@ function pmFilterSelect(id,label) {
 function pmKanbanView(content,tasks) {
   pmTaskTools(content,tasks,'board')
   const focused=pmTaskListItems(tasks)
-  const groups=groupBoardTasks({grouping:boardGrouping,tasks:focused,plans:state.plans,buckets:state.buckets,events:liveEvents(),teams,planId:selectedPlan(),eventId:value('event-filter')})
+  const groups=(boardGrouping==='dueDate'?pmDueGroups(focused):groupBoardTasks({grouping:boardGrouping,tasks:focused,plans:state.plans,buckets:state.buckets,events:liveEvents(),teams,planId:selectedPlan(),eventId:value('event-filter')}))
+    .filter(group=>boardGrouping!=='status'||group.id!=='review'||group.tasks.length)
   const editingPlan=activePlans().find(plan=>plan.id===selectedPlan())
-  const grouping=node('label',{class:'pm-dropdown pm-board-grouping'},[
-    pmText('span','pm-dropdown-caption','Organizar por'),
-    node('select',{'aria-label':'Organizar Kanban por',onChange:event=>{boardGrouping=event.target.value;render()}},
-      BOARD_GROUPINGS.map(([id,label])=>node('option',{value:id,text:label,selected:boardGrouping===id})))
-  ])
   const filterbar=pmGroup('div','pm-board-controls pm-board-subtools',[
-    grouping,
     editingPlan?pmButton('Editar etapas',()=>{openPlan(editingPlan);$('plan-buckets').focus()},'pm-light-button'):null
   ])
   const board=pmGroup('div','pm-premium-board'+(groups.length>4?' pm-board-many':''))
@@ -1393,7 +1522,7 @@ function pmKanbanView(content,tasks) {
     const stack=pmGroup('div','pm-kanban-stack')
     for(const task of items){
       const card=pmGroup('article','pm-kanban-task')
-      card.draggable=true;card.setAttribute('data-task-id',task.id)
+      card.draggable=boardGrouping!=='dueDate';card.setAttribute('data-task-id',task.id)
       card.addEventListener('dragstart',e=>{draggedTask=task.id;draggedTaskGroup=group.id;e.dataTransfer?.setData('text/plain',task.id)})
       if(task.status==='done'){
         card.append(pmGroup('div','pm-kanban-done-line',[
@@ -1427,11 +1556,14 @@ function pmKanbanView(content,tasks) {
       pmNewTask('',defaults)
     },'Adicionar demanda')
     add.className='pm-kanban-add pm-create-button'
-    col.append(stack,add)
+    add.replaceChildren(pmText('span','pm-kanban-add-plus','+'),pmText('span','','Adicionar demanda'))
+    add.setAttribute('aria-label','Adicionar demanda em '+group.label)
+    col.append(add,stack)
     col.addEventListener('dragover',e=>{e.preventDefault();col.classList.add('pm-drag-over')})
     col.addEventListener('dragleave',e=>{if(!col.contains(e.relatedTarget))col.classList.remove('pm-drag-over')})
     col.addEventListener('drop',async e=>{
       e.preventDefault();col.classList.remove('pm-drag-over')
+      if(boardGrouping==='dueDate')return notice('Para mudar o prazo, abra a demanda e edite sua data.')
       const task=byId('tasks',e.dataTransfer?.getData('text/plain')||draggedTask)
       if(task)try{
         await action(async()=>{
@@ -1445,7 +1577,8 @@ function pmKanbanView(content,tasks) {
     })
     board.append(col)
   }
-  content.append(filterbar)
+  if(filterbar.children.length)content.append(filterbar)
+  if(boardGrouping==='dueDate')content.append(pmText('p','pm-board-note','Para mudar um prazo, abra a demanda e altere a data de conclusão.'))
   if(boardGrouping==='assignee')content.append(pmText('p','pm-board-note','Demandas com mais de um responsável aparecem na coluna de cada pessoa.'))
   content.append(board)
 }
