@@ -104,7 +104,7 @@ export function selectGanttPlanContext(planId){
 }
 export function renderGanttWorkspace(ctx){
   const {content,tasks,allTasks,plans,buckets,recurrence,
-    openTask,resolveDependencies,routeDependencies,render,today}=ctx
+    openTask,resolveDependencies,routeDependencies,render,today,progressOf}=ctx
   const orderedPlans=plans.slice().sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'))
   if(!viewState.cursor)viewState.cursor=today
   if(!orderedPlans.some(plan=>plan.id===viewState.focusId))viewState.focusId=ctx.globalPlanId||orderedPlans[0]?.id||''
@@ -354,10 +354,18 @@ export function renderGanttWorkspace(ctx){
         pin.dataset.id=task.id;name.append(pin)
       }
       const span=taskRange(task)
+      const percent=typeof progressOf==='function'?progressOf(task):(task.status==='done'?100:0)
       const bar=rangeButton(span,taskCss(task,today),'',()=>openTask(task))
       if(bar){
         bar.title=task.title+' · '+dateLabel(span.start)+' a '+dateLabel(span.end)+' · '+statusLabel(task,today)
-        bar.setAttribute('aria-label',bar.title)
+        bar.setAttribute('aria-label',bar.title+' · '+percent+'% concluído')
+        if(percent>0){
+          const completed=element('span','pg-task-fill')
+          completed.style.width=percent+'%';bar.append(completed)
+        }
+        if(percent>0&&percent<100&&diff(span.start,span.end)>=2){
+          bar.append(element('span','pg-task-percent',percent+'%'))
+        }
         bar.addEventListener('mouseenter',()=>{viewState.hovered=task.id;drawCurrent?.()})
         bar.addEventListener('mouseleave',()=>{viewState.hovered='';drawCurrent?.()})
         bar.addEventListener('focus',()=>{viewState.hovered=task.id;drawCurrent?.()})
@@ -370,7 +378,7 @@ export function renderGanttWorkspace(ctx){
       ?(row.task.assignees||[]).map(p=>p.name||p.email).filter(Boolean).slice(0,1).join('')||'—'
       :row.kind==='series'?'Série':''))
     label.append(element('span','pg-progress',row.kind==='plan'?row.progress+'%':
-      row.kind==='task'?(row.task.status==='done'?'100%':row.task.status==='doing'?'Em curso':'—'):
+      row.kind==='task'?((typeof progressOf==='function'?progressOf(row.task):(row.task.status==='done'?100:0))+'%'):
       row.kind==='bucket'?row.items.filter(t=>t.status==='done').length+'/'+row.items.length:
       row.kind==='series'?row.items.filter(t=>t.status==='done').length+'/'+row.items.length:''))
     tree.append(label);timeline.append(time)
