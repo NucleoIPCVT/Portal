@@ -2261,6 +2261,7 @@ $('planner-app').querySelector('.planner-shell').addEventListener('transitionend
     window.dispatchEvent(new Event('resize'))
   }
 })
+$('pm-sidebar-close').addEventListener('click',pmSidebarClose)
 $('pm-sidebar-backdrop').addEventListener('click',pmSidebarClose)
 document.addEventListener('keydown',event=>{if(event.key==='Escape')pmSidebarClose()})
 function pmSyncThemeButton(){
