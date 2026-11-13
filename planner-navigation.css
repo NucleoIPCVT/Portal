@@ -1,0 +1,268 @@
+/* IPCVT Planner | Navegação unificada (13 nov 2026).
+   Carregada depois das folhas legadas para preservar editores e integrações. */
+body.pm-active #planner-app.workspace{background:#f3f5f0;min-height:100vh}
+body.pm-active #planner-app .pm-topbar{
+  position:sticky;top:0;z-index:90;min-height:67px;height:auto;
+  padding:0 25px;gap:16px;display:flex;align-items:center;
+  background:linear-gradient(110deg,#dde7dc,#d1dfd4);border-bottom:1px solid #cbdacc;
+}
+body.pm-active #planner-app .pm-primary-nav{display:none!important}
+body.pm-active #planner-app .pm-brand{flex:0 0 auto;min-width:140px;width:auto;gap:8px;margin:0}
+body.pm-active #planner-app .pm-brand>span{font-size:14px}
+body.pm-active #planner-app .pm-brand strong{font-size:13px}
+body.pm-active #planner-app .pm-topbar-context{color:#5e786a;font-size:12px;font-weight:550;flex:1}
+body.pm-active #planner-app .pm-toolbar{margin-left:auto}
+body.pm-active #planner-app .pm-stage{width:100%;max-width:none;margin:0;padding:0}
+body.pm-active #planner-app .planner-shell{
+  display:grid!important;grid-template-columns:235px minmax(0,1fr);
+  align-items:stretch;gap:0;max-width:none;margin:0;padding:0;min-height:calc(100vh - 67px);
+}
+body.pm-active #planner-app .planner-sidebar{
+  display:flex!important;flex-direction:column;min-width:0;width:235px;
+  background:#f3f6f1;color:#345847;border-right:1px solid #dfe9df;
+  border-radius:0;box-shadow:none;position:sticky;top:67px;height:calc(100vh - 67px);
+  max-height:calc(100vh - 67px);overflow-y:auto;padding:24px 13px 16px;
+  z-index:50;
+}
+body.pm-active #planner-app .planner-main{
+  background:#fbfaf7;width:100%;max-width:none;min-width:0;min-height:calc(100vh - 67px);
+  margin:0;box-shadow:none;border:0;border-radius:0;padding:27px clamp(18px,2.5vw,40px) 45px;
+}
+body.pm-active #planner-app .view-nav{
+  display:flex;flex-direction:column;gap:3px;align-items:stretch;overflow:visible;
+  padding:0;border:none;width:100%;
+}
+body.pm-active #planner-app .view-nav .nav-group-label{
+  display:block!important;padding:4px 12px 10px;text-transform:uppercase;
+  font-weight:750;letter-spacing:.09em;color:#84988b;font-size:9px;line-height:1.4;
+}
+body.pm-active #planner-app .view-nav button.pm-side-link,
+body.pm-active #planner-app .view-nav .nav-extras button{
+  display:flex;justify-content:flex-start;align-items:center;gap:12px;width:100%;
+  border:1px solid transparent;border-radius:8px;padding:12px 13px;min-height:43px;
+  background:transparent;color:#486656;text-align:left;
+  font-size:12px;font-weight:610;white-space:normal;line-height:1.15;
+}
+body.pm-active #planner-app .view-nav button.pm-side-link:hover,
+body.pm-active #planner-app .view-nav .nav-extras button:hover,
+body.pm-active #planner-app .sidebar-plan-link:hover{background:#e5eee5;border-color:#d9e7da;color:#285c40}
+body.pm-active #planner-app .view-nav button.pm-side-link[aria-pressed=true],
+body.pm-active #planner-app .view-nav .nav-extras button[aria-pressed=true]{
+  background:#dcebdc;border-color:#c7dfcb;color:#246144;font-weight:760;
+}
+body.pm-active #planner-app .view-nav button.pm-side-link[aria-pressed=true]::before{
+  content:'';position:absolute;left:0;width:3px;height:25px;border-radius:4px;background:#35845d;
+}
+body.pm-active #planner-app .view-nav button.pm-side-link{position:relative}
+body.pm-active #planner-app .view-nav svg{
+  display:block;width:17px;height:17px;flex:0 0 17px;
+  fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
+}
+body.pm-active #planner-app .sidebar-plans-heading{
+  display:flex;align-items:center;justify-content:space-between;
+  margin:22px 0 4px;border-top:1px solid #dfe8df;padding:15px 4px 0;
+}
+body.pm-active #planner-app .sidebar-plans-heading .nav-group-label{padding:4px 6px}
+body.pm-active #planner-app .sidebar-plans-heading button{
+  display:grid;place-items:center;background:#e5eee6;border:1px solid #d5e4d7;
+  color:#35684b;font-size:18px;padding:0;width:28px;height:28px;min-height:28px;border-radius:6px;flex-shrink:0;
+}
+body.pm-active #planner-app .sidebar-plan-list{
+  display:grid;gap:2px;margin:0 0 12px;max-height:calc(100vh - 540px);
+  min-height:24px;overflow-y:auto;padding:0 2px;
+}
+body.pm-active #planner-app .sidebar-plan-link{
+  display:block;width:100%;background:transparent;border:1px solid transparent;
+  border-radius:7px;color:#577262;font-size:11px;font-weight:590;
+  line-height:1.4;min-height:34px;text-align:left;padding:8px 10px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+body.pm-active #planner-app .sidebar-plan-link[aria-current=page]{
+  color:#2c724e;background:#e4efe4;border-color:#cce1ce;font-weight:710;
+}
+body.pm-active #planner-app .sidebar-plan-empty{color:#92a497;font-size:11px;padding:7px 10px}
+body.pm-active #planner-app .nav-extras{border:0;border-top:1px solid #e0e9e0;margin:8px 0 0;padding:12px 0 0}
+body.pm-active #planner-app .nav-extras summary{
+  list-style:none;cursor:pointer;color:#647e6c;font-size:11px;font-weight:700;
+  padding:8px 12px;border-radius:7px;
+}
+body.pm-active #planner-app .nav-extras summary::-webkit-details-marker{display:none}
+body.pm-active #planner-app .nav-extras summary::after{content:'⌄';float:right;color:#8ba192}
+body.pm-active #planner-app .nav-extras:not([open]) summary::after{content:'›'}
+body.pm-active #planner-app .view-nav .nav-extras button{font-size:11px;min-height:37px;padding:9px 12px}
+body.pm-active #planner-app .pm-sidebar-footer{margin-top:auto;padding-top:18px}
+body.pm-active #planner-app .pm-theme-button{
+  display:flex;align-items:center;gap:11px;width:100%;background:transparent;border:1px solid #d9e5da;
+  padding:10px 12px;border-radius:8px;color:#436653;font-size:12px;font-weight:670;text-align:left;
+}
+body.pm-active #planner-app .pm-theme-button:hover{background:#e7eee6}
+body.pm-active #planner-app .pm-theme-button svg,
+body.pm-active #planner-app .pm-sidebar-toggle svg{
+  width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:0 0 18px;
+}
+body.pm-active #planner-app .sidebar-source{
+  display:flex!important;margin:13px 0 0;padding:12px 8px 2px;
+  border-top:1px solid #dfe8df;background:transparent;
+  font-size:11px;color:#668171;line-height:1.35;
+}
+body.pm-active #planner-app .sidebar-source small{font-size:10px;color:#9bac9f}
+body.pm-active #planner-app .mobile-more-menu{display:none!important}
+.pm-sidebar-backdrop{display:none}
+.pm-sidebar-toggle{display:none;flex-shrink:0;place-items:center;width:35px;height:35px;
+  padding:6px;background:#edf4ed;border:1px solid #d6e2d8;border-radius:8px;color:#2b5b44}
+body.pm-active #planner-app .pm-page-header{margin-bottom:20px}
+body.pm-active #planner-app .pm-heading-title{font-size:26px;letter-spacing:-.04em}
+body.pm-active #planner-app .pm-kicker{font-size:11px;letter-spacing:.02em;color:#718b7a}
+body.pm-active #planner-app .pm-heading-meta{font-size:12px;color:#7b8e80}
+body.pm-active #planner-app .planner-main>.view-heading{display:none!important}
+/* Meu dia */
+.pm-today-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin:0 0 19px}
+.pm-today-stat{display:flex;align-items:center;gap:15px;background:#fefefd;border:1px solid #e3e9e2;
+  border-radius:9px;padding:16px 20px;box-shadow:0 2px 4px #27432905;color:#35644c}
+.pm-today-stat>svg{width:27px;height:27px;color:#5f9a71}
+.pm-today-stat>div{display:grid;gap:2px}
+.pm-today-stat strong{font-size:28px;line-height:1.1;color:#243f31;font-weight:760}
+.pm-today-stat span{font-size:11px;color:#708978}
+.pm-today-danger>svg,.pm-today-danger strong{color:#b86d58}
+.pm-today-layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(250px,.85fr);gap:17px;align-items:start}
+.pm-today-card{background:#fff;border:1px solid #e4e9e2;border-radius:9px;min-width:0;padding:19px 22px;box-shadow:0 1px 3px #1c392a05}
+.pm-today-card h3{font-size:15px;font-weight:750;color:#294c39;margin:0 0 16px}
+.pm-today-section-title{font-size:11px;font-weight:730;color:#809381;text-transform:uppercase;letter-spacing:.05em;margin:18px 0 8px}
+.pm-today-task{display:flex;align-items:center;gap:11px;padding:12px 3px;border-bottom:1px solid #eff1ec}
+.pm-today-task input{width:17px;height:17px;flex:0 0 17px;accent-color:#2b7652}
+.pm-today-task-content{display:grid;gap:4px;flex:1;min-width:0}
+.pm-today-task-content .pm-table-task{font-size:12px}
+.pm-today-task-content>span{font-size:10px;color:#8b9e90}
+.pm-today-event{display:flex;align-items:flex-start;gap:12px;width:100%;border:1px solid #dfe9df;border-radius:8px;
+  padding:13px;background:#edf5ec;text-align:left;color:#356344;cursor:pointer}
+.pm-today-event svg{flex:0 0 19px;width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7}
+.pm-today-event span{display:grid;gap:5px}.pm-today-event strong{font-size:12px}.pm-today-event small{font-size:10px;color:#709078}
+/* Um único espaço Minhas tarefas; Grade / Quadro são alternâncias internas. */
+.pm-task-controls{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid #e4e9e2;margin:-5px 0 16px}
+.pm-task-scopes,.pm-task-actions,.pm-task-mode{display:flex;align-items:center;gap:6px}
+.pm-task-scopes{gap:23px}
+.pm-scope-button{background:transparent;border:0;border-bottom:2px solid transparent;border-radius:0;
+  padding:12px 3px 13px;font-size:12px;color:#688074;font-weight:660;white-space:nowrap}
+.pm-scope-button:hover,.pm-scope-button[aria-pressed=true]{color:#2c674a}
+.pm-scope-button[aria-pressed=true]{font-weight:760;border-bottom-color:#2b7551}
+.pm-task-actions{padding:2px 0 8px}
+.pm-task-actions .pm-demand-search{width:194px;max-width:40vw;height:35px;background:#fff}
+.pm-task-filter-button{display:grid;place-items:center;width:36px;height:35px;padding:5px}
+.pm-task-filter-button svg{height:16px;width:16px}
+.pm-task-filter-button[aria-expanded=true]{background:#dfece0;border-color:#acd1b5}
+.pm-task-mode{border:1px solid #dce7de;border-radius:8px;background:#f4f7f3;padding:3px;gap:2px}
+.pm-mode-button{display:flex;align-items:center;justify-content:center;gap:5px;min-height:29px;
+  padding:6px 10px;border:1px solid transparent;background:transparent;color:#6c8375;
+  font-size:11px;font-weight:700;border-radius:5px;white-space:nowrap}
+.pm-mode-button svg{width:16px;height:16px}
+.pm-mode-button[aria-pressed=true]{background:#fff;border-color:#dce7dc;color:#235a40;box-shadow:0 1px 3px #1e3f290d}
+.pm-task-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));align-items:end;gap:9px;
+  background:#eff5ed;border:1px solid #d9e7d9;border-radius:9px;padding:14px;margin:-4px 0 18px}
+.pm-task-filters .pm-dropdown{display:flex;flex-direction:column;align-items:stretch;min-width:0;gap:5px;
+  background:transparent;border:0;padding:0}
+.pm-task-filters .pm-dropdown-caption{font-size:10px;color:#5e7968}
+.pm-task-filters .pm-dropdown select{height:35px;min-width:0;max-width:100%;width:100%;padding:4px 8px;
+  border:1px solid #d6e3d6;border-radius:6px;background:#fff;color:#3e6350;font-size:11px}
+.pm-task-filters .pm-filter-clear{height:35px;max-width:140px}
+.pm-board-subtools{justify-content:flex-start;margin-bottom:14px;gap:8px}
+.pm-board-subtools .pm-dropdown{min-width:195px}
+.pm-plans-switch{display:flex;align-items:center;gap:20px;border-bottom:1px solid #e2e9e1;margin:-7px 0 19px}
+.pm-plans-switch .pm-demand-tab{margin:0}
+.pm-plans-switch .pm-demand-tab[aria-pressed=true]{color:#246b47;border-bottom-color:#2a7a51;font-weight:760}
+.pm-sunday-detail-link{margin-top:8px}
+.pm-day-sunday-summary{display:flex;align-items:center;gap:12px;background:#e9f3e8;border:1px solid #cce2cd;
+  border-radius:8px;padding:15px;margin:0 0 17px;color:#2d6243}
+.pm-day-sunday-summary svg{width:24px;height:24px;flex:0 0 24px}
+.pm-day-sunday-summary div{display:grid;gap:5px}
+.pm-day-sunday-summary strong{font-size:13px}.pm-day-sunday-summary span{font-size:11px;color:#5b8269}
+/* Sidebar no tablet e celular: gaveta, não uma coluna espremida. */
+@media(max-width:1120px){
+  body.pm-active #planner-app .pm-sidebar-toggle{display:grid}
+  body.pm-active #planner-app .planner-shell{grid-template-columns:minmax(0,1fr)}
+  body.pm-active #planner-app .planner-sidebar{
+    position:fixed;z-index:115;top:0;left:0;width:min(280px,82vw);height:100dvh;max-height:100dvh;
+    border-right:1px solid #cfdece;box-shadow:0 15px 40px #19372722;
+    transform:translateX(-105%);transition:transform .18s ease;padding-top:30px;
+  }
+  body.pm-sidebar-open #planner-app .planner-sidebar{transform:translateX(0)}
+  body.pm-sidebar-open #planner-app .pm-sidebar-backdrop{
+    display:block;position:fixed;inset:0;z-index:110;border:0;border-radius:0;background:#102d23a6;width:100%;height:100%;
+  }
+  body.pm-sidebar-open{overflow:hidden}
+  body.pm-active #planner-app .planner-main{padding:23px 20px 35px}
+}
+@media(max-width:760px){
+  body.pm-active #planner-app .pm-topbar{padding:8px 12px;min-height:59px;gap:8px}
+  body.pm-active #planner-app .pm-topbar-context{display:none}
+  body.pm-active #planner-app .pm-brand{min-width:102px}
+  body.pm-active #planner-app .pm-toolbar{gap:4px}
+  body.pm-active #planner-app .pm-global-search{max-width:115px}
+  body.pm-active #planner-app .planner-main{padding:19px 13px 35px}
+  .pm-today-stats{gap:8px}.pm-today-stat{padding:12px 10px;gap:7px}
+  .pm-today-stat>svg{width:20px;height:20px}.pm-today-stat strong{font-size:23px}.pm-today-stat span{font-size:10px}
+  .pm-today-layout{grid-template-columns:1fr}
+  .pm-task-controls{align-items:stretch}
+  .pm-task-scopes{width:100%;gap:18px}
+  .pm-task-actions{width:100%;justify-content:space-between;gap:5px}
+  .pm-task-actions .pm-demand-search{flex:1;width:auto;min-width:105px;max-width:none}
+  .pm-task-filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:400px){
+  .pm-mode-button{padding:6px}.pm-mode-button svg{width:14px;height:14px}
+  .pm-today-stat{flex-direction:column;align-items:flex-start}
+  .pm-today-task .pm-priority-chip{display:none}
+}
+/* O alternador usa a preferência local já existente no planner-theme.js. */
+:root[data-theme=dark] body.pm-active #planner-app.workspace{background:#1b2520;color:#d9eadf}
+:root[data-theme=dark] body.pm-active #planner-app .pm-topbar{
+  background:linear-gradient(110deg,#2b4437,#304c3b);border-bottom-color:#456854}
+:root[data-theme=dark] body.pm-active #planner-app .pm-topbar-context{color:#bed4c4}
+:root[data-theme=dark] body.pm-active #planner-app .pm-sidebar-toggle{background:#324b3b;border-color:#4b6c54;color:#d8eadc}
+:root[data-theme=dark] body.pm-active #planner-app .planner-sidebar{
+  background:#232f28;color:#d9e9dc;border-right-color:#3c5644;
+}
+:root[data-theme=dark] body.pm-active #planner-app .planner-main{background:#202b24;color:#d4e6d9}
+:root[data-theme=dark] body.pm-active #planner-app .view-nav .nav-group-label{color:#91ab97}
+:root[data-theme=dark] body.pm-active #planner-app .view-nav button.pm-side-link,
+:root[data-theme=dark] body.pm-active #planner-app .view-nav .nav-extras button,
+:root[data-theme=dark] body.pm-active #planner-app .sidebar-plan-link{color:#bfdbc6}
+:root[data-theme=dark] body.pm-active #planner-app .view-nav button.pm-side-link:hover,
+:root[data-theme=dark] body.pm-active #planner-app .view-nav .nav-extras button:hover{background:#304b39;border-color:#49664c;color:#e3f1e5}
+:root[data-theme=dark] body.pm-active #planner-app .view-nav button.pm-side-link[aria-pressed=true],
+:root[data-theme=dark] body.pm-active #planner-app .view-nav .nav-extras button[aria-pressed=true],
+:root[data-theme=dark] body.pm-active #planner-app .sidebar-plan-link[aria-current=page]{background:#355b41;border-color:#4d785a;color:#e7f3e8}
+:root[data-theme=dark] body.pm-active #planner-app .sidebar-plans-heading,
+:root[data-theme=dark] body.pm-active #planner-app .nav-extras,
+:root[data-theme=dark] body.pm-active #planner-app .sidebar-source{border-color:#415747}
+:root[data-theme=dark] body.pm-active #planner-app .sidebar-plans-heading button,
+:root[data-theme=dark] body.pm-active #planner-app .pm-theme-button{background:#2c4435;border-color:#44644c;color:#d5e8d8}
+:root[data-theme=dark] body.pm-active #planner-app .pm-theme-button:hover{background:#365840}
+:root[data-theme=dark] body.pm-active #planner-app .sidebar-plan-empty,
+:root[data-theme=dark] body.pm-active #planner-app .sidebar-source small{color:#95ad9c}
+:root[data-theme=dark] .pm-today-stat,
+:root[data-theme=dark] .pm-today-card{background:#29372e;border-color:#405748}
+:root[data-theme=dark] .pm-today-stat strong,
+:root[data-theme=dark] .pm-today-card h3,
+:root[data-theme=dark] .pm-today-task-content .pm-table-task{color:#dcebe0}
+:root[data-theme=dark] .pm-today-stat span,
+:root[data-theme=dark] .pm-today-task-content>span{color:#a4bbaa}
+:root[data-theme=dark] .pm-today-task{border-color:#3c5341}
+:root[data-theme=dark] .pm-today-event,
+:root[data-theme=dark] .pm-day-sunday-summary{background:#304a39;border-color:#4f6e55;color:#e3f1e4}
+:root[data-theme=dark] .pm-day-sunday-summary span{color:#b7d2bd}
+:root[data-theme=dark] .pm-task-controls,
+:root[data-theme=dark] .pm-plans-switch{border-color:#405849}
+:root[data-theme=dark] .pm-scope-button{color:#b6cab9}
+:root[data-theme=dark] .pm-scope-button[aria-pressed=true]{color:#bde6c3;border-bottom-color:#86c69a}
+:root[data-theme=dark] .pm-task-mode{background:#293b30;border-color:#486251}
+:root[data-theme=dark] .pm-mode-button{color:#c5d6c7}
+:root[data-theme=dark] .pm-mode-button[aria-pressed=true]{background:#3c5c44;color:#e8f5e9;border-color:#52785a}
+:root[data-theme=dark] .pm-task-filters{background:#293a30;border-color:#405d46}
+:root[data-theme=dark] .pm-task-filters .pm-dropdown-caption{color:#bbd1c0}
+:root[data-theme=dark] .pm-task-filters .pm-dropdown select,
+:root[data-theme=dark] .pm-task-actions .pm-demand-search{background:#2b3d31;border-color:#48604c;color:#d6e8d9}
+@media print {
+  body.pm-active #planner-app .planner-sidebar,body.pm-active #planner-app .pm-sidebar-toggle,
+  body.pm-active #planner-app .pm-sidebar-backdrop{display:none!important}
+  body.pm-active #planner-app .planner-shell{display:block!important}
+}
