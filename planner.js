@@ -5,6 +5,7 @@ import {
   teamMetadataId,sanitizeTeamSvg,teamSvgUrl
 } from './planner-team-icons.js?v=20261113-teatro-v1'
 import { ganttLinkRoutes } from './planner-gantt-links.js?v=20261113-fanin-v1'
+import { renderGanttWorkspace, selectGanttPlanContext } from './planner-gantt-workspace.js?v=20261113-premium-v1'
 import { routineMigrationPlan } from './planner-routine-migration.js?v=20261113-unified-v1'
 import { resolveGanttDependencies } from './planner-gantt-dependencies.js?v=20261113-recurring-links-v1'
 import {
@@ -173,12 +174,12 @@ function refreshFilters() {
   for (const task of liveTasks()) for (const person of task.assignees || []) people.set(person.email || person.name, person.name || person.email)
   setOptions($('assignee-filter'), [['__mine__', 'Minhas tarefas'], ...[...people].sort((a, b) => a[1].localeCompare(b[1], 'pt-BR'))], $('assignee-filter').value, ['', 'Todos os responsáveis'])
 }
-function visibleTasks() {
+function visibleTasks({ ignorePlan = false } = {}) {
   const query = value('search-filter').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
   const person = value('assignee-filter')
   const eventTitles = new Map(liveEvents().map(event => [event.id, event.title]))
   return liveTasks().filter(task =>
-    (!selectedPlan() || task.planId === selectedPlan()) &&
+    (ignorePlan || !selectedPlan() || task.planId === selectedPlan()) &&
     (!value('team-filter') || task.team === value('team-filter')) &&
     (!value('status-filter') || task.status === value('status-filter')) &&
     (!value('event-filter') || (value('event-filter') === '__independent__' ? !task.eventId : task.eventId === value('event-filter'))) &&
@@ -891,6 +892,7 @@ function clearTaskFilters() {
 }
 function changeView(view, { preserveFilters = false } = {}) {
   const previous = currentView
+  if (view === 'gantt' && previous !== 'gantt') selectGanttPlanContext(selectedPlan())
   if (!preserveFilters && (!taskViews.has(view) || !taskViews.has(previous))) clearTaskFilters()
   currentView = view
   $('mobile-more-menu').open = false
@@ -2189,7 +2191,11 @@ function pmRenderMain(content,tasks){
   if(currentView==='calendar-all')return calendarMode==='week'?pmWeekView(content,tasks):calendarMode==='year'?pmYearView(content,tasks):pmMonthView(content,tasks)
   if(currentView==='list')return pmDemandView(content,tasks)
   if(currentView==='board')return pmKanbanView(content,tasks)
-  if(currentView==='gantt')return pmGanttView(content,tasks)
+  if(currentView==='gantt')return renderGanttWorkspace({
+    content,tasks,allTasks:liveTasks(),plans:activePlans(),buckets:state.buckets,
+    recurrence:taskRecurrence,openTask,resolveDependencies:resolveGanttDependencies,
+    routeDependencies:ganttLinkRoutes,render,today:todayISO(),globalPlanId:selectedPlan()
+  })
   if(currentView==='sunday')return pmSundayView(content,tasks)
   if(currentView==='teams')return pmTeamsView(content,tasks)
   const legacy={home:pmTodayView,mine:renderMyDay,plans:renderPlans,events:renderEvents,calendar:renderCalendar,summary:renderSummary,integrations:renderIntegrations,routines:renderRoutines}
@@ -2233,7 +2239,7 @@ function render() {
   if (session.status !== 'authorized') return
   refreshFilters()
   const selected = activePlans().find(plan => plan.id === selectedPlan())
-  const withinPlan = !!selected && taskViews.has(currentView) && currentView !== 'calendar-all'
+  const withinPlan = !!selected && taskViews.has(currentView) && currentView !== 'calendar-all' && currentView !== 'gantt'
   const sidebarPlans = $('sidebar-plan-list')
   sidebarPlans.replaceChildren(...activePlans().filter(pmIsMyPlan).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')).map(plan => {
     const entry = button(plan.name, () => openPlanBoard(plan.id), 'sidebar-plan-link')
@@ -2257,7 +2263,7 @@ function render() {
   })
   pmSyncThemeButton()
   $('plan-view-tabs').hidden = !withinPlan
-  $('plan-filter').closest('label').style.display = withinPlan ? 'none' : ''
+  $('plan-filter').closest('label').style.display = withinPlan || currentView === 'gantt' ? 'none' : ''
   const filterVisible = currentView === 'events' || taskViews.has(currentView)
   $('workspace-filter-strip').hidden = !filterVisible
   $('advanced-filters').hidden = currentView === 'events'
@@ -2271,7 +2277,7 @@ function render() {
     content.append(empty('Crie um plano para reunir suas demandas e acompanhar o andamento.'), button('Criar plano', () => openPlan(), 'button button-primary'))
     return
   }
-  const tasks = visibleTasks()
+  const tasks = visibleTasks({ignorePlan:currentView==='gantt'})
   if(document.activeElement !== $('pm-search')) $('pm-search').value = $('search-filter').value
   pmRenderMain(content,tasks)
 }
