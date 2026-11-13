@@ -1,4 +1,9 @@
 import { createPlannerStore } from './planner-store.js?v=20261113-unified-v1'
+import {
+  TEAM_METADATA_PREFIX,TEAM_ICON_PRESETS,DEFAULT_TEAM_NAMES,
+  normalizedTeamName,parseTeamMetadata,teamMetadataTask,
+  teamMetadataId,sanitizeTeamSvg,teamSvgUrl
+} from './planner-team-icons.js?v=20261113-teams-v1'
 import { ganttLinkRoutes } from './planner-gantt-links.js?v=20261113-fanin-v1'
 import { routineMigrationPlan } from './planner-routine-migration.js?v=20261113-unified-v1'
 import { resolveGanttDependencies } from './planner-gantt-dependencies.js?v=20261113-recurring-links-v1'
@@ -160,8 +165,9 @@ function setOptions(select, items, current = select.value, first = null) {
   select.value = [...select.options].some(option => option.value === current) ? current : first ? first[0] : items[0]?.[0] || ''
 }
 function refreshFilters() {
+  $('team-suggestions').replaceChildren(...plannerTeamNames().map(team=>node('option',{value:team})))
   setOptions($('plan-filter'), activePlans().map(plan => [plan.id, plan.name]), $('plan-filter').value, ['', 'Todos os planos'])
-  setOptions($('team-filter'), [...new Set([...teams, ...liveTasks().map(task => task.team).filter(Boolean)])].sort().map(team => [team, team]), $('team-filter').value, ['', 'Todas as equipes'])
+  setOptions($('team-filter'), plannerTeamNames().map(team => [team, team]), $('team-filter').value, ['', 'Todas as equipes'])
   setOptions($('event-filter'), [['__independent__', 'Sem evento vinculado'], ...liveEvents().sort((a, b) => a.startDate.localeCompare(b.startDate)).map(event => [event.id, event.title + ' · ' + formatDate(event.startDate)])], $('event-filter').value, ['', 'Todas as demandas'])
   const people = new Map()
   for (const task of liveTasks()) for (const person of task.assignees || []) people.set(person.email || person.name, person.name || person.email)
@@ -1001,9 +1007,126 @@ function pmIcon(kind='calendar') {
   const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d',paths[kind]||paths.calendar);svg.append(path)
   return svg
 }
-function pmTeamIcon(team='') {
-  return pmIcon(/louvor/i.test(team)?'music':/m[ií]dia|t[eé]cnica/i.test(team)?'screen':/lit[uú]rg|celebra/i.test(team)?'church':'team')
+function teamRecords(){
+  return state.tasks.map(parseTeamMetadata).filter(Boolean)
 }
+function plannerTeamNames(){
+  const found=new Map()
+  for(const name of [...teams,...state.tasks.filter(task=>!task.deleted).map(task=>task.team),...teamRecords().map(item=>item.name)]){
+    const key=normalizedTeamName(name)
+    if(key&&!found.has(key))found.set(key,String(name).trim())
+  }
+  return [...found.values()].sort((a,b)=>a.localeCompare(b,'pt-BR'))
+}
+function teamRecordByName(name){
+  const key=normalizedTeamName(name)
+  return teamRecords().find(entry=>normalizedTeamName(entry.name)===key)||null
+}
+function teamPresetFor(name){
+  return /louvor|música/i.test(name)?'music'
+    :/m[ií]dia|t[eé]cnica|proje|transmiss/i.test(name)?'screen'
+    :/lit[uú]rg|celebra|culto/i.test(name)?'church'
+    :/comunica/i.test(name)?'document'
+    :'team'
+}
+function teamIconElement(icon,name=''){
+  if(icon?.type==='svg'){
+    try{
+      const validated=sanitizeTeamSvg(icon.value)
+      return node('img',{class:'pm-team-svg-icon',src:teamSvgUrl(validated),
+        alt:'','aria-hidden':'true',decoding:'async'})
+    }catch{
+      return pmIcon('team')
+    }
+  }
+  return pmIcon(icon?.value||teamPresetFor(name))
+}
+function pmTeamIcon(team=''){
+  return teamIconElement(teamRecordByName(team)?.icon,team)
+}
+let teamEditorIcon={type:'preset',value:'team'}
+let teamEditorName=''
+function renderTeamIconPicker(){
+  const options=$('team-icon-choices')
+  options.replaceChildren()
+  for(const [id,label] of TEAM_ICON_PRESETS){
+    const choice=pmButton('',()=>{
+      teamEditorIcon={type:'preset',value:id}
+      $('team-svg-file').value=''
+      $('team-feedback').textContent=''
+      renderTeamIconPicker()
+    },'pm-team-icon-choice')
+    choice.setAttribute('aria-pressed',String(teamEditorIcon.type==='preset'&&teamEditorIcon.value===id))
+    choice.setAttribute('aria-label','Usar ícone '+label)
+    choice.title=label
+    choice.append(pmIcon(id),pmText('span','',label))
+    options.append(choice)
+  }
+  const preview=$('team-icon-preview')
+  preview.replaceChildren(teamIconElement(teamEditorIcon))
+  $('team-icon-preview-label').textContent=teamEditorIcon.type==='svg'
+    ? 'SVG personalizado selecionado'
+    : 'Ícone: '+(TEAM_ICON_PRESETS.find(([id])=>id===teamEditorIcon.value)?.[1]||'Pessoas')
+}
+function openTeamEditor(name=''){
+  teamEditorName=String(name||'').trim()
+  const saved=teamRecordByName(teamEditorName)
+  teamEditorIcon=saved?.icon||{type:'preset',value:teamPresetFor(teamEditorName)}
+  $('team-form').reset()
+  $('team-feedback').textContent=''
+  $('team-dialog-title').textContent=teamEditorName?'Editar ícone da equipe':'Nova equipe'
+  $('team-name').value=teamEditorName
+  $('team-name').readOnly=Boolean(teamEditorName)
+  $('team-name-hint').textContent=teamEditorName
+    ? 'O nome permanece vinculado às demandas existentes. Você pode alterar o ícone sem perder os registros.'
+    : 'A nova equipe ficará disponível nas demandas, nos filtros e no painel Equipes.'
+  $('team-submit').textContent=teamEditorName?'Salvar ícone':'Criar equipe'
+  renderTeamIconPicker()
+  $('team-dialog').showModal()
+  if(!teamEditorName)$('team-name').focus()
+}
+$('team-svg-file').addEventListener('change',async event=>{
+  const file=event.target.files?.[0]
+  if(!file)return
+  try{
+    if(file.size>9000||file.size===0)throw new Error('O arquivo SVG deve ter até 9 KB.')
+    if(!/\.svg$/i.test(file.name)&&file.type!=='image/svg+xml')
+      throw new Error('Selecione um arquivo com extensão .svg.')
+    const clean=sanitizeTeamSvg(await file.text())
+    teamEditorIcon={type:'svg',value:clean}
+    $('team-feedback').textContent=''
+    renderTeamIconPicker()
+  }catch(error){
+    $('team-feedback').textContent=error.message
+    event.target.value=''
+  }
+})
+$('team-form').addEventListener('submit',async event=>{
+  event.preventDefault()
+  const submit=$('team-submit')
+  submit.disabled=true
+  try{
+    const name=String($('team-name').value||'').normalize('NFC').trim().replace(/\s+/g,' ')
+    if(!name||name.length>80)throw new Error('Informe um nome de equipe com até 80 caracteres.')
+    const found=plannerTeamNames().find(current=>normalizedTeamName(current)===normalizedTeamName(name))
+    if(!teamEditorName&&found)throw new Error('A equipe '+found+' já existe. Abra o cartão dela para alterar o ícone.')
+    if(teamEditorName&&normalizedTeamName(teamEditorName)!==normalizedTeamName(name))
+      throw new Error('Para preservar as demandas, o nome da equipe existente não pode ser alterado neste formulário.')
+    const id=await teamMetadataId(name)
+    const prior=state.tasks.find(task=>task.id===id)
+    let plan=activePlans().find(item=>item.id===prior?.planId)||activePlans()[0]
+    if(!plan){
+      const created=await store.ensureStandardPlan('independent')
+      plan=created.plan
+    }
+    const record=teamMetadataTask(name,teamEditorIcon,plan.id,id,prior||null)
+    await action(()=>save('tasks',record),teamEditorName?'Ícone da equipe atualizado.':'Equipe criada com sucesso.')
+    $('team-dialog').close()
+    render()
+  }catch(error){
+    $('team-feedback').textContent=error?.message||'Não foi possível salvar a equipe.'
+  }finally{submit.disabled=false}
+})
 function pmEventLine(event) {
   return pmGroup('span','',[pmIcon('clock'),pmText('span','',pmEventText(event))])
 }
@@ -1978,28 +2101,42 @@ function pmSundayView(content,tasks){
   content.append(pmGroup('div','pm-sunday-layout',[aside,main]))
 }
 function pmTeamsView(content,tasks){
-  const groups=[...new Set([...teams,...tasks.map(t=>t.team).filter(Boolean)])]
+  const groups=plannerTeamNames()
   const cards=pmGroup('div','pm-teams-view')
   for(const group of groups){
-    const members=tasks.filter(t=>t.team===group)
-    const people=[...new Set(members.flatMap(t=>(t.assignees||[]).map(p=>p.name||p.email).filter(Boolean)))]
-    const done=members.filter(t=>t.status==='done').length
+    const members=tasks.filter(task=>normalizedTeamName(task.team)===normalizedTeamName(group))
+    const people=[...new Set(members.flatMap(task=>(task.assignees||[])
+      .map(person=>person.name||person.email).filter(Boolean)))]
+    const done=members.filter(task=>task.status==='done').length
+    const icon=pmGroup('span','pm-team-card-icon',[pmTeamIcon(group)])
     const card=pmGroup('article','pm-team-card',[
-      pmGroup('div','pm-team-card-top',[pmGroup('span','pm-team-card-icon',[pmTeamIcon(group)]),pmText('h3','',group)]),
+      pmGroup('div','pm-team-card-top',[
+        icon,pmText('h3','',group),
+        pmButton('',()=>openTeamEditor(group),'pm-team-edit-icon')
+      ]),
       pmGroup('div','pm-team-stats',[
         pmText('strong','',String(members.length)),
         pmText('span','','demandas'),
         pmText('small','',done+' concluída(s)')
       ]),
-      pmGroup('div','pm-team-members',people.length?people.map(name=>pmText('span','pm-team-tag',name)): [pmText('span','pm-muted','Sem responsáveis atribuídos')]),
+      pmGroup('div','pm-team-members',people.length
+        ?people.map(name=>pmText('span','pm-team-tag',name))
+        :[pmText('span','pm-muted','Sem responsáveis atribuídos')]),
       pmButton('Ver demandas  →',()=>{
         $('team-filter').value=group
         changeView('list',{preserveFilters:true})
       },'pm-text-link')
     ])
+    const edit=card.querySelector('.pm-team-edit-icon')
+    edit.append(pmIcon('document'))
+    edit.setAttribute('aria-label','Personalizar ícone de '+group)
+    edit.title='Personalizar ícone'
     cards.append(card)
   }
-  content.append(pmHeader('Pessoas e responsabilidades','Equipes','',[pmCreationButton('task',()=>pmNewTask())]),cards)
+  const create=pmButton('',()=>openTeamEditor(),'pm-primary-button pm-create-button pm-create-team')
+  create.append(pmIcon('team'),pmText('span','','Nova equipe'))
+  content.append(pmHeader('Pessoas e responsabilidades','Equipes',
+    groups.length+' equipes',[create]),cards)
 }
 function pmTodayView(content) {
   const today=todayISO()

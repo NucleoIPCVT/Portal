@@ -22,9 +22,10 @@
     <link rel="stylesheet" href="planner-gantt-clean.css?v=20261113-gantt-clean-v1">
     <link rel="stylesheet" href="planner-cards-dependencies.css?v=20261113-cards-deps-v1">
     <link rel="stylesheet" href="planner-unified-routines-gantt.css?v=20261113-unified-v1">
-    <script type="module" src="planner.js?v=20261113-unified-v1"></script>
+    <link rel="stylesheet" href="planner-team-management.css?v=20261113-teams-v1">
+    <script type="module" src="planner.js?v=20261113-teams-v1"></script>
   </head>
-  <body data-interface="planner-ipcvt-verde-creme" data-revisao="20261113-unified-v1">
+  <body data-interface="planner-ipcvt-verde-creme" data-revisao="20261113-teams-v1">
     <a class="skip-link" href="#main-content">Ir para o conteúdo</a>
     <header class="site-header">
       <a class="brand" href="planner.html" aria-label="Início do Planner da Comissão">
@@ -289,6 +290,41 @@
           <p id="plan-feedback" class="feedback" role="status" aria-live="polite"></p>
         </div>
         <div class="dialog-footer"><button id="delete-plan-button" class="button button-danger" type="button" hidden>Excluir plano</button><span class="footer-spacer"></span><button class="button" type="button" data-close-dialog="plan-dialog">Cancelar</button><button class="button button-primary" type="submit">Salvar plano</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="team-dialog" class="editor-dialog pm-team-dialog" aria-labelledby="team-dialog-title">
+      <form id="team-form">
+        <div class="dialog-heading">
+          <div><p class="eyebrow">Organização da Comissão</p><h2 id="team-dialog-title">Nova equipe</h2></div>
+          <button class="icon-button" type="button" data-close-dialog="team-dialog" aria-label="Fechar equipe">×</button>
+        </div>
+        <div class="dialog-body">
+          <label class="field" for="team-name">Nome da equipe
+            <input id="team-name" type="text" maxlength="80" required placeholder="Ex.: Fotografia, Recepção ou Transmissão">
+          </label>
+          <p id="team-name-hint" class="field-note">Cadastre a equipe uma vez. Depois, você poderá selecioná-la nas demandas.</p>
+          <h3 class="pm-team-picker-title">Ícone da equipe</h3>
+          <p class="pm-team-picker-description">Escolha um dos ícones ou envie um SVG personalizado.</p>
+          <div id="team-icon-choices" class="pm-team-icon-choices" role="group" aria-label="Ícones disponíveis"></div>
+          <div class="pm-team-svg-panel">
+            <label class="pm-team-file-picker" for="team-svg-file">
+              <span>Enviar um ícone SVG</span>
+              <input id="team-svg-file" type="file" accept=".svg,image/svg+xml">
+            </label>
+            <small>SVG vetorial de até 9 KB. Arquivos com scripts, links ou elementos externos não são aceitos.</small>
+          </div>
+          <div class="pm-team-icon-preview-row">
+            <span id="team-icon-preview" class="pm-team-icon-preview" aria-hidden="true"></span>
+            <span id="team-icon-preview-label">Prévia do ícone selecionado</span>
+          </div>
+          <p id="team-feedback" class="feedback" role="status" aria-live="polite"></p>
+        </div>
+        <div class="dialog-footer">
+          <span class="footer-spacer"></span>
+          <button type="button" class="button button-quiet" data-close-dialog="team-dialog">Cancelar</button>
+          <button type="submit" id="team-submit" class="button button-primary">Salvar equipe</button>
+        </div>
       </form>
     </dialog>
 

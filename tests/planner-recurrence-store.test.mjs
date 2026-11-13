@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
+import { teamMetadataTask,parseTeamMetadata } from '../planner-team-icons.js'
 import {
   nextRecurringTask,setTaskRecurrence,taskRecurrence,rotationConfigId,
   rotationConfigRecord,parseRotationConfig,recurrenceOccurrenceAt,scheduledUpcomingDates
@@ -181,4 +182,26 @@ test('a migração de Rotinas não duplica ocorrências antigas já programadas'
     'ocorrência legada não pode reaparecer com um segundo ID')
   const regular=[...records.keys()].filter(key=>key.includes('repeat_original_'))
   assert.equal(regular.length,upcoming.length-1)
+})
+
+
+test('a equipe cadastrada persiste no Firebase existente sem virar uma demanda',async()=>{
+  const {store,records}=await fixture()
+  const id='team_meta_v1_'+'a'.repeat(64)
+  const icon={type:'preset',value:'music'}
+  const record=teamMetadataTask('Equipe de fotografia',icon,'p1',id)
+  const saved=await store.save('tasks',record)
+  assert.equal(saved.version,1)
+  const raw=records.get(path('tasks',id))
+  assert.equal(raw.deleted,true)
+  assert.equal(raw.team,'Equipe de fotografia')
+  assert.deepEqual(parseTeamMetadata({...raw,id}).icon,icon)
+  assert.equal(records.size,2,'a equipe não gera ocorrências de demanda')
+
+  const edited=teamMetadataTask('Equipe de fotografia',
+    {type:'preset',value:'screen'},'p1',id,{...raw,id})
+  const result=await store.save('tasks',edited,{expectedVersion:1})
+  assert.equal(result.version,2)
+  assert.equal(records.size,2)
+  assert.equal(parseTeamMetadata({...records.get(path('tasks',id)),id}).icon.value,'screen')
 })
