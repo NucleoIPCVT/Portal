@@ -3,7 +3,7 @@ const viewState = {
   mode:'focus', focusId:'', selectedIds:null, zoom:'weeks',
   cursor:'', collapsedPlans:new Set(), collapsedBuckets:new Set(),
   expandedSeries:new Set(), groupRecurrences:true, showAllLinks:false,
-  selectedTaskId:''
+  selectedTaskId:'', portfolioInitialized:false
 }
 let drawCurrent=null
 if(typeof window!=='undefined')window.addEventListener('resize',()=>drawCurrent?.())
@@ -136,7 +136,14 @@ export function renderGanttWorkspace(ctx){
   intro.append(introText)
   const switcher=element('div','pg-switcher')
   const modeButton=(id,name)=>{
-    const btn=control(name,()=>{viewState.mode=id;render()},'pg-switch'+(viewState.mode===id?' is-active':''))
+    const btn=control(name,()=>{
+      if(id==='portfolio'&&!viewState.portfolioInitialized){
+        viewState.collapsedPlans=new Set(orderedPlans.filter(p=>p.id!==viewState.focusId).map(p=>p.id))
+        viewState.portfolioInitialized=true
+      }
+      if(id==='focus')viewState.collapsedPlans.delete(viewState.focusId)
+      viewState.mode=id;render()
+    },'pg-switch'+(viewState.mode===id?' is-active':''))
     btn.setAttribute('aria-pressed',String(viewState.mode===id))
     return btn
   }
@@ -242,6 +249,16 @@ export function renderGanttWorkspace(ctx){
     ()=>{viewState.groupRecurrences=!viewState.groupRecurrences;render()},'pg-tool-button')
   toggleSeries.setAttribute('aria-pressed',String(viewState.groupRecurrences))
   toolbar.append(toggleLinks,toggleSeries)
+  if(viewState.mode==='portfolio'){
+    const allCollapsed=chosen.every(plan=>viewState.collapsedPlans.has(plan.id))
+    toolbar.append(control(allCollapsed?'Expandir planos':'Recolher planos',()=>{
+      for(const plan of chosen){
+        if(allCollapsed)viewState.collapsedPlans.delete(plan.id)
+        else viewState.collapsedPlans.add(plan.id)
+      }
+      render()
+    },'pg-tool-button'))
+  }
   const shift=delta=>{viewState.cursor=add(viewState.cursor,delta*({weeks:28,months:84,quarter:182}[viewState.zoom]||28));render()}
   toolbar.append(control('‹',()=>shift(-1),'pg-pager'),control('Hoje',()=>{viewState.cursor=today;render()},'pg-pager pg-today'),
     control('›',()=>shift(1),'pg-pager'))
