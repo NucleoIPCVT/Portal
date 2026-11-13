@@ -7,7 +7,8 @@ export const TEAM_ICON_PRESETS = [
   ['team','Pessoas'],['music','Música'],['screen','Projeção'],
   ['church','Culto'],['checklist','Checklist'],['resource','Equipamento'],
   ['document','Documentos'],['calendar','Agenda'],
-  ['flag','Coordenação'],['plan','Planejamento'],['clock','Horários']
+  ['flag','Coordenação'],['plan','Planejamento'],['clock','Horários'],
+  ['theater','Teatro']
 ]
 export const DEFAULT_TEAM_NAMES =
   ['Louvor','Litúrgico','Técnica','Mídia','Comunicação','Comissão']

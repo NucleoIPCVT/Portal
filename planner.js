@@ -3,7 +3,7 @@ import {
   TEAM_METADATA_PREFIX,TEAM_ICON_PRESETS,DEFAULT_TEAM_NAMES,
   normalizedTeamName,parseTeamMetadata,teamMetadataTask,
   teamMetadataId,sanitizeTeamSvg,teamSvgUrl
-} from './planner-team-icons.js?v=20261113-teams-v1'
+} from './planner-team-icons.js?v=20261113-teatro-v1'
 import { ganttLinkRoutes } from './planner-gantt-links.js?v=20261113-fanin-v1'
 import { routineMigrationPlan } from './planner-routine-migration.js?v=20261113-unified-v1'
 import { resolveGanttDependencies } from './planner-gantt-dependencies.js?v=20261113-recurring-links-v1'
@@ -991,6 +991,8 @@ function pmIcon(kind='calendar') {
     flag:'M8 21V4m0 1c5-4 7 4 12 0v10c-5 4-7-4-12 0',
     team:'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M2 21v-2a7 7 0 0 1 14 0v2m1-17a4 4 0 0 1 0 8m3 3a6 6 0 0 1 2 5v1',
     music:'M9 18V5l11-2v13M9 5l11-2M9 8l11-2M9 18c0 2-6 3-6 0s6-3 6 0m11-2c0 2-6 3-6 0s6-3 6 0',
+    // Máscaras clássicas de teatro: comédia (à frente) e tragédia (atrás).
+    theater:'M12.3 4.2c2.8-1.3 5.7-1.3 8.5-.1v5.8c0 3-1.7 5.4-4.1 7l-2-1.4 M14.6 7h.01 M18.5 7h.01 M14.1 11.5q2.2-2.7 4.8 0 M3.3 8.5c2.8-1.3 5.8-1.3 8.6 0v5.3c0 3-1.9 5.7-4.3 7.2-2.7-1.7-4.3-4.2-4.3-7.2z M5.6 11.6h.01 M9.5 11.6h.01 M5.1 15.3q2.4 2.6 4.8 0',
     screen:'M3 4h18v13H3zM8 21h8m-4-4v4M7 2v4m10-4v4',
     church:'M3 21V10l9-7 9 7v11H3m6 0v-7h6v7M12 2v7m-3-4h6',
     checklist:'M8 4h13v17H3V4h3m2-2h8v4H8zM7 11l2 2 3-4m2 3h4M7 17h11',

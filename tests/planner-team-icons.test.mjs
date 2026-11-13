@@ -30,7 +30,7 @@ test('preserva a versão existente e aceita mudança de ícone',()=>{
 })
 test('os presets possuem nomes únicos e incluem música, pessoas e projeção',()=>{
   assert.equal(TEAM_ICON_PRESETS.length,new Set(TEAM_ICON_PRESETS.map(([id])=>id)).size)
-  for(const kind of ['team','music','screen'])assert.ok(TEAM_ICON_PRESETS.some(([id])=>id===kind))
+  for(const kind of ['team','music','screen','theater'])assert.ok(TEAM_ICON_PRESETS.some(([id])=>id===kind))
 })
 test('normalização de nomes impede duplicação por espaços ou maiúsculas',()=>{
   assert.equal(normalizedTeamName('  FOTOGRAFIA   E  Vídeo '),normalizedTeamName('fotografia e vídeo'))
@@ -46,4 +46,11 @@ test('registros comuns e outras configurações ocultas não viram equipes',()=>
   assert.equal(parseTeamMetadata({...record,deleted:false}),null)
   assert.equal(parseTeamMetadata({...record,id:'rotation_v1_abc'}),null)
   assert.equal(parseTeamMetadata({...record,description:'texto'}),null)
+})
+
+
+test('ícone do teatro (comédia e tragédia) pode ser salvo e recuperado',()=>{
+  const record=teamMetadataTask('Teatro',{type:'preset',value:'theater'},'plano',id)
+  const parsed=parseTeamMetadata(record)
+  assert.deepEqual(parsed.icon,{type:'preset',value:'theater'})
 })
