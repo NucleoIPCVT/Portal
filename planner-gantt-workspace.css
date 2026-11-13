@@ -68,7 +68,7 @@
 .pg-bar{position:absolute;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;min-width:6px;height:18px;max-height:18px;border:1px solid #96bba0;border-radius:4px;padding:0 4px;background:#b7d2ba;color:#315b41;font-size:9px;font-weight:750;white-space:nowrap;overflow:hidden;cursor:pointer;z-index:2}
 .pg-bar.is-done{background:#79a88a;border-color:#79a88a;color:#fff}.pg-bar.is-doing{background:#86afb4;border-color:#7ca9ad;color:white}.pg-bar.is-todo{background:#c6d9c6;border-color:#a8c5ac}
 .pg-bar.is-late{background:#d3aa7d;border-color:#c99b6c;color:white}
-.pg-bar.is-plan{height:16px;max-height:16px;border:0;background:#7cad8d;color:white;opacity:.97}
+.pg-bar{isolation:isolate}.pg-bar.is-plan{height:16px;max-height:16px;border:0;background:#7cad8d;color:white;opacity:.97}
 .pg-plan-fill{position:absolute;inset:0 auto 0 0;display:block;background:#3d7854;z-index:-1}
 .pg-bar.is-bucket{height:8px;max-height:8px;border:0;background:#dce9dc}
 .pg-bar.is-series{height:8px;max-height:8px;border:0;background:#e4f0e5;opacity:.85}
@@ -109,3 +109,9 @@
 @media(max-width:1040px){.pg-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.pg-grid{grid-template-columns:265px minmax(720px,1fr);min-width:985px}.pg-picker-wrap{max-width:none}.pg-zoom-wrap{flex:1 1 auto}}
 @media(max-width:650px){.pg-title{font-size:20px!important}.pg-intro{align-items:stretch}.pg-switcher{width:100%}.pg-switch{flex:1}.pg-controls{padding:11px}.pg-picker-wrap{min-width:0;flex:1 1 100%}.pg-zoom-wrap{flex:1 1 100%}.pg-zoom{display:flex}.pg-zoom-choice{flex:1}.pg-metrics{gap:8px}.pg-metric{min-height:60px;padding:10px}.pg-metric div>strong{font-size:18px}.pg-metric-icon{display:none}.pg-card-heading{padding:10px}.pg-toolbar{gap:5px}.pg-tool-button{padding:6px}.pg-grid{grid-template-columns:215px minmax(650px,1fr);min-width:865px}.pg-tree-header,.pg-left-row{grid-template-columns:minmax(0,1fr) 42px 37px}.pg-tree-header{font-size:8px;padding:0 6px}.pg-left-row{padding-right:5px}.pg-left-row.pg-task{padding-left:16px}.pg-row-icon{display:none}.pg-owner,.pg-progress{font-size:8px}}
 @media print{.pg-intro,.pg-controls,.pg-metrics,.pg-toolbar,.pg-note{display:none!important}.pg-grid{width:100%;min-width:0;grid-template-columns:240px minmax(500px,1fr)}.pg-scroller{overflow:visible}.pg-card{box-shadow:none}.pg-legend{padding:8px 10px}}
+
+/* A porcentagem efetiva considera o checklist sem alterar o status salvo. */
+.pg-task-fill{position:absolute;top:0;left:0;bottom:0;z-index:-1;background:#5a8e70;opacity:.6;pointer-events:none}
+.pg-bar.is-doing .pg-task-fill{background:#3a7784;opacity:.58}
+.pg-bar.is-late .pg-task-fill{background:#a56e44;opacity:.55}
+.pg-task-percent{position:relative;z-index:1;color:#fff;text-shadow:0 1px 2px #31544277;font-size:9px;font-weight:800;pointer-events:none}
