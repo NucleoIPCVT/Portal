@@ -1,0 +1,130 @@
+/* Planner IPCVT · rodízio de responsáveis
+ * Complementa a ficha de demanda sem alterar os estilos gerais. */
+.task-rotation-settings[hidden],
+.task-rotation-roster[hidden],
+.task-rotation-preview-wrap[hidden],
+.task-rotation-people-hint[hidden]{display:none!important}
+.task-rotation-settings{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;margin:15px 0 3px;padding:13px 14px;
+  border:1px solid #dce8dc;border-radius:9px;
+  background:linear-gradient(120deg,#f4f8f2,#fbfcf9);
+}
+.task-rotation-settings>.field{margin:0;min-width:0}
+.task-rotation-settings .field>span{
+  display:block;margin:0 0 6px;font-size:11px;
+  font-weight:720;color:#466451;
+}
+.task-rotation-settings select{
+  width:100%;min-width:0;max-width:100%;
+  font:inherit;font-size:12px;
+  color:#2b5540;background:#fff;
+  border:1px solid #d6e1d7;border-radius:6px;
+  padding:9px 11px;min-height:39px;
+}
+.task-rotation-people-hint{
+  color:#4c7560;font-size:11px;line-height:1.55;
+  background:#eef6ed;border-radius:7px;
+  border-left:3px solid #74a884;
+  padding:10px 12px;margin:5px 0 13px;
+}
+.task-rotation-roster{
+  border:1px solid #dfe9df;border-radius:9px;
+  padding:15px;margin:15px 0 4px;background:#fafcf8;
+}
+.task-rotation-roster h4,
+.task-rotation-preview-wrap h4{
+  font-size:12px;font-weight:760;letter-spacing:0;
+  color:#285740;margin:0 0 7px;
+}
+.task-rotation-roster p,
+.task-rotation-empty{
+  margin:0 0 13px;color:#7d9282;
+  font-size:11px;line-height:1.5;
+}
+.task-rotation-list{display:grid;gap:6px}
+.task-rotation-person{
+  display:flex;gap:8px;align-items:center;min-height:42px;
+  padding:7px 9px;border:1px solid #e0e8df;border-radius:7px;
+  background:#fff;
+}
+.task-rotation-person-name{
+  flex:1;min-width:0;overflow-wrap:anywhere;
+  color:#385c46;font-size:11px;font-weight:700;
+}
+.task-rotation-person select{
+  width:102px;max-width:33%;min-height:30px;
+  border:1px solid #dbe4dc;background:#f7faf5;
+  border-radius:5px;padding:5px;font-size:11px;color:#39624a;
+}
+.task-rotation-arrow{
+  flex:0 0 29px;display:grid;place-items:center;
+  width:29px;min-height:29px;border:1px solid #d9e4da;
+  border-radius:6px;background:#f4f8f3;
+  color:#447151;font-size:15px;cursor:pointer;
+}
+.task-rotation-arrow:hover:not(:disabled){
+  background:#e4f1e6;border-color:#a8c6aa;
+}
+.task-rotation-arrow:disabled{opacity:.35;cursor:default}
+.task-rotation-preview-wrap{
+  margin-top:15px;padding:13px 15px;
+  border:1px solid #dce6dc;border-radius:9px;background:#f5f9f4;
+}
+.task-rotation-preview{
+  display:grid;gap:0;margin:8px 0 0;padding:0;list-style:none;
+}
+.task-rotation-preview li{
+  display:grid;grid-template-columns:minmax(98px,.45fr) minmax(0,1fr);
+  gap:9px;align-items:center;padding:9px 2px;
+  border-bottom:1px solid #e1e9e0;
+  font-size:11px;line-height:1.45;
+}
+.task-rotation-preview li:last-child{border-bottom:0}
+.task-rotation-preview li strong{font-weight:720;color:#45644e}
+.task-rotation-preview li span{font-weight:600;color:#2b6546;overflow-wrap:anywhere}
+.task-rotation-preview .task-rotation-empty{display:block;color:#a06e3c}
+:root[data-theme=dark] .task-rotation-settings,
+:root[data-theme=dark] .task-rotation-roster,
+:root[data-theme=dark] .task-rotation-preview-wrap{
+  background:#28382d;border-color:#425f47;
+}
+:root[data-theme=dark] .task-rotation-people-hint{
+  background:#344d39;border-left-color:#83ba8b;color:#c4e0c8;
+}
+:root[data-theme=dark] .task-rotation-settings .field>span,
+:root[data-theme=dark] .task-rotation-roster h4,
+:root[data-theme=dark] .task-rotation-preview-wrap h4,
+:root[data-theme=dark] .task-rotation-person-name{
+  color:#cfe8d1;
+}
+:root[data-theme=dark] .task-rotation-settings select,
+:root[data-theme=dark] .task-rotation-person select,
+:root[data-theme=dark] .task-rotation-person{
+  background:#2e4033;color:#d6e8d8;border-color:#48664b;
+}
+:root[data-theme=dark] .task-rotation-arrow{
+  background:#344c3a;border-color:#55735a;color:#d7f0d9;
+}
+:root[data-theme=dark] .task-rotation-arrow:hover:not(:disabled){background:#466b4d}
+:root[data-theme=dark] .task-rotation-preview li{border-color:#425946}
+:root[data-theme=dark] .task-rotation-preview li strong,
+:root[data-theme=dark] .task-rotation-preview li span{color:#c6e5cb}
+:root[data-theme=dark] .task-rotation-roster p{color:#a4b9a7}
+@media(max-width:690px){
+  .task-rotation-settings{grid-template-columns:1fr;padding:12px}
+  .task-rotation-person{gap:5px;padding:7px}
+  .task-rotation-person select{width:92px}
+}
+@media(max-width:390px){
+  .task-rotation-person-name{font-size:10px}
+  .task-rotation-arrow{flex-basis:26px;width:26px}
+  .task-rotation-preview li{grid-template-columns:1fr;gap:2px}
+}
+
+.task-rotation-fixed{
+  display:inline-flex;align-items:center;gap:5px;color:#55725d;
+  font-size:10px;font-weight:720;white-space:nowrap;
+}
+.task-rotation-fixed input{width:15px;height:15px;accent-color:#2b7951}
+:root[data-theme=dark] .task-rotation-fixed{color:#bbd8c0}

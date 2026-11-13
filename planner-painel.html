@@ -18,9 +18,10 @@
     <link rel="stylesheet" href="planner-controls.css?v=20261112-repetir-01">
     <link rel="stylesheet" href="planner-navigation.css?v=20261113-nav-unificada">
     <link rel="stylesheet" href="planner-compact-ui.css?v=20261113-controles-semana-v1">
-    <script type="module" src="planner.js?v=20261113-controles-semana-v1"></script>
+    <link rel="stylesheet" href="planner-rotation.css?v=20261113-rodizio-v1">
+    <script type="module" src="planner.js?v=20261113-rodizio-v1"></script>
   </head>
-  <body data-interface="planner-ipcvt-verde-creme" data-revisao="20261113-controles-semana-v1">
+  <body data-interface="planner-ipcvt-verde-creme" data-revisao="20261113-rodizio-v1">
     <a class="skip-link" href="#main-content">Ir para o conteúdo</a>
     <header class="site-header">
       <a class="brand" href="planner.html" aria-label="Início do Planner da Comissão">
@@ -193,11 +194,36 @@
               <label class="field" for="task-repeat-interval"><span class="field-visually-hidden">Intervalo da repetição</span><input id="task-repeat-interval" type="number" min="1" max="999" step="1" value="1" inputmode="numeric" aria-label="Intervalo da repetição" disabled></label>
               <label class="field" for="task-repeat-unit"><span class="field-visually-hidden">Unidade da repetição</span><select id="task-repeat-unit" aria-label="Unidade da repetição" disabled><option value="day">Dia</option><option value="week" selected>Semana</option><option value="month">Mês</option></select></label>
             </div>
+            <div id="task-rotation-settings" class="task-rotation-settings" hidden>
+              <label class="field" for="task-repeat-advance"><span>Criar próxima ocorrência</span>
+                <select id="task-repeat-advance">
+                  <option value="completion">Quando a ocorrência anterior for concluída</option>
+                  <option value="scheduled">Na data programada (recomendado para rodízios)</option>
+                </select>
+              </label>
+              <label class="field" for="task-rotation-mode"><span>Distribuição de responsáveis</span>
+                <select id="task-rotation-mode">
+                  <option value="fixed">Responsáveis fixos</option>
+                  <option value="individual">Rodízio individual (uma pessoa por vez)</option>
+                  <option value="groups">Rodízio por grupos</option>
+                </select>
+              </label>
+            </div>
             <p id="task-repeat-hint" class="task-repeat-hint" aria-live="polite">Esta demanda acontece uma única vez.</p>
           </section>
           <section class="task-editor-section task-people-section" aria-labelledby="task-people-title">
             <h3 id="task-people-title">Responsáveis</h3>
+            <p id="task-rotation-people-hint" class="task-rotation-people-hint" hidden>Adicione todas as pessoas do rodízio abaixo. A cada ocorrência, apenas quem estiver no turno será responsável.</p>
             <div id="task-assignees-editor" class="task-editor-roots"></div>
+            <div id="task-rotation-roster" class="task-rotation-roster" hidden>
+              <h4>Ordem do rodízio</h4>
+              <p id="task-rotation-roster-hint">Organize a sequência usando as setas.</p>
+              <div id="task-rotation-list" class="task-rotation-list"></div>
+            </div>
+            <div id="task-rotation-preview-wrap" class="task-rotation-preview-wrap" hidden>
+              <h4>Próximas quatro ocorrências</h4>
+              <ol id="task-rotation-preview" class="task-rotation-preview"></ol>
+            </div>
           </section>
           <section class="task-editor-section task-event-section" aria-labelledby="task-organization-title">
             <h3 id="task-organization-title">Evento-alvo <span class="optional-tag">Opcional</span></h3>

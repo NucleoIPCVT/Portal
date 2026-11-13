@@ -1,7 +1,7 @@
 // Structured task fields. These editors keep the existing Firestore payload shape.
 let editorSequence = 0
 
-export function createTaskEditor({ assigneesRoot, checklistRoot, dependencyRoot }) {
+export function createTaskEditor({ assigneesRoot, checklistRoot, dependencyRoot, onAssigneesChange = () => {} }) {
   const document = assigneesRoot.ownerDocument
   const prefix = 'task-editor-' + (++editorSequence)
   let assignees = []
@@ -131,6 +131,7 @@ export function createTaskEditor({ assigneesRoot, checklistRoot, dependencyRoot 
       peopleField.list.append(row)
     }
     peopleField.counter.textContent = assignees.length + ' de 10 responsáveis'
+    onAssigneesChange(assignees.map(person => ({ ...person })))
   }
   function addPerson({ focus = true } = {}) {
     const parsed = parsePerson(personInput.value)
@@ -300,6 +301,11 @@ export function createTaskEditor({ assigneesRoot, checklistRoot, dependencyRoot 
   return {
     setTask,
     setDependencies,
+    setAssignees: list => {
+      assignees = list.map(person => ({ name:person.name || '', email:person.email || '' }))
+      report(peopleField)
+      renderPeople()
+    },
     validate,
     getAssignees: () => assignees.map(person => ({ ...person })),
     getChecklist: () => checklist.map(item => ({ ...item, text: item.text.trim() })),

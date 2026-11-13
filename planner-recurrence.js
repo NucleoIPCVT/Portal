@@ -78,28 +78,161 @@ export function nextRecurrenceDate(task) {
   return ''
 }
 
-export function nextRecurringTask(task, buckets = []) {
-  const rule = taskRecurrence(task)
-  if (!rule || task.deleted || task.status !== 'done') return null
-  const dueDate = nextRecurrenceDate(task)
-  if (!dueDate) throw new Error('Não foi possível calcular a próxima data da repetição.')
-  const from = civilDate(task.startDate)
-  const previousDue = civilDate(task.dueDate)
-  const duration = from ? Math.max(0, Math.round((previousDue - from) / DAY_MS)) : null
-  const startDate = duration === null ? '' : iso(new Date(civilDate(dueDate).getTime() - duration * DAY_MS))
-  const normalized = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
-  const currentBucket = buckets.find(bucket => bucket.id === task.bucketId)
-  const todoBucket = buckets.find(bucket => !bucket.deleted && bucket.planId === task.planId && normalized(bucket.name) === 'a fazer')
-  const resetBucket = ['em andamento', 'concluido'].includes(normalized(currentBucket?.name))
+
+/* Rotação v1: configurações armazenadas em uma demanda técnica, marcada como
+ * excluída. Somente campos já admitidos pelo Firestore da Comissão são usados.
+ * Cada ocorrência visível recebe exclusivamente os seus responsáveis. */
+export const ROTATION_PREFIX = 'rotation_v1_'
+const ROTATION_KEY = 'rotation-v1'
+const ROTATION_MODES = ['fixed', 'individual', 'groups']
+const ROTATION_ADVANCE = ['completion', 'scheduled']
+
+export function rotationConfigId(sourceId) {
+  const id = ROTATION_PREFIX + encodeURIComponent(String(sourceId || ''))
+  if (!sourceId || id.length > 200 || id.includes('/')) throw new Error('Identificador de rodízio inválido.')
+  return id
+}
+
+export function parseRotationConfig(record) {
+  if (!record?.deleted || !String(record.id || '').startsWith(ROTATION_PREFIX)) return null
+  const parts = String(record.templateKey || '').split(':')
+  if (parts.length !== 4 || parts[0] !== ROTATION_KEY
+    || !ROTATION_MODES.includes(parts[1]) || !ROTATION_ADVANCE.includes(parts[2])) return null
+  const people = Array.isArray(record.assignees) ? record.assignees : []
+  const groups = parts[3] ? parts[3].split(',').map(Number) : []
+  if (people.length > 10 || groups.length !== people.length ||
+    groups.some(n => !Number.isInteger(n) || n < -1 || n > 9)) return null
   return {
-    id: 'repeat_' + encodeURIComponent(rule.sourceId) + '_' + dueDate,
-    planId: task.planId, bucketId: resetBucket ? (todoBucket?.id || '') : (task.bucketId || ''),
-    title: task.title, description: task.description || '', team: task.team || '',
-    assignees: (task.assignees || []).map(person => ({ ...person })),
-    startDate, dueDate, status: 'todo', priority: task.priority || 'normal',
-    checklist: (task.checklist || []).map(item => ({ ...item, done: false })),
-    dependencyIds: [...(task.dependencyIds || [])], eventId: task.eventId || '',
-    dateMode: 'manual', dueOffsetDays: null, deleted: false,
-    recurrenceId: task.recurrenceId, sourceTaskId: rule.sourceId, cycleKey: dueDate,
+    id: record.id, sourceId: record.sourceTaskId || '',
+    templateId: record.routineId || record.sourceTaskId || '',
+    mode: parts[1], advance: parts[2],
+    people: people.map(person => ({name:person.name || '',email:person.email || ''})),
+    groups
   }
+}
+
+export function rotationConfigRecord(task, settings) {
+  const rule = taskRecurrence(task)
+  if (!rule) throw new Error('Ative a repetição antes de configurar o rodízio.')
+  const { mode, advance } = settings || {}
+  const people = settings?.people || []
+  if (!ROTATION_MODES.includes(mode) || !ROTATION_ADVANCE.includes(advance)) throw new Error('Tipo de rodízio inválido.')
+  if (!Array.isArray(people) || people.length > 10 || people.some(person => !person
+      || typeof person.name !== 'string' || typeof person.email !== 'string'
+      || person.name.length > 120 || person.email.length > 254
+      || !String(person.name || person.email).trim())) {
+    throw new Error('Selecione até 10 pessoas válidas para o rodízio.')
+  }
+  if (mode !== 'fixed' && people.length < 2) throw new Error('Adicione pelo menos duas pessoas para alternar os responsáveis.')
+  const groups = mode === 'groups' ? settings.groups : people.map((_,i) => i)
+  if (!Array.isArray(groups) || groups.length !== people.length ||
+    groups.some(n => !Number.isInteger(n) || n < -1 || n > 9)) {
+    throw new Error('Defina um grupo para cada participante.')
+  }
+  if (mode === 'groups' && new Set(groups.filter(n => n >= 0)).size < 2) throw new Error('Configure ao menos dois grupos para o rodízio.')
+  if (mode === 'individual' && groups.filter(n => n >= 0).length < 2) throw new Error('Escolha pelo menos duas pessoas que se alternam.')
+  const templateKey = [ROTATION_KEY,mode,advance,groups.join(',')].join(':')
+  return {
+    id: rotationConfigId(rule.sourceId),
+    planId: task.planId, bucketId: task.bucketId || '',
+    title: 'Configuração interna de rodízio', description: '', team: task.team || '',
+    assignees: people.map(person => ({ name: person.name, email: person.email })),
+    startDate:'',dueDate:'',status:'todo',priority:'normal',checklist:[],
+    dependencyIds:[],eventId:'',dateMode:'manual',dueOffsetDays:null,
+    sourceTaskId:rule.sourceId,routineId:task.id,templateKey,
+    recurrenceId:'',cycleKey:'',deleted:true
+  }
+}
+
+export function recurrenceDateAt(rule,index) {
+  if (!rule || !Number.isInteger(index) || index < 0 || !civilDate(rule.anchor)) return ''
+  const anchor = civilDate(rule.anchor)
+  if (rule.unit === 'day' || rule.unit === 'week') {
+    return iso(new Date(anchor.getTime() + index * rule.interval * (rule.unit === 'week' ? 7 : 1) * DAY_MS))
+  }
+  const date = new Date(anchor)
+  date.setUTCDate(1)
+  date.setUTCMonth(date.getUTCMonth() + index * rule.interval)
+  const end = new Date(date)
+  end.setUTCMonth(end.getUTCMonth() + 1)
+  end.setUTCDate(0)
+  date.setUTCDate(Math.min(anchor.getUTCDate(),end.getUTCDate()))
+  return iso(date)
+}
+
+export function recurrenceCycleIndex(rule,date) {
+  const anchor = civilDate(rule?.anchor)
+  const current = civilDate(date)
+  if (!anchor || !current || !rule.interval) return 0
+  if (rule.unit !== 'month') {
+    const days=(current-anchor)/DAY_MS
+    return Math.max(0,Math.round(days/(rule.interval*(rule.unit === 'week'?7:1))))
+  }
+  const months=(current.getUTCFullYear()-anchor.getUTCFullYear())*12
+    +current.getUTCMonth()-anchor.getUTCMonth()
+  return Math.max(0,Math.round(months/rule.interval))
+}
+
+export function rotationAssigneesForDate(task, config, dueDate) {
+  const people=config?.people || task.assignees || []
+  if (!config || config.mode === 'fixed')return people.map(person=>({...person}))
+  const rule=taskRecurrence(task)
+  const cycle=recurrenceCycleIndex(rule,dueDate)
+  const fixed=people.filter((_,index)=>config.groups[index]===-1)
+  if (config.mode === 'individual'){
+    const rotating=people.filter((_,index)=>config.groups[index]!==-1)
+    return [...fixed,...(rotating.length?[rotating[cycle%rotating.length]]:[])].map(person=>({...person}))
+  }
+  const groups=[...new Set((config.groups || []).filter(value=>value>=0))]
+  const selected=groups.length?groups[cycle%groups.length]:-2
+  return people.filter((_,index)=>config.groups[index]===-1||config.groups[index]===selected).map(person=>({...person}))
+}
+
+export function recurrenceOccurrenceAt(task,dueDate,config=null,buckets=[]) {
+  const rule=taskRecurrence(task)
+  const target=civilDate(dueDate)
+  const previous=civilDate(task?.dueDate)
+  if (!rule || !target || !previous) return null
+  const from=civilDate(task.startDate)
+  const duration=from?Math.max(0,Math.round((previous-from)/DAY_MS)):null
+  const startDate=duration===null?'':iso(new Date(target.getTime()-duration*DAY_MS))
+  const normalized=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()
+  const currentBucket=buckets.find(bucket=>bucket.id===task.bucketId)
+  const todoBucket=buckets.find(bucket=>!bucket.deleted&&bucket.planId===task.planId&&normalized(bucket.name)==='a fazer')
+  const resetBucket=['em andamento','concluido'].includes(normalized(currentBucket?.name))
+  return {
+    id:'repeat_'+encodeURIComponent(rule.sourceId)+'_'+dueDate,
+    planId:task.planId,bucketId:resetBucket?(todoBucket?.id||''):(task.bucketId||''),
+    title:task.title,description:task.description||'',team:task.team||'',
+    assignees:rotationAssigneesForDate(task,config,dueDate),
+    startDate,dueDate,status:'todo',priority:task.priority||'normal',
+    checklist:(task.checklist||[]).map(item=>({...item,done:false})),
+    dependencyIds:[...(task.dependencyIds||[])],eventId:task.eventId||'',
+    dateMode:'manual',dueOffsetDays:null,deleted:false,
+    recurrenceId:task.recurrenceId,sourceTaskId:rule.sourceId,cycleKey:dueDate
+  }
+}
+
+export function scheduledUpcomingDates(task,today,count=4) {
+  const rule=taskRecurrence(task)
+  const start=civilDate(today)
+  if (!rule || !start || count < 1) return []
+  const approx=recurrenceCycleIndex(rule,today)
+  const results=[]
+  // Three corrections around a monthly boundary are sufficient even for the 31st.
+  let index=Math.max(0,approx-2)
+  for(let attempts=0;attempts<Math.min(count+16,36)&&results.length<count;attempts++,index++){
+    const dueDate=recurrenceDateAt(rule,index)
+    if(dueDate>=today && dueDate!==task.dueDate && (civilDate(dueDate)-start)<=366*DAY_MS)results.push(dueDate)
+    if(dueDate && (civilDate(dueDate)-start)>366*DAY_MS)break
+  }
+  return results
+}
+
+export function nextRecurringTask(task,buckets=[],config=null) {
+  const rule=taskRecurrence(task)
+  if (!rule || task.deleted || task.status!=='done' || config?.advance==='scheduled')return null
+  const next=nextRecurrenceDate(task)
+  if (!next)throw new Error('Não foi possível calcular a próxima data da repetição.')
+  return recurrenceOccurrenceAt(task,next,config,buckets)
 }

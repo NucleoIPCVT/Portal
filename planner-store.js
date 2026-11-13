@@ -7,7 +7,9 @@ import {
   getFirestore, collection, doc, onSnapshot, runTransaction, serverTimestamp, setDoc
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'
 import { createGoogleLogin } from './ipcvt-google-login.js?v=20261112-google-direto-02'
-import { nextRecurringTask } from './planner-recurrence.js?v=20261112-repetir-01'
+import { nextRecurringTask, taskRecurrence, rotationConfigId, rotationConfigRecord,
+  parseRotationConfig, recurrenceOccurrenceAt, scheduledUpcomingDates
+} from './planner-recurrence.js?v=20261113-rodizio-v1'
 
 const googleLogin = createGoogleLogin({
   getAccounts: () => window.google?.accounts,
@@ -130,6 +132,70 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
   let stopAccess = null
   let stopData = []
   let watchingData = false
+  let scheduling = false
+  let schedulingPending = false
+  let scheduleRevision = ''
+  let loadedKinds = new Set()
+  function rotationRevision(){
+    return data.tasks.filter(task=>task.deleted&&task.id?.startsWith('rotation_v1_'))
+      .map(config=>{
+        const template=data.tasks.find(task=>task.id===config.routineId)
+        return [config.id,config.version||0,template?.id||'',template?.version||0].join(':')
+      }).sort().join('|')
+  }
+  function requestScheduleRefresh(){
+    if(!loadedKinds.has('tasks')||!loadedKinds.has('buckets')||!loadedKinds.has('plans'))return
+    const revision=rotationRevision()
+    if(revision===scheduleRevision)return
+    scheduleRevision=revision
+    void refreshScheduledSeries()
+  }
+  const localDay=()=>new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo',
+    year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())
+  async function ensureScheduledSeries(template,config) {
+    if(!template||!taskRecurrence(template)||config?.advance!=='scheduled')return
+    const upcoming=scheduledUpcomingDates(template,localDay(),4)
+    for(const date of upcoming){
+      if(session.status!=='authorized')return
+      const occurrence=recurrenceOccurrenceAt(template,date,config,data.buckets)
+      if(!occurrence||data.tasks.some(task=>task.id===occurrence.id))continue
+      const target=itemRef('tasks',occurrence.id)
+      const setting=itemRef('tasks',config.id||rotationConfigId(config.sourceId))
+      const original=itemRef('tasks',template.id)
+      await runTransaction(db,async tx=>{
+        const currentSetting=await tx.get(setting)
+        const currentOriginal=await tx.get(original)
+        const exists=await tx.get(target)
+        if(exists.exists()||!currentSetting.exists()||!currentOriginal.exists()||currentOriginal.data().deleted)return
+        const latestConfig=parseRotationConfig({...currentSetting.data(),id:config.id})
+        if(!latestConfig||latestConfig.advance!=='scheduled'||latestConfig.templateId!==template.id||
+          currentOriginal.data().recurrenceId!==template.recurrenceId)return
+        const latest=recurrenceOccurrenceAt({...currentOriginal.data(),id:template.id},date,latestConfig,data.buckets)
+        if(!latest)return
+        const actor=requireSession()
+        tx.set(target,{...payloadFor('tasks',latest),version:1,
+          createdAt:serverTimestamp(),createdBy:actor.email,
+          updatedAt:serverTimestamp(),updatedBy:actor.email})
+      })
+    }
+  }
+  async function refreshScheduledSeries(){
+    if(scheduling){schedulingPending=true;return}
+    scheduling=true
+    try{
+      do{
+        schedulingPending=false
+        const configs=data.tasks.map(parseRotationConfig).filter(config=>config?.advance==='scheduled')
+        for(const config of configs){
+          if(session.status!=='authorized')return
+          const template=data.tasks.find(task=>task.id===config.templateId&&!task.deleted)
+          const plan=template&&data.plans.find(item=>item.id===template.planId)
+          if(template&&!plan?.deleted)await ensureScheduledSeries(template,config)
+        }
+      }while(schedulingPending&&session.status==='authorized')
+    }catch(cause){onError(readableError(cause))}
+    finally{scheduling=false}
+  }
 
   function publishSession(fields) {
     session = { ...session, ...fields }
@@ -140,6 +206,9 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
     for (const stop of stopData) stop()
     stopData = []
     watchingData = false
+    schedulingPending = false
+    scheduleRevision = ''
+    loadedKinds = new Set()
     data = blankData()
     onData(data)
     onConfig(null)
@@ -170,7 +239,9 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
     stopData = KINDS.map(kind => onSnapshot(collection(db, 'comissao_planner', 'main', kind), snapshot => {
       if (sequence !== currentSequence || session.status !== 'authorized') return
       data = { ...data, [kind]: snapshot.docs.map(item => snapshotItem(kind, item)) }
+      loadedKinds.add(kind)
       onData(data)
+      if(['tasks','buckets','plans'].includes(kind))requestScheduleRefresh()
     }, cause => {
       if (sequence !== currentSequence) return
       const problem = readableError(cause)
@@ -301,16 +372,24 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
       try { await signOut(auth) } catch (cause) { throw readableError(cause) }
     },
 
-    async save(kind, item, { expectedVersion } = {}) {
+    async save(kind, item, { expectedVersion, rotationConfig } = {}) {
       const actor = requireSession()
       const ref = itemRef(kind, item.id)
       const fields = payloadFor(kind, item)
-      const nextTask = kind === 'tasks' ? nextRecurringTask({ ...fields, id: item.id }, data.buckets) : null
-      const nextRef = nextTask ? itemRef('tasks', nextTask.id) : null
+      const setup=kind==='tasks'&&rotationConfig
+        ? rotationConfigRecord({...fields,id:item.id},rotationConfig):null
+      const setupFields=setup?payloadFor('tasks',setup):null
+      const setupRef=setup?itemRef('tasks',setup.id):null
+      const rule=kind==='tasks'?taskRecurrence({...fields,id:item.id}):null
+      const oldConfig=rule?data.tasks.find(task=>task.id===rotationConfigId(rule.sourceId)):null
+      const config=setup?parseRotationConfig(setup):parseRotationConfig(oldConfig)
+      const nextTask=kind==='tasks'?nextRecurringTask({...fields,id:item.id},data.buckets,config):null
+      const nextRef=nextTask?itemRef('tasks',nextTask.id):null
       if (kind === 'events' && fields.source === 'google' && !actor.isAdmin) throw error('Somente um administrador pode importar eventos do Google Agenda.', 'planner-admin-required')
       try {
-        return await runTransaction(db, async transaction => {
+        const saved=await runTransaction(db, async transaction => {
           const previous = await transaction.get(ref)
+          const previousSetup=setupRef?await transaction.get(setupRef):null
           // Read both documents before writing. Completing an occurrence and
           // creating its successor succeed together, including on retries.
           const continues = nextRef && (!previous.exists() || previous.data().status !== 'done')
@@ -328,6 +407,15 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
             updatedAt: serverTimestamp(), updatedBy: actor.email
           }
           transaction.set(ref, record)
+          if(setupRef){
+            const wasSaved=previousSetup?.exists()
+            transaction.set(setupRef,{
+              ...setupFields,version:wasSaved?previousSetup.data().version+1:1,
+              createdAt:wasSaved?previousSetup.data().createdAt:serverTimestamp(),
+              createdBy:wasSaved?previousSetup.data().createdBy:actor.email,
+              updatedAt:serverTimestamp(),updatedBy:actor.email
+            })
+          }
           if (continues && !nextSnapshot.exists()) {
             const nextFields = payloadFor('tasks', nextTask)
             transaction.set(nextRef, {
@@ -338,6 +426,7 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
           }
           return { ...fields, id: item.id, version }
         })
+        return saved
       } catch (cause) { throw readableError(cause) }
     },
 

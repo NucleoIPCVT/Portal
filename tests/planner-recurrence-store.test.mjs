@@ -1,7 +1,10 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
-import { nextRecurringTask, setTaskRecurrence } from '../planner-recurrence.js'
+import {
+  nextRecurringTask,setTaskRecurrence,taskRecurrence,rotationConfigId,
+  rotationConfigRecord,parseRotationConfig,recurrenceOccurrenceAt,scheduledUpcomingDates
+} from '../planner-recurrence.js'
 
 // Exercise the production store and its version checks with an isolated,
 // transactional Firebase adapter. No credentials or live data are involved.
@@ -36,7 +39,9 @@ async function fixture({ failCommit = false } = {}) {
     initializeApp: () => ({ name: 'ipcvt-comissao' }), getApps: () => [],
     getAuth: () => auth, GoogleAuthProvider: {}, signInWithCredential() {},
     reauthenticateWithPopup() {}, signInWithPopup() {}, signOut() {},
-    createGoogleLogin: () => async () => {}, nextRecurringTask,
+    createGoogleLogin: () => async () => {},
+    nextRecurringTask,taskRecurrence,rotationConfigId,rotationConfigRecord,
+    parseRotationConfig,recurrenceOccurrenceAt,scheduledUpcomingDates,
     onAuthStateChanged: (_, callback) => { queueMicrotask(() => callback(user)); return () => {} },
     getFirestore: () => ({}), serverTimestamp: () => 'timestamp', setDoc() {},
     doc: (_, ...parts) => ({ path: parts.join('/') }),
@@ -119,4 +124,25 @@ test('stopping recurrence on a pending demand prevents generation on completion'
   await store.save('tasks', setTaskRecurrence({ ...original, status: 'done' }, null), { expectedVersion: 1 })
   assert.equal(records.size, 1)
   assert.equal(records.get(path('tasks', original.id)).status, 'done')
+})
+
+
+test('rotating scheduled tasks preserve the chosen person and do not wait for completion', async () => {
+  const {store,records,original}=await fixture()
+  const people=['João','Liliane','Lucas'].map(name=>({name,email:''}))
+  const current={...original,assignees:[people[0]],status:'todo'}
+  await store.save('tasks',current,{expectedVersion:1,
+    rotationConfig:{mode:'individual',advance:'scheduled',people,groups:[0,1,2]}})
+  for(let attempt=0;attempt<50&&records.size<6;attempt++)
+    await new Promise(resolve=>setTimeout(resolve,0))
+  const config=[...records.values()].find(record=>record.templateKey?.startsWith('rotation-v1:'))
+  assert.ok(config,'series configuration should be persisted')
+  assert.equal(config.deleted,true)
+  const future=[...records.values()].filter(record=>record.sourceTaskId===original.id && !record.deleted)
+    .sort((a,b)=>a.dueDate.localeCompare(b.dueDate))
+  assert.equal(future.length,4)
+  const indexes=future.map(item=>item.assignees[0]?.name)
+  assert.equal(new Set(indexes).size,3,'the three people should alternate')
+  assert.equal(records.get(path('tasks',original.id)).status,'todo')
+  assert.equal(records.size,6,'original, hidden config and four future occurrences')
 })

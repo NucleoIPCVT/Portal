@@ -1,7 +1,11 @@
-import { createPlannerStore } from './planner-store.js?v=20261112-repetir-01'
-import { taskRecurrence, setTaskRecurrence, recurrenceLabel, nextRecurrenceDate } from './planner-recurrence.js?v=20261112-repetir-01'
+import { createPlannerStore } from './planner-store.js?v=20261113-rodizio-v1'
+import {
+  taskRecurrence,setTaskRecurrence,recurrenceLabel,nextRecurrenceDate,
+  rotationConfigId,parseRotationConfig,rotationConfigRecord,rotationAssigneesForDate,
+  recurrenceDateAt,recurrenceCycleIndex
+} from './planner-recurrence.js?v=20261113-rodizio-v1'
 import { todayISO, addDays, formatDate, calendarCells, computeSummary, validateTask, isOverdue, taskProgress, generateWeeklyTasks } from './planner-core.js'
-import { createTaskEditor } from './planner-task-editor.js'
+import { createTaskEditor } from './planner-task-editor.js?v=20261113-rodizio-v1'
 import { taskCreationContext } from './planner-task-context.js'
 import { BOARD_GROUPINGS, groupBoardTasks, moveBoardTask } from './planner-board.js?v=20261112-planner-01'
 import { GoogleCalendarClient } from './planner-google.js'
@@ -38,11 +42,17 @@ let calendarFetching = false
 let calendarTimer = null
 let calendarLastLoad = 0
 let calendarUnread = []
+let rotationEditorReady=false
+let rotationGroupsByPerson=new Map()
 const taskEditor = createTaskEditor({
   assigneesRoot: $('task-assignees-editor'),
   checklistRoot: $('task-checklist-editor'),
-  dependencyRoot: $('task-dependencies-editor')
+  dependencyRoot: $('task-dependencies-editor'),
+  onAssigneesChange:()=>{
+    if(rotationEditorReady)updateRotationEditor()
+  }
 })
+rotationEditorReady=true
 
 function node(tag, attrs = {}, children = []) {
   const element = document.createElement(tag)
@@ -133,8 +143,10 @@ async function action(work, success = '') {
     throw error
   }
 }
-function save(kind, item) {
-  return store.save(kind, item, item.version === undefined ? {} : { expectedVersion: item.version })
+function save(kind,item,options={}){
+  return store.save(kind,item,{
+    ...(item.version===undefined?{}:{expectedVersion:item.version}),...options
+  })
 }
 function selectedPlan() { return value('plan-filter') }
 function setOptions(select, items, current = select.value, first = null) {
@@ -1939,12 +1951,19 @@ function openTask(task = null, defaults = {}) {
   $('task-status').value = current.status
   $('task-priority').value = current.priority
   const repeat = taskRecurrence(current)
+  const storedRotation=repeat
+    ? parseRotationConfig(state.tasks.find(task=>task.id===rotationConfigId(repeat.sourceId))):null
+  rotationGroupsByPerson=new Map((storedRotation?.people||[]).map((person,index)=>[
+    rotationPersonKey(person),storedRotation.groups[index]
+  ]))
   $('task-repeat-mode').value = repeat ? 'repeat' : 'none'
   $('task-repeat-interval').value = repeat?.interval || 1
   $('task-repeat-unit').value = repeat?.unit || 'week'
+  $('task-repeat-advance').value = storedRotation?.advance || 'completion'
+  $('task-rotation-mode').value = storedRotation?.mode || 'fixed'
   const dependencies = state.tasks.filter(item => item.planId === current.planId && item.id !== current.id && (!item.deleted || current.dependencyIds?.includes(item.id)))
   const people = [...state.tasks.flatMap(item => item.assignees || []), { name: session.name || '', email: session.email || '' }]
-  taskEditor.setTask(current, { people, dependencies })
+  taskEditor.setTask({...current,assignees:storedRotation?.people||current.assignees||[]}, { people, dependencies })
   const eventOptions = liveEvents().filter(event => event.startDate && (event.status !== 'cancelled' || event.id === current.eventId))
     .sort((a, b) => a.startDate.localeCompare(b.startDate))
     .map(event => [event.id, event.title + ' · ' + formatDate(event.startDate) + (event.status === 'cancelled' ? ' · Cancelado' : '')])
@@ -1982,6 +2001,100 @@ function updateTaskEventFields(recalculate = false) {
   }
   updateTaskRepeatFields()
 }
+
+const rotationPersonKey=person=>(person.email||person.name||'').trim().toLocaleLowerCase('pt-BR')
+function currentRotationSettings(){
+  const people=taskEditor.getAssignees()
+  const groups=people.map((person,index)=>{
+    const value=rotationGroupsByPerson.get(rotationPersonKey(person))
+    return Number.isInteger(value)?value:index
+  })
+  return {mode:value('task-rotation-mode'),advance:value('task-repeat-advance'),people,groups}
+}
+function updateRotationEditor(){
+  const enabled=value('task-repeat-mode')==='repeat'
+  const mode=value('task-rotation-mode')
+  const active=enabled&&mode!=='fixed'
+  $('task-rotation-roster').hidden=!active
+  $('task-rotation-people-hint').hidden=!active
+  $('task-rotation-preview-wrap').hidden=!enabled
+  $('task-rotation-roster-hint').textContent=mode==='groups'
+    ? 'Defina a ordem dos grupos. Se alguém servir em todas as vezes, selecione Fixo.'
+    : 'Reordene as pessoas. Marque Fixo para quem deve acompanhar todos os turnos.'
+  const roster=taskEditor.getAssignees()
+  const list=$('task-rotation-list')
+  list.replaceChildren()
+  if(active){
+    roster.forEach((person,index)=>{
+      const label=person.name||person.email
+      const row=node('div',{class:'task-rotation-person'})
+      row.append(node('span',{class:'task-rotation-person-name',text:(index+1)+'. '+label}))
+      if(mode==='groups'){
+        const selector=node('select',{'aria-label':'Grupo de '+label,onChange:e=>{
+          rotationGroupsByPerson.set(rotationPersonKey(person),Number(e.target.value))
+          updateRotationPreview()
+        }})
+        selector.append(node('option',{value:'-1',text:'Fixo (todos os turnos)'}))
+        for(let group=0;group<Math.max(2,roster.length);group++){
+          selector.append(node('option',{value:String(group),text:'Grupo '+(group+1)}))
+        }
+        selector.value=String(rotationGroupsByPerson.get(rotationPersonKey(person))??index)
+        row.append(selector)
+      }else{
+        const isFixed=rotationGroupsByPerson.get(rotationPersonKey(person))===-1
+        const fixed=node('label',{class:'task-rotation-fixed'},[
+          node('input',{type:'checkbox',checked:isFixed,onChange:event=>{
+            rotationGroupsByPerson.set(rotationPersonKey(person),event.target.checked?-1:index)
+            updateRotationPreview()
+          }}),
+          node('span',{text:'Fixo'})
+        ])
+        row.append(fixed)
+      }
+      const up=button('↑',()=>{
+        const revised=taskEditor.getAssignees()
+        ;[revised[index],revised[index-1]]=[revised[index-1],revised[index]]
+        taskEditor.setAssignees(revised)
+      },'task-rotation-arrow')
+      up.disabled=index===0
+      up.setAttribute('aria-label','Mover '+label+' para cima')
+      const down=button('↓',()=>{
+        const revised=taskEditor.getAssignees()
+        ;[revised[index],revised[index+1]]=[revised[index+1],revised[index]]
+        taskEditor.setAssignees(revised)
+      },'task-rotation-arrow')
+      down.disabled=index===roster.length-1
+      down.setAttribute('aria-label','Mover '+label+' para baixo')
+      row.append(up,down)
+      list.append(row)
+    })
+    if(!roster.length)list.append(node('p',{class:'task-rotation-empty',text:'Adicione duas ou mais pessoas acima.'}))
+  }
+  updateRotationPreview()
+}
+function updateRotationPreview(){
+  const list=$('task-rotation-preview')
+  list.replaceChildren()
+  if(value('task-repeat-mode')!=='repeat')return
+  try{
+    const settings=currentRotationSettings()
+    const draft=taskRepeatDraft()
+    const rule=taskRecurrence(draft)
+    if(!rule||!draft.dueDate)throw new Error('Informe a data e o intervalo da repetição para visualizar o rodízio.')
+    const index=recurrenceCycleIndex(rule,draft.dueDate)
+    for(let n=0;n<4;n++){
+      const date=n===0?draft.dueDate:recurrenceDateAt(rule,index+n)
+      const people=rotationAssigneesForDate({...draft,assignees:settings.people},settings,date)
+      list.append(node('li',{},[
+        node('strong',{text:formatDate(date)}),
+        node('span',{text:people.map(person=>person.name||person.email).join(' + ')||'Sem responsável'})
+      ]))
+    }
+  }catch(error){
+    list.append(node('li',{class:'task-rotation-empty',text:error.message}))
+  }
+}
+
 function taskRepeatDraft() {
   const previous = byId('tasks', value('task-id'))
   return setTaskRecurrence({
@@ -1992,6 +2105,9 @@ function taskRepeatDraft() {
 }
 function updateTaskRepeatFields() {
   const enabled = value('task-repeat-mode') === 'repeat'
+  $('task-rotation-settings').hidden = !enabled
+  $('task-repeat-advance').disabled = !enabled
+  $('task-rotation-mode').disabled = !enabled
   $('task-repeat-options').hidden = !enabled
   $('task-repeat-interval').disabled = !enabled
   $('task-repeat-unit').disabled = !enabled
@@ -2005,18 +2121,23 @@ function updateTaskRepeatFields() {
   hint.classList.remove('is-error')
   if (!enabled) {
     hint.textContent = 'Esta demanda acontece uma única vez.'
+    updateRotationEditor()
     return
   }
   try {
     const next = nextRecurrenceDate(taskRepeatDraft())
     if (!next) throw new Error('Confira a data de entrega e o intervalo da repetição.')
-    hint.textContent = 'Ao concluir esta demanda, a próxima será criada para ' + formatDate(next) + ', com o checklist reiniciado. Para encerrar, escolha “Não repetir” na ocorrência pendente.'
+    hint.textContent = value('task-repeat-advance') === 'scheduled'
+      ? 'As próximas quatro ocorrências serão preparadas automaticamente, mesmo sem concluir a anterior. A lista será renovada quando alguém abrir o Planner. Para encerrar, escolha “Não repetir” na ocorrência que define a série.'
+      : 'Ao concluir esta demanda, a próxima será criada para ' + formatDate(next) + ', com o checklist reiniciado. Para encerrar, escolha “Não repetir” na ocorrência pendente.'
   } catch (error) {
     hint.textContent = error.message
     hint.classList.add('is-error')
   }
+  updateRotationEditor()
 }
 for (const id of ['task-repeat-mode', 'task-repeat-interval', 'task-repeat-unit']) $(id).addEventListener('input', updateTaskRepeatFields)
+for (const id of ['task-repeat-advance','task-rotation-mode']) $(id).addEventListener('change', updateRotationEditor)
 $('task-event').addEventListener('change', () => updateTaskEventFields(true))
 $('task-date-mode').addEventListener('change', () => updateTaskEventFields(true))
 $('task-offset').addEventListener('input', () => updateTaskEventFields(true))
@@ -2059,13 +2180,19 @@ $('task-form').addEventListener('submit', async event => {
     }
     task = setTaskRecurrence(task, value('task-repeat-mode') === 'repeat'
       ? { interval: Number(value('task-repeat-interval')), unit: value('task-repeat-unit') } : null)
+    const config=taskRecurrence(task)?currentRotationSettings():null
+    if(config){
+      rotationConfigRecord(task,config)
+      task.assignees=rotationAssigneesForDate(task,config,task.dueDate)
+    }
     const errors = validateTask(task, state.tasks)
     if (errors.length) throw new Error(errors.join(' '))
     if (task.assignees.length > 10 || task.checklist.length > 20 || task.dependencyIds.length > 20) throw new Error('Use até 10 responsáveis, 20 itens de checklist e 20 dependências.')
     if (task.description.length > 10000 || task.checklist.some(item => item.text.length > 300)) throw new Error('Use até 10.000 caracteres na descrição e 300 em cada item do checklist.')
     task.reviewRequired = false
     task.reviewReason = ''
-    await action(() => save('tasks', task), previous ? 'Demanda atualizada.' : 'Demanda criada.')
+    await action(() => save('tasks',task,config?{rotationConfig:config}:{}),
+      previous ? 'Demanda atualizada.' : 'Demanda criada.')
     $('task-dialog').close()
   } catch (error) { $('task-feedback').textContent = error.message }
   finally { submit.disabled = false }
