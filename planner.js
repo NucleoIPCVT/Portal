@@ -1,5 +1,6 @@
 import { createPlannerStore } from './planner-store.js?v=20261113-rodizio-v1'
 import { ganttLinkRoutes } from './planner-gantt-links.js?v=20261113-gantt-clean-v1'
+import { resolveGanttDependencies } from './planner-gantt-dependencies.js?v=20261113-recurring-links-v1'
 import {
   taskRecurrence,setTaskRecurrence,recurrenceLabel,nextRecurrenceDate,
   rotationConfigId,parseRotationConfig,rotationConfigRecord,rotationAssigneesForDate,
@@ -1546,7 +1547,34 @@ function pmKanbanView(content,tasks) {
         card.append(pmButton(task.title,()=>openTask(task),'pm-kanban-title'))
       }
       if(taskRecurrence(task))card.append(pmText('small','task-repeat-badge','↻ '+recurrenceLabel(task)))
-      card.append(pmText('small','pm-kanban-plan',planName(task.planId)),pmGroup('div','pm-kanban-card-foot',[
+      card.append(pmText('small','pm-kanban-plan',planName(task.planId)))
+      const assigned=(task.assignees||[]).map(person=>person.name||person.email).filter(Boolean)
+      const responsible=assigned.length
+        ? assigned.slice(0,2).join(', ')+(assigned.length>2?' +'+(assigned.length-2):'')
+        : 'Sem responsável'
+      const owners=pmGroup('div','pm-kanban-owner',[
+        pmIcon('team'),
+        pmText('span','pm-kanban-owner-text',responsible)
+      ])
+      owners.title=assigned.length?assigned.join(', '):'Nenhum responsável atribuído'
+      const today=todayISO()
+      const dueLabel=task.dueDate?formatDate(task.dueDate):'Sem prazo'
+      const timing=task.status==='done'
+        ? {text:'Concluída',className:'pm-kanban-ontrack pm-kanban-complete'}
+        : !task.dueDate
+          ? {text:'Sem prazo',className:'pm-kanban-ontrack pm-kanban-no-due'}
+          : isOverdue(task,today)
+            ? {text:'Em atraso',className:'pm-kanban-ontrack pm-kanban-late'}
+            : task.dueDate===today
+              ? {text:'Vence hoje',className:'pm-kanban-ontrack pm-kanban-today'}
+              : {text:'Em dia',className:'pm-kanban-ontrack pm-kanban-on-time'}
+      const due=pmGroup('div','pm-kanban-due',[pmIcon('calendar'),pmText('span','',dueLabel)])
+      due.title=task.dueDate?'Prazo: '+dueLabel:'Demanda sem prazo cadastrado'
+      card.append(pmGroup('div','pm-kanban-details',[
+        owners,
+        pmGroup('div','pm-kanban-dates',[due,pmText('span',timing.className,timing.text)])
+      ]))
+      card.append(pmGroup('div','pm-kanban-card-foot',[
         pmText('span','pm-team-tag',task.team||pmPriorityLabel(task.priority)),pmAvatarFor(task)
       ]))
       stack.append(card)
@@ -1613,10 +1641,10 @@ function pmGanttView(content,tasks){
     (a.startDate||a.dueDate).localeCompare(b.startDate||b.dueDate)||
     (a.dueDate||'').localeCompare(b.dueDate||'')||
     a.title.localeCompare(b.title,'pt-BR'))
-  const shownIds=new Set(sorted.map(task=>task.id))
-  const dependencyLinks=sorted.flatMap(task=>
-    (task.dependencyIds||[]).filter(id=>shownIds.has(id))
-      .map(id=>({from:id,to:task.id})))
+  // A ocorrência original mantém seus IDs mesmo se for reaberta.
+  // Em demandas geradas, resolver a dependência pela data do ciclo.
+  const resolved=resolveGanttDependencies(liveTasks(),sorted)
+  const dependencyLinks=resolved.links
   const linkedIds=new Set(dependencyLinks.flatMap(link=>[link.from,link.to]))
   const layout=pmGroup('div','pm-gantt-view')
   const left=pmGroup('div','pm-gantt-outline',[
@@ -1635,7 +1663,7 @@ function pmGanttView(content,tasks){
   const month=pmText('span','pm-gantt-month',pmShort(start,{month:'long',timeZone:'UTC'}))
   const controls=pmGroup('div','pm-gantt-toolbar-actions')
   const linkCount=pmText('span','pm-gantt-link-count',
-    dependencyLinks.length+(dependencyLinks.length===1?' dependência':' dependências'))
+    dependencyLinks.length+(dependencyLinks.length===1?' ligação':' ligações')+' neste período')
   controls.append(linkCount)
   if(dependencyLinks.length>6){
     const toggle=pmButton(pmGanttShowAllLinks?'Mostrar apenas em foco':'Exibir todas',
@@ -1663,13 +1691,22 @@ function pmGanttView(content,tasks){
   }
   const insertTask=task=>{
     const item=pmGroup('div','pm-gantt-item')
+    const copy=pmGroup('div','pm-gantt-task-copy')
     const title=pmButton(task.title,()=>openTask(task),'pm-gantt-label')
     title.title=task.title
     title.addEventListener('mouseenter',()=>{hoveredId=task.id;drawGanttLinks()})
     title.addEventListener('mouseleave',()=>{hoveredId='';drawGanttLinks()})
     title.addEventListener('focus',()=>{hoveredId=task.id;drawGanttLinks()})
     title.addEventListener('blur',()=>{hoveredId='';drawGanttLinks()})
-    item.append(title)
+    const assignees=(task.assignees||[])
+      .map(person=>person.name||person.email).filter(Boolean)
+    const names=assignees.length
+      ? assignees.slice(0,2).join(' · ')+(assignees.length>2?' +'+(assignees.length-2):'')
+      : 'Sem responsável'
+    const owner=pmText('span','pm-gantt-assignees','Responsável: '+names)
+    owner.title=assignees.length?assignees.join(', '):'Sem responsável atribuído'
+    copy.append(title,owner)
+    item.append(copy)
     if(linkedIds.has(task.id)){
       const pin=pmButton('↗',()=>updateFocus(task.id),'pm-gantt-focus')
       pin.setAttribute('aria-label','Destacar dependências de '+task.title)
@@ -1687,7 +1724,7 @@ function pmGanttView(content,tasks){
         'pm-gantt-bar'+(task.status==='done'?' pm-gantt-done':''))
       bar.style.left=(first/35*100)+'%'
       bar.style.width=(Math.max(1,last-first+1)/35*100)+'%'
-      bar.title=task.title+' · '+formatDate(a)+' a '+formatDate(b)
+      bar.title=task.title+' · '+formatDate(a)+' a '+formatDate(b)+' · Responsável: '+(assignees.join(', ')||'Não atribuído')
       bar.setAttribute('aria-label',bar.title)
       bar.addEventListener('mouseenter',()=>{hoveredId=task.id;drawGanttLinks()})
       bar.addEventListener('mouseleave',()=>{hoveredId='';drawGanttLinks()})
@@ -1726,6 +1763,10 @@ function pmGanttView(content,tasks){
     content.append(pmText('p','pm-gantt-help',
       'Para evitar linhas sobrepostas, as dependências aparecem em foco. Passe o mouse sobre uma barra ou use ↗ ao lado da demanda para destacar suas conexões.'))
   }
+  if(resolved.missing.length){
+    content.append(pmText('p','pm-gantt-help pm-gantt-unresolved',
+      resolved.missing.length+' dependência(s) ainda sem ocorrência correspondente. As setas não foram ligadas a tarefas de outras datas.'))
+  }
 
   function drawGanttLinks(){
     if(!right.isConnected)return
@@ -1734,7 +1775,7 @@ function pmGanttView(content,tasks){
     const height=right.scrollHeight
     if(!width||!height)return
     const nodes=[...bars.values()].map(({task,bar,row})=>({
-      id:task.id,title:task.title,
+      id:task.id,title:task.title+' ('+formatDate(task.dueDate)+')',
       left:bar.offsetLeft,right:bar.offsetLeft+bar.offsetWidth,
       y:row.offsetTop+row.offsetHeight/2
     }))

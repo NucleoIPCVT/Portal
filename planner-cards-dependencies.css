@@ -1,0 +1,153 @@
+/* IPCVT Planner | Metadados dos cartões e cronograma por ocorrência.
+   Última camada: mantém os estilos e as preferências de tema anteriores. */
+
+/* Minhas tarefas > Quadro: responsabilidade, prazo e pontualidade. */
+body.pm-active .pm-kanban-task{
+  display:flex;flex-direction:column;align-items:stretch;gap:0;
+  min-width:0;
+}
+body.pm-active .pm-kanban-task .pm-kanban-title{
+  text-align:left;white-space:normal;overflow-wrap:anywhere;line-height:1.4;
+}
+.pm-kanban-details{
+  display:grid;gap:8px;margin:10px 0 2px;
+  padding:10px 0 9px;border-top:1px solid #e8ede8;
+  border-bottom:1px solid #e8ede8;min-width:0;
+}
+.pm-kanban-owner{
+  display:flex;align-items:center;gap:7px;min-width:0;
+  color:#597463;font-size:11px;font-weight:560;
+}
+.pm-kanban-owner>.pm-icon{
+  width:14px;height:14px;flex:0 0 14px;color:#6b947b;
+}
+.pm-kanban-owner-text{
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.pm-kanban-dates{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:7px;min-width:0;flex-wrap:wrap;
+}
+.pm-kanban-due{
+  display:inline-flex;align-items:center;gap:6px;
+  color:#5f7769;font-size:10px;font-weight:650;
+  white-space:nowrap;
+}
+.pm-kanban-due .pm-icon{
+  width:13px;height:13px;flex:0 0 13px;color:#688c77;
+}
+.pm-kanban-ontrack{
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:10px;line-height:1.1;font-weight:750;white-space:nowrap;
+  border-radius:6px;border:1px solid transparent;
+  padding:5px 7px;
+}
+.pm-kanban-late{
+  background:#fce9e7;border-color:#f5d8d6;color:#ad3f3a;
+}
+.pm-kanban-today{
+  background:#fff1d7;border-color:#f0dfbe;color:#9c6b22;
+}
+.pm-kanban-on-time{
+  background:#e8f3e9;border-color:#d3e7d6;color:#348052;
+}
+.pm-kanban-complete{
+  background:#e7f3ec;border-color:#d1e8d8;color:#347b56;
+}
+.pm-kanban-no-due{
+  background:#eff1ee;border-color:#e3e8e2;color:#728578;
+}
+body.pm-active .pm-kanban-task .pm-kanban-card-foot{
+  margin-top:9px;min-height:20px;
+}
+
+/* Gantt: a tarefa tem uma segunda linha para seus responsáveis.
+   As alturas das duas colunas permanecem iguais e a seta parte do
+   centro da barra correspondente ao vencimento daquela ocorrência. */
+body.pm-active #planner-app .pm-gantt-item,
+body.pm-active #planner-app .pm-gantt-row{
+  box-sizing:border-box;
+  height:48px;min-height:48px;
+}
+body.pm-active #planner-app .pm-gantt-item{
+  display:flex;align-items:center;gap:3px;
+  background:#fbfaf8;
+}
+.pm-gantt-task-copy{
+  flex:1 1 auto;min-width:0;display:flex;
+  flex-direction:column;align-items:flex-start;justify-content:center;
+  gap:3px;padding:4px 0 4px 12px;overflow:hidden;
+}
+body.pm-active #planner-app .pm-gantt-task-copy .pm-gantt-label{
+  display:block;flex:0 0 auto;
+  width:100%;max-width:100%;height:18px;min-height:18px;
+  padding:0;margin:0;border:0;outline-offset:1px;
+  background:transparent;color:#355849;font-size:11px;
+  font-weight:710;line-height:18px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;
+}
+body.pm-active #planner-app .pm-gantt-task-copy .pm-gantt-label:hover{
+  text-decoration:underline;background:transparent;
+}
+.pm-gantt-assignees{
+  display:block;width:100%;font-size:10px;line-height:14px;
+  color:#7d9482;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;
+}
+body.pm-active #planner-app .pm-gantt-row{
+  border-bottom:1px solid #e7eae6;background-color:#fbfaf8;
+}
+body.pm-active #planner-app .pm-gantt-row .pm-gantt-bar{
+  top:14px;height:19px;min-height:19px;max-height:19px;
+}
+body.pm-active #planner-app .pm-gantt-item .pm-gantt-focus{
+  flex:0 0 27px;margin-right:7px;
+}
+.pm-gantt-unresolved{
+  border-color:#efdfbd;background:#fff8ed;color:#987141;
+}
+@media(max-width:760px){
+  body.pm-active #planner-app .pm-gantt-task-copy{
+    padding-left:8px;
+  }
+  body.pm-active #planner-app .pm-gantt-task-copy .pm-gantt-label{
+    font-size:10px;
+  }
+  .pm-gantt-assignees{font-size:9px}
+  .pm-kanban-dates{align-items:flex-start}
+}
+:root[data-theme=dark] .pm-kanban-details{
+  border-color:#40594a;
+}
+:root[data-theme=dark] .pm-kanban-owner,
+:root[data-theme=dark] .pm-kanban-due{
+  color:#bed6c4;
+}
+:root[data-theme=dark] .pm-kanban-owner>.pm-icon,
+:root[data-theme=dark] .pm-kanban-due>.pm-icon{
+  color:#a8cdb1;
+}
+:root[data-theme=dark] .pm-kanban-late{
+  background:#573a38;border-color:#79524f;color:#ffd7cf;
+}
+:root[data-theme=dark] .pm-kanban-today{
+  background:#55432b;border-color:#826944;color:#fce1ab;
+}
+:root[data-theme=dark] .pm-kanban-on-time,
+:root[data-theme=dark] .pm-kanban-complete{
+  background:#31503b;border-color:#4e7054;color:#c5efcf;
+}
+:root[data-theme=dark] .pm-kanban-no-due{
+  background:#354039;border-color:#4b5b50;color:#c3d1c5;
+}
+:root[data-theme=dark] body.pm-active #planner-app .pm-gantt-item,
+:root[data-theme=dark] body.pm-active #planner-app .pm-gantt-row{
+  background-color:#2b3930;border-color:#415749;
+}
+:root[data-theme=dark] body.pm-active #planner-app .pm-gantt-task-copy .pm-gantt-label{
+  color:#d0ebd5;
+}
+:root[data-theme=dark] .pm-gantt-assignees{color:#9fbba6}
+:root[data-theme=dark] .pm-gantt-unresolved{
+  background:#483d2b;border-color:#746142;color:#ead1a6;
+}
