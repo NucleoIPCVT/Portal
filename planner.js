@@ -2237,6 +2237,7 @@ $('pm-logout').addEventListener('click',()=>$('logout-button').click())
 
 function render() {
   if (session.status !== 'authorized') return
+  document.body.classList.toggle('pm-gantt-active',currentView==='gantt')
   refreshFilters()
   const selected = activePlans().find(plan => plan.id === selectedPlan())
   const withinPlan = !!selected && taskViews.has(currentView) && currentView !== 'calendar-all' && currentView !== 'gantt'
