@@ -216,8 +216,8 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
           const plan=template&&data.plans.find(item=>item.id===template.planId)
           if(template&&!plan?.deleted)await ensureScheduledSeries(template,config)
         }
-      }while(schedulingPending&&session.status==='authorized')
         await refreshRecurringPlans()
+      }while(schedulingPending&&session.status==='authorized')
     }catch(cause){onError(readableError(cause))}
     finally{scheduling=false}
   }
