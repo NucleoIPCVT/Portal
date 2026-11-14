@@ -1,0 +1,72 @@
+/* Planner IPCVT | ícones do Google e tema no cabeçalho. */
+@media screen {
+  /* O controle do Planner fica entre a busca e as notificações. */
+  body.pm-active #planner-app .pm-toolbar .pm-theme-toggle {
+    display:inline-flex;align-items:center;justify-content:center;
+    flex:0 0 32px;width:32px;height:32px;min-height:32px;
+    margin:0;padding:0;gap:0;border:1px solid transparent;
+    border-radius:7px;background:transparent;color:#305c4c;
+    box-shadow:none;line-height:1;cursor:pointer;
+  }
+  body.pm-active #planner-app .pm-toolbar .pm-theme-toggle:hover {
+    background:#ffffff73;border-color:#bfd2c5;color:#1e573a;
+  }
+  body.pm-active #planner-app .pm-toolbar .pm-theme-toggle:focus-visible {
+    outline:2px solid #61957a;outline-offset:2px;
+  }
+  body.pm-active #planner-app .pm-theme-toggle .theme-icon {
+    display:inline-flex;align-items:center;justify-content:center;
+    flex:0 0 auto;width:19px;height:19px;
+    font-size:0;line-height:1;
+  }
+  body.pm-active #planner-app .pm-theme-toggle .theme-icon svg {
+    width:19px;height:19px;flex:0 0 19px;
+    fill:none;stroke:currentColor;stroke-width:1.8;
+    stroke-linecap:round;stroke-linejoin:round;
+  }
+  body.pm-active #planner-app .pm-theme-toggle .theme-label {
+    position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+    overflow:hidden;white-space:nowrap;clip:rect(0,0,0,0);
+    clip-path:inset(50%);border:0;
+  }
+  /* A tela de acesso mantém seu próprio controle; durante o uso,
+     o tema é alternado exclusivamente na barra do Planner. */
+  body.pm-active .site-header #theme-toggle-gate{display:none!important}
+  #theme-toggle-gate .theme-icon {
+    display:inline-flex;align-items:center;justify-content:center;
+    width:18px;height:18px;
+  }
+  #theme-toggle-gate .theme-icon svg {
+    width:18px;height:18px;fill:none;stroke:currentColor;
+    stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
+  }
+  /* Preserve as cores oficiais do G do Google na navegação. */
+  body.pm-active #planner-app .view-nav svg.pm-google-g {
+    width:18px;height:18px;flex:0 0 18px;
+    fill:none;stroke:none!important;
+  }
+  body.pm-active #planner-app .view-nav svg.pm-google-g path {
+    stroke:none!important;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-toolbar .pm-theme-toggle{
+    background:transparent;color:#d2e3d8;border-color:transparent;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-toolbar .pm-theme-toggle:hover{
+    background:#394642;border-color:#607369;color:#f0faf2;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-toolbar .pm-theme-toggle:focus-visible{
+    outline-color:#94c7a4;
+  }
+}
+@media screen and (max-width:640px){
+  body.pm-active #planner-app .pm-toolbar .pm-theme-toggle{
+    flex:0 0 29px;width:29px;height:30px;min-height:30px;
+  }
+  body.pm-active #planner-app .pm-theme-toggle .theme-icon,
+  body.pm-active #planner-app .pm-theme-toggle .theme-icon svg{
+    width:18px;height:18px;flex-basis:18px;
+  }
+}
+@media print {
+  #theme-toggle,#theme-toggle-gate{display:none!important}
+}
