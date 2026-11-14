@@ -10,6 +10,7 @@ import { createGoogleLogin } from './ipcvt-google-login.js?v=20261112-google-dir
 import { nextRecurringTask, taskRecurrence, rotationConfigId, rotationConfigRecord,
   parseRotationConfig, recurrenceOccurrenceAt, scheduledUpcomingDates
 } from './planner-recurrence.js?v=20261113-unified-v1'
+import {parsePlanCycleConfig,missingPlanCycleTasks} from './planner-plan-cycles.js?v=20261113-plan-cycle-v1'
 
 const googleLogin = createGoogleLogin({
   getAccounts: () => window.google?.accounts,
@@ -136,6 +137,7 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
   let schedulingPending = false
   let scheduleRevision = ''
   let loadedKinds = new Set()
+  const planConfigFor=id=>data.tasks.map(parsePlanCycleConfig).find(config=>config?.planId===id)
   function rotationRevision(){
     return data.tasks.filter(task=>task.deleted&&task.id?.startsWith('rotation_v1_'))
       .map(config=>{
@@ -143,9 +145,18 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
         return [config.id,config.version||0,template?.id||'',template?.version||0].join(':')
       }).sort().join('|')
   }
+  function planCycleRevision(){
+    const configs=data.tasks.map(parsePlanCycleConfig).filter(Boolean)
+    const active=new Set(configs.map(config=>config.planId))
+    return [localDay(),...configs.map(cfg=>cfg.id+':'+cfg.templateKey),
+      ...data.plans.filter(plan=>active.has(plan.id)).map(plan=>plan.id+':'+plan.deleted),
+      ...data.tasks.filter(task=>active.has(task.planId)&&!task.deleted)
+        .map(task=>task.id+':'+task.dueDate+':'+task.sourceTaskId+':'+task.recurrenceId)]
+      .sort().join('|')
+  }
   function requestScheduleRefresh(){
     if(!loadedKinds.has('tasks')||!loadedKinds.has('buckets')||!loadedKinds.has('plans'))return
-    const revision=rotationRevision()
+    const revision=rotationRevision()+'||'+planCycleRevision()
     if(revision===scheduleRevision)return
     scheduleRevision=revision
     void refreshScheduledSeries()
@@ -153,7 +164,7 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
   const localDay=()=>new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo',
     year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())
   async function ensureScheduledSeries(template,config) {
-    if(!template||!taskRecurrence(template)||config?.advance!=='scheduled')return
+    if(!template||!taskRecurrence(template)||config?.advance!=='scheduled'||planConfigFor(template.planId))return
     const upcoming=scheduledUpcomingDates(template,localDay(),4)
     for(const date of upcoming){
       if(session.status!=='authorized')return
@@ -206,8 +217,33 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
           if(template&&!plan?.deleted)await ensureScheduledSeries(template,config)
         }
       }while(schedulingPending&&session.status==='authorized')
+        await refreshRecurringPlans()
     }catch(cause){onError(readableError(cause))}
     finally{scheduling=false}
+  }
+
+  async function refreshRecurringPlans(){
+    const configs=data.tasks.map(parsePlanCycleConfig).filter(Boolean)
+    for(const config of configs){
+      if(session.status!=='authorized')return
+      if(!data.plans.some(plan=>plan.id===config.planId&&!plan.deleted))continue
+      const targets=missingPlanCycleTasks(config,data.tasks,data.buckets,localDay(),2)
+      for(const draft of targets){
+        if(session.status!=='authorized')return
+        await runTransaction(db,async tx=>{
+          const configDoc=await tx.get(itemRef('tasks',config.id))
+          const planDoc=await tx.get(itemRef('plans',config.planId))
+          const target=itemRef('tasks',draft.id)
+          const exists=await tx.get(target)
+          if(exists.exists()||!configDoc.exists()||!planDoc.exists()||planDoc.data().deleted||
+            parsePlanCycleConfig({...configDoc.data(),id:config.id})?.templateKey!==config.templateKey)return
+          const actor=requireSession()
+          tx.set(target,{...payloadFor('tasks',draft),version:1,
+            createdAt:serverTimestamp(),createdBy:actor.email,
+            updatedAt:serverTimestamp(),updatedBy:actor.email})
+        })
+      }
+    }
   }
 
   function publishSession(fields) {
@@ -396,7 +432,8 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
       const rule=kind==='tasks'?taskRecurrence({...fields,id:item.id}):null
       const oldConfig=rule?data.tasks.find(task=>task.id===rotationConfigId(rule.sourceId)):null
       const config=setup?parseRotationConfig(setup):parseRotationConfig(oldConfig)
-      const nextTask=kind==='tasks'?nextRecurringTask({...fields,id:item.id},data.buckets,config):null
+      const nextTask=kind==='tasks'&&!planConfigFor(fields.planId)
+        ?nextRecurringTask({...fields,id:item.id},data.buckets,config):null
       const nextRef=nextTask?itemRef('tasks',nextTask.id):null
       if (kind === 'events' && fields.source === 'google' && !actor.isAdmin) throw error('Somente um administrador pode importar eventos do Google Agenda.', 'planner-admin-required')
       try {
