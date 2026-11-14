@@ -85,6 +85,7 @@ let draggedTask = ''
 let draggedTaskGroup = ''
 let importBusy = false
 let pendingProjectImport = null
+let projectImportBusy = false
 let excelLibraryPromise = null
 const integrationRange = { from: addDays(todayISO(), -30), to: addDays(todayISO(), 180) }
 let authEpoch = 0
@@ -692,17 +693,17 @@ function projectImportPreview(result, filename = '') {
     container.append(table)
     if (result.tasks.length > 20) container.append(node('p', { class: 'pm-import-hint', text: 'Exibidas as primeiras 20 demandas de ' + result.tasks.length + '. Todas serão importadas.' }))
   }
-  $('project-import-confirm').disabled = !pendingProjectImport || importBusy
+  $('project-import-confirm').disabled = !pendingProjectImport || projectImportBusy
   if (!$('project-import-dialog').open) $('project-import-dialog').showModal()
 }
 async function openProjectExcel() {
-  if (session.status !== 'authorized' || importBusy) return
+  if (session.status !== 'authorized' || projectImportBusy) return
   $('project-import-file').click()
 }
 $('project-import-file').addEventListener('change', async event => {
   const file = event.target.files?.[0]
   event.target.value = ''
-  if (!file || importBusy || session.status !== 'authorized') return
+  if (!file || projectImportBusy || session.status !== 'authorized') return
   try {
     const xlsx = await plannerExcelLibrary()
     projectImportPreview(await readProjectFile(file, xlsx), file.name)
@@ -711,7 +712,7 @@ $('project-import-file').addEventListener('change', async event => {
   }
 })
 $('project-import-confirm').addEventListener('click', async () => {
-  if (!pendingProjectImport || importBusy || session.status !== 'authorized') return
+  if (!pendingProjectImport || projectImportBusy || session.status !== 'authorized') return
   const { plan, buckets, tasks } = pendingProjectImport
   const invalid = tasks.flatMap(task => validateTask(task, tasks))
   if (invalid.length) {
@@ -719,7 +720,7 @@ $('project-import-confirm').addEventListener('click', async () => {
     return
   }
   const confirm = $('project-import-confirm')
-  importBusy = true
+  projectImportBusy = true
   confirm.disabled = true
   let createdPlan = false
   let savedTasks = 0
@@ -754,7 +755,7 @@ $('project-import-confirm').addEventListener('click', async () => {
       ? 'Importação interrompida: ' + (error.message || 'erro desconhecido') + '. O plano já foi criado e pode conter ' + savedTasks + ' demanda(s). Confira-o antes de tentar importar o mesmo arquivo novamente.'
       : 'Não foi possível criar o plano: ' + (error.message || 'erro desconhecido')
   } finally {
-    importBusy = false
+    projectImportBusy = false
     confirm.disabled = !pendingProjectImport
   }
 })
