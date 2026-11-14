@@ -1,0 +1,82 @@
+/* Importação Excel de projetos: discreta no cabeçalho, conferência ampla no modal. */
+.pm-excel-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  min-height: 37px;
+  padding: .55rem .78rem;
+  border-radius: 9px;
+  font-size: .84rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background: transparent;
+  color: inherit;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  cursor: pointer;
+}
+.pm-excel-action:hover, .pm-excel-action:focus-visible {
+  background: color-mix(in srgb, currentColor 7%, transparent);
+}
+.pm-excel-action-primary {
+  border-color: #78978a;
+  background: #d6e6db;
+  color: #213e35;
+}
+.pm-excel-action-primary:hover, .pm-excel-action-primary:focus-visible { background: #c3dbc9; }
+.pm-import-dialog { width: min(840px, calc(100vw - 28px)); max-height: min(92dvh, 900px); }
+.pm-import-dialog .dialog-body { overflow-y: auto; }
+.pm-import-file-name {
+  margin: .35rem 0 .8rem;
+  font-size: .85rem;
+  opacity: .8;
+  overflow-wrap: anywhere;
+}
+.pm-import-overview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: .6rem;
+  margin-bottom: .75rem;
+}
+.pm-import-stat {
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: 9px;
+  padding: .65rem .7rem;
+  background: color-mix(in srgb, currentColor 3%, transparent);
+  min-width: 0;
+}
+.pm-import-stat small { display: block; font-size: .72rem; opacity: .68; margin-bottom: .25rem; }
+.pm-import-stat strong { display: block; font-size: .92rem; overflow-wrap: anywhere; }
+.pm-import-messages { display: grid; gap: .3rem; margin-bottom: .75rem; }
+.pm-import-message {
+  padding: .55rem .65rem;
+  font-size: .84rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  overflow-wrap: anywhere;
+}
+.pm-import-error { background: #fbe8e5; border-color: #e7aba6; color: #7f2820; }
+.pm-import-warning { background: #fff5db; border-color: #e5ce92; color: #664f18; }
+.pm-import-preview {
+  overflow-x: auto;
+  border-radius: 9px;
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+}
+.pm-import-table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+.pm-import-table th, .pm-import-table td { text-align: left; vertical-align: top; padding: .55rem .6rem; border-bottom: 1px solid color-mix(in srgb, currentColor 11%, transparent); }
+.pm-import-table th { font-size: .73rem; font-weight: 700; background: color-mix(in srgb, currentColor 5%, transparent); white-space: nowrap; }
+.pm-import-table tr:last-child td { border-bottom: none; }
+.pm-import-table td:first-child { font-weight: 600; min-width: 170px; }
+.pm-import-table small { display: block; opacity: .7; margin-top: .2rem; }
+.pm-import-hint { font-size: .78rem; opacity: .7; margin: .55rem 0; }
+.pm-import-dialog button[disabled] { opacity: .55; cursor: not-allowed; }
+[data-theme="dark"] .pm-excel-action-primary { color: #e7f1e9; background: #304e43; border-color: #658977; }
+[data-theme="dark"] .pm-excel-action-primary:hover { background: #3a5e50; }
+[data-theme="dark"] .pm-import-error { color: #ffd7d2; background: #4d2827; border-color: #88504e; }
+[data-theme="dark"] .pm-import-warning { color: #ffe6b0; background: #4c3e21; border-color: #806b39; }
+@media (max-width: 760px) {
+  .pm-import-overview { grid-template-columns: 1fr; gap: .4rem; }
+  .pm-import-dialog { width: calc(100vw - 16px); }
+  .pm-import-dialog .dialog-body { padding-left: .85rem; padding-right: .85rem; }
+  .pm-excel-action { font-size: .78rem; padding: .48rem .58rem; }
+}
