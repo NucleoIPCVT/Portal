@@ -71,12 +71,11 @@ export function ganttLinkRoutes(nodes,dependencies,{
           : 'M '+x1+' '+y1+' H '+x+' V '+y2+' H '+x2
       }
     }else{
-      const lane=round(Math.min(width-3,Math.max(x1+2,
-        Math.max(from.right,to.right)+12+(index%4)*6)))
-      const exit=round(clamp(to.right+4,2,width-2))
-      // Relações regressivas conectam ao lado DIREITO da demanda C,
-      // sem atravessar o seu cartão horizontalmente.
-      d='M '+x1+' '+y1+' H '+lane+' V '+y2+' H '+exit
+      // Linhas contínuas entram pelo início da demanda, mesmo quando
+      // as datas se sobrepõem. Não prolongar até uma futura ocorrência.
+      const lane=round(clamp(from.right+10,2,width-2))
+      const entry=round(clamp(to.left-7,2,width-2))
+      d='M '+x1+' '+y1+' H '+lane+' V '+y2+' H '+entry
     }
     return {
       ...link,d,backward:!forward,
@@ -95,9 +94,8 @@ export function ganttLinkRoutes(nodes,dependencies,{
     const join=forward
       ? round(clamp(maxRight+Math.min(22,(target.left-maxRight)/2),
         maxRight+7,target.left-11))
-      : round(Math.min(width-5,Math.max(maxRight,target.right)+15))
-    const entry=forward?round(clamp(target.left-7,2,width-2))
-      :round(clamp(target.right+5,2,width-2))
+      : round(clamp(maxRight+10,2,width-5))
+    const entry=round(clamp(target.left-7,2,width-2))
     const involved=routes.filter(link=>link.to===targetId)
     for(const route of involved){
       const source=byId.get(route.from)
