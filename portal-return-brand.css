@@ -1,0 +1,87 @@
+/* Retornos padronizados: seta + símbolo oficial, legenda Portal abaixo. */
+a.ipcvt-portal-return,
+.portal-return-links a {
+  box-sizing:border-box!important;
+  display:inline-flex!important; flex-direction:column!important;
+  align-items:center!important; justify-content:center!important;
+  flex:0 0 auto!important; gap:2px!important; vertical-align:middle;
+  min-width:70px!important; width:74px!important; min-height:62px!important;
+  margin-top:0; padding:6px 8px!important;
+  border:1px solid #c6d7c8!important; border-radius:12px!important;
+  background:#f2f6ef!important; color:#284936!important;
+  font:600 10px/1.12 Inter,Arial,sans-serif!important; letter-spacing:.02em!important;
+  text-decoration:none!important; text-transform:none!important;
+  white-space:normal!important; text-align:center!important;
+  box-shadow:0 2px 8px rgba(35,62,45,.08); cursor:pointer;
+  transition:background-color .2s,border-color .2s,transform .2s;
+}
+a.ipcvt-portal-return:hover,
+.portal-return-links a:hover {background:#e2eddf!important; color:#173929!important; transform:translateY(-1px);}
+a.ipcvt-portal-return:focus-visible,
+.portal-return-links a:focus-visible {outline:3px solid #78a98b;outline-offset:2px;}
+a.ipcvt-portal-return .ipcvt-portal-return__top {
+  box-sizing:border-box; display:flex!important; align-items:center!important; justify-content:center!important;
+  gap:7px!important; width:100%; min-height:32px; margin:0!important;
+}
+a.ipcvt-portal-return .ipcvt-portal-return__arrow{
+  display:inline-block!important; font:600 17px/1 Arial,sans-serif!important;
+  flex:0 0 auto; width:auto; height:auto;
+  margin:0!important; color:inherit!important;
+}
+a.ipcvt-portal-return .ipcvt-portal-return__top img{
+  display:block!important; width:29px!important; height:29px!important;
+  max-width:none!important; max-height:none!important; flex:0 0 29px;
+  object-fit:contain!important; filter:brightness(0)!important;
+  margin:0!important;
+}
+a.ipcvt-portal-return .ipcvt-portal-return__caption{
+  display:block!important; color:inherit!important; font:600 10px/1.15 Inter,Arial,sans-serif!important;
+  letter-spacing:.04em!important; text-transform:none!important;
+  white-space:nowrap!important; width:auto!important; height:auto!important;
+  margin:0!important; padding:0!important;
+}
+/* O Planejamento Estratégico renderiza os links pela aplicação React.
+   Personalizamos apenas com CSS para não alterar elementos controlados pelo React. */
+.portal-return-links a {font-size:0!important;line-height:0!important;}
+.portal-return-links a::before{
+  content:"←";box-sizing:border-box;display:flex;align-items:center;
+  justify-content:flex-start;width:48px;height:31px; padding-left:2px;
+  color:#171f19;font:600 17px/1 Arial,sans-serif;
+  background:url("logo-nucleo-quatro-aliancas.svg") right center/29px 29px no-repeat;
+}
+.portal-return-links a:nth-child(2)::before{background-image:url("logo-comissao.svg");}
+.portal-return-links a::after{content:"Portal";display:block;color:inherit;font:600 10px/1.15 Inter,Arial,sans-serif;letter-spacing:.04em;}
+/* Em superfícies permanentemente escuras, o botão fica invertido. */
+a.ipcvt-portal-return--inverse {
+  background:rgba(24,56,43,.92)!important;border-color:#94b5a4!important;color:#fff!important;
+}
+a.ipcvt-portal-return--inverse:hover{background:#315944!important;color:#fff!important;}
+a.ipcvt-portal-return--inverse .ipcvt-portal-return__top img{filter:brightness(0) invert(1)!important;}
+/* Respeita os diferentes atributos usados pelas ferramentas para modo escuro. */
+html[data-portal-theme="dark"] a.ipcvt-portal-return,
+html[data-theme="dark"] a.ipcvt-portal-return,
+html.dark a.ipcvt-portal-return,
+html[data-portal-theme="dark"] .portal-return-links a,
+html[data-theme="dark"] .portal-return-links a {
+  background:#344f43!important;border-color:#739482!important;color:#fff!important;
+  box-shadow:0 2px 8px #11281b2a;
+}
+html[data-portal-theme="dark"] a.ipcvt-portal-return:hover,
+html[data-theme="dark"] a.ipcvt-portal-return:hover,
+html[data-portal-theme="dark"] .portal-return-links a:hover,
+html[data-theme="dark"] .portal-return-links a:hover {background:#486a57!important;color:#fff!important;}
+html[data-portal-theme="dark"] a.ipcvt-portal-return .ipcvt-portal-return__top img,
+html[data-theme="dark"] a.ipcvt-portal-return .ipcvt-portal-return__top img,
+html.dark a.ipcvt-portal-return .ipcvt-portal-return__top img {filter:brightness(0) invert(1)!important;}
+html[data-portal-theme="dark"] .portal-return-links a::before,
+html[data-theme="dark"] .portal-return-links a::before{filter:brightness(0) invert(1);}
+@media (max-width:760px){
+  a.ipcvt-portal-return,.portal-return-links a {width:65px!important;min-width:65px!important;min-height:58px!important;padding:5px 6px!important;}
+  a.ipcvt-portal-return .ipcvt-portal-return__top {gap:5px!important;min-height:28px;}
+  a.ipcvt-portal-return .ipcvt-portal-return__top img {width:25px!important;height:25px!important;flex-basis:25px;}
+  a.ipcvt-portal-return .ipcvt-portal-return__caption {font-size:9px!important;}
+  .portal-return-links a::before {width:42px;height:28px;background-size:25px 25px;font-size:15px;}
+  .portal-return-links a::after {font-size:9px;}
+  .strategic-gate-nav .strategic-gate-back.ipcvt-portal-return {display:inline-flex!important;}
+}
+@media (prefers-reduced-motion:reduce){a.ipcvt-portal-return,.portal-return-links a{transition:none!important;}}

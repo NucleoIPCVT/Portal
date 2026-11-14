@@ -39,8 +39,9 @@ function loadingError(message) {
   loader.style.gap = '14px'
   const back = document.createElement('a')
   back.href = '../comissao.html'
-  back.textContent = 'Voltar ao Painel da Comissão'
-  back.style.color = '#315f46'
+  back.className = 'ipcvt-portal-return ipcvt-portal-return--comissao'
+  back.setAttribute('aria-label', 'Voltar ao Portal da Comissão IPCVT')
+  back.innerHTML = '<span class="ipcvt-portal-return__top" aria-hidden="true"><span class="ipcvt-portal-return__arrow">←</span><img src="../logo-comissao.svg" alt="" width="30" height="30"></span><span class="ipcvt-portal-return__caption">Portal</span>'
   loader.append(back)
 }
 

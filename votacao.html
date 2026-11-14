@@ -43,6 +43,7 @@
         }
         .modal-backdrop.active .modal-content { transform: scale(1); }
     </style>
+  <link rel="stylesheet" href="portal-return-brand.css?v=20261114-return-brand-v1">
 </head>
 <body class="bg-slate-50 font-sans text-slate-800 pb-20 selection:bg-presb-gold selection:text-presb-green">
 
@@ -250,9 +251,7 @@
                         ${renderTabButton('votacao', 'Votação', 'ph-check-square-offset')}
                         ${renderTabButton('analise', 'Análise', 'ph-shield-check')}
                         ${renderTabButton('cadastro', 'Membros', 'ph-users-three')}
-                        <a href="index.html" class="flex-1 min-w-[100px] flex items-center justify-center py-5 px-4 border-b-[3px] border-transparent font-bold text-[10px] uppercase tracking-widest text-slate-400 hover:text-presb-green transition-all whitespace-nowrap">
-                            <i class="ph-bold ph-arrow-left text-xl mr-2"></i> Portal IPCVT
-                        </a>
+                        <a href="index.html" class="ipcvt-portal-return ipcvt-portal-return--nucleo" aria-label="Voltar ao Portal IPCVT" title="Voltar ao Portal IPCVT"><span class="ipcvt-portal-return__top" aria-hidden="true"><span class="ipcvt-portal-return__arrow">←</span><img src="logo-nucleo-quatro-aliancas.svg" alt="" width="30" height="30"></span><span class="ipcvt-portal-return__caption">Portal</span></a>
                     </div>
                 </nav>
 
@@ -279,7 +278,7 @@
             
             return `
                 <div class="min-h-screen bg-presb-dark flex flex-col items-center justify-center p-6 fade-in bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-presb-green to-presb-dark">
-                    <a href="index.html" class="self-start mb-6 text-white font-bold text-xs"><i class="ph-bold ph-arrow-left mr-2" aria-hidden="true"></i> Portal IPCVT</a>
+                    <a href="index.html" class="self-start mb-6 ipcvt-portal-return--inverse ipcvt-portal-return ipcvt-portal-return--nucleo" aria-label="Voltar ao Portal IPCVT" title="Voltar ao Portal IPCVT"><span class="ipcvt-portal-return__top" aria-hidden="true"><span class="ipcvt-portal-return__arrow">←</span><img src="logo-nucleo-quatro-aliancas.svg" alt="" width="30" height="30"></span><span class="ipcvt-portal-return__caption">Portal</span></a>
                     <div class="bg-white p-10 md:p-12 rounded-[3rem] shadow-2xl border-t-8 border-presb-gold w-full max-w-md text-center relative overflow-hidden">
                         <a href="votacao.html" aria-label="Início da Votação de Músicas" class="bg-presb-gold/20 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8 text-presb-gold text-5xl shadow-inner relative z-10">
                             <i class="ph-fill ph-music-notes"></i>
