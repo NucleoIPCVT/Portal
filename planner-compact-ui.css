@@ -387,3 +387,60 @@ body.pm-active #planner-app .planner-main{min-height:calc(100vh - 54px)}
 :root[data-theme=dark] .pm-premium-board .pm-kanban-column .pm-kanban-add{color:#c3d9c4}
 :root[data-theme=dark] .pm-premium-board .pm-kanban-column .pm-kanban-add:hover{background:#ffffff12}
 :root[data-theme=dark] .pm-kanban-add-plus{color:#aad6b1}
+
+
+/* Minhas tarefas > Filtrar > Outros filtros.
+   O componente legado .pm-dropdown fixava height:37px, mas aqui cada
+   seletor precisa de duas linhas: título e campo de seleção. */
+@media screen {
+  body.pm-active #planner-app .pm-task-popover {
+    left:auto;right:0;
+    width:min(355px,calc(100vw - 28px));
+    max-width:calc(100vw - 28px);
+    max-height:min(75vh,670px);
+    overflow-y:auto;overflow-x:hidden;
+    overscroll-behavior:contain;
+    padding:12px;
+  }
+  body.pm-active #planner-app .pm-filter-category .pm-filter-choices {
+    display:grid;grid-template-columns:minmax(0,1fr);
+    gap:7px;min-width:0;
+    padding:7px 6px 13px 16px;
+  }
+  body.pm-active #planner-app .pm-filter-choices .pm-dropdown {
+    display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;
+    height:auto;min-height:0;width:100%;max-width:100%;
+    gap:6px;padding:6px 7px;
+    overflow:visible;box-sizing:border-box;
+    border:0;background:transparent;
+  }
+  body.pm-active #planner-app .pm-filter-choices .pm-dropdown .pm-dropdown-caption {
+    display:block;width:100%;flex:0 0 auto;
+    line-height:1.35;white-space:normal;overflow:visible;
+    font-size:11px;font-weight:700;
+  }
+  body.pm-active #planner-app .pm-filter-choices .pm-dropdown select {
+    display:block;box-sizing:border-box;
+    flex:0 0 auto;width:100%;max-width:100%;min-width:0;
+    height:38px;min-height:38px;padding:7px 24px 7px 10px;
+    font-size:12px;line-height:1.35;text-align:left;
+    text-overflow:ellipsis;white-space:nowrap;
+    cursor:pointer;appearance:auto;
+  }
+  body.pm-active #planner-app .pm-filter-choices .pm-dropdown select option {
+    color:#294838;background:#fff;font-size:12px;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app
+  .pm-filter-choices .pm-dropdown select option {
+    color:#e4f0e8;background:#293438;
+  }
+}
+@media screen and (max-width:600px) {
+  body.pm-active #planner-app .pm-task-popover {
+    right:-8px;left:auto;width:min(330px,calc(100vw - 22px));
+    max-width:calc(100vw - 22px);
+  }
+  body.pm-active #planner-app .pm-filter-category .pm-filter-choices {
+    padding-left:10px;padding-right:4px;
+  }
+}
