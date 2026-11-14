@@ -767,7 +767,7 @@
   :root[data-theme="dark"] body.pm-active #planner-app .pm-demand-table-wrap
   .pm-demand-table tbody tr.pm-group-row td {
     background:#343e40;
-    color:#dcebe0;
+    color:#e3f0e7;
     border-top:1px solid #56635d;
     border-bottom:1px solid #45534e;
     font-size:11px;
