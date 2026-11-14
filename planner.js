@@ -9,7 +9,7 @@ import { renderGanttWorkspace, selectGanttPlanContext } from './planner-gantt-wo
 import { routineMigrationPlan } from './planner-routine-migration.js?v=20261113-unified-v1'
 import {
   parsePlanCycleConfig,planCycleConfigRecord,planCycleConfigId,
-  currentPlanCycle,nextPlanCycle,cycleForPlanTask,planCycleLabel
+  currentPlanCycle,nextPlanCycle,previousPlanCycle,cycleForPlanTask,planCycleLabel
 } from './planner-plan-cycles.js?v=20261113-plan-cycle-v1'
 import { resolveGanttDependencies } from './planner-gantt-dependencies.js?v=20261113-recurring-links-v1'
 import {
@@ -52,7 +52,7 @@ function pmPlanCycleBar(plan){
   ])
   const controls=node('div',{class:'pm-cycle-controls'})
   const setCycle=next=>{pmPlanCycleSelected.set(plan.id,next);render()}
-  const older=button('‹',()=>setCycle(currentPlanCycle(config,addDays(cycle,-1))),'pm-cycle-arrow')
+  const older=button('‹',()=>setCycle(previousPlanCycle(config,cycle)),'pm-cycle-arrow')
   older.setAttribute('aria-label','Ver ciclo anterior')
   const label=node('strong',{class:'pm-cycle-date',text:formatDate(cycle)})
   const newer=button('›',()=>setCycle(nextPlanCycle(config,cycle)),'pm-cycle-arrow')
@@ -2246,6 +2246,7 @@ function pmRenderMain(content,tasks){
     routeDependencies:ganttLinkRoutes,render,today:todayISO(),globalPlanId:selectedPlan(),progressOf:taskProgress,
     planCycleConfigOf:planCycleConfig,cycleForTask:cycleForPlanTask,
     cycleDateOf:pmPlanCycle,currentCycleDate:currentPlanCycle,nextCycleDate:nextPlanCycle,
+    previousCycleDate:previousPlanCycle,
     setCycleDate:(id,date)=>pmPlanCycleSelected.set(id,date)
   })
   if(currentView==='sunday')return pmSundayView(content,tasks)
