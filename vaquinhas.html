@@ -68,7 +68,7 @@
                 <button id="vaquinhas-session-button" onclick="window.toggleManagementLogin()" aria-label="Entrar com Google">Entrar</button>
                 <a href="index.html" class="portal-return" aria-label="Voltar ao Portal IPCVT"><i data-lucide="arrow-left" aria-hidden="true"></i><span>Portal IPCVT</span></a>
                 <button id="vaquinhas-theme-toggle" class="campaign-theme-toggle" type="button" aria-pressed="false" aria-label="Ativar modo escuro" title="Alternar modo claro ou escuro">
-                    <i data-lucide="moon-star" aria-hidden="true" class="campaign-theme-icon"></i><span id="vaquinhas-theme-label">Modo escuro</span>
+                    <span class="theme-symbol theme-moon" aria-hidden="true"><i data-lucide="moon-star"></i></span><span class="theme-symbol theme-sun" aria-hidden="true"><i data-lucide="sun"></i></span><span id="vaquinhas-theme-label">Modo escuro</span>
                 </button>
             </nav>
         </div>
@@ -1409,11 +1409,6 @@
           button.setAttribute('aria-label', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
           button.setAttribute('title', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
           label.textContent = dark ? 'Modo claro' : 'Modo escuro';
-          var icon = button.querySelector('i');
-          if (icon) {
-            icon.setAttribute('data-lucide', dark ? 'sun' : 'moon-star');
-            if (window.lucide && window.lucide.createIcons) window.lucide.createIcons({ nodes: [icon] });
-          }
           if (churchLogo) churchLogo.style.filter = dark ? 'brightness(0) invert(1)' : 'none';
           if (meta) meta.content = dark ? '#282e32' : '#f3f5f4';
         }
