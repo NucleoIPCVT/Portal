@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f9f6ef">
     <title>Gestão de Escala - Núcleo IPCVT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -59,11 +60,35 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
     <link rel="stylesheet" href="portal-ui.css?v=20261107-navegacao">
+    <script>
+      (function () {
+        var theme = 'light';
+        try { theme = localStorage.getItem('ipcvt-portal-theme') === 'dark' ? 'dark' : 'light'; } catch (error) {}
+        document.documentElement.setAttribute('data-portal-theme', theme);
+      })();
+    </script>
     <link rel="stylesheet" href="escala-admin-ui.css?v=20261107-funcoes">
+    <link rel="stylesheet" href="escala-geral-nucleo.css?v=20261114-escala-pastel-v1">
 </head>
 <body class="scale-page bg-slate-50 text-slate-800 font-sans h-[100dvh] overflow-hidden">
 
-    <header class="scale-topbar"><button id="navigation-toggle" aria-controls="scale-navigation" aria-expanded="false" onclick="toggleScaleNavigation()"><i class="ph ph-list" aria-hidden="true"></i><span>Menu</span></button><a href="escala_geral.html" aria-label="Início da Escala Geral"><img src="logo-nucleo.svg" alt="">Núcleo <span>IPCVT</span></a><a class="scale-portal-link" href="index.html"><i class="ph ph-arrow-left" aria-hidden="true"></i> Portal IPCVT</a></header>
+    <header class="scale-topbar">
+      <button id="navigation-toggle" type="button" aria-controls="scale-navigation" aria-expanded="false" onclick="toggleScaleNavigation()" aria-label="Abrir menu">
+        <i class="ph ph-list" aria-hidden="true"></i><span>Menu</span>
+      </button>
+      <a href="escala_geral.html" class="scale-topbar-brand" aria-label="Início da Escala Geral">
+        <span class="scale-brand-mark" aria-hidden="true"><i class="ph ph-stack"></i></span>
+        <span class="scale-brand-type">Escala Geral<small>NÚCLEO IPCVT</small></span>
+      </a>
+      <div class="scale-topbar-actions">
+        <a class="scale-portal-link" href="index.html"><i class="ph ph-arrow-left" aria-hidden="true"></i><span>Portal IPCVT</span></a>
+        <button id="scale-theme-toggle" type="button" aria-label="Ativar modo escuro" aria-pressed="false" title="Alternar modo claro e escuro">
+          <i class="ph ph-moon-stars scale-theme-moon" aria-hidden="true"></i>
+          <i class="ph ph-sun scale-theme-sun" aria-hidden="true"></i>
+          <span id="scale-theme-label">Modo escuro</span>
+        </button>
+      </div>
+    </header>
     <button id="navigation-backdrop" hidden aria-label="Fechar menu" onclick="toggleScaleNavigation(false)"></button>
     <div id="app-layout" class="h-full flex flex-col md:flex-row w-full overflow-hidden">
         
@@ -72,8 +97,8 @@
             <a href="index.html" class="scale-home"><i class="ph ph-arrow-left" aria-hidden="true"></i> Portal IPCVT</a>
             <div class="hidden md:block">
                 <div class="p-8 text-center border-b border-white/5">
-                    <a href="escala_geral.html" class="scale-sidebar-brand" aria-label="Início da Escala Geral"><img src="logo-nucleo.svg" alt="" class="scale-logo">
-                    <h1 class="text-xl font-bold font-serif uppercase tracking-tight">Núcleo<span class="text-presb-gold">IPCVT</span></h1></a>
+                    <a href="escala_geral.html" class="scale-sidebar-brand" aria-label="Início da Escala Geral"><span class="scale-sidebar-mark" aria-hidden="true"><i class="ph ph-stack"></i></span>
+                    <h1 class="text-xl font-bold font-serif uppercase tracking-tight">Escala Geral</h1></a>
                     <p class="text-[9px] text-white/40 mt-1 uppercase tracking-[0.3em] font-bold">Escalas e Gestão</p>
                 </div>
             </div>
@@ -1523,6 +1548,30 @@
             finally { input.value = ''; }
         };
         window.onload = startApp;
+    </script>
+
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var toggle = document.getElementById('scale-theme-toggle');
+        var label = document.getElementById('scale-theme-label');
+        var meta = document.querySelector('meta[name="theme-color"]');
+        function syncTheme() {
+          var dark = root.getAttribute('data-portal-theme') === 'dark';
+          toggle.setAttribute('aria-pressed', String(dark));
+          toggle.setAttribute('aria-label', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
+          toggle.title = dark ? 'Ativar modo claro' : 'Ativar modo escuro';
+          label.textContent = dark ? 'Modo claro' : 'Modo escuro';
+          if (meta) meta.content = dark ? '#284337' : '#f9f6ef';
+        }
+        toggle.addEventListener('click', function () {
+          var next = root.getAttribute('data-portal-theme') === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-portal-theme', next);
+          try { localStorage.setItem('ipcvt-portal-theme', next); } catch (error) {}
+          syncTheme();
+        });
+        syncTheme();
+      })();
     </script>
 </body>
 </html>
