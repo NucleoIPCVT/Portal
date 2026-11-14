@@ -1,0 +1,27 @@
+/* TESTE REVERSÍVEL | Planner IPCVT: tablet em paisagem a 80%.
+   Para voltar a 100%, remova o link desta folha do planner.html.
+   Restrição a telas touch com largura de tablet; desktop e retrato intactos.
+   width:125% compensa o zoom .8 para não deixar margens vazias.
+*/
+@media screen and (min-width:768px) and (max-width:1366px)
+       and (orientation:landscape) and (any-pointer:coarse) {
+  body.pm-active #planner-app.workspace {
+    zoom:0.8;
+    width:125%;
+    max-width:none;
+    min-height:125dvh;
+  }
+  body.pm-active #planner-app .planner-main {
+    min-height:calc(125dvh - 54px);
+  }
+  body.pm-active #planner-app .planner-sidebar {
+    height:calc(125dvh - 54px);
+    max-height:calc(125dvh - 54px);
+  }
+}
+@media print {
+  body.pm-active #planner-app.workspace {
+    zoom:1!important;
+    width:100%!important;
+  }
+}
