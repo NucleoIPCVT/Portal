@@ -759,3 +759,120 @@
     color:#f4c5bc;
   }
 }
+
+
+/* Minhas tarefas > Grade: separadores dos agrupamentos e seleção legível.
+   Um separador de grupo não deve herdar a faixa clara da tabela original. */
+@media screen {
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-demand-table-wrap
+  .pm-demand-table tbody tr.pm-group-row td {
+    background:#343e40;
+    color:#dcebe0;
+    border-top:1px solid #56635d;
+    border-bottom:1px solid #45534e;
+    font-size:11px;
+    font-weight:750;
+    letter-spacing:.018em;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-demand-table-wrap
+  .pm-demand-table tbody tr.pm-group-row:hover td {
+    background:#3b4745;
+    color:#e7f4e9;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-demand-table-wrap
+  .pm-demand-table tbody tr:not(.pm-group-row):hover td {
+    background:#343d3f;
+    color:#e0eae2;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-demand-table-wrap
+  .pm-demand-table input[type=checkbox] {
+    background:#252d30;
+    border:1px solid #789586;
+    accent-color:#86b99a;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-demand-table-wrap
+  .pm-demand-table input[type=checkbox]:checked {
+    background:#446c56;
+    border-color:#92c5a3;
+    accent-color:#92c5a3;
+  }
+
+  /* Grade/Quadro e Todos/Atribuídos: fundos e textos com contraste estável. */
+  :root[data-theme="dark"] body.pm-active #planner-app
+  .pm-task-toolbar .pm-mode-button,
+  :root[data-theme="dark"] body.pm-active #planner-app
+  .pm-task-toolbar .pm-scope-button {
+    background:#30383a;
+    border-color:#50615a;
+    color:#cbdcd0;
+    box-shadow:none;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app
+  .pm-task-toolbar .pm-mode-button:hover,
+  :root[data-theme="dark"] body.pm-active #planner-app
+  .pm-task-toolbar .pm-scope-button:hover {
+    background:#3b4a44;
+    border-color:#789987;
+    color:#eff9f0;
+    box-shadow:none;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app
+  .pm-task-toolbar .pm-mode-button[aria-pressed="true"],
+  :root[data-theme="dark"] body.pm-active #planner-app
+  .pm-task-toolbar .pm-scope-button[aria-pressed="true"] {
+    background:#365b47;
+    border-color:#81ac8e;
+    color:#f1fbf3;
+    box-shadow:inset 0 0 0 1px #769d8426;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app
+  .pm-task-toolbar .pm-mode-button[aria-pressed="true"]:hover,
+  :root[data-theme="dark"] body.pm-active #planner-app
+  .pm-task-toolbar .pm-scope-button[aria-pressed="true"]:hover {
+    background:#406b52;
+    border-color:#99c7a5;
+    color:#fff;
+  }
+  /* Menu "Agrupar por", filtros e itens escolhidos. */
+  :root[data-theme="dark"] body.pm-active #planner-app
+  .pm-group-summary {
+    color:#d2e4d7;
+    background:transparent;
+    border-color:transparent;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app
+  .pm-group-summary:hover,
+  :root[data-theme="dark"] body.pm-active #planner-app
+  .pm-group-menu[open] .pm-group-summary {
+    background:#3a4943;
+    border-color:#5a7565;
+    color:#f0faf2;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app
+  .pm-group-option[aria-pressed="true"],
+  :root[data-theme="dark"] body.pm-active #planner-app
+  .pm-popover-option[aria-pressed="true"] {
+    background:#385544;
+    color:#edf8ef;
+    font-weight:750;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app
+  .pm-group-option[aria-pressed="true"]:hover,
+  :root[data-theme="dark"] body.pm-active #planner-app
+  .pm-popover-option[aria-pressed="true"]:hover {
+    background:#446950;
+    color:#fff;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app
+  .pm-popover-check,
+  :root[data-theme="dark"] body.pm-active #planner-app
+  .pm-group-check {
+    color:#b6dfc0;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app
+  .pm-filter-choices .pm-dropdown select {
+    background:#293438;
+    border-color:#586961;
+    color:#e2efe5;
+  }
+}
