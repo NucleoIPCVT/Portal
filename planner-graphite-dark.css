@@ -644,3 +644,118 @@
     color:#1e3025;
   }
 }
+
+/* Acabamentos: barras de ferramentas, menus flutuantes e ajustes finos. */
+@media screen {
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-week-columns-scroll {
+    background:#282e32;
+    border-color:#434e4e;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-week-column-sunday {
+    background:#303e38;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-task-toolbar {
+    border-color:#424e50;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-task-toolbar-divider {
+    background:#53615a;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-task-toolbar .pm-mode-button,
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-task-toolbar .pm-scope-button,
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-task-search input {
+    background:#31393d;
+    border-color:#4d595c;
+    color:#d5e5da;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-task-toolbar .pm-mode-button[aria-pressed=true],
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-task-toolbar .pm-scope-button[aria-pressed=true] {
+    background:#3a5a47;
+    border-color:#729a7d;
+    color:#edf8ef;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-task-toolbar .pm-toolbar-icon {
+    color:#becfc5;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-task-toolbar .pm-toolbar-icon:hover,
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-task-toolbar .pm-filter-menu[open]>.pm-toolbar-icon {
+    background:#394840;
+    color:#e8f4eb;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-task-popover,
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-group-popover {
+    background:#30363a;
+    border-color:#52605e;
+    color:#e2ece5;
+    box-shadow:0 14px 35px #090d10a6;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-task-popover-head,
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-filter-category {
+    border-color:#475556;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-task-popover-head strong,
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-filter-category-title,
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-group-summary,
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-group-option,
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-popover-option {
+    color:#d9e8dd;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-filter-category-title:hover,
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-popover-option:hover,
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-group-option:hover,
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-group-option[aria-pressed=true] {
+    background:#3e5145;
+    color:#f0faf2;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-filter-choices .pm-dropdown select {
+    background:#30383b;
+    border-color:#566460;
+    color:#e0eee4;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-team-tile,
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-legacy-routines-banner,
+  :root[data-theme="dark"] body.pm-active #planner-app .plans-intro,
+  :root[data-theme="dark"] body.pm-active #planner-app .event-reference-heading {
+    background:#303b38;
+    border-color:#4c5c55;
+    color:#dcebe0;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-team-stats,
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-team-stats strong,
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-progress-ring strong,
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-team-tile strong {
+    color:#d8eade;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-progress-ring {
+    background:conic-gradient(#83b695 var(--progress),#475751 var(--progress));
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-progress-ring::before {
+    background:var(--graphite-panel);
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-team-icon-choice,
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-team-file-picker {
+    background:#31383b;
+    border-color:#4a5959;
+    color:#dce9de;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-team-icon-choice:hover,
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-team-icon-choice[aria-pressed=true] {
+    background:#3b5847;
+    border-color:#83ae8d;
+    color:#f1fbf2;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-plan-repeat p,
+  :root[data-theme="dark"] body.pm-active #planner-app .pm-plan-repeat small,
+  :root[data-theme="dark"] body.pm-active #planner-app .task-rotation-roster p {
+    color:#bdcdc2;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .notice:not([hidden]) {
+    background:#393e34;
+    border-color:#67644e;
+    color:#e6d8ad;
+  }
+  :root[data-theme="dark"] body.pm-active #planner-app .notice.error {
+    background:#443436;
+    border-color:#885d5d;
+    color:#f4c5bc;
+  }
+}
