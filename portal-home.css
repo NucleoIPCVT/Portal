@@ -330,3 +330,7 @@ html[data-portal-theme="dark"] .portal-nucleo .portal-footer-brand img{
  html{scroll-behavior:auto;}
  .portal-nucleo *, .portal-nucleo *::before, .portal-nucleo *::after{transition:none!important;}
 }
+
+/* Símbolos oficiais: Núcleo no cabeçalho, Comissão branca no cartão grafite. */
+.portal-nucleo .portal-card-comissao .portal-card-icon img {filter:brightness(0) invert(1);}
+html[data-portal-theme="dark"] .portal-nucleo .brand-mark {filter:brightness(0) invert(1);}

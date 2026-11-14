@@ -602,3 +602,8 @@ html[data-portal-theme="dark"] .commission-footer {border-color:#5d6970;}
   }
 }
 
+
+/* Identidade oficial da Comissão; inversão branca no tema escuro. */
+html:not([data-portal-theme="dark"]) .commission-brand-mark {filter:brightness(0);}
+html[data-portal-theme="dark"] .commission-brand-mark,
+html[data-portal-theme="dark"] .commission-logo {filter:brightness(0) invert(1);}
