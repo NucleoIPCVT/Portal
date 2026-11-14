@@ -1,5 +1,5 @@
 import { createPlannerStore } from './planner-store.js?v=20261113-plan-rotation-v1'
-import { downloadProjectTemplate, readProjectFile } from './planner-excel-import.js?v=20261114-project-import-v1'
+import { downloadProjectTemplate, readProjectFile, existingProjectByName } from './planner-excel-import.js?v=20261114-project-import-v2'
 import { hasPanelEntry, clearPanelEntry } from './comissao-entrada.js?v=20261114-v1'
 
 // O link isolado não abre o Planner: a entrada precisa ser iniciada no painel.
@@ -651,6 +651,11 @@ function plannerExcelLibrary() {
   return excelLibraryPromise
 }
 function projectImportPreview(result, filename = '') {
+  const exists = result?.plan && existingProjectByName(result.plan.name, activePlans())
+  if (exists) {
+    result = { ...result, errors: [...(result.errors || []),
+      'Projeto já existente: "' + exists.name + '". Altere o nome na aba Projeto e envie novamente.'] }
+  }
   pendingProjectImport = result?.errors?.length ? null : result
   $('project-import-filename').textContent = filename ? 'Arquivo: ' + filename : ''
   $('project-import-feedback').textContent = ''
@@ -714,6 +719,13 @@ $('project-import-file').addEventListener('change', async event => {
 $('project-import-confirm').addEventListener('click', async () => {
   if (!pendingProjectImport || projectImportBusy || session.status !== 'authorized') return
   const { plan, buckets, tasks } = pendingProjectImport
+  const exists = existingProjectByName(plan.name, activePlans())
+  if (exists) {
+    projectImportPreview({ ...pendingProjectImport, errors: [
+      'Projeto já existente: "' + exists.name + '". Altere o nome na aba Projeto e envie novamente.'
+    ] }, '')
+    return
+  }
   const invalid = tasks.flatMap(task => validateTask(task, tasks))
   if (invalid.length) {
     projectImportPreview({ errors: [...new Set(invalid)], warnings: [] })
