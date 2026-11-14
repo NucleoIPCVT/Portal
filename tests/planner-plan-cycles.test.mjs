@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  planCycleConfigRecord,parsePlanCycleConfig,currentPlanCycle,nextPlanCycle,
+  planCycleConfigRecord,parsePlanCycleConfig,currentPlanCycle,nextPlanCycle,previousPlanCycle,
   planCycleDates,missingPlanCycleTasks,cycleForPlanTask
 } from '../planner-plan-cycles.js'
 
@@ -88,4 +88,13 @@ test('uma ocorrência individual excluída não reaparece ao converter o plano',
     sourceTaskId:'a',deleted:true
   })
   assert.deepEqual(missingPlanCycleTasks(config,[root,deleted],buckets,'2026-11-13'),[])
+})
+
+test('navegação anterior retorna ao domingo precedente ou ao mês anterior',()=>{
+  assert.equal(previousPlanCycle(config,'2026-11-22'),'2026-11-15')
+  assert.equal(previousPlanCycle(config,'2027-01-03'),'2026-12-27')
+  const monthly=parsePlanCycleConfig(planCycleConfigRecord(plan,{
+    unit:'month',interval:1,anchor:'2026-01-31'
+  }))
+  assert.equal(previousPlanCycle(monthly,'2026-03-31'),'2026-02-28')
 })
