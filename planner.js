@@ -2241,7 +2241,10 @@ function pmRenderMain(content,tasks){
   if(currentView==='gantt')return renderGanttWorkspace({
     content,tasks,allTasks:liveTasks(),plans:activePlans(),buckets:state.buckets,
     recurrence:taskRecurrence,openTask,resolveDependencies:resolveGanttDependencies,
-    routeDependencies:ganttLinkRoutes,render,today:todayISO(),globalPlanId:selectedPlan(),progressOf:taskProgress
+    routeDependencies:ganttLinkRoutes,render,today:todayISO(),globalPlanId:selectedPlan(),progressOf:taskProgress,
+    planCycleConfigOf:planCycleConfig,cycleForTask:cycleForPlanTask,
+    cycleDateOf:pmPlanCycle,currentCycleDate:currentPlanCycle,nextCycleDate:nextPlanCycle,
+    setCycleDate:(id,date)=>pmPlanCycleSelected.set(id,date)
   })
   if(currentView==='sunday')return pmSundayView(content,tasks)
   if(currentView==='teams')return pmTeamsView(content,tasks)
