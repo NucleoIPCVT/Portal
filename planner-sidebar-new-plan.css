@@ -1,0 +1,155 @@
+/* Planner IPCVT | Ação "Novo plano" na navegação lateral.
+   Hierarquia visual: título discreto, botão de criação reconhecível.
+   Abrange sidebar aberta, trilho recolhido e gaveta de tablet. */
+
+body.pm-active #planner-app .sidebar-plans-heading{
+  margin-bottom:8px;
+}
+
+body.pm-active #planner-app .view-nav > button.pm-new-plan-action{
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  justify-content:flex-start;
+  width:calc(100% - 8px);
+  min-width:0;
+  height:44px;
+  min-height:44px;
+  margin:0 4px 9px;
+  padding:7px 10px 7px 8px;
+  gap:10px;
+  color:#f4faf5;
+  background:#356b4c;
+  border:1px solid #2e6044;
+  border-radius:8px;
+  box-shadow:0 2px 5px rgba(32,71,47,.09);
+  font-family:inherit;
+  font-size:12px;
+  line-height:1.2;
+  font-weight:700;
+  letter-spacing:.005em;
+  white-space:nowrap;
+  text-align:left;
+  cursor:pointer;
+  transition:background .15s ease,border-color .15s ease,box-shadow .15s ease,transform .15s ease;
+}
+body.pm-active #planner-app .view-nav > button.pm-new-plan-action:hover{
+  color:#fff;
+  background:#2a5b40;
+  border-color:#245239;
+  box-shadow:0 3px 9px rgba(28,64,43,.14);
+}
+body.pm-active #planner-app .view-nav > button.pm-new-plan-action:active{
+  transform:translateY(1px);
+  box-shadow:none;
+}
+body.pm-active #planner-app .view-nav > button.pm-new-plan-action:focus-visible{
+  outline:3px solid #9bd1a9;
+  outline-offset:2px;
+}
+
+body.pm-active #planner-app .pm-new-plan-symbol{
+  display:grid;
+  place-items:center;
+  flex:0 0 27px;
+  width:27px;
+  height:27px;
+  border-radius:6px;
+  background:rgba(255,255,255,.14);
+}
+body.pm-active #planner-app .view-nav > button.pm-new-plan-action .pm-new-plan-symbol svg{
+  display:block;
+  flex:none;
+  width:17px;
+  height:17px;
+  fill:none;
+  stroke:#f8fff9;
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+body.pm-active #planner-app .pm-new-plan-label{
+  flex:1 1 auto;
+  min-width:0;
+  font-size:12px;
+}
+body.pm-active #planner-app .view-nav > button.pm-new-plan-action > .pm-new-plan-chevron{
+  width:14px;
+  height:14px;
+  flex:0 0 14px;
+  margin-left:auto;
+  fill:none;
+  stroke:#c9e5d0;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+@media(min-width:1121px){
+  body.pm-active.pm-sidebar-collapsed #planner-app .sidebar-plans-heading{
+    width:48px;
+    height:1px;
+    min-height:1px;
+    margin:13px 0 9px;
+    padding:0;
+  }
+  body.pm-active.pm-sidebar-collapsed #planner-app .view-nav > button.pm-new-plan-action{
+    width:48px;
+    min-width:48px;
+    height:46px;
+    min-height:46px;
+    margin:0 0 8px;
+    padding:0;
+    justify-content:center;
+    gap:0;
+    border-radius:8px;
+  }
+  body.pm-active.pm-sidebar-collapsed #planner-app .pm-new-plan-symbol{
+    width:30px;
+    height:30px;
+    flex-basis:30px;
+    border-radius:6px;
+  }
+  body.pm-active.pm-sidebar-collapsed #planner-app .pm-new-plan-label,
+  body.pm-active.pm-sidebar-collapsed #planner-app .view-nav > button.pm-new-plan-action > .pm-new-plan-chevron{
+    display:none;
+  }
+}
+
+@media(max-width:1120px) and (orientation:portrait){
+  body.pm-active #planner-app .planner-sidebar .view-nav > button.pm-new-plan-action{
+    display:flex;
+    width:calc(100% - 8px);
+    min-height:46px;
+    margin:3px 4px 10px;
+    padding:8px 11px 8px 9px;
+  }
+}
+
+:root[data-theme=dark] body.pm-active #planner-app .view-nav > button.pm-new-plan-action{
+  color:#eff9f0;
+  background:#416b4d;
+  border-color:#61836a;
+  box-shadow:none;
+}
+:root[data-theme=dark] body.pm-active #planner-app .view-nav > button.pm-new-plan-action:hover{
+  color:#fff;
+  background:#4b805b;
+  border-color:#84a58a;
+}
+:root[data-theme=dark] body.pm-active #planner-app .pm-new-plan-symbol{
+  background:rgba(255,255,255,.13);
+}
+:root[data-theme=dark] body.pm-active #planner-app .view-nav > button.pm-new-plan-action > .pm-new-plan-chevron{
+  stroke:#d2ecd5;
+}
+@media(prefers-reduced-motion:reduce){
+  body.pm-active #planner-app .view-nav > button.pm-new-plan-action{
+    transition:none;
+  }
+}
+@media print{
+  body.pm-active #planner-app .view-nav > button.pm-new-plan-action{
+    display:none!important;
+  }
+}
