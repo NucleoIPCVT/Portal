@@ -2687,7 +2687,12 @@ function openPlan(plan = null, defaults = {}) {
   $('plan-dialog').dataset.version = plan?.version ?? ''
   $('plan-name').value = plan?.name || ''
   $('plan-dialog-title').textContent = plan ? 'Editar plano' : 'Novo plano'
-  $('plan-kind').value = plan?.kind || defaults.kind || 'continuous'
+  const repeatSettings=plan?planCycleConfig(plan.id):null
+  $('plan-kind').value = repeatSettings?'recurring':plan?.kind || defaults.kind || 'continuous'
+  $('plan-repeat-unit').value=repeatSettings?.unit||'week'
+  $('plan-repeat-interval').value=String(repeatSettings?.interval||1)
+  $('plan-repeat-anchor').value=repeatSettings?.anchor||pmDefaultPlanCycleAnchor('week')
+  pmUpdatePlanRepeatFields()
   $('plan-description').value = plan?.description || ''
   $('plan-start').value = plan?.startDate || defaults.startDate || ''
   $('plan-due').value = plan?.dueDate || defaults.dueDate || ''
@@ -2698,7 +2703,28 @@ function openPlan(plan = null, defaults = {}) {
   $('plan-dialog').showModal()
   $('plan-name').focus()
 }
-$('plan-kind').addEventListener('change', () => { if (!value('plan-id')) $('plan-buckets').value = 'A fazer\nEm andamento\nConcluído' })
+function pmDefaultPlanCycleAnchor(unit){
+  const day=todayISO()
+  if(unit==='week'){
+    const weekday=new Date(day+'T12:00:00Z').getUTCDay()
+    return addDays(day,(7-weekday)%7)
+  }
+  return day
+}
+function pmUpdatePlanRepeatFields(){
+  const recurring=value('plan-kind')==='recurring'
+  $('plan-repeat-fields').hidden=!recurring
+  $('plan-date-fields').hidden=recurring
+  $('plan-repeat-interval').required=recurring
+  $('plan-repeat-anchor').required=recurring
+}
+$('plan-kind').addEventListener('change', () => {
+  pmUpdatePlanRepeatFields()
+  if (!value('plan-id')) $('plan-buckets').value = 'A fazer\nEm andamento\nConcluído'
+})
+$('plan-repeat-unit').addEventListener('change',()=>{
+  if(!value('plan-id'))$('plan-repeat-anchor').value=pmDefaultPlanCycleAnchor(value('plan-repeat-unit'))
+})
 $('plan-form').addEventListener('submit', async event => {
   event.preventDefault()
   const submit = event.submitter
@@ -2707,7 +2733,19 @@ $('plan-form').addEventListener('submit', async event => {
     const old = byId('plans', value('plan-id'))
     if (value('plan-id') && !old) throw new Error('Este plano não está mais disponível. Feche a janela e atualize a tela.')
     if (old && String(old.version) !== $('plan-dialog').dataset.version) throw new Error('Este plano foi atualizado. Feche e abra novamente.')
-    const plan = { ...(old || {}), id: old?.id || newId(), name: value('plan-name'), kind: value('plan-kind'), description: value('plan-description'), startDate: value('plan-start'), dueDate: value('plan-due') }
+    const wantsRecurrence=value('plan-kind')==='recurring'
+    const settings=wantsRecurrence?{
+      unit:value('plan-repeat-unit'),interval:Number(value('plan-repeat-interval')),
+      anchor:value('plan-repeat-anchor')
+    }:null
+    const plan = { ...(old || {}), id: old?.id || newId(), name: value('plan-name'),
+      // A configuração recorrente ocupa um registro técnico compatível
+      // com as regras atuais do Firestore.
+      kind:wantsRecurrence?'continuous':value('plan-kind'),
+      description:value('plan-description'),
+      startDate:value('plan-start'),dueDate:value('plan-due') }
+    const existingCycleConfig=old?state.tasks.find(task=>task.id===planCycleConfigId(plan.id)):null
+    if(settings)planCycleConfigRecord(plan,settings,existingCycleConfig)
     if (!plan.name || plan.name.length > 120 || (plan.startDate && plan.dueDate && plan.startDate > plan.dueDate)) throw new Error('Confira o nome e as datas do plano.')
     const names = [...new Set(value('plan-buckets').split('\n').map(name => name.trim()).filter(Boolean))]
     if (names.length > 30 || names.some(name => name.length > 80)) throw new Error('Use até 30 buckets, cada um com até 80 caracteres.')
@@ -2723,6 +2761,14 @@ $('plan-form').addEventListener('submit', async event => {
         await save('buckets', { ...(found || {}), id: found?.id || newId(), planId: plan.id, name: names[index], order: index })
       }
       for (const bucket of removed) await save('buckets', { ...bucket, deleted: true })
+      if(settings){
+        const configuration=planCycleConfigRecord(plan,settings,existingCycleConfig)
+        await save('tasks',configuration,existingCycleConfig
+          ?{expectedVersion:existingCycleConfig.version}:{})
+      }else if(parsePlanCycleConfig(existingCycleConfig)){
+        await save('tasks',{...existingCycleConfig,templateKey:''},
+          {expectedVersion:existingCycleConfig.version})
+      }
     }, 'Plano salvo.')
     $('plan-filter').value = plan.id
     $('plan-dialog').close()
