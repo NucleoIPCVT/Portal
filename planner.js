@@ -748,8 +748,15 @@ $('project-import-confirm').addEventListener('click', async () => {
     }, 'Projeto "' + plan.name + '" importado com ' + tasks.length + ' demandas.')
     pendingProjectImport = null
     $('project-import-dialog').close()
-    $('plan-filter').value = plan.id
-    openPlanBoard(plan.id)
+    // Também mostra o plano recém-criado quando o autor ainda não é responsável por nenhuma demanda.
+    pmShowAllPlans = true
+    if (activePlans().some(item => item.id === plan.id)) {
+      $('plan-filter').value = plan.id
+      openPlanBoard(plan.id)
+    } else {
+      // O listener do Firestore ainda pode estar concluindo a sincronização.
+      changeView('plans')
+    }
   } catch (error) {
     feedback.textContent = createdPlan
       ? 'Importação interrompida: ' + (error.message || 'erro desconhecido') + '. O plano já foi criado e pode conter ' + savedTasks + ' demanda(s). Confira-o antes de tentar importar o mesmo arquivo novamente.'
