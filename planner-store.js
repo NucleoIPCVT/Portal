@@ -10,7 +10,7 @@ import { createGoogleLogin } from './ipcvt-google-login.js?v=20261112-google-dir
 import { nextRecurringTask, taskRecurrence, rotationConfigId, rotationConfigRecord,
   parseRotationConfig, recurrenceOccurrenceAt, scheduledUpcomingDates
 } from './planner-recurrence.js?v=20261113-unified-v1'
-import {parsePlanCycleConfig,missingPlanCycleTasks} from './planner-plan-cycles.js?v=20261113-plan-cycle-v1'
+import {parsePlanCycleConfig,missingPlanCycleTasks} from './planner-plan-cycles.js?v=20261113-plan-cycle-v2'
 
 const googleLogin = createGoogleLogin({
   getAccounts: () => window.google?.accounts,
