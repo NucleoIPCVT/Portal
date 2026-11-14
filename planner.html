@@ -197,7 +197,7 @@
             <label class="field" for="task-priority">Prioridade<select id="task-priority"><option value="low">Baixa</option><option value="normal" selected>Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option></select></label>
           </div>
           <section class="task-editor-section task-repeat-section" aria-labelledby="task-repeat-title">
-            <h3 id="task-repeat-title">Repetição <span class="optional-tag">Opcional</span></h3>
+            <h3 id="task-repeat-title"><span id="task-repeat-title-text">Repetição</span> <span class="optional-tag">Opcional</span></h3>
             <label class="field" for="task-repeat-mode"><span class="field-visually-hidden">Repetição da demanda</span><select id="task-repeat-mode" aria-label="Repetição da demanda" aria-describedby="task-repeat-hint"><option value="none">Não repetir</option><option value="repeat">Repetir</option></select></label>
             <div id="task-repeat-options" class="task-repeat-options" hidden>
               <span>Repetir a cada</span>
@@ -217,7 +217,7 @@
               </select>
             </label>
             <div id="task-rotation-settings" class="task-rotation-settings" hidden>
-              <label class="field" for="task-repeat-advance"><span>Criar próxima ocorrência</span>
+              <label id="task-repeat-advance-field" class="field" for="task-repeat-advance"><span>Criar próxima ocorrência</span>
                 <select id="task-repeat-advance">
                   <option value="completion">Quando a ocorrência anterior for concluída</option>
                   <option value="scheduled">Na data programada (recomendado para rodízios)</option>
