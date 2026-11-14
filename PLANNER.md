@@ -163,6 +163,31 @@ esse plano antes de tentar importar novamente para evitar duplicação.
 > Siga a aba Instruções e gere o arquivo Excel final apenas com valores,
 > sem fórmulas.
 
+
+## Criar projetos por planilha Excel (com IA)
+
+Na tela **Meus planos**, use **Base Excel** para baixar o modelo e **Importar Excel** para criar um plano novo.
+
+1. Preencha a aba **Projeto** com nome, descrição e datas gerais.
+2. Preencha a aba **Demandas** com o título de cada tarefa, datas, equipe, responsáveis, checklist e status.
+3. Em **Depende de**, escreva os títulos das demandas predecessoras, separados por ponto e vírgula.
+4. Envie o arquivo \`.xlsx\` ao Planner. Confirme a prévia com as demandas, datas e conexões.
+
+**Não há coluna ID.** O Planner cria identificadores internos durante a importação. Para
+que os vínculos sejam inequívocos, cada título de demanda deve ser único **dentro do
+mesmo arquivo/projeto**, inclusive considerando diferenças de acentuação, maiúsculas
+e espaços extras. Dependências inválidas ou circulares bloqueiam a criação.
+
+Se já existir um plano **ativo** com o mesmo nome, a importação é bloqueada
+com **Projeto já existente**. O nome é comparado sem diferenciar maiúsculas,
+acentos ou espaços extras. Demandas de outros planos podem ter títulos iguais.
+A importação nunca substitui ou mescla planos existentes.
+
+O modelo contém a aba **Instruções** para ajudar outras IAs a respeitar o formato.
+Há limite de até 100 tarefas, 30 etapas, 10 responsáveis e 20 dependências por
+demanda. O usuário revisa a prévia antes de salvar; importação parcial pode
+precisar de conferência manual se houver falha de rede durante a gravação.
+
 ## Validação
 
 Com Node.js 22 ou superior:
