@@ -2546,7 +2546,8 @@ function updateRotationPreview(){
       const baseline=currentPlanCycle(cycleConfig,dueDate)
       const offset=Math.round((Date.parse(dueDate+'T12:00:00Z')-
         Date.parse(baseline+'T12:00:00Z'))/86400000)
-      let cycle=baseline
+      const todayCycle=currentPlanCycle(cycleConfig,todayISO())
+      let cycle=baseline>todayCycle?baseline:todayCycle
       for(let n=0;n<4;n++){
         if(n)cycle=nextPlanCycle(cycleConfig,cycle)
         const targetDue=addDays(cycle,offset)
