@@ -144,11 +144,16 @@ export function renderGanttWorkspace(ctx){
   const taskCount=dated.length,completed=dated.filter(t=>t.status==='done').length
   const overdue=dated.filter(t=>t.status!=='done'&&dateOk(t.dueDate)&&t.dueDate<today).length
   const shell=element('section','pg-workspace')
+  // Mantém o título no mesmo padrão das outras seções, fora dos filtros.
+  const pageHeader=element('div','pm-page-header pg-page-header')
+  const pageHeading=element('div','pm-page-heading')
+  const pageHeadingLine=element('div','pm-heading-line')
+  pageHeadingLine.append(element('h2','pm-heading-title','Gantt'))
+  pageHeading.append(element('span','pm-kicker','Trabalho da Comissão'),pageHeadingLine)
+  pageHeader.append(pageHeading)
+  shell.append(pageHeader)
   const summaryBar=element('div','pg-summary-bar')
   const filters=element('div','pg-controls pg-controls-compact')
-  const heading=element('h2','pg-compact-title','Gantt')
-  heading.setAttribute('aria-label','Cronograma de projetos')
-  filters.append(heading)
   const modeWrap=element('div','pg-mode-wrap')
   modeWrap.append(element('span','pg-caption','VISUALIZAÇÃO'))
   const switcher=element('div','pg-switcher')
