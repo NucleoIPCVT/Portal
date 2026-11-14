@@ -9,7 +9,8 @@ import { renderGanttWorkspace, selectGanttPlanContext } from './planner-gantt-wo
 import { routineMigrationPlan } from './planner-routine-migration.js?v=20261113-unified-v1'
 import {
   parsePlanCycleConfig,planCycleConfigRecord,planCycleConfigId,
-  currentPlanCycle,nextPlanCycle,previousPlanCycle,cycleForPlanTask,planCycleLabel
+  currentPlanCycle,nextPlanCycle,previousPlanCycle,cycleForPlanTask,planCycleLabel,
+  assigneesForPlanCycle
 } from './planner-plan-cycles.js?v=20261113-plan-cycle-v2'
 import { resolveGanttDependencies } from './planner-gantt-dependencies.js?v=20261113-recurring-links-v1'
 import {
@@ -2401,17 +2402,20 @@ function openTask(task = null, defaults = {}) {
   $('task-status').value = current.status
   $('task-priority').value = current.priority
   const repeat = taskRecurrence(current)
-  const storedRotation=repeat
-    ? parseRotationConfig(state.tasks.find(task=>task.id===rotationConfigId(repeat.sourceId))):null
+  const belongsToCycle=Boolean(planCycleConfig(current.planId))
+  const singleCycleInstance=Boolean(current.sourceTaskId && current.sourceTaskId!==current.id)
+  const rotationFamily=repeat?.sourceId||current.sourceTaskId||current.id
+  const storedRotation=(repeat||belongsToCycle)&&!singleCycleInstance&&rotationFamily
+    ?parseRotationConfig(state.tasks.find(item=>item.id===rotationConfigId(rotationFamily))):null
   rotationGroupsByPerson=new Map((storedRotation?.people||[]).map((person,index)=>[
     rotationPersonKey(person),storedRotation.groups[index]
   ]))
-  $('task-repeat-mode').value = repeat ? 'repeat' : 'none'
+  $('task-repeat-mode').value = belongsToCycle?'none':repeat?'repeat':'none'
   $('task-repeat-interval').value = repeat?.interval || 1
   $('task-repeat-unit').value = repeat?.unit || 'week'
   $('task-repeat-weekday').value=String(new Date((current.dueDate||todayISO())+'T12:00:00Z').getUTCDay())
   taskRepeatWeekdayChanged=false
-  $('task-repeat-advance').value = storedRotation?.advance || 'completion'
+  $('task-repeat-advance').value = belongsToCycle?'scheduled':(storedRotation?.advance || 'completion')
   $('task-rotation-mode').value = storedRotation?.mode || 'fixed'
   const dependencies = state.tasks.filter(item => item.planId === current.planId && item.id !== current.id && (!item.deleted || current.dependencyIds?.includes(item.id)))
   const people = [...state.tasks.flatMap(item => item.assignees || []), { name: session.name || '', email: session.email || '' }]
@@ -2464,7 +2468,10 @@ function currentRotationSettings(){
   return {mode:value('task-rotation-mode'),advance:value('task-repeat-advance'),people,groups}
 }
 function updateRotationEditor(){
-  const enabled=value('task-repeat-mode')==='repeat'
+  const selectedTask=byId('tasks',value('task-id'))
+  const cyclePlan=planCycleConfig(value('task-plan'))
+  const singleCycleInstance=Boolean(selectedTask?.sourceTaskId&&selectedTask.sourceTaskId!==selectedTask.id)
+  const enabled=value('task-repeat-mode')==='repeat'||Boolean(cyclePlan&&!singleCycleInstance)
   const mode=value('task-rotation-mode')
   const active=enabled&&mode!=='fixed'
   $('task-rotation-roster').hidden=!active
@@ -2527,20 +2534,42 @@ function updateRotationEditor(){
 function updateRotationPreview(){
   const list=$('task-rotation-preview')
   list.replaceChildren()
-  if(value('task-repeat-mode')!=='repeat')return
+  const cycleConfig=planCycleConfig(value('task-plan'))
+  const existing=byId('tasks',value('task-id'))
+  const singleCycleInstance=Boolean(existing?.sourceTaskId&&existing.sourceTaskId!==existing.id)
+  if(value('task-repeat-mode')!=='repeat'&&(!cycleConfig||singleCycleInstance))return
   try{
     const settings=currentRotationSettings()
-    const draft=taskRepeatDraft()
-    const rule=taskRecurrence(draft)
-    if(!rule||!draft.dueDate)throw new Error('Informe a data e o intervalo da repetição para visualizar o rodízio.')
-    const index=recurrenceCycleIndex(rule,draft.dueDate)
-    for(let n=0;n<4;n++){
-      const date=n===0?draft.dueDate:recurrenceDateAt(rule,index+n)
-      const people=rotationAssigneesForDate({...draft,assignees:settings.people},settings,date)
-      list.append(node('li',{},[
-        node('strong',{text:formatDate(date)}),
-        node('span',{text:people.map(person=>person.name||person.email).join(' + ')||'Sem responsável'})
-      ]))
+    if(cycleConfig){
+      const dueDate=value('task-due')
+      if(!dueDate)throw new Error('Informe a data de entrega para visualizar o rodízio.')
+      const baseline=currentPlanCycle(cycleConfig,dueDate)
+      const offset=Math.round((Date.parse(dueDate+'T12:00:00Z')-
+        Date.parse(baseline+'T12:00:00Z'))/86400000)
+      let cycle=baseline
+      for(let n=0;n<4;n++){
+        if(n)cycle=nextPlanCycle(cycleConfig,cycle)
+        const targetDue=addDays(cycle,offset)
+        const previewTask={...(existing||{}),assignees:settings.people}
+        const people=assigneesForPlanCycle(cycleConfig,previewTask,settings,cycle,targetDue)
+        list.append(node('li',{},[
+          node('strong',{text:formatDate(targetDue)}),
+          node('span',{text:people.map(person=>person.name||person.email).join(' + ')||'Sem responsável'})
+        ]))
+      }
+    }else{
+      const draft=taskRepeatDraft()
+      const rule=taskRecurrence(draft)
+      if(!rule||!draft.dueDate)throw new Error('Informe a data e o intervalo da repetição para visualizar o rodízio.')
+      const index=recurrenceCycleIndex(rule,draft.dueDate)
+      for(let n=0;n<4;n++){
+        const date=n===0?draft.dueDate:recurrenceDateAt(rule,index+n)
+        const people=rotationAssigneesForDate({...draft,assignees:settings.people},settings,date)
+        list.append(node('li',{},[
+          node('strong',{text:formatDate(date)}),
+          node('span',{text:people.map(person=>person.name||person.email).join(' + ')||'Sem responsável'})
+        ]))
+      }
     }
   }catch(error){
     list.append(node('li',{class:'task-rotation-empty',text:error.message}))
@@ -2557,10 +2586,24 @@ function taskRepeatDraft() {
       resetAnchor:taskRepeatWeekdayChanged } : null)
 }
 function updateTaskRepeatFields() {
-  const enabled = value('task-repeat-mode') === 'repeat'
-  $('task-rotation-settings').hidden = !enabled
+  const cycleConfig=planCycleConfig(value('task-plan'))
+  const original=byId('tasks',value('task-id'))
+  const singleCycleInstance=Boolean(original?.sourceTaskId&&original.sourceTaskId!==original.id)
+  const inCycle=Boolean(cycleConfig)
+  const enabled = !inCycle&&value('task-repeat-mode') === 'repeat'
+  const rotationEnabled=inCycle&&!singleCycleInstance
+  $('task-repeat-title-text').textContent=inCycle?'Recorrência do plano':'Repetição'
+  $('task-repeat-mode').closest('.field').hidden=inCycle
+  $('task-repeat-mode').disabled=inCycle
+  $('task-repeat-advance-field').hidden=inCycle
+  $('task-repeat-hint').textContent=inCycle
+    ?singleCycleInstance
+      ?'Esta ocorrência pertence a um ciclo específico. Para alterar o rodízio dos próximos ciclos, edite a demanda original.'
+      :'As datas se repetem pelo plano. Escolha abaixo os responsáveis fixos, rodízio individual ou por grupos.'
+    :'Esta demanda acontece uma única vez.'
+  $('task-rotation-settings').hidden = !(enabled||rotationEnabled)
   $('task-repeat-advance').disabled = !enabled
-  $('task-rotation-mode').disabled = !enabled
+  $('task-rotation-mode').disabled = !(enabled||rotationEnabled)
   $('task-repeat-options').hidden = !enabled
   $('task-repeat-interval').disabled = !enabled
   $('task-repeat-unit').disabled = !enabled
@@ -2580,8 +2623,12 @@ function updateTaskRepeatFields() {
   }
   const hint = $('task-repeat-hint')
   hint.classList.remove('is-error')
-  if (!enabled) {
-    hint.textContent = 'Esta demanda acontece uma única vez.'
+  if (inCycle || !enabled) {
+    hint.textContent=inCycle
+      ?singleCycleInstance
+        ?'Esta edição altera somente esta ocorrência. O rodízio geral fica na demanda original.'
+        :'O plano gera os próximos ciclos automaticamente. O rodízio avança por período, sem depender da conclusão.'
+      :'Esta demanda acontece uma única vez.'
     updateRotationEditor()
     return
   }
@@ -2625,6 +2672,7 @@ $('task-due').addEventListener('input', () => {
 })
 $('task-plan').addEventListener('change', () => {
   fillBucketSelect($('task-bucket'), value('task-plan'))
+  updateTaskRepeatFields()
   taskEditor.setDependencies(liveTasks().filter(task => task.planId === value('task-plan') && task.id !== value('task-id')))
 })
 $('task-bucket').addEventListener('change', () => {
@@ -2653,13 +2701,23 @@ $('task-form').addEventListener('submit', async event => {
       if (!linked?.startDate || !Number.isInteger(task.dueOffsetDays) || Math.abs(task.dueOffsetDays) > 365) throw new Error('Selecione um evento e um intervalo de até 365 dias para o prazo relativo.')
       task.dueDate = addDays(linked.startDate, task.dueOffsetDays)
     }
-    task = setTaskRecurrence(task, value('task-repeat-mode') === 'repeat'
-      ? { interval: Number(value('task-repeat-interval')), unit: value('task-repeat-unit'),
-        resetAnchor:taskRepeatWeekdayChanged } : null)
-    const config=taskRecurrence(task)?currentRotationSettings():null
+    const cycleConfig=planCycleConfig(task.planId)
+    const singleCycleInstance=Boolean(previous?.sourceTaskId&&previous.sourceTaskId!==previous.id)
+    if(!cycleConfig){
+      task = setTaskRecurrence(task, value('task-repeat-mode') === 'repeat'
+        ? { interval: Number(value('task-repeat-interval')), unit: value('task-repeat-unit'),
+          resetAnchor:taskRepeatWeekdayChanged } : null)
+    }
+    const config=cycleConfig&&!singleCycleInstance
+      ?{...currentRotationSettings(),
+        sourceId:taskRecurrence(task)?.sourceId||task.id,advance:'scheduled'}
+      :!cycleConfig&&taskRecurrence(task)?currentRotationSettings():null
     if(config){
       rotationConfigRecord(task,config)
-      task.assignees=rotationAssigneesForDate(task,config,task.dueDate)
+      task.assignees=cycleConfig
+        ?assigneesForPlanCycle(cycleConfig,task,config,
+          currentPlanCycle(cycleConfig,task.dueDate),task.dueDate)
+        :rotationAssigneesForDate(task,config,task.dueDate)
     }
     const errors = validateTask(task, state.tasks)
     if (errors.length) throw new Error(errors.join(' '))
