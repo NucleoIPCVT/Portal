@@ -480,3 +480,8 @@ html[data-portal-theme="dark"] .portal-page.portal-harmonia .portal-tools::befor
 @media(prefers-reduced-motion:reduce) {
   .portal-page.portal-harmonia *, .portal-page.portal-harmonia *::before, .portal-page.portal-harmonia *::after {transition:none!important;scroll-behavior:auto!important;}
 }
+
+/* Logo da igreja branca exclusivamente no modo escuro. */
+html[data-portal-theme="dark"] .portal-page.portal-harmonia .footer-lockup img {
+  filter: brightness(0) invert(1);
+}
