@@ -47,9 +47,13 @@ function spanOf(items){
   }
 }
 const inWindow=(range,start,end)=>range&&range.start<=end&&range.end>=start
-function recurrenceKey(task,recurrence){
+function recurrenceKey(task,recurrence,planCycleConfigOf){
   const rule=recurrence(task)
-  const family=rule?.sourceId||
+  // Os ciclos de um plano compartilham o mesmo modelo, mesmo sem recurrenceId.
+  // Tarefas excepcionais (somente de um ciclo) nunca formam uma série.
+  const planFamily=planCycleConfigOf?.(task.planId)&&task.templateKey!=='plan-once-v1'
+    ? (task.sourceTaskId||rule?.sourceId||task.id) : ''
+  const family=planFamily||rule?.sourceId||
     (task.recurrenceId?.startsWith('repeat-v1:')?task.sourceTaskId:'')||
     task.routineId||''
   return family?String(task.planId)+'/'+String(task.bucketId||'')+'/'+family:''
@@ -65,7 +69,7 @@ function taskCss(task,today){
   if(dateOk(task.dueDate)&&task.dueDate<today)return 'is-late'
   return task.status==='doing'?'is-doing':'is-todo'
 }
-function buildPlanRows(plan,items,buckets,recurrence){
+function buildPlanRows(plan,items,buckets,recurrence,planCycleConfigOf){
   const rows=[]
   const progress=items.length?Math.round(items.filter(task=>task.status==='done').length/items.length*100):0
   rows.push({kind:'plan',id:plan.id,name:plan.name,items,span:spanOf(items),progress})
@@ -83,7 +87,7 @@ function buildPlanRows(plan,items,buckets,recurrence){
     if(viewState.collapsedBuckets.has(bucketKey))continue
     const families=new Map()
     for(const task of groupItems){
-      const family=viewState.groupRecurrences?recurrenceKey(task,recurrence):''
+      const family=viewState.groupRecurrences?recurrenceKey(task,recurrence,planCycleConfigOf):''
       const key=family||'task:'+task.id
       if(!families.has(key))families.set(key,[])
       families.get(key).push(task)
@@ -94,7 +98,7 @@ function buildPlanRows(plan,items,buckets,recurrence){
         const row={kind:'series',key,name:members[0].title,items:members,span:spanOf(members)}
         rows.push(row)
         if(viewState.expandedSeries.has(key))for(const task of members)rows.push({kind:'task',task,occurrence:true})
-      }else for(const task of members)rows.push({kind:'task',task,occurrence:Boolean(recurrenceKey(task,recurrence))})
+      }else for(const task of members)rows.push({kind:'task',task,occurrence:Boolean(recurrenceKey(task,recurrence,planCycleConfigOf))})
     }
   }
   return rows
@@ -135,17 +139,18 @@ export function renderGanttWorkspace(ctx){
   const rows=[]
   for(const plan of chosen){
     const within=dated.filter(task=>task.planId===plan.id)
-    rows.push(...buildPlanRows(plan,within,buckets,recurrence))
+    rows.push(...buildPlanRows(plan,within,buckets,recurrence,planCycleConfigOf))
   }
   const taskCount=dated.length,completed=dated.filter(t=>t.status==='done').length
   const overdue=dated.filter(t=>t.status!=='done'&&dateOk(t.dueDate)&&t.dueDate<today).length
   const shell=element('section','pg-workspace')
-  const intro=element('div','pg-intro')
-  const introText=element('div','pg-intro-text')
-  introText.append(element('span','pg-eyebrow','PLANEJAMENTO E ACOMPANHAMENTO'),
-    element('h2','pg-title','Cronograma de projetos'),
-    element('p','pg-subtitle','Acompanhe seus planos, prazos, responsáveis e dependências em uma única linha do tempo.'))
-  intro.append(introText)
+  const summaryBar=element('div','pg-summary-bar')
+  const filters=element('div','pg-controls pg-controls-compact')
+  const heading=element('h2','pg-compact-title','Gantt')
+  heading.setAttribute('aria-label','Cronograma de projetos')
+  filters.append(heading)
+  const modeWrap=element('div','pg-mode-wrap')
+  modeWrap.append(element('span','pg-caption','VISUALIZAÇÃO'))
   const switcher=element('div','pg-switcher')
   const modeButton=(id,name)=>{
     const btn=control(name,()=>{
@@ -159,11 +164,9 @@ export function renderGanttWorkspace(ctx){
     btn.setAttribute('aria-pressed',String(viewState.mode===id))
     return btn
   }
-  switcher.append(modeButton('focus','Plano em foco'),modeButton('portfolio','Portfólio'))
-  intro.append(switcher)
-  shell.append(intro)
-
-  const filters=element('div','pg-controls')
+  switcher.append(modeButton('focus','Um plano'),modeButton('portfolio','Vários planos'))
+  modeWrap.append(switcher)
+  filters.append(modeWrap)
   const pickerWrap=element('div','pg-picker-wrap')
   pickerWrap.append(element('span','pg-caption','PLANOS / PROJETOS'))
   const picker=element('details','pg-plan-picker')
@@ -222,14 +225,14 @@ export function renderGanttWorkspace(ctx){
   }
   picker.append(summary,menu);pickerWrap.append(picker);filters.append(pickerWrap)
   const zoomWrap=element('div','pg-zoom-wrap')
-  zoomWrap.append(element('span','pg-caption','ESCALA DA LINHA DO TEMPO'))
+  zoomWrap.append(element('span','pg-caption','ESCALA'))
   const zoom=element('div','pg-zoom')
   for(const [id,label] of [['weeks','Semanas'],['months','Meses'],['quarter','Trimestre']]){
     const choice=control(label,()=>{viewState.zoom=id;render()},'pg-zoom-choice'+(viewState.zoom===id?' is-active':''))
     choice.setAttribute('aria-pressed',String(viewState.zoom===id));zoom.append(choice)
   }
   zoomWrap.append(zoom);filters.append(zoomWrap)
-  shell.append(filters)
+  summaryBar.append(filters)
 
   const metrics=element('div','pg-metrics')
   const metricData=[
@@ -244,30 +247,39 @@ export function renderGanttWorkspace(ctx){
     texts.append(element('span','',name),element('strong','',value))
     item.append(texts,element('span','pg-metric-icon',icon));metrics.append(item)
   }
-  shell.append(metrics)
+  summaryBar.append(metrics)
+  shell.append(summaryBar)
 
   const card=element('div','pg-card')
   const cardHeader=element('div','pg-card-heading')
-  const heading=element('div','pg-card-text')
-  heading.append(element('h3','',viewState.mode==='focus'?(chosen[0]?.name||'Nenhum plano selecionado'):'Visão geral dos planos'),
+  const cardTitle=element('div','pg-card-text')
+  cardTitle.append(element('h3','',viewState.mode==='focus'?(chosen[0]?.name||'Nenhum plano selecionado'):'Visão geral dos planos'),
     element('small','',dateLabel(start,{month:'long',year:'numeric'})+' a '+dateLabel(end,{month:'long',year:'numeric'})+
       ' · '+resolved.links.length+' vínculo(s) no período'))
-  cardHeader.append(heading)
+  cardHeader.append(cardTitle)
   const toolbar=element('div','pg-toolbar')
-  const toggleLinks=control(viewState.showAllLinks?'Dependências: todas':'Dependências: em foco',
+  const toggleLinks=control('Destacar dependências',
     ()=>{viewState.showAllLinks=!viewState.showAllLinks;render()},'pg-tool-button')
-  toggleLinks.setAttribute('aria-pressed',String(viewState.showAllLinks))
-  const toggleSeries=control(viewState.groupRecurrences?'Recorrências agrupadas':'Recorrências detalhadas',
+  toggleLinks.setAttribute('aria-pressed',String(!viewState.showAllLinks))
+  toggleLinks.title=viewState.showAllLinks
+    ? 'Exibindo todas as conexões. Clique para destacar apenas as da demanda em foco.'
+    : 'Destacando conexões em foco quando existem muitas setas. Clique para exibir todas.'
+  const toggleSeries=control('Agrupar repetições',
     ()=>{viewState.groupRecurrences=!viewState.groupRecurrences;render()},'pg-tool-button')
   toggleSeries.setAttribute('aria-pressed',String(viewState.groupRecurrences))
+  toggleSeries.title=viewState.groupRecurrences
+    ? 'As execuções repetidas aparecem agrupadas. Clique para detalhar cada uma.'
+    : 'Cada execução aparece separada. Clique para reuni-las por demanda.'
   toolbar.append(toggleLinks,toggleSeries)
   if(chosen.some(plan=>planCycleConfigOf?.(plan.id))){
-    const scope=control(viewState.cycleOnly?'Ciclo selecionado':'Todos os ciclos',()=>{
+    const scope=control('Apenas este ciclo',()=>{
       viewState.cycleOnly=!viewState.cycleOnly
       if(viewState.cycleOnly&&recurringFocused)viewState.cursor=cycleDateOf(viewState.focusId)||today
       render()
     },'pg-tool-button')
-    scope.title='Alternar entre execuções selecionadas e histórico completo dos planos recorrentes'
+    scope.title=viewState.cycleOnly
+      ? 'Exibindo apenas o ciclo escolhido. Clique para mostrar também outros ciclos.'
+      : 'Exibindo o histórico de ciclos. Clique para mostrar apenas o selecionado.'
     scope.setAttribute('aria-pressed',String(viewState.cycleOnly))
     toolbar.append(scope)
     if(recurringFocused&&viewState.cycleOnly){
