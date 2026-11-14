@@ -69,3 +69,8 @@ body.pm-active #planner-app .pm-cycle-today:hover{background:#dfeee0}
   background:#344a39;border-color:#4a7152;
 }
 :root[data-theme=dark] .pg-workspace .pg-cycle-date{color:#d3e7d6}
+
+/* Evita que estilos de campos reexibam os controles de repetição individual. */
+body.pm-active #planner-app #task-repeat-advance-field[hidden],
+body.pm-active #planner-app .task-repeat-section .field[hidden],
+body.pm-active #planner-app #task-repeat-title .optional-tag[hidden]{display:none!important}
