@@ -125,8 +125,8 @@ export function renderGanttWorkspace(ctx){
     viewState.cycleFocusPlan=viewState.focusId
   }
   if(!recurringFocused)viewState.cycleFocusPlan=''
-  const totalDays={weeks:35,months:91,quarter:182}[viewState.zoom]||35
-  const step={weeks:7,months:7,quarter:14}[viewState.zoom]||7
+  const totalDays={days:14,weeks:35,months:91,quarter:182}[viewState.zoom]||35
+  const step={days:1,weeks:7,months:7,quarter:14}[viewState.zoom]||7
   const start=monday(viewState.cursor),end=add(start,totalDays-1)
   const relevant=tasks.filter(task=>{
     if(!selectedIds.includes(task.planId))return false
@@ -232,7 +232,7 @@ export function renderGanttWorkspace(ctx){
   const zoomWrap=element('div','pg-zoom-wrap')
   zoomWrap.append(element('span','pg-caption','ESCALA'))
   const zoom=element('div','pg-zoom')
-  for(const [id,label] of [['weeks','Semanas'],['months','Meses'],['quarter','Trimestre']]){
+  for(const [id,label] of [['days','Dias'],['weeks','Semanas'],['months','Meses'],['quarter','Trimestre']]){
     const choice=control(label,()=>{viewState.zoom=id;render()},'pg-zoom-choice'+(viewState.zoom===id?' is-active':''))
     choice.setAttribute('aria-pressed',String(viewState.zoom===id));zoom.append(choice)
   }
@@ -316,7 +316,7 @@ export function renderGanttWorkspace(ctx){
       render()
     },'pg-tool-button'))
   }
-  const shift=delta=>{viewState.cursor=add(viewState.cursor,delta*({weeks:28,months:84,quarter:182}[viewState.zoom]||28));render()}
+  const shift=delta=>{viewState.cursor=add(viewState.cursor,delta*({days:7,weeks:28,months:84,quarter:182}[viewState.zoom]||28));render()}
   toolbar.append(control('‹',()=>shift(-1),'pg-pager'),control('Hoje',()=>{viewState.cursor=today;render()},'pg-pager pg-today'),
     control('›',()=>shift(1),'pg-pager'))
   cardHeader.append(toolbar);card.append(cardHeader)
@@ -350,7 +350,7 @@ export function renderGanttWorkspace(ctx){
   resize.setAttribute('aria-valuemin',String(minimumOutline))
   resize.setAttribute('aria-valuemax',String(maximumOutline))
   resize.title='Arraste para ajustar os nomes. Duplo clique para restaurar.'
-  const measuredWidth=()=>Math.round(tree.getBoundingClientRect().width)||290
+  const measuredWidth=()=>Math.round(tree.offsetWidth)||290
   let latestWidth=savedWidth
   const currentWidth=()=>latestWidth??measuredWidth()
   const setWidth=(width,persist=false)=>{
@@ -373,7 +373,10 @@ export function renderGanttWorkspace(ctx){
     document.body.classList.add('pg-column-resizing')
   })
   resize.addEventListener('pointermove',event=>{
-    if(resizing)setWidth(originWidth+event.clientX-originX)
+    if(resizing){
+      const scale=tree.offsetWidth ? tree.getBoundingClientRect().width/tree.offsetWidth : 1
+      setWidth(originWidth+(event.clientX-originX)/(scale||1))
+    }
   })
   const finishResize=()=>{
     if(!resizing)return
@@ -411,7 +414,9 @@ export function renderGanttWorkspace(ctx){
   for(let day=0;day<totalDays;day+=step){
     const length=Math.min(step,totalDays-day)
     const date=add(start,day)
-    const tick=element('span','pg-tick',dateLabel(date,{day:'2-digit',month:'short'}))
+    const tick=element('span','pg-tick',viewState.zoom==='days'
+      ?dateLabel(date,{day:'2-digit',month:'2-digit'})
+      :dateLabel(date,{day:'2-digit',month:'short'}))
     tick.style.width=(length/totalDays*100)+'%'
     tickHead.append(tick)
   }
@@ -559,11 +564,14 @@ export function renderGanttWorkspace(ctx){
     const bounds=timeline.getBoundingClientRect()
     const width=timeline.clientWidth,height=timeline.scrollHeight
     if(!width||!height)return
+    // getBoundingClientRect está na escala visual (zoom do tablet),
+    // enquanto viewBox utiliza pixels CSS de layout. Normalize ambos.
+    const scale=bounds.width/width||1
     const nodes=[...bars.values()].map(({task,bar})=>{
       const b=bar.getBoundingClientRect()
       return {id:task.id,title:task.title,
-        left:b.left-bounds.left,right:b.right-bounds.left,
-        y:(b.top+b.bottom)/2-bounds.top}
+        left:(b.left-bounds.left)/scale,right:(b.right-bounds.left)/scale,
+        y:((b.top+b.bottom)/2-bounds.top)/scale}
     })
     const canDraw=resolved.links.filter(link=>bars.has(link.from)&&bars.has(link.to))
     const focusId=(viewState.hovered&&bars.has(viewState.hovered)?viewState.hovered:'')||
