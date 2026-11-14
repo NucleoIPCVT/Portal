@@ -1,0 +1,166 @@
+/* IPCVT Planner | Gantt: topo compacto.
+   Uma única faixa: controles à esquerda, indicadores à direita.
+   Redução responsiva sem esconder filtros ou números importantes. */
+@media screen{
+  body.pm-active #planner-app .pg-workspace{gap:11px}
+  body.pm-active #planner-app .pg-summary-bar{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:14px;position:relative;z-index:12;
+    min-width:0;padding:10px 12px;
+    border:1px solid var(--pg-border);border-radius:8px;
+    background:var(--pg-card);
+  }
+  body.pm-active #planner-app .pg-summary-bar .pg-controls{
+    display:flex;align-items:end;justify-content:flex-start;
+    flex:1 1 610px;gap:8px 12px;flex-wrap:nowrap;
+    min-width:0;padding:0;margin:0;
+    border:0;border-radius:0;background:transparent;
+  }
+  body.pm-active #planner-app .pg-compact-title{
+    margin:0 3px 5px 0!important;padding:0;
+    flex:0 0 auto;align-self:end;
+    color:#315740;font-size:15px!important;font-weight:790!important;
+    letter-spacing:-.25px;line-height:34px;
+  }
+  body.pm-active #planner-app .pg-mode-wrap,
+  body.pm-active #planner-app .pg-zoom-wrap{
+    display:flex;flex-direction:column;gap:3px;flex:0 0 auto;
+    min-width:0;
+  }
+  body.pm-active #planner-app .pg-summary-bar .pg-caption{
+    margin:0;color:#819489;font-size:9px;font-weight:770;
+    line-height:1.2;letter-spacing:.45px;
+  }
+  body.pm-active #planner-app .pg-summary-bar .pg-switcher,
+  body.pm-active #planner-app .pg-summary-bar .pg-zoom{
+    display:flex;gap:2px;padding:2px;align-items:center;
+    border-radius:6px;
+  }
+  body.pm-active #planner-app .pg-summary-bar .pg-switch,
+  body.pm-active #planner-app .pg-summary-bar .pg-zoom-choice{
+    min-height:32px;padding:6px 9px;
+    font-size:10px;font-weight:740;
+  }
+  body.pm-active #planner-app .pg-summary-bar .pg-picker-wrap{
+    flex:1 1 190px;min-width:155px;max-width:275px;
+    display:flex;flex-direction:column;gap:3px;
+  }
+  body.pm-active #planner-app .pg-summary-bar .pg-plan-picker>summary{
+    min-height:36px;padding:6px 9px;font-size:11px;
+  }
+  body.pm-active #planner-app .pg-summary-bar .pg-picker-icon{
+    width:22px;height:22px;flex:0 0 22px;
+  }
+  body.pm-active #planner-app .pg-summary-bar .pg-metrics{
+    display:grid;grid-template-columns:repeat(4,minmax(80px,1fr));
+    gap:6px;align-items:stretch;
+    flex:0 1 420px;min-width:340px;margin:0;
+  }
+  body.pm-active #planner-app .pg-summary-bar .pg-metric{
+    display:flex;align-items:center;justify-content:center;min-width:0;
+    min-height:51px;padding:7px 8px;
+    box-shadow:none;border-radius:6px;
+  }
+  body.pm-active #planner-app .pg-summary-bar .pg-metric div{
+    display:flex;flex-direction:column-reverse;
+    align-items:flex-start;gap:3px;min-width:0;
+    width:100%;
+  }
+  body.pm-active #planner-app .pg-summary-bar .pg-metric div>strong{
+    font-size:18px;line-height:1.1;letter-spacing:-.5px;
+  }
+  body.pm-active #planner-app .pg-summary-bar .pg-metric div>span{
+    font-size:9px;line-height:1.25;
+    overflow-wrap:anywhere;
+  }
+  body.pm-active #planner-app .pg-summary-bar .pg-metric-icon{display:none}
+  body.pm-active #planner-app .pg-card-heading{min-height:49px;padding:8px 12px}
+  body.pm-active #planner-app .pg-card-text h3{font-size:12px!important}
+  body.pm-active #planner-app .pg-card-text small{font-size:9px}
+  body.pm-active #planner-app .pg-toolbar{gap:5px}
+  body.pm-active #planner-app .pg-tool-button{min-height:29px;font-size:10px;padding:5px 8px}
+  body.pm-active #planner-app .pg-tool-button[aria-pressed=true]{
+    background:#e2eee4;border-color:#b4d0bb;color:#315d41;
+  }
+  body.pm-active #planner-app .pg-tool-button[aria-pressed=true]::before{
+    content:'✓';margin-right:5px;font-size:10px;font-weight:850;
+  }
+}
+/* Em monitores médios, o cabeçalho pode quebrar internamente,
+   mas continua sendo uma única faixa visual. */
+@media screen and (max-width:1640px){
+  body.pm-active #planner-app .pg-summary-bar{flex-wrap:wrap}
+  body.pm-active #planner-app .pg-summary-bar .pg-controls{flex:1 1 570px}
+  body.pm-active #planner-app .pg-summary-bar .pg-metrics{flex:1 1 355px}
+}
+@media screen and (max-width:1200px){
+  body.pm-active #planner-app .pg-summary-bar .pg-controls{flex-wrap:wrap}
+  body.pm-active #planner-app .pg-summary-bar .pg-metrics{min-width:0;flex:1 1 100%}
+  body.pm-active #planner-app .pg-summary-bar .pg-picker-wrap{max-width:none}
+}
+@media screen and (max-width:600px){
+  body.pm-active #planner-app .pg-summary-bar{gap:9px;padding:10px}
+  body.pm-active #planner-app .pg-summary-bar .pg-controls{
+    flex:1 1 100%;gap:9px 8px;align-items:end;
+  }
+  body.pm-active #planner-app .pg-compact-title{font-size:13px!important;line-height:32px}
+  body.pm-active #planner-app .pg-summary-bar .pg-mode-wrap{flex:1 1 215px}
+  body.pm-active #planner-app .pg-summary-bar .pg-picker-wrap{flex:1 1 175px}
+  body.pm-active #planner-app .pg-summary-bar .pg-zoom-wrap{flex:1 1 215px}
+  body.pm-active #planner-app .pg-summary-bar .pg-zoom-choice{flex:1}
+  body.pm-active #planner-app .pg-summary-bar .pg-metrics{
+    grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;
+  }
+  body.pm-active #planner-app .pg-summary-bar .pg-metric{min-height:40px;padding:7px 9px}
+  body.pm-active #planner-app .pg-summary-bar .pg-metric div{flex-direction:row;align-items:center;justify-content:space-between;gap:8px}
+  body.pm-active #planner-app .pg-summary-bar .pg-metric div>strong{font-size:16px}
+  body.pm-active #planner-app .pg-summary-bar .pg-metric div>span{font-size:10px}
+}
+
+/* Grafite: indicadores e controles neutros, estados selecionados verde-sálvia. */
+@media screen{
+  :root[data-theme=dark] body.pm-active #planner-app .pg-summary-bar{
+    background:#292f33;border-color:#424c4f;
+  }
+  :root[data-theme=dark] body.pm-active #planner-app .pg-compact-title{
+    color:#d6e9db;
+  }
+  :root[data-theme=dark] body.pm-active #planner-app .pg-summary-bar .pg-caption{
+    color:#adc0b3;
+  }
+  :root[data-theme=dark] body.pm-active #planner-app .pg-summary-bar .pg-metric{
+    background:#333b3d;border-color:#485558;
+  }
+  :root[data-theme=dark] body.pm-active #planner-app .pg-summary-bar .pg-metric div>span{
+    color:#b4c4ba;
+  }
+  :root[data-theme=dark] body.pm-active #planner-app .pg-summary-bar .pg-metric div>strong{
+    color:#e0f0e5;
+  }
+  :root[data-theme=dark] body.pm-active #planner-app .pg-summary-bar .pg-metric.has-alert div>strong{
+    color:#efbd8e;
+  }
+  :root[data-theme=dark] body.pm-active #planner-app .pg-summary-bar .pg-switcher,
+  :root[data-theme=dark] body.pm-active #planner-app .pg-summary-bar .pg-zoom{
+    background:#343e40;border-color:#4c5b57;
+  }
+  :root[data-theme=dark] body.pm-active #planner-app .pg-summary-bar .pg-switch,
+  :root[data-theme=dark] body.pm-active #planner-app .pg-summary-bar .pg-zoom-choice{
+    color:#c5d8cb;
+  }
+  :root[data-theme=dark] body.pm-active #planner-app .pg-summary-bar .pg-switch.is-active,
+  :root[data-theme=dark] body.pm-active #planner-app .pg-summary-bar .pg-zoom-choice.is-active{
+    background:#3c624c;color:#f0faf2;
+  }
+  :root[data-theme=dark] body.pm-active #planner-app .pg-tool-button[aria-pressed=true]{
+    background:#3d5d48;border-color:#6f977c;color:#f0faf2;
+  }
+  :root[data-theme=dark] body.pm-active #planner-app .pg-tool-button[aria-pressed=true]:hover{
+    background:#466f54;color:#fff;
+  }
+}
+@media print{
+  body.pm-active #planner-app .pg-summary-bar .pg-metrics,
+  body.pm-active #planner-app .pg-summary-bar .pg-controls{display:none!important}
+  body.pm-active #planner-app .pg-summary-bar{display:none!important}
+}
