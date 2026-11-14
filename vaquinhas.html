@@ -46,7 +46,7 @@
         })();
     </script>
     <link rel="stylesheet" href="vaquinhas-ui.css?v=20261107-titulos-privados">
-    <link rel="stylesheet" href="vaquinhas-nucleo.css?v=20261114-verde-bege-v2">
+    <link rel="stylesheet" href="vaquinhas-nucleo.css?v=20261114-verde-bege-contraste-v3">
 </head>
 <body class="campaign-page min-h-screen font-sans selection:bg-presb-gold selection:text-presb-green">
 
@@ -63,7 +63,7 @@
                 <span class="campaign-brand-copy">Vaquinhas IPCVT<small>NÚCLEO IPCVT</small></span>
             </a>
             <nav aria-label="Navegação">
-                <button id="nav-btn-list" onclick="window.switchView('list')">Vaquinhas</button>
+                <span id="nav-btn-list" hidden aria-hidden="true"></span>
                 <button id="nav-btn-form" onclick="window.requireAuth('create')"><i data-lucide="plus" aria-hidden="true"></i><span>Nova arrecadação</span></button>
                 <button id="vaquinhas-session-button" onclick="window.toggleManagementLogin()" aria-label="Entrar com Google">Entrar</button>
                 <a href="index.html" class="portal-return" aria-label="Voltar ao Portal IPCVT"><i data-lucide="arrow-left" aria-hidden="true"></i><span>Portal IPCVT</span></a>
