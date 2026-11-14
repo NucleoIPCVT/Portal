@@ -2592,7 +2592,8 @@ function updateTaskRepeatFields() {
   const inCycle=Boolean(cycleConfig)
   const enabled = !inCycle&&value('task-repeat-mode') === 'repeat'
   const rotationEnabled=inCycle&&!singleCycleInstance
-  $('task-repeat-title-text').textContent=inCycle?'Recorrência do plano':'Repetição'
+  $('task-repeat-title-text').textContent=inCycle?'Responsáveis por ciclo':'Repetição'
+  $('task-repeat-title').querySelector('.optional-tag').hidden=inCycle
   $('task-repeat-mode').closest('.field').hidden=inCycle
   $('task-repeat-mode').disabled=inCycle
   $('task-repeat-advance-field').hidden=inCycle
@@ -2702,6 +2703,7 @@ $('task-form').addEventListener('submit', async event => {
       task.dueDate = addDays(linked.startDate, task.dueOffsetDays)
     }
     const cycleConfig=planCycleConfig(task.planId)
+    if(cycleConfig&&!task.dueDate)throw new Error('Informe a data de entrega da demanda no ciclo de referência do plano.')
     const singleCycleInstance=Boolean(previous?.sourceTaskId&&previous.sourceTaskId!==previous.id)
     if(!cycleConfig){
       task = setTaskRecurrence(task, value('task-repeat-mode') === 'repeat'
