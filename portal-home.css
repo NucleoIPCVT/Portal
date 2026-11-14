@@ -1,381 +1,482 @@
-/* Capa do Portal IPCVT — identidade presbiteriana em verde e bege pastel.
-   Este arquivo é exclusivo do index.html; os outros aplicativos mantêm seus estilos. */
+/* Portal IPCVT, capa Harmonia. Escopo exclusivo da página inicial. */
 :root {
-  --portal-ink: #102f27;
-  --portal-green: #137344;
-  --portal-sage: #dcebdd;
-  --portal-beige: #f7ecdf;
-  --portal-card: #fffaf2;
+  --portal-ink:#23332c;
+  --portal-muted:#4c5a50;
+  --portal-green:#47694f;
+  --portal-green-dark:#315740;
+  --portal-lime:#a4c78e;
+  --portal-line:#c8d0bf;
+  --portal-cream:#f7f2ea;
+}
+html { scroll-behavior:smooth; }
+.portal-page.portal-harmonia {
+  --hero-title:#23332c;
+  --hero-text:#35443b;
+  --header-bg:rgba(250,247,241,.93);
+  --header-border:#deddd3;
+  --accent:#416b4b;
+  --accent-bright:#648b67;
+  --link-text:#2c4935;
+  --button-bg:#f7f4ec;
+  --button-border:#c8cfbf;
+  --footer-color:#566b5b;
+  color:var(--portal-ink);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  overflow-x:clip;
+  background:
+    radial-gradient(ellipse at 0% 55%,rgba(196,217,199,.34),transparent 34%),
+    radial-gradient(ellipse at 89% 6%,rgba(236,201,170,.28),transparent 46%),
+    linear-gradient(115deg,#fbf8f3 0%,#f7f3ed 58%,#f0eee5 100%);
+}
+.portal-page.portal-harmonia a:focus-visible,
+.portal-page.portal-harmonia button:focus-visible { outline:3px solid #729b6c; outline-offset:4px; }
+.portal-page.portal-harmonia .portal-bar {
+  width:100%;max-width:none;min-height:78px;margin:0;
+  padding:9px clamp(22px,3.8vw,65px);
+  display:flex;justify-content:space-between;align-items:center;gap:26px;
+  background:var(--header-bg);border-bottom:1px solid var(--header-border);
+  position:relative;z-index:20;backdrop-filter:blur(18px);
+}
+.portal-page.portal-harmonia .portal-brand {
+  display:inline-flex;align-items:center;gap:15px;flex-shrink:0;
+  text-decoration:none;color:var(--hero-title);letter-spacing:normal;
+}
+.portal-page.portal-harmonia .brand-mark {width:63px;height:59px;object-fit:contain;border:0;border-radius:0;}
+.portal-page.portal-harmonia .brand-wordmark {
+  display:block;color:var(--hero-title);
+  font:600 clamp(23px,2vw,31px)/.92 'Cormorant Garamond',Georgia,serif;
+  white-space:nowrap;letter-spacing:-.025em;
+}
+.portal-page.portal-harmonia .brand-wordmark small {
+  display:block;color:var(--hero-title);margin-top:9px;text-align:center;
+  font:600 9px/1.1 Inter,Arial,sans-serif;letter-spacing:.33em;
+}
+.portal-page.portal-harmonia .portal-menu {display:flex;align-items:center;gap:clamp(15px,2.2vw,39px);min-width:0;}
+.portal-page.portal-harmonia .portal-menu a {
+  display:inline-flex;gap:7px;align-items:center;
+  color:var(--hero-title);text-decoration:none;white-space:nowrap;
+  padding:14px 1px 13px;border-bottom:2px solid transparent;
+  font:600 clamp(16px,1.35vw,20px)/1 'Cormorant Garamond',Georgia,serif;
+  transition:color .2s,border-color .2s;
+}
+.portal-menu i {font-size:12px;}
+.portal-page.portal-harmonia .portal-menu a:hover,
+.portal-page.portal-harmonia .portal-menu a.is-current {
+  color:var(--accent);border-bottom-color:var(--accent);
+}
+.portal-header-actions {display:flex;align-items:center;flex-shrink:0;gap:10px;padding-left:20px;border-left:1px solid var(--header-border);}
+.portal-page.portal-harmonia .portal-theme-toggle,
+.portal-page.portal-harmonia .portal-menu-toggle {
+  color:var(--link-text);background:var(--button-bg);
+  border:1px solid var(--button-border);border-radius:99px;
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  min-height:40px;padding:8px 15px;cursor:pointer;
+  font:600 11px/1.2 Inter,Arial,sans-serif;
+  box-shadow:0 2px 8px #263b2b09;transition:background .2s,transform .2s;
+}
+.portal-page.portal-harmonia .portal-theme-toggle i {font-size:19px;}
+.portal-page.portal-harmonia .portal-theme-toggle:hover,
+.portal-page.portal-harmonia .portal-menu-toggle:hover {transform:translateY(-1px);background:rgba(160,190,152,.22);}
+.portal-page.portal-harmonia .portal-menu-toggle {display:none;padding:8px 10px;min-width:42px;}
+.portal-page.portal-harmonia .portal-menu-toggle i {font-size:22px;}
+
+.portal-page.portal-harmonia .portal-main {width:100%;max-width:none;margin:0;padding:0;display:block;flex:1;}
+.portal-page.portal-harmonia .portal-hero {
+  position:relative;isolation:isolate;min-height:500px;
+  display:flex;align-items:center;overflow:hidden;
+}
+.portal-page.portal-harmonia .portal-hero::before {
+  content:"";position:absolute;z-index:-2;inset:0;
+  background:
+    radial-gradient(ellipse at 6% 90%,rgba(194,212,188,.24),transparent 35%),
+    linear-gradient(108deg,rgba(255,251,246,.95) 0%,rgba(255,250,243,.72) 33%,transparent 65%);
+}
+.portal-page.portal-harmonia .portal-hero-ornament {
+  position:absolute;z-index:-1;left:-240px;top:-160px;width:600px;height:640px;
+  border:1px solid rgba(141,167,142,.17);border-radius:50%;transform:rotate(-24deg);
+  box-shadow:50px 40px 0 -49px rgba(145,168,136,.24),110px 80px 0 -109px rgba(145,168,136,.17);
+}
+.portal-page.portal-harmonia .portal-intro {
+  width:min(45%,720px);max-width:none;z-index:3;position:relative;
+  padding:45px 0 44px clamp(32px,4.1vw,72px);
+}
+.portal-page.portal-harmonia .eyebrow {
+  display:flex;gap:15px;align-items:center;white-space:nowrap;
+  color:var(--hero-text);text-transform:uppercase;
+  font:700 clamp(9px,.69vw,11px)/1.5 Inter,Arial,sans-serif;letter-spacing:.29em;
+}
+.portal-page.portal-harmonia .eyebrow::before{display:none;}
+.portal-page.portal-harmonia .eyebrow::after {content:"";display:block;width:66px;height:1px;background:var(--accent-bright);}
+.portal-page.portal-harmonia .portal-intro h1 {
+  color:var(--hero-title);font:500 clamp(59px,5.65vw,98px)/.84 'Cormorant Garamond',Georgia,serif;
+  letter-spacing:-.045em;margin:30px 0 22px;
+}
+.portal-page.portal-harmonia .portal-intro h1 em {font-weight:500;color:var(--accent);letter-spacing:-.055em;}
+.portal-page.portal-harmonia .portal-intro p {
+  margin:0;max-width:460px;padding:0;border:0;
+  color:var(--hero-text);font:400 clamp(14px,1.11vw,18px)/1.43 Inter,Arial,sans-serif;
+}
+.portal-attributes {display:flex;align-items:center;gap:0;margin:28px 0 30px;}
+.portal-attributes span {
+  display:flex;align-items:center;gap:11px;padding:0 18px;
+  color:var(--hero-text);font:500 11px/1.45 Inter,Arial,sans-serif;white-space:nowrap;
+}
+.portal-attributes span:first-child{padding-left:0;}
+.portal-attributes span+span {border-left:1px solid var(--button-border);}
+.portal-attributes i {font-size:28px;color:var(--accent);}
+.portal-hero-actions{display:flex;align-items:center;gap:13px;flex-wrap:wrap;}
+.portal-page.portal-harmonia .portal-cta {
+  min-height:47px;display:inline-flex;justify-content:center;align-items:center;gap:11px;
+  padding:11px 21px;border:1px solid var(--button-border);border-radius:99px;
+  text-decoration:none;font:600 12px/1.3 Inter,Arial,sans-serif;white-space:nowrap;
+  box-shadow:inset 0 1px #ffffff9c,0 4px 9px #28462a10;
+  transition:transform .2s,box-shadow .2s,background .2s;
+}
+.portal-page.portal-harmonia .portal-cta i {font-size:17px;}
+.portal-page.portal-harmonia .portal-cta:hover {transform:translateY(-2px);box-shadow:0 9px 22px #1a362a26;}
+.portal-page.portal-harmonia .portal-cta-primary {
+  background:linear-gradient(115deg,#56795b,#365a42);color:#fff;border-color:#315640;
+}
+.portal-page.portal-harmonia .portal-cta-outline {background:rgba(244,241,231,.84);color:var(--link-text);}
+.portal-page.portal-harmonia .portal-hero-photo {
+  position:absolute;z-index:1;top:0;right:0;bottom:0;width:68%;
+  background:url('portal-hero-mixhouse.webp') center 47% / cover no-repeat;
+  border-radius:130px 0 105px 90px;
+  clip-path:polygon(20% 0%,100% 0%,100% 62%,86% 100%,0 100%);
+  box-shadow:inset 0 0 0 3px #ffffff8c;
+}
+.portal-page.portal-harmonia .portal-hero-photo::after {
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(248,241,229,.11),transparent 20%,transparent 90%,rgba(25,55,36,.12));
+}
+.portal-page.portal-harmonia .portal-hero-signature {
+  position:absolute;z-index:3;right:clamp(18px,2.7vw,50px);bottom:31px;
+  padding-left:16px;border-left:1px solid #627b5a;color:#263b31;
+  font:700 9px/1.7 Inter,Arial,sans-serif;letter-spacing:.29em;
+  background:rgba(250,248,242,.62);border-radius:2px;
 }
 
-.portal-page {
-  color: var(--portal-ink);
-  background: linear-gradient(103deg, #daeddf 0%, #e8efdf 39%, #f7eddd 78%, #f9eadf 100%);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+.portal-page.portal-harmonia .portal-tools {
+  position:relative;padding:25px clamp(32px,3.75vw,68px) 22px;
 }
-
-.portal-page a:focus-visible {
-  outline: 3px solid #157748;
-  outline-offset: 4px;
+.portal-page.portal-harmonia .portal-tools::before {
+  content:"";position:absolute;z-index:0;left:-100px;bottom:-80px;
+  width:300px;height:200px;border:35px solid rgba(158,183,161,.12);border-radius:50%;
+  pointer-events:none;
 }
-
-.portal-page .portal-bar {
-  max-width: none;
-  width: 100%;
-  min-height: 76px;
-  padding: 7px clamp(22px, 3.4vw, 64px);
-  background: linear-gradient(100deg, #ecf3e7 0%, #f8f0e5 100%);
-  border-bottom: 1px solid #c5d7c5;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 26px;
+.portal-page.portal-harmonia .portal-toolgrid {
+  position:relative;z-index:1;width:100%;max-width:1810px;margin:0 auto;
+  display:grid;gap:17px;grid-template-columns:1.03fr 1.60fr 1fr 1fr 1.08fr;
+  grid-template-rows:130px 156px;
 }
+.portal-tools-intro {grid-column:1;grid-row:1 / 3;padding:32px 15px 0 0;align-self:stretch;}
+.portal-tools-kicker {display:flex;gap:12px;align-items:center;white-space:nowrap;color:var(--hero-title);font:700 10px/1.2 Inter,Arial,sans-serif;letter-spacing:.14em;}
+.portal-tools-kicker span {display:block;width:31px;height:2px;background:var(--accent);}
+.portal-tools-intro h2 {margin:31px 0 19px;color:var(--hero-title);font:600 clamp(27px,2.35vw,39px)/1.03 'Cormorant Garamond',Georgia,serif;letter-spacing:-.035em;}
+.portal-palette {display:flex;gap:10px;margin-left:29px;}
+.portal-palette span{width:10px;height:10px;background:#72927a;}
+.portal-palette span:nth-child(2){background:#c5ab7d;}
+.portal-palette span:nth-child(3){background:#d19b83;}
+.portal-palette span:nth-child(4){background:#9ec5d0;}
 
-.portal-page .portal-brand {
-  color: var(--portal-ink);
-  display: inline-flex;
-  gap: 12px;
-  align-items: center;
-  flex-shrink: 0;
-  text-decoration: none;
+.portal-page.portal-harmonia .portal-card {
+  position:relative;display:block;min-width:0;min-height:0;margin:0 9px;
+  padding:0;overflow:hidden;isolation:isolate;
+  border:1.6px solid rgba(255,255,255,.86);border-radius:27px;
+  text-decoration:none;box-shadow:0 16px 24px rgba(64,62,52,.15);
+  transform:skewX(-6deg);transform-origin:center;
+  transition:transform .25s ease,box-shadow .25s ease,filter .25s ease;
 }
-
-.portal-page .brand-mark {
-  width: 58px;
-  height: 58px;
-  border: 0;
-  border-radius: 0;
-  object-fit: contain;
-  display: block;
+.portal-page.portal-harmonia .portal-card:hover {transform:skewX(-6deg) translateY(-5px);box-shadow:0 22px 32px rgba(40,50,38,.24);filter:saturate(1.05);}
+.portal-page.portal-harmonia .portal-card::before {
+  content:"";position:absolute;z-index:-1;inset:0;
+  background:radial-gradient(ellipse at 95% 5%,rgba(255,255,255,.45),transparent 55%);
 }
-
-.portal-page .portal-brand .brand-wordmark {
-  color: var(--portal-ink);
-  font: 600 clamp(22px, 2.1vw, 32px)/.98 'Cormorant Garamond', Georgia, serif;
-  white-space: nowrap;
-  letter-spacing: -.025em;
+.portal-page.portal-harmonia .portal-card::after {
+  content:"";position:absolute;z-index:-1;right:-18%;bottom:-90%;height:125%;width:100%;
+  border-radius:50%;border:1.2px solid currentColor;opacity:.16;
+  box-shadow:0 -16px 0 -15px currentColor,0 -36px 0 -35px currentColor,0 -57px 0 -56px currentColor;
+  pointer-events:none;
 }
-
-.portal-page .brand-wordmark small {
-  color: #29473a;
-  display: block;
-  margin-top: 7px;
-  font: 600 9px/1.2 Inter, Arial, sans-serif;
-  letter-spacing: .27em;
-  text-transform: uppercase;
+.portal-page.portal-harmonia .portal-card-inner {
+  position:relative;display:flex;flex-direction:column;
+  width:100%;height:100%;padding:24px 28px 23px;
+  transform:skewX(6deg);
 }
-
-.portal-menu {
-  display: flex;
-  align-items: center;
-  gap: clamp(16px, 2.3vw, 38px);
-  min-width: 0;
+.portal-page.portal-harmonia .portal-card h3 {
+  margin:0 0 9px;font:600 clamp(25px,2.3vw,37px)/.97 'Cormorant Garamond',Georgia,serif;
+  letter-spacing:-.035em;color:inherit;
 }
-
-.portal-menu a {
-  color: var(--portal-ink);
-  font: 600 clamp(16px, 1.45vw, 21px)/1 'Cormorant Garamond', Georgia, serif;
-  white-space: nowrap;
-  text-decoration: none;
-  padding: 15px 1px 12px;
-  border-bottom: 3px solid transparent;
-  transition: border-color .2s, color .2s;
+.portal-page.portal-harmonia .portal-card p {
+  margin:0;font:400 13px/1.38 Inter,Arial,sans-serif;color:inherit;max-width:320px;
 }
-
-.portal-menu a:hover,
-.portal-menu a.is-current {
-  color: #125d39;
-  border-bottom-color: #177c48;
+.portal-page.portal-harmonia .portal-card .portal-icon {
+  width:63px;height:62px;display:flex;align-items:center;justify-content:flex-start;
+  flex-shrink:0;margin:0 0 15px;color:inherit;
 }
-
-.portal-page .portal-main {
-  width: 100%;
-  max-width: none;
-  margin: 0;
-  padding: 0;
-  display: block;
-  flex: 1;
+.portal-page.portal-harmonia .portal-card .portal-icon i {font-size:44px;line-height:1;}
+.portal-page.portal-harmonia .portal-card .portal-icon img {max-width:100%;height:auto;display:block;object-fit:contain;}
+.portal-page.portal-harmonia .portal-card-louvor {grid-column:2;grid-row:1 / 3;background:linear-gradient(143deg,#d7e8ef 0%,#aed3e3 76%,#90bdce 100%);color:#194756;border-color:#d1e9ec;}
+.portal-card-louvor .portal-card-inner {padding:26px 35px 24px!important;}
+.portal-icon-louvor{position:relative;}
+.portal-page.portal-harmonia .portal-icon-louvor i:first-child {font-size:53px;}
+.portal-page.portal-harmonia .portal-icon-louvor i:last-child {position:absolute;right:1px;bottom:0;font-size:27px;background:#c7dfeb;border-radius:6px;padding:2px;}
+.portal-card-badge {
+  position:absolute;right:0;top:0;padding:7px 11px;
+  border-radius:30px;background:#f8ffffb3;border:1px solid #ffffffb6;
+  font:600 10px/1.1 Inter,Arial,sans-serif;color:#23505c;display:flex;gap:5px;align-items:center;
 }
-
-.portal-hero {
-  min-height: 300px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  isolation: isolate;
+.portal-card-badge i {font-size:13px;}
+.portal-page.portal-harmonia .portal-card-louvor h3 {font-size:clamp(31px,2.9vw,49px);margin:0 0 11px;}
+.portal-page.portal-harmonia .portal-card-louvor p {font-size:14px;line-height:1.42;max-width:300px;}
+.portal-card-action {
+  margin-top:auto;align-self:flex-start;
+  padding:10px 16px 10px 19px;min-width:135px;
+  display:flex;justify-content:space-between;gap:22px;align-items:center;
+  background:rgba(250,255,255,.72);border:1px solid rgba(48,112,127,.57);
+  border-radius:50px;box-shadow:0 5px 11px #22556623;
+  font:600 12px/1.2 Inter,Arial,sans-serif;color:#194756;
 }
-
-.portal-page .portal-intro {
-  position: relative;
-  z-index: 2;
-  padding: 31px 0 29px clamp(30px, 4.1vw, 74px);
-  width: 47%;
-  max-width: 760px;
+.portal-card-action i {font-size:20px;}
+.portal-page.portal-harmonia .portal-card-agenda {grid-column:3 / 5;grid-row:1;background:linear-gradient(125deg,#fffaf1 0%,#f5e7d4 68%,#e4bf92 100%);color:#293d2a;}
+.portal-page.portal-harmonia .portal-card-geral {grid-column:3;grid-row:2;background:linear-gradient(129deg,#f4f1e5,#e1e6d5 72%,#cdd3bb);color:#45583c;}
+.portal-page.portal-harmonia .portal-card-vaquinhas {grid-column:4;grid-row:2;background:linear-gradient(135deg,#fff1e7,#f8ddcf 68%,#eebcae);color:#a45134;}
+.portal-page.portal-harmonia .portal-card-comissao {grid-column:5;grid-row:1 / 3;background:linear-gradient(140deg,#464a4d,#262d30 85%);border-color:#91979a;color:#f9faf6;}
+.portal-page.portal-harmonia .portal-card-comissao::before {background:radial-gradient(ellipse at 95% 0,rgba(255,255,255,.12),transparent 60%);}
+.portal-page.portal-harmonia .portal-card-horizontal .portal-card-inner {
+  display:grid;grid-template-columns:49px minmax(0,1fr) 37px;
+  align-items:center;column-gap:13px;padding:15px 20px;
 }
-
-.portal-page .eyebrow {
-  color: #214d38;
-  font-size: 10px;
-  letter-spacing: .35em;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  text-transform: uppercase;
+.portal-page.portal-harmonia .portal-card-horizontal .portal-icon {width:49px;height:49px;margin:0;align-self:start;justify-content:center;}
+.portal-page.portal-harmonia .portal-card-horizontal .portal-icon i {font-size:38px;}
+.portal-page.portal-harmonia .portal-card-horizontal h3 {font-size:clamp(24px,1.85vw,31px);line-height:.98;margin-bottom:8px;}
+.portal-page.portal-harmonia .portal-card-horizontal p {font-size:11px;line-height:1.38;}
+.portal-card-round-arrow {
+  display:grid;place-items:center;flex-shrink:0;
+  width:38px;height:38px;border-radius:50%;border:1px solid #ffffff88;
+  background:#ffffff4d;box-shadow:0 3px 9px #0000000d;color:inherit;
 }
-
-.portal-page .eyebrow::before { display: none; }
-.portal-page .eyebrow::after { content: ''; width: 62px; height: 2px; background: #17864d; }
-
-.portal-page .portal-intro h1 {
-  color: #073526;
-  font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: clamp(46px, 4.8vw, 75px);
-  font-weight: 600;
-  letter-spacing: -.04em;
-  line-height: .94;
-  margin: 21px 0 20px;
+.portal-card-round-arrow i {font-size:22px;}
+.portal-page.portal-harmonia .portal-card-geral .portal-card-inner,
+.portal-page.portal-harmonia .portal-card-vaquinhas .portal-card-inner {
+  display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;
+  padding:15px 21px;
 }
-
-.portal-page .portal-intro p {
-  max-width: 460px;
-  color: #234337;
-  font: italic 500 clamp(15px, 1.3vw, 19px)/1.45 'Cormorant Garamond', Georgia, serif;
-  padding-left: 16px;
-  border-left: 3px solid #248a56;
-  margin: 0;
+.portal-page.portal-harmonia .portal-card-geral .portal-icon,
+.portal-page.portal-harmonia .portal-card-vaquinhas .portal-icon {
+  position:absolute;left:20px;top:18px;width:44px;height:44px;
 }
-
-.portal-hero-photo {
-  position: absolute;
-  z-index: 1;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 63%;
-  background: linear-gradient(90deg, #dcebdd10, transparent 24%), url('portal-hero-mixhouse.webp') center 54% / cover no-repeat;
-  clip-path: ellipse(88% 130% at 89% 50%);
+.portal-page.portal-harmonia .portal-card-geral .portal-icon i,
+.portal-page.portal-harmonia .portal-card-vaquinhas .portal-icon i {font-size:37px;}
+.portal-page.portal-harmonia .portal-card-geral .portal-card-copy,
+.portal-page.portal-harmonia .portal-card-vaquinhas .portal-card-copy {
+  margin-left:51px;max-width:calc(100% - 44px);min-width:0;
 }
-
-.portal-hero::after {
-  content: '';
-  position: absolute;
-  z-index: 1;
-  width: 380px;
-  height: 380px;
-  top: 0;
-  left: 33%;
-  border: 1.7px solid #17864db3;
-  border-radius: 50%;
-  pointer-events: none;
+.portal-page.portal-harmonia .portal-card-geral h3,
+.portal-page.portal-harmonia .portal-card-vaquinhas h3 {font-size:clamp(24px,1.9vw,32px);white-space:nowrap;}
+.portal-page.portal-harmonia .portal-card-geral p,
+.portal-page.portal-harmonia .portal-card-vaquinhas p {font-size:11px;}
+.portal-page.portal-harmonia .portal-card-geral .portal-card-round-arrow,
+.portal-page.portal-harmonia .portal-card-vaquinhas .portal-card-round-arrow {
+  position:absolute;bottom:10px;right:15px;width:34px;height:34px;
 }
+.portal-page.portal-harmonia .portal-card-comissao .portal-card-inner {padding:30px 29px 24px;}
+.portal-page.portal-harmonia .portal-card-comissao .portal-icon {width:70px;height:63px;margin-bottom:13px;}
+.portal-page.portal-harmonia .portal-card-comissao .portal-icon img {width:70px;height:57px;object-fit:contain;}
+.portal-page.portal-harmonia .portal-card-comissao h3 {font-size:clamp(30px,2.55vw,44px);margin-bottom:9px;}
+.portal-page.portal-harmonia .portal-card-comissao p {font-size:13px;max-width:200px;line-height:1.45;}
+.portal-page.portal-harmonia .portal-card-comissao .portal-card-round-arrow {margin-top:auto;}
+.portal-card-access {font:500 9px/1.3 Inter,Arial,sans-serif;opacity:.66;margin-top:8px;letter-spacing:.02em;}
 
-.portal-tools {
-  padding: 18px clamp(25px, 3vw, 54px) 20px;
+.portal-page.portal-harmonia .portal-footer {
+  width:100%;max-width:none;margin:0;padding:24px clamp(28px,8vw,150px) 28px;
+  border:0;display:flex;flex-direction:row;justify-content:center;align-items:center;gap:26px;
+  color:var(--footer-color);
 }
+.portal-page.portal-harmonia .footer-rule {height:1px;min-width:25px;flex:1;background:var(--portal-line);}
+.portal-page.portal-harmonia .footer-lockup {display:flex;justify-content:center;align-items:center;gap:15px;}
+.portal-page.portal-harmonia .footer-lockup img {width:85px;height:auto;object-fit:contain;}
+.portal-page.portal-harmonia .footer-lockup p {margin:0;color:var(--footer-color);font:600 15px/1.25 'Cormorant Garamond',Georgia,serif;white-space:nowrap;}
 
-.portal-section-heading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(18px, 2vw, 34px);
-  margin: 0 auto 22px;
-  max-width: 1420px;
+/* Modo escuro: verdes sálvia, musgo e oliva em vez de verde fluorescente. */
+html[data-portal-theme="dark"] .portal-page.portal-harmonia {
+  --portal-ink:#f2f2e9;
+  --portal-muted:#c9d6c8;
+  --portal-line:#537166;
+  --hero-title:#f6f5ed;
+  --hero-text:#d7e3d6;
+  --header-bg:rgba(26,53,44,.95);
+  --header-border:#567466;
+  --accent:#b9d59e;
+  --accent-bright:#bad19c;
+  --link-text:#f3f4eb;
+  --button-bg:rgba(54,90,72,.66);
+  --button-border:#6d8d75;
+  --footer-color:#d4e0d2;
+  background:
+    radial-gradient(ellipse at 50% -20%,rgba(114,145,102,.28),transparent 49%),
+    radial-gradient(ellipse at 20% 92%,rgba(93,128,106,.22),transparent 45%),
+    linear-gradient(115deg,#1d3b33 0%,#29473b 58%,#203d36 100%);
 }
-
-.portal-section-heading::before,
-.portal-section-heading::after {
-  content: '';
-  flex: 1;
-  max-width: 290px;
-  height: 2px;
-  background: #16864e;
+html[data-portal-theme="dark"] .portal-page.portal-harmonia .portal-hero::before {
+  background:radial-gradient(ellipse at 30% 20%,rgba(95,124,92,.17),transparent 48%),linear-gradient(100deg,#193c33 0%,rgba(25,55,47,.91) 33%,transparent 67%);
 }
-
-.portal-section-heading h2 {
-  font: 600 clamp(33px, 3.9vw, 61px)/1 'Cormorant Garamond', Georgia, serif;
-  letter-spacing: -.035em;
-  text-align: center;
-  color: #083628;
-  margin: 0;
+html[data-portal-theme="dark"] .portal-page.portal-harmonia .portal-hero-ornament {border-color:rgba(191,216,165,.17);}
+html[data-portal-theme="dark"] .portal-page.portal-harmonia .portal-cta-primary {
+  background:linear-gradient(110deg,#83a579,#628969);color:#112e23;border-color:#b8d4a1;
 }
-
-.portal-page .portal-grid {
-  max-width: 1650px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
+html[data-portal-theme="dark"] .portal-page.portal-harmonia .portal-cta-outline {
+  color:#f1f5eb;background:rgba(45,76,60,.55);border-color:#819f7d;
 }
-
-.portal-page .portal-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  min-height: 242px;
-  padding: clamp(17px, 1.6vw, 24px);
-  background: #fffaf2df;
-  border: 1px solid #a9c2ab;
-  border-radius: 13px;
-  color: #0a3024;
-  box-shadow: 0 5px 18px #31553b0b;
-  text-decoration: none;
-  transition: transform .2s, box-shadow .2s, border-color .2s;
+html[data-portal-theme="dark"] .portal-page.portal-harmonia .portal-hero-photo {box-shadow:inset 0 0 0 3px #a3c393b3;}
+html[data-portal-theme="dark"] .portal-page.portal-harmonia .portal-hero-signature {
+  color:#f2f4e9;background:rgba(25,55,47,.73);border-color:#b1caa1;
 }
-
-.portal-page .portal-card:hover {
-  background: #fffdf7;
-  border-color: #4f9b67;
-  transform: translateY(-4px);
-  box-shadow: 0 12px 25px #31553b1e;
+html[data-portal-theme="dark"] .portal-page.portal-harmonia .portal-card-louvor {
+  background:linear-gradient(140deg,#477f8a,#3e727a 70%,#37636c);color:#f4faf8;border-color:#9bc9cf;
 }
-
-.portal-page .portal-card .portal-icon {
-  width: 56px;
-  height: 60px;
-  color: #0b4932;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  margin: 0 0 12px;
+html[data-portal-theme="dark"] .portal-page.portal-harmonia .portal-icon-louvor i:last-child {background:#457c85;}
+html[data-portal-theme="dark"] .portal-page.portal-harmonia .portal-card-badge {color:#153c44;background:#c4e6e7;}
+html[data-portal-theme="dark"] .portal-page.portal-harmonia .portal-card-action {color:#173c43;background:#c4e4e8;border-color:#a8cfd1;}
+html[data-portal-theme="dark"] .portal-page.portal-harmonia .portal-card-agenda {
+  background:linear-gradient(135deg,#617f64,#4d7155 65%,#3b604d);color:#f6f7e9;border-color:#adc4a2;
 }
-
-.portal-page .portal-card .portal-icon i { font-size: 44px; line-height: 1; }
-.portal-page .portal-card .portal-icon img { max-width: 100%; height: auto; display: block; object-fit: contain; }
-
-.portal-page .portal-card h3 {
-  font: 600 clamp(21px, 1.8vw, 28px)/1 'Cormorant Garamond', Georgia, serif;
-  letter-spacing: -.03em;
-  margin: 0 0 10px;
+html[data-portal-theme="dark"] .portal-page.portal-harmonia .portal-card-geral {
+  background:linear-gradient(135deg,#71846b,#5d765d 70%,#4e6852);color:#faf9ec;border-color:#becaae;
 }
-
-.portal-page .portal-card p {
-  margin: 0 0 15px;
-  color: #3c4841;
-  font: 400 clamp(11px, .9vw, 13px)/1.5 Inter, Arial, sans-serif;
+html[data-portal-theme="dark"] .portal-page.portal-harmonia .portal-card-vaquinhas {
+  background:linear-gradient(135deg,#a47b71,#946e66 65%,#805b57);color:#fff7f1;border-color:#e0b9ae;
 }
-
-.portal-page .portal-card .portal-card-meta {
-  display: block;
-  margin-top: auto;
-  padding-right: 20px;
-  color: #467055;
-  font: 500 10px/1.4 Inter, Arial, sans-serif;
-  letter-spacing: .01em;
+html[data-portal-theme="dark"] .portal-page.portal-harmonia .portal-card-comissao {
+  background:linear-gradient(135deg,#474e50,#2d3638 75%);color:#f6f7f3;border-color:#96a6a4;
 }
+html[data-portal-theme="dark"] .portal-page.portal-harmonia .portal-card {box-shadow:0 14px 28px rgba(5,23,16,.35);}
+html[data-portal-theme="dark"] .portal-page.portal-harmonia .portal-tools::before {border-color:rgba(160,195,147,.1);}
 
-.portal-card-meta i { margin-right: 4px; }
-
-.portal-card-arrow {
-  position: absolute;
-  right: 17px;
-  bottom: 14px;
-  color: #15774b;
-  font-size: 23px;
+/* Laptops: preservar o formato dos cartões e abrir espaço para a navegação. */
+@media(max-width:1400px) {
+  .portal-page.portal-harmonia .portal-bar{gap:15px;padding-inline:25px;}
+  .portal-page.portal-harmonia .portal-menu{gap:15px;}
+  .portal-page.portal-harmonia .portal-intro {width:49%;padding-left:42px;}
+  .portal-page.portal-harmonia .portal-intro h1 {font-size:clamp(56px,5.4vw,78px);}
+  .portal-page.portal-harmonia .portal-hero-photo {width:66%;}
+  .portal-page.portal-harmonia .portal-toolgrid {
+    grid-template-columns:.95fr 1.56fr 1fr 1fr 1fr;gap:12px;
+  }
+  .portal-page.portal-harmonia .portal-card-horizontal .portal-card-inner {grid-template-columns:39px minmax(0,1fr) 30px;gap:9px;padding:13px 14px;}
+  .portal-page.portal-harmonia .portal-card-horizontal .portal-icon {width:39px;}
+  .portal-page.portal-harmonia .portal-card-horizontal .portal-icon i {font-size:32px;}
+  .portal-page.portal-harmonia .portal-card-geral .portal-card-inner,
+  .portal-page.portal-harmonia .portal-card-vaquinhas .portal-card-inner {padding:15px 17px;}
+  .portal-page.portal-harmonia .portal-card-geral .portal-icon,
+  .portal-page.portal-harmonia .portal-card-vaquinhas .portal-icon {left:14px;}
+  .portal-page.portal-harmonia .portal-card-geral .portal-card-copy,
+  .portal-page.portal-harmonia .portal-card-vaquinhas .portal-card-copy {margin-left:40px;max-width:calc(100% - 35px);}
+  .portal-page.portal-harmonia .portal-card-geral h3,
+  .portal-page.portal-harmonia .portal-card-vaquinhas h3 {font-size:25px;}
+  .portal-page.portal-harmonia .portal-card-geral p,
+  .portal-page.portal-harmonia .portal-card-vaquinhas p {font-size:10px;}
 }
-
-.portal-page .portal-card.portal-card-louvor {
-  color: #103b48;
-  background: #AED3E3;
-  border-color: #80b4ca;
+@media(max-width:1120px) {
+  .portal-page.portal-harmonia .portal-menu {position:absolute;top:calc(100% + 1px);right:17px;left:17px;display:none;
+    background:var(--header-bg);border:1px solid var(--header-border);border-radius:18px;
+    padding:14px 21px;box-shadow:0 12px 25px #13281e24;flex-direction:column;align-items:stretch;gap:0;}
+  .portal-page.portal-harmonia .portal-menu.is-open {display:flex;}
+  .portal-page.portal-harmonia .portal-menu a {padding:13px 5px;border-bottom:1px solid var(--header-border);}
+  .portal-page.portal-harmonia .portal-menu a:last-child {border-bottom:0;}
+  .portal-page.portal-harmonia .portal-menu-toggle {display:inline-flex;}
+  .portal-page.portal-harmonia .portal-hero {min-height:470px;}
+  .portal-page.portal-harmonia .portal-intro {width:57%;padding-left:33px;}
+  .portal-page.portal-harmonia .portal-hero-photo {width:63%;opacity:.93;}
+  .portal-page.portal-harmonia .portal-intro h1 {font-size:65px;}
+  .portal-attributes span{padding:0 11px;font-size:10px;gap:6px;}
+  .portal-attributes i{font-size:22px;}
+  .portal-page.portal-harmonia .portal-toolgrid {grid-template-columns:1.25fr 1fr 1fr;grid-template-rows:auto 155px 155px auto;}
+  .portal-tools-intro {grid-column:1/-1;grid-row:1;padding:0 8px 8px;}
+  .portal-tools-intro h2{font-size:38px;margin:12px 0;max-width:600px;}
+  .portal-palette{margin-left:0;}
+  .portal-page.portal-harmonia .portal-card-louvor {grid-column:1;grid-row:2/4;}
+  .portal-page.portal-harmonia .portal-card-agenda {grid-column:2/4;grid-row:2;}
+  .portal-page.portal-harmonia .portal-card-geral {grid-column:2;grid-row:3;}
+  .portal-page.portal-harmonia .portal-card-vaquinhas {grid-column:3;grid-row:3;}
+  .portal-page.portal-harmonia .portal-card-comissao {grid-column:1/4;grid-row:4;}
+  .portal-page.portal-harmonia .portal-card-comissao .portal-card-inner {min-height:140px;display:grid;grid-template-columns:70px 1fr 48px;column-gap:15px;align-items:center;}
+  .portal-page.portal-harmonia .portal-card-comissao .portal-icon {grid-column:1;grid-row:1/3;margin:0;}
+  .portal-page.portal-harmonia .portal-card-comissao h3 {grid-column:2;grid-row:1;margin:0;}
+  .portal-page.portal-harmonia .portal-card-comissao p {grid-column:2;grid-row:2;max-width:500px;}
+  .portal-page.portal-harmonia .portal-card-comissao .portal-card-round-arrow{grid-column:3;grid-row:1/3;margin:0;}
+  .portal-page.portal-harmonia .portal-card-comissao .portal-card-access {grid-column:2;grid-row:3;margin-top:-2px;}
 }
-.portal-page .portal-card.portal-card-louvor:hover { background: #bfdeea; border-color: #629cb5; }
-.portal-page .portal-card-louvor .portal-icon { width: 60px; }
-.portal-page .portal-card-louvor .portal-icon img { width: 58px; height: 58px; }
-.portal-page .portal-card-louvor p,
-.portal-page .portal-card-louvor .portal-card-meta,
-.portal-page .portal-card-louvor .portal-card-arrow { color: #194957; }
-
-.portal-page .portal-card.portal-card-comissao {
-  color: #fff;
-  background: linear-gradient(140deg, #25282d, #1d2025);
-  border-color: #565b62;
+@media(max-width:720px) {
+  .portal-page.portal-harmonia .portal-bar {min-height:68px;padding:7px 17px;gap:10px;}
+  .portal-page.portal-harmonia .brand-mark {width:46px;height:46px;}
+  .portal-page.portal-harmonia .brand-wordmark {font-size:25px;}
+  .portal-page.portal-harmonia .brand-wordmark small{font-size:7px;letter-spacing:.25em;margin-top:6px;}
+  .portal-header-actions{padding-left:0;border:0;gap:6px;}
+  .portal-page.portal-harmonia .portal-theme-toggle{padding:9px 11px;min-width:41px;}
+  .portal-page.portal-harmonia .portal-theme-toggle span{display:none;}
+  .portal-page.portal-harmonia .portal-hero {min-height:0;display:flex;flex-direction:column;align-items:stretch;}
+  .portal-page.portal-harmonia .portal-intro {width:100%;padding:38px 25px 26px;max-width:none;}
+  .portal-page.portal-harmonia .eyebrow{font-size:9px;letter-spacing:.15em;white-space:normal;}
+  .portal-page.portal-harmonia .eyebrow::after{width:30px;}
+  .portal-page.portal-harmonia .portal-intro h1{font-size:clamp(58px,11.6vw,80px);margin:25px 0 19px;}
+  .portal-page.portal-harmonia .portal-intro p{font-size:14px;max-width:480px;}
+  .portal-attributes {margin:22px 0;}
+  .portal-attributes span {font-size:9px;padding:0 9px;gap:6px;}
+  .portal-attributes i {font-size:21px;}
+  .portal-page.portal-harmonia .portal-cta {font-size:11px;padding:10px 14px;min-height:43px;}
+  .portal-page.portal-harmonia .portal-hero-photo {position:relative;width:calc(100% - 24px);height:270px;min-height:0;margin:0 12px 0;
+    border-radius:28px 28px 45px 45px;clip-path:none;opacity:1;background-position:center 47%;}
+  .portal-page.portal-harmonia .portal-hero-signature {display:none;}
+  .portal-page.portal-harmonia .portal-tools{padding:28px 21px 20px;}
+  .portal-page.portal-harmonia .portal-toolgrid {display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto;gap:14px;}
+  .portal-tools-intro {grid-column:1/-1;grid-row:auto;padding:0 4px 0;}
+  .portal-tools-intro h2{font-size:37px;max-width:440px;}
+  .portal-page.portal-harmonia .portal-card{transform:none;margin:0;border-radius:24px;}
+  .portal-page.portal-harmonia .portal-card:hover{transform:translateY(-4px);}
+  .portal-page.portal-harmonia .portal-card-inner{transform:none;}
+  .portal-page.portal-harmonia .portal-card-louvor{grid-column:1/-1;grid-row:auto;min-height:255px;}
+  .portal-page.portal-harmonia .portal-card-louvor h3{font-size:42px;}
+  .portal-page.portal-harmonia .portal-card-louvor .portal-card-inner{padding:24px 27px!important;}
+  .portal-page.portal-harmonia .portal-card-agenda{grid-column:1/-1;grid-row:auto;min-height:130px;}
+  .portal-page.portal-harmonia .portal-card-geral{grid-column:1;grid-row:auto;min-height:184px;}
+  .portal-page.portal-harmonia .portal-card-vaquinhas{grid-column:2;grid-row:auto;min-height:184px;}
+  .portal-page.portal-harmonia .portal-card-geral .portal-card-inner,
+  .portal-page.portal-harmonia .portal-card-vaquinhas .portal-card-inner{padding:17px 14px;}
+  .portal-page.portal-harmonia .portal-card-geral .portal-icon,
+  .portal-page.portal-harmonia .portal-card-vaquinhas .portal-icon{left:13px;top:12px;}
+  .portal-page.portal-harmonia .portal-card-geral .portal-card-copy,
+  .portal-page.portal-harmonia .portal-card-vaquinhas .portal-card-copy{margin-left:37px;max-width:calc(100% - 30px);}
+  .portal-page.portal-harmonia .portal-card-geral h3,
+  .portal-page.portal-harmonia .portal-card-vaquinhas h3{font-size:26px;white-space:normal;}
+  .portal-page.portal-harmonia .portal-card-geral p,
+  .portal-page.portal-harmonia .portal-card-vaquinhas p{font-size:10px;}
+  .portal-page.portal-harmonia .portal-card-comissao{grid-column:1/-1;grid-row:auto;}
+  .portal-page.portal-harmonia .portal-card-comissao .portal-card-inner{padding:23px;min-height:150px;}
+  .portal-page.portal-harmonia .portal-footer {padding:21px 17px 25px;gap:12px;}
+  .portal-page.portal-harmonia .footer-lockup{gap:10px;}
+  .portal-page.portal-harmonia .footer-lockup img{width:59px;}
+  .portal-page.portal-harmonia .footer-lockup p{font-size:13px;white-space:normal;}
 }
-.portal-page .portal-card.portal-card-comissao:hover { background: #31353b; border-color: #8f969e; }
-.portal-page .portal-card-comissao .portal-icon img { width: 62px; height: 50px; }
-.portal-page .portal-card-comissao p,
-.portal-page .portal-card-comissao .portal-card-meta,
-.portal-page .portal-card-comissao .portal-card-arrow { color: #fff; }
-
-.portal-page .portal-footer {
-  width: 100%;
-  max-width: none;
-  border: 0;
-  margin: 0;
-  padding: 12px clamp(28px, 8vw, 150px) 21px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 32px;
-  color: #183d2d;
+@media(max-width:430px) {
+  .portal-page.portal-harmonia .brand-mark{width:39px;height:39px;}
+  .portal-page.portal-harmonia .brand-wordmark{font-size:21px;}
+  .portal-page.portal-harmonia .portal-intro {padding:30px 19px 23px;}
+  .portal-page.portal-harmonia .portal-intro h1{font-size:56px;}
+  .portal-attributes span{font-size:8px;padding:0 6px;}
+  .portal-attributes i{font-size:18px;}
+  .portal-page.portal-harmonia .portal-tools{padding-inline:16px;}
+  .portal-page.portal-harmonia .portal-card-geral .portal-icon,
+  .portal-page.portal-harmonia .portal-card-vaquinhas .portal-icon{position:static;width:42px;height:36px;margin:0 0 7px;}
+  .portal-page.portal-harmonia .portal-card-geral .portal-card-copy,
+  .portal-page.portal-harmonia .portal-card-vaquinhas .portal-card-copy{margin:0;max-width:none;}
+  .portal-page.portal-harmonia .portal-card-geral h3,
+  .portal-page.portal-harmonia .portal-card-vaquinhas h3{font-size:27px;}
+  .portal-page.portal-harmonia .portal-card-geral p,
+  .portal-page.portal-harmonia .portal-card-vaquinhas p{font-size:10px;}
 }
-
-.portal-footer .footer-rule { height: 2px; background: #16834c; flex: 1; min-width: 30px; }
-.footer-lockup { display: flex; align-items: center; justify-content: center; gap: 18px; }
-.footer-lockup img { display: block; width: 95px; height: auto; object-fit: contain; }
-.portal-footer .footer-lockup p { margin: 0; color: #173e2c; white-space: nowrap; font: italic 600 clamp(14px, 1.35vw, 19px)/1.2 'Cormorant Garamond', Georgia, serif; }
-
-@media (max-width: 1220px) {
-  .portal-page .portal-bar { gap: 18px; }
-  .portal-menu { gap: 18px; }
-  .portal-page .portal-grid { gap: 10px; }
-  .portal-page .portal-card { padding: 18px; }
-  .portal-page .portal-card h3 { font-size: 24px; }
-}
-
-@media (max-width: 980px) {
-  .portal-page .portal-bar { flex-wrap: wrap; justify-content: center; padding: 10px 24px 0; }
-  .portal-menu { width: 100%; justify-content: center; flex-wrap: wrap; gap: 8px 25px; }
-  .portal-menu a { padding: 9px 0 12px; }
-  .portal-page .portal-intro { width: 56%; }
-  .portal-hero-photo { width: 60%; }
-  .portal-page .portal-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .portal-page .portal-card { min-height: 230px; }
-}
-
-@media (max-width: 680px) {
-  .portal-page .portal-bar { gap: 5px; align-items: center; }
-  .portal-page .brand-mark { width: 49px; height: 49px; }
-  .portal-page .portal-brand .brand-wordmark { font-size: 25px; }
-  .portal-page .brand-wordmark small { font-size: 8px; letter-spacing: .19em; }
-  .portal-menu { gap: 6px 20px; }
-  .portal-menu a { font-size: 16px; }
-  .portal-hero { min-height: 0; display: flex; flex-direction: column; }
-  .portal-page .portal-intro { padding: 32px 25px 26px; width: 100%; max-width: none; }
-  .portal-page .portal-intro h1 { font-size: clamp(43px, 11vw, 62px); }
-  .portal-page .portal-intro p { font-size: 17px; }
-  .portal-hero-photo { width: 100%; height: 205px; position: relative; background-position: center 48%; clip-path: none; }
-  .portal-hero::after { width: 220px; height: 220px; top: 10px; left: auto; right: -150px; }
-  .portal-tools { padding: 23px 22px 16px; }
-  .portal-section-heading { gap: 14px; margin-bottom: 19px; }
-  .portal-section-heading h2 { font-size: clamp(32px, 7.5vw, 46px); }
-  .portal-page .portal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .portal-page .portal-card { min-height: 238px; padding: 16px; }
-  .portal-page .portal-card h3 { font-size: 23px; }
-  .portal-page .portal-card p { font-size: 11px; }
-  .portal-page .portal-footer { padding: 13px 18px 23px; gap: 14px; }
-  .footer-lockup { gap: 9px; }
-  .footer-lockup img { width: 62px; }
-  .portal-footer .footer-lockup p { white-space: normal; font-size: 14px; }
-}
-
-@media (max-width: 430px) {
-  .portal-menu a { font-size: 15px; }
-  .portal-page .portal-grid { grid-template-columns: 1fr; }
-  .portal-page .portal-card { min-height: 200px; }
-  .portal-page .portal-card .portal-icon { height: 51px; margin-bottom: 8px; }
-  .portal-page .portal-card .portal-icon i { font-size: 40px; }
-  .portal-page .portal-card p { font-size: 12px; }
-  .portal-section-heading::before,
-  .portal-section-heading::after { max-width: 38px; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .portal-page *, .portal-page *::before, .portal-page *::after { transition: none !important; }
+@media(prefers-reduced-motion:reduce) {
+  .portal-page.portal-harmonia *, .portal-page.portal-harmonia *::before, .portal-page.portal-harmonia *::after {transition:none!important;scroll-behavior:auto!important;}
 }
