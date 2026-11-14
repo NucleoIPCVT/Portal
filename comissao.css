@@ -87,68 +87,132 @@ footer { width:min(1140px,calc(100% - 64px)); margin:0 auto; border-top:1px soli
 @media(max-width:600px){.login-help{padding:11px}.login-help summary{font-size:12px}}
 
 
-/* Prévia discreta das antigas telas de entrada, integrada ao cartão da ferramenta. */
+/* Miniaturas das telas internas. As camadas ficam atrás do texto e sem interação. */
 .tool-card { overflow:hidden; isolation:isolate; }
 .tool-card > :not(.tool-card-preview) { position:relative; z-index:2; }
 .tool-card::before {
   content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
-  background:linear-gradient(95deg,#252a2ffb 0%,#252a2ff2 39%,#252a2fba 66%,#252a2f6b 100%);
+  background:linear-gradient(95deg,#252a2ffc 0%,#252a2ff0 40%,#252a2fc1 66%,#252a2f64 100%);
 }
 .tool-card-planner::before {
-  background:linear-gradient(95deg,#33383efb 0%,#33383ef2 39%,#33383ec9 67%,#33383e77 100%);
+  background:linear-gradient(95deg,#33383efc 0%,#33383ef1 40%,#33383ecb 66%,#33383e73 100%);
 }
 .tool-card-preview {
-  position:absolute; z-index:0; width:90%; height:88%; top:19px; right:-39px;
-  opacity:.52; pointer-events:none; transform:rotate(-4deg) scale(.98);
-  filter:blur(.45px); transform-origin:center;
+  position:absolute; z-index:0; width:94%; height:92%; top:15px; right:-49px;
+  opacity:.62; pointer-events:none; transform:rotate(-3.2deg) scale(.99);
+  transform-origin:center; filter:blur(.25px);
 }
 .preview-window {
-  height:100%; padding:10px; border:1px solid #cbd5dc82; border-radius:9px;
-  background:#e5ebdf; box-shadow:0 12px 34px #0003; overflow:hidden;
+  height:100%; min-width:0; border:1px solid #cbd5dc82; border-radius:8px;
+  box-shadow:0 12px 34px #0003; overflow:hidden; font-family:Inter,Arial,sans-serif;
 }
-.preview-window-top {
-  display:flex; justify-content:space-between; align-items:center; gap:8px;
-  height:29px; padding:0 10px; background:#334c40; color:#fff;
-  font-size:8px; font-weight:650; letter-spacing:.03em;
+.preview-app-header {
+  display:flex; align-items:center; gap:7px; height:30px; padding:0 12px;
+  background:#2b3433; color:#eef5f0; font-size:8px; letter-spacing:.01em;
 }
-.preview-planner-login {
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  width:62%; min-height:77%; margin:12px auto 0; padding:8px 14px;
-  border:1px solid #d6dfd7; background:#fcfdfa; border-radius:10px;
-  color:#315240; box-shadow:0 12px 25px #274e3520;
+.preview-app-mark {
+  display:grid; place-items:center; width:19px; height:19px;
+  border:1px solid #d0e5d155; border-radius:4px; font-size:13px;
 }
-.preview-planner-login img { width:30px; height:30px; object-fit:contain; }
-.preview-planner-login small, .preview-strategic-login small {
-  font-size:7px; font-weight:750; letter-spacing:.12em; margin-top:8px;
+.preview-app-header strong { font-weight:700; white-space:nowrap; }
+.preview-app-tabs { margin-left:auto; color:#c0d7c6; white-space:nowrap; }
+.preview-app-tabs b { background:#d0e2d043; padding:4px 6px; border-radius:4px; color:#fff; }
+.preview-app-user {
+  display:grid; place-items:center; width:18px; height:18px;
+  border-radius:50%; background:#537661; color:#f8fff8; font-size:7px; font-weight:700;
 }
-.preview-planner-login strong { font:600 29px/1.1 'Cormorant Garamond',Georgia,serif; }
-.preview-planner-login > span, .preview-strategic-login > span {
-  color:#728575; font-size:8px; margin-top:5px; white-space:nowrap;
+.preview-section-kicker { font-size:7px; font-weight:750; letter-spacing:.12em; color:#78947e; }
+
+/* Planner: miniatura ilustrativa do Gantt real, com linhas de tempo e dependências. */
+.preview-planner-window { background:#f7faf6; }
+.preview-gantt-content { padding:13px 12px; color:#304c3a; }
+.preview-gantt-intro { display:flex; align-items:baseline; gap:8px; margin:5px 0 9px; }
+.preview-gantt-intro strong { font-size:17px; font-weight:750; letter-spacing:-.6px; }
+.preview-gantt-intro span { font-size:9px; font-weight:750; color:#5b8667; border-radius:4px; background:#e2efe3; padding:3px 6px; }
+.preview-gantt-controls { display:flex; align-items:center; justify-content:space-between; gap:5px; margin-bottom:9px; font-size:8px; color:#4c6a54; }
+.preview-gantt-controls span { padding:5px 8px; background:#edf5ea; border:1px solid #d8e7d9; border-radius:4px; }
+.preview-gantt-board {
+  display:grid; grid-template-columns:34% 66%; width:100%; overflow:hidden;
+  background:#fff; border:1px solid #d8e4d8; border-radius:5px; box-shadow:0 2px 8px #22492b12;
 }
-.preview-google {
-  display:flex; align-items:center; justify-content:center; gap:9px;
-  margin-top:12px; padding:9px 13px; background:#fff; border:1px solid #d5ded7;
-  border-radius:5px; color:#365143; font-size:9px; font-weight:650;
-  white-space:nowrap;
+.preview-gantt-names { min-width:0; border-right:1px solid #dce6db; background:#f9fbf8; }
+.preview-gantt-heading,.preview-gantt-month {
+  display:grid; align-items:center; height:20px; padding:0 7px;
+  color:#67836d; background:#edf3ed; font-weight:750; font-size:7px; letter-spacing:.07em;
+  border-bottom:1px solid #dae4d9;
 }
-.preview-google b { color:#4285f4; font-size:12px; }
-.tool-card-preview-estrategico .preview-window { background:#f8f7f2; }
-.preview-strategic-body {
-  height:85%; display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:10px;
-  padding:15px 11px;
+.preview-gantt-name {
+  height:34px; display:flex; align-items:center; gap:5px; padding:0 7px;
+  font-size:7px; font-weight:650; white-space:nowrap; overflow:hidden;
+  text-overflow:ellipsis; color:#53725b; border-bottom:1px solid #eaf0e9;
 }
-.preview-strategic-login {
-  padding:10px; background:#fffefa; border:1px solid #d8e2d7; border-radius:8px;
-  display:flex; flex-direction:column; align-items:flex-start; color:#304f3e;
+.preview-task-dot { flex:none; width:6px; height:6px; border-radius:2px; background:#86a88b; }
+.preview-task-dot.blue { background:#80aeb2; }
+.preview-task-dot.gold { background:#bba076; }
+.preview-gantt-timeline { min-width:0; }
+.preview-gantt-month { justify-content:center; }
+.preview-gantt-days { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); height:18px; background:#f5f8f4; }
+.preview-gantt-days span { display:grid; place-items:center; font-size:6px; font-weight:700; color:#90a395; border-right:1px solid #e2ebe0; }
+.preview-gantt-tracks { position:relative; }
+.preview-gantt-track {
+  height:34px; position:relative; background:repeating-linear-gradient(to right,transparent 0,transparent calc(14.285% - 1px),#e6ece4 calc(14.285% - 1px),#e6ece4 14.285%);
+  border-bottom:1px solid #eaf0e9;
 }
-.preview-strategic-login strong { font:600 19px/1.12 'Cormorant Garamond',Georgia,serif; margin-top:8px; }
-.preview-strategic-login .preview-google { padding:7px; font-size:8px; }
-.preview-strategic-teams { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; height:78%; padding:9px; background:#fffefa; border:1px solid #d8e2d7; border-radius:8px; }
-.preview-team { background:#e1eadc; padding:7px 5px; border:1px solid #cfdfc8; border-radius:5px; }
-.preview-team:nth-child(2) { background:#eee4dc; border-color:#e0d3c8; }
-.preview-team:nth-child(3) { background:#e7e2ed; border-color:#dcd4e8; }
-.preview-team b { font-size:7px; font-weight:700; color:#405944; }
-.preview-team i { display:block; height:16px; margin:8px 0; border-radius:3px; background:#fff9; border:1px solid #c4d1bd; }
+.preview-gantt-bar {
+  position:absolute; top:10px; height:15px; border-radius:4px; border:1px solid #8eb69b;
+  background:#bed9c3; box-shadow:0 1px 3px #22492b15;
+}
+.preview-gantt-bar.task-1 { left:6%; width:39%; background:#9dc1a5; }
+.preview-gantt-bar.task-2 { left:20%; width:34%; background:#8ab5b9; border-color:#7babb0; }
+.preview-gantt-bar.task-3 { left:41%; width:32%; background:#c2d8c3; }
+.preview-gantt-bar.task-4 { left:68%; width:24%; background:#d9c9a6; border-color:#c3ad82; }
+.preview-gantt-connections {
+  position:absolute; inset:0; width:100%; height:100%; fill:none;
+  stroke:#72977c; stroke-width:1.3; stroke-dasharray:0; opacity:.85; pointer-events:none;
+}
+
+/* Planejamento Estratégico: Times completos, cada um com Louvor, Litúrgicos e Mídia. */
+.preview-strategy-window { background:#f8f7f2; }
+.preview-strategy-header { background:#304f3e; }
+.preview-strategy-content { padding:12px 11px; color:#415b47; }
+.preview-strategy-title {
+  display:flex; gap:7px; align-items:center; margin:5px 0 8px;
+  font:17px/1.1 Georgia,serif; color:#425b45;
+}
+.preview-strategy-title span {
+  padding:3px 5px; margin-left:auto; white-space:nowrap;
+  font:700 7px Inter,Arial,sans-serif; border:1px solid #d9e2d7; border-radius:4px;
+}
+.preview-formed-team { min-width:0; padding:7px 8px; border:1px solid #e2e5dd; border-radius:6px; background:#fffefa; margin-bottom:7px; }
+.preview-formed-team-heading { display:flex; align-items:center; gap:5px; margin-bottom:6px; }
+.preview-team-letter {
+  width:17px; height:17px; display:grid; place-items:center; flex:none;
+  border-radius:4px; background:#dce6d6; color:#5c7b5e; font:700 9px Inter,Arial,sans-serif;
+}
+.preview-formed-team-heading strong { font:14px/1.1 Georgia,serif; }
+.preview-formed-team-heading small { margin-left:auto; font-size:7px; color:#91a090; }
+.preview-formation-grid { display:grid; grid-template-columns:1.38fr 1fr 1fr; gap:5px; }
+.preview-formation-group {
+  display:flex; flex-direction:column; min-width:0; gap:4px; padding:6px 5px;
+  border-radius:5px; border:1px solid var(--formation-border);
+  background:var(--formation-bg); color:#4f6850;
+}
+.preview-formation-louvor { --formation-bg:#edf2e5; --formation-border:#cbd9bc; }
+.preview-formation-liturgia { --formation-bg:#f6eee5; --formation-border:#dfceb9; }
+.preview-formation-midia { --formation-bg:#f0edf4; --formation-border:#d2c7df; }
+.preview-formation-group > strong { font:600 9px Georgia,serif; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.preview-formation-group > small { font-size:5.5px; letter-spacing:.08em; font-weight:750; color:#859183; white-space:nowrap; overflow:hidden; }
+.preview-member {
+  display:flex; align-items:center; gap:4px; min-width:0; padding:3px;
+  height:20px; border:1px solid #ffffffb8; border-radius:4px; background:#ffffffa6;
+}
+.preview-member i {
+  flex:none; display:grid; place-items:center; width:12px; height:12px; border-radius:50%;
+  background:#d1dfcc; color:#5c795c; font:700 6px Inter,Arial,sans-serif;
+}
+.preview-member span { font:650 7px Inter,Arial,sans-serif; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.preview-formed-team-secondary .preview-formation-group { padding:5px; }
+.preview-formed-team-secondary .preview-member { height:17px; }
 .launch-feedback { margin:13px 0 0; min-height:20px; color:#f0d9bb; font-size:12px; }
 @media (max-width:700px) {
   .tool-card-preview { width:87%; right:-30px; opacity:.43; }
