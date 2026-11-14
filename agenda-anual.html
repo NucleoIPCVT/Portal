@@ -3,22 +3,38 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#153e31">
+    <meta name="theme-color" content="#f9f6ef">
     <meta name="description" content="Agenda anual de eventos da Igreja Presbiteriana Central em Vilar dos Teles, atualizada a partir do Google Agenda e pronta para impressão.">
     <title>Agenda Anual IPCVT · Eventos da Igreja</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      (function () {
+        var mode = 'light';
+        try { mode = localStorage.getItem('ipcvt-portal-theme') === 'dark' ? 'dark' : 'light'; } catch (error) {}
+        document.documentElement.setAttribute('data-portal-theme', mode);
+      })();
+    </script>
     <link rel="stylesheet" href="agenda-anual.css?v=20261110-responsive">
+    <link rel="stylesheet" href="agenda-anual-nucleo.css?v=20261114-agenda-pastel-v1">
     <script type="module" src="agenda-anual.js?v=20261110-balanced"></script>
   </head>
   <body>
     <header class="app-bar screen-only">
       <a href="index.html" class="home-link" aria-label="Voltar ao Portal IPCVT">
-        <img src="logo-nucleo.svg" alt="" width="36" height="36">
-        <span>Portal <strong>IPCVT</strong></span>
+        <img src="logo-nucleo-quatro-aliancas.svg" alt="" width="64" height="64">
+        <span class="agenda-brand-copy">Agenda IPCVT<small>NÚCLEO IPCVT</small></span>
       </a>
-      <span class="app-bar-caption">Igreja Presbiteriana Central em Vilar dos Teles</span>
+      <div class="agenda-header-actions">
+        <span class="app-bar-caption">Igreja Presbiteriana Central em Vilar dos Teles</span>
+        <a href="index.html" class="agenda-return"><span aria-hidden="true">←</span> Portal IPCVT</a>
+        <button type="button" id="agenda-theme-toggle" class="agenda-theme-toggle" aria-pressed="false" aria-label="Ativar modo escuro" title="Alternar modo claro e escuro">
+          <span class="agenda-theme-moon" aria-hidden="true">☾</span>
+          <span class="agenda-theme-sun" aria-hidden="true">☀</span>
+          <span id="agenda-theme-label">Modo escuro</span>
+        </button>
+      </div>
     </header>
 
     <main class="app-shell">
@@ -79,5 +95,28 @@
         <p>Os eventos vêm da Agenda IPCVT no Google e são consultados novamente ao clicar em Atualizar.</p>
       </footer>
     </main>
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var button = document.getElementById('agenda-theme-toggle');
+        var label = document.getElementById('agenda-theme-label');
+        var meta = document.querySelector('meta[name="theme-color"]');
+        function updateTheme() {
+          var dark = root.getAttribute('data-portal-theme') === 'dark';
+          button.setAttribute('aria-pressed', String(dark));
+          button.setAttribute('aria-label', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
+          button.title = dark ? 'Ativar modo claro' : 'Ativar modo escuro';
+          label.textContent = dark ? 'Modo claro' : 'Modo escuro';
+          if (meta) meta.content = dark ? '#294339' : '#f9f6ef';
+        }
+        button.addEventListener('click', function () {
+          var next = root.getAttribute('data-portal-theme') === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-portal-theme', next);
+          try { localStorage.setItem('ipcvt-portal-theme', next); } catch (error) {}
+          updateTheme();
+        });
+        updateTheme();
+      })();
+    </script>
   </body>
 </html>
