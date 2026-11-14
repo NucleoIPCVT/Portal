@@ -113,7 +113,10 @@ export function parseRotationConfig(record) {
 
 export function rotationConfigRecord(task, settings) {
   const rule = taskRecurrence(task)
-  if (!rule) throw new Error('Ative a repetição antes de configurar o rodízio.')
+  // Em um plano recorrente, a configuração do rodízio pertence à família
+  // da demanda, mesmo quando a demanda não possui repetição própria.
+  const sourceId=rule?.sourceId||settings?.sourceId
+  if (!sourceId) throw new Error('Ative a repetição ou vincule a um plano recorrente antes de configurar o rodízio.')
   const { mode, advance } = settings || {}
   const people = settings?.people || []
   if (!ROTATION_MODES.includes(mode) || !ROTATION_ADVANCE.includes(advance)) throw new Error('Tipo de rodízio inválido.')
@@ -133,13 +136,13 @@ export function rotationConfigRecord(task, settings) {
   if (mode === 'individual' && groups.filter(n => n >= 0).length < 2) throw new Error('Escolha pelo menos duas pessoas que se alternam.')
   const templateKey = [ROTATION_KEY,mode,advance,groups.join(',')].join(':')
   return {
-    id: rotationConfigId(rule.sourceId),
+    id: rotationConfigId(sourceId),
     planId: task.planId, bucketId: task.bucketId || '',
     title: 'Configuração interna de rodízio', description: '', team: task.team || '',
     assignees: people.map(person => ({ name: person.name, email: person.email })),
     startDate:'',dueDate:'',status:'todo',priority:'normal',checklist:[],
     dependencyIds:[],eventId:'',dateMode:'manual',dueOffsetDays:null,
-    sourceTaskId:rule.sourceId,routineId:task.id,templateKey,
+    sourceTaskId:sourceId,routineId:task.id,templateKey,
     recurrenceId:'',cycleKey:'',deleted:true
   }
 }
@@ -173,11 +176,14 @@ export function recurrenceCycleIndex(rule,date) {
   return Math.max(0,Math.round(months/rule.interval))
 }
 
-export function rotationAssigneesForDate(task, config, dueDate) {
+export function rotationAssigneesForDate(task,config,dueDate) {
+  const rule=taskRecurrence(task)
+  return rotationAssigneesAtIndex(task,config,recurrenceCycleIndex(rule,dueDate))
+}
+
+export function rotationAssigneesAtIndex(task,config,cycle=0) {
   const people=config?.people || task.assignees || []
   if (!config || config.mode === 'fixed')return people.map(person=>({...person}))
-  const rule=taskRecurrence(task)
-  const cycle=recurrenceCycleIndex(rule,dueDate)
   const fixed=people.filter((_,index)=>config.groups[index]===-1)
   if (config.mode === 'individual'){
     const rotating=people.filter((_,index)=>config.groups[index]!==-1)
