@@ -16,11 +16,12 @@
     min-width:0;padding:0;margin:0;
     border:0;border-radius:0;background:transparent;
   }
-  body.pm-active #planner-app .pg-compact-title{
-    margin:0 3px 5px 0!important;padding:0;
-    flex:0 0 auto;align-self:end;
-    color:#315740;font-size:15px!important;font-weight:790!important;
-    letter-spacing:-.25px;line-height:34px;
+  body.pm-active #planner-app .pg-page-header{
+    margin:0 0 1px;padding:0;min-height:0;
+    align-items:flex-start;
+  }
+  body.pm-active #planner-app .pg-page-header .pm-heading-title{
+    font-size:30px;line-height:1.15;
   }
   body.pm-active #planner-app .pg-mode-wrap,
   body.pm-active #planner-app .pg-zoom-wrap{
@@ -103,7 +104,7 @@
   body.pm-active #planner-app .pg-summary-bar .pg-controls{
     flex:1 1 100%;gap:9px 8px;align-items:end;
   }
-  body.pm-active #planner-app .pg-compact-title{font-size:13px!important;line-height:32px}
+  body.pm-active #planner-app .pg-page-header .pm-heading-title{font-size:26px!important;line-height:1.15}
   body.pm-active #planner-app .pg-summary-bar .pg-mode-wrap{flex:1 1 215px}
   body.pm-active #planner-app .pg-summary-bar .pg-picker-wrap{flex:1 1 175px}
   body.pm-active #planner-app .pg-summary-bar .pg-zoom-wrap{flex:1 1 215px}
@@ -121,9 +122,6 @@
 @media screen{
   :root[data-theme=dark] body.pm-active #planner-app .pg-summary-bar{
     background:#292f33;border-color:#424c4f;
-  }
-  :root[data-theme=dark] body.pm-active #planner-app .pg-compact-title{
-    color:#d6e9db;
   }
   :root[data-theme=dark] body.pm-active #planner-app .pg-summary-bar .pg-caption{
     color:#adc0b3;
