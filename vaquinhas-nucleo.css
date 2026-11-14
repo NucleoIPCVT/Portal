@@ -851,3 +851,82 @@ html[data-portal-theme="dark"] .campaign-page .campaign-footer{border-color:#738
     color:#edf4e7;background:transparent;
   }
 }
+
+
+/* Ajustes de legibilidade em ações de retorno e PIX.
+   O identificador nav-btn-list permanece apenas como referência invisível
+   para o estado de navegação, sem criar um botão acessível ou clicável. */
+.campaign-page .campaign-header #nav-btn-list { display:none!important; }
+
+.campaign-page #view-detail #btn-copy-pix,
+.campaign-page #view-detail #btn-copy-pix.bg-emerald-600 {
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  background:#3c654b!important;
+  border:1px solid #32583f!important;
+  color:#ffffff!important;
+  font-weight:700;
+  min-height:46px;
+  border-radius:12px!important;
+  opacity:1;
+  box-shadow:0 3px 11px rgba(32,68,46,.17);
+}
+.campaign-page #view-detail #btn-copy-pix:hover,
+.campaign-page #view-detail #btn-copy-pix:focus-visible {
+  background:#284f39!important;
+  border-color:#284f39!important;
+  color:#ffffff!important;
+}
+.campaign-page #view-detail #btn-copy-pix svg {color:inherit!important;stroke:currentColor!important;}
+
+.campaign-page #view-form > button[onclick*="switchView"],
+.campaign-page #view-detail > div:first-child > button[onclick*="switchView"]{
+  color:#254c32!important;
+  background:#e0eddd!important;
+  border:1px solid #9db99c!important;
+  border-radius:99px!important;
+  min-height:42px;
+  padding:10px 16px!important;
+  font-size:12px!important;
+  font-weight:700!important;
+  text-decoration:none;
+}
+.campaign-page #view-form > button[onclick*="switchView"]:hover,
+.campaign-page #view-detail > div:first-child > button[onclick*="switchView"]:hover {
+  background:#c7dec2!important;color:#183d26!important;
+}
+.campaign-page #view-form > button[onclick*="switchView"] svg,
+.campaign-page #view-detail > div:first-child > button[onclick*="switchView"] svg{
+  color:inherit!important;stroke:currentColor!important;
+}
+.campaign-page #ledger-dialog #ledger-close {
+  background:#e0eddd!important;color:#254c32!important;
+  border:1px solid #9db99c!important;border-radius:99px!important;
+  min-height:42px;font-size:12px!important;font-weight:700!important;
+  padding:10px 15px!important;
+}
+.campaign-page #ledger-dialog #ledger-close:hover{
+  background:#c7dec2!important;color:#183d26!important;
+}
+
+html[data-portal-theme="dark"] .campaign-page #view-detail #btn-copy-pix,
+html[data-portal-theme="dark"] .campaign-page #view-detail #btn-copy-pix.bg-emerald-600 {
+  background:#c5deb6!important;
+  border-color:#d4e8c6!important;
+  color:#1d3f2b!important;
+}
+html[data-portal-theme="dark"] .campaign-page #view-detail #btn-copy-pix:hover,
+html[data-portal-theme="dark"] .campaign-page #view-detail #btn-copy-pix:focus-visible {
+  background:#d8e9c9!important;color:#173723!important;
+}
+html[data-portal-theme="dark"] .campaign-page #view-form > button[onclick*="switchView"],
+html[data-portal-theme="dark"] .campaign-page #view-detail > div:first-child > button[onclick*="switchView"],
+html[data-portal-theme="dark"] .campaign-page #ledger-dialog #ledger-close{
+  color:#f5f8ed!important;
+  background:#355c43!important;
+  border-color:#8eac89!important;
+}
+html[data-portal-theme="dark"] .campaign-page #view-form > button[onclick*="switchView"]:hover,
+html[data-portal-theme="dark"] .campaign-page #view-detail > div:first-child > button[onclick*="switchView"]:hover,
+html[data-portal-theme="dark"] .campaign-page #ledger-dialog #ledger-close:hover {
+  background:#476e51!important;color:#ffffff!important;
+}
