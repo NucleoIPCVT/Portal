@@ -1,0 +1,277 @@
+/* Agenda Anual IPCVT • linguagem visual do Portal Núcleo IPCVT
+   Apenas apresentação. Dimensões da folha impressa e lógica da agenda preservadas. */
+@media screen {
+  :root{color-scheme:light;}
+  html[data-portal-theme="dark"]{color-scheme:dark;}
+  body{
+    --agenda-ink:#263b30;
+    --agenda-text:#526557;
+    --agenda-line:#d6ddcf;
+    --agenda-accent:#587960;
+    --agenda-surface:#fffaf3;
+    --agenda-header:rgba(251,249,243,.94);
+    --agenda-light:#eff3e9;
+    min-height:100vh;
+    color:var(--agenda-ink);
+    background:
+      radial-gradient(ellipse at 99% 10%,rgba(202,221,188,.38),transparent 34%),
+      radial-gradient(ellipse at 1% 78%,rgba(228,211,181,.20),transparent 38%),
+      linear-gradient(160deg,#fbf8f3,#f9f6ef 60%,#f0f5ed 100%);
+    font-family:Inter,'DM Sans',Arial,sans-serif;
+    overflow-x:clip;
+  }
+  .app-bar{
+    min-height:91px;
+    padding:10px clamp(22px,4.3vw,80px);
+    justify-content:space-between;
+    gap:20px;
+    background:var(--agenda-header);
+    border-bottom:1px solid rgba(182,199,177,.56);
+    color:var(--agenda-ink);
+    backdrop-filter:blur(17px);
+  }
+  .home-link{
+    flex-shrink:0;min-width:0;display:flex;gap:16px;align-items:center;
+    color:var(--agenda-ink);text-decoration:none;letter-spacing:0;
+    font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(27px,2.45vw,39px);
+    font-weight:600;line-height:.94;
+  }
+  .home-link img{width:64px;height:64px;object-fit:contain;}
+  .agenda-brand-copy{
+    display:block;border-left:1px solid var(--agenda-line);
+    padding-left:20px;white-space:nowrap;letter-spacing:-.035em;
+  }
+  .agenda-brand-copy small{
+    display:block;margin-top:9px;
+    font:600 10px/1.2 Inter,Arial,sans-serif;letter-spacing:.25em;
+    color:var(--agenda-text);
+  }
+  .agenda-header-actions{
+    display:flex;align-items:center;justify-content:flex-end;
+    gap:clamp(12px,2vw,30px);min-width:0;
+  }
+  .app-bar-caption{
+    font:500 11px/1.4 Inter,Arial,sans-serif;color:var(--agenda-text);
+    text-align:right;letter-spacing:.015em;
+  }
+  .agenda-return,.agenda-theme-toggle{
+    display:inline-flex;justify-content:center;align-items:center;gap:9px;
+    color:var(--agenda-ink);text-decoration:none;white-space:nowrap;
+    border:1px solid var(--agenda-line);border-radius:99px;
+    min-height:41px;padding:9px 14px;
+    background:rgba(255,255,255,.48);
+    font:600 11px/1.2 Inter,Arial,sans-serif;
+    transition:background .2s,transform .2s;
+  }
+  .agenda-return:hover,.agenda-theme-toggle:hover{
+    background:#e7eee2;transform:translateY(-1px);
+  }
+  .agenda-theme-toggle{cursor:pointer;}
+  .agenda-theme-moon,.agenda-theme-sun{
+    display:inline-grid;place-items:center;line-height:1;font-size:22px;
+    width:19px;min-width:19px;
+  }
+  .agenda-theme-sun{display:none;}
+  .app-shell{max-width:1550px;padding:clamp(28px,3.3vw,52px) clamp(21px,3.7vw,62px) 40px;}
+  .page-toolbar{gap:28px;margin-bottom:27px;align-items:flex-end;}
+  .page-intro{min-width:0;}
+  .eyebrow{
+    color:#64826b;font:700 10px/1.3 Inter,Arial,sans-serif;
+    letter-spacing:.24em;text-transform:uppercase;
+  }
+  .page-intro .eyebrow::after{
+    content:"";display:inline-block;vertical-align:middle;margin-left:15px;
+    width:95px;height:1px;background:linear-gradient(90deg,#86a484,transparent);
+  }
+  .page-intro h1{
+    margin:12px 0 10px;
+    font:600 clamp(48px,4.6vw,76px)/.92 'Cormorant Garamond',Georgia,serif;
+    color:var(--agenda-ink);letter-spacing:-.05em;
+  }
+  .page-intro h1 em{
+    font-style:italic;font-weight:500;color:var(--agenda-accent);
+  }
+  .page-intro p{
+    color:var(--agenda-text);font:400 14px/1.62 Inter,Arial,sans-serif;
+    max-width:575px;
+  }
+  .toolbar-actions{gap:11px;align-items:flex-end;}
+  .year-control{
+    color:var(--agenda-text);font:600 11px/1.2 Inter,Arial,sans-serif;
+    gap:7px;
+  }
+  .year-control select{
+    background:var(--agenda-surface);color:var(--agenda-ink);
+    border:1px solid var(--agenda-line);border-radius:99px;
+    height:46px;padding:0 14px;min-width:115px;
+    font:600 12px Inter,Arial,sans-serif;
+  }
+  .button{
+    min-height:46px;height:auto;padding:11px 18px;
+    border-radius:99px;font:600 11px/1.35 Inter,Arial,sans-serif;
+    transition:background .2s,transform .2s,box-shadow .2s;
+  }
+  .button-secondary{
+    color:#3f674b;background:var(--agenda-surface);
+    border:1px solid #cbdac5;
+  }
+  .button-secondary:hover{background:#e9f1e5;}
+  .button-primary{
+    color:#fff;background:linear-gradient(115deg,#78977a,#4f7458);
+    border:1px solid #638565;
+    box-shadow:0 7px 18px rgba(48,89,58,.17);
+  }
+  .button-primary:hover{background:#41674c;box-shadow:0 10px 20px rgba(48,89,58,.22);}
+  .load-status{
+    background:#eaf3e7;border:1px solid #d0dec9;border-radius:15px;
+    color:#47644e;padding:13px 18px;font:500 12px/1.6 Inter,Arial,sans-serif;
+  }
+  .load-status.is-error{background:#f9ebe5;border-color:#e9c6bd;color:#8d4b3e;}
+  .load-status.is-warning{background:#f8f0dd;border-color:#e8d4a9;color:#7c633c;}
+  .booklet-instructions{
+    color:var(--agenda-text);font:400 12px/1.7 Inter,Arial,sans-serif;
+    padding:0 3px;margin:0 0 27px;
+  }
+  .booklet-instructions strong{color:var(--agenda-accent);}
+  .print-sheet{
+    border:1px solid #d9e1d5;border-radius:17px;
+    background:#fffdf8;box-shadow:0 14px 28px rgba(55,73,46,.11);
+  }
+  .duplex-sheet{
+    border:1px solid #e0e4d9;border-radius:16px;
+    background:#fffdf8;
+    box-shadow:0 15px 32px rgba(55,73,46,.11);
+  }
+  .mini-month{
+    border:1px solid #dee7d8;border-radius:9px;
+    background:linear-gradient(160deg,#fcfdf9,#fffaf2);
+  }
+  .mini-month-head{border-color:#e1e9dd;}
+  .mini-month-head strong{color:#365b42;}
+  .mini-month-grid .day.has-event,
+  .booklet-calendar-page .mini-month-grid .day.has-event,
+  .single-page-calendar-grid .mini-month-grid .day.has-event,
+  .duplex-calendar-grid .mini-month-grid .day.has-event {
+    color:#335d3e;
+    background:#dfeadb;
+    box-shadow:inset 0 0 0 1px rgba(113,149,111,.23);
+    font-weight:700;
+  }
+  .event-key{background:#dfeadb;box-shadow:inset 0 0 0 1px rgba(113,149,111,.35);}
+  .event-date{background:#eaf2e5;border-radius:9px;}
+  .event-row{border-color:#e9eee5;}
+  .screen-footer{
+    border-top:1px solid var(--agenda-line);padding:22px 0 12px;
+    gap:22px;color:var(--agenda-text);
+    font:500 11px/1.65 Inter,Arial,sans-serif;
+  }
+  .screen-footer a{color:var(--agenda-accent);}
+  .screen-footer a:hover{text-decoration:underline;}
+
+  /* Tema escuro no ambiente. As folhas de impressão continuam claras. */
+  html[data-portal-theme="dark"] body{
+    --agenda-ink:#f0f6ed;
+    --agenda-text:#d3e1d0;
+    --agenda-line:#718e75;
+    --agenda-accent:#c3d9b6;
+    --agenda-surface:#3a5747;
+    --agenda-header:rgba(29,53,43,.95);
+    --agenda-light:#476951;
+    background:
+      radial-gradient(ellipse at 96% 8%,rgba(137,165,121,.23),transparent 42%),
+      radial-gradient(ellipse at 2% 87%,rgba(188,165,119,.12),transparent 42%),
+      linear-gradient(155deg,#243d33,#335344 56%,#294339);
+    color:var(--agenda-ink);
+  }
+  html[data-portal-theme="dark"] .home-link img{filter:brightness(1.12) saturate(.9);}
+  html[data-portal-theme="dark"] .agenda-brand-copy{border-color:#749176;}
+  html[data-portal-theme="dark"] .agenda-return,
+  html[data-portal-theme="dark"] .agenda-theme-toggle{
+    background:#3e604d;color:#f2f7ed;border-color:#8aa788;
+  }
+  html[data-portal-theme="dark"] .agenda-return:hover,
+  html[data-portal-theme="dark"] .agenda-theme-toggle:hover{
+    background:#51745a;color:#fff;
+  }
+  html[data-portal-theme="dark"] .agenda-theme-moon{display:none;}
+  html[data-portal-theme="dark"] .agenda-theme-sun{display:inline-grid;}
+  html[data-portal-theme="dark"] .eyebrow{color:#c2d6b7;}
+  html[data-portal-theme="dark"] .page-intro .eyebrow::after{
+    background:linear-gradient(90deg,#a8c39e,transparent);
+  }
+  html[data-portal-theme="dark"] .page-intro h1 em{color:#c8ddb9;}
+  html[data-portal-theme="dark"] .year-control select{
+    color:#f2f7ee;background:#385542;border-color:#8aab84;
+  }
+  html[data-portal-theme="dark"] .button-secondary{
+    color:#eff6ea;background:#3d5c49;border-color:#829f7c;
+  }
+  html[data-portal-theme="dark"] .button-secondary:hover{background:#52715a;}
+  html[data-portal-theme="dark"] .button-primary{
+    color:#1c3929;background:linear-gradient(115deg,#c5d9b8,#9dbd99);
+    border-color:#c2d6b7;
+  }
+  html[data-portal-theme="dark"] .button-primary:hover{background:#d5e5c9;}
+  html[data-portal-theme="dark"] .load-status{
+    color:#e8f3e4;background:#3a624b;border-color:#81a180;
+  }
+  html[data-portal-theme="dark"] .load-status.is-error{
+    color:#ffded1;background:#744d48;border-color:#b78a7d;
+  }
+  html[data-portal-theme="dark"] .load-status.is-warning{
+    color:#f4e5c8;background:#685c45;border-color:#ad9c7a;
+  }
+  html[data-portal-theme="dark"] .screen-footer{border-color:#709072;}
+  @media(max-width:1320px){
+    .app-bar-caption{display:none;}
+    .page-toolbar{flex-direction:column;align-items:stretch;gap:23px;}
+    .toolbar-actions{justify-content:flex-start;}
+  }
+  @media(max-width:760px){
+    .app-bar{padding:9px 16px;min-height:77px;gap:7px;}
+    .home-link{font-size:26px;gap:8px;}
+    .home-link img{width:44px;height:44px;}
+    .agenda-brand-copy{padding-left:11px;}
+    .agenda-brand-copy small{font-size:8px;letter-spacing:.15em;margin-top:5px;}
+    .agenda-header-actions{gap:6px;}
+    .agenda-return{padding:8px 10px;min-height:38px;font-size:0;gap:0;}
+    .agenda-return span{font-size:18px;line-height:1;}
+    .agenda-theme-toggle{min-height:38px;padding:7px 10px;}
+    .agenda-theme-toggle>span:last-child{display:none;}
+    .app-shell{padding:26px 14px 30px;}
+    .page-intro h1{font-size:clamp(43px,9vw,61px);}
+    .page-intro p{font-size:13px;}
+    .toolbar-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+    .toolbar-actions .button{min-height:46px;}
+    .toolbar-actions > .button-primary,.toolbar-actions>a.button{grid-column:1/-1;}
+    .booklet-instructions{font-size:11px;margin-bottom:19px;}
+    .print-sheet{border-radius:12px;}
+    .screen-footer{flex-direction:column;align-items:flex-start;gap:12px;}
+    .screen-footer p{text-align:left;}
+  }
+  @media(max-width:390px){
+    .home-link{font-size:23px;}
+    .home-link img{width:36px;height:36px;}
+    .agenda-brand-copy small{font-size:7px;}
+    .agenda-return{padding:7px;}
+    .agenda-theme-toggle{padding:7px;}
+    .app-shell{padding-inline:11px;}
+  }
+}
+
+/* Impressão: marcações suaves, preservando tamanhos, paginação e orientação A4.
+   A identidade do papel segue o layout claro mesmo com tema escuro ativo. */
+@media print {
+  .mini-month-grid .day.has-event,
+  .booklet-calendar-page .mini-month-grid .day.has-event,
+  .single-page-calendar-grid .mini-month-grid .day.has-event,
+  .duplex-calendar-grid .mini-month-grid .day.has-event{
+    color:#345e40!important;
+    background:#e0eadb!important;
+    box-shadow:inset 0 0 0 .2mm rgba(103,147,108,.25)!important;
+    font-weight:700;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+  .event-key{background:#e0eadb!important;box-shadow:inset 0 0 0 .15mm rgba(103,147,108,.28);}
+}
