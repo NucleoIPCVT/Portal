@@ -5,7 +5,7 @@ import {
   teamMetadataId,sanitizeTeamSvg,teamSvgUrl
 } from './planner-team-icons.js?v=20261113-teatro-v1'
 import { ganttLinkRoutes } from './planner-gantt-links.js?v=20261113-fanin-v1'
-import { renderGanttWorkspace, selectGanttPlanContext } from './planner-gantt-workspace.js?v=20261113-gantt-title-v2'
+import { renderGanttWorkspace, selectGanttPlanContext } from './planner-gantt-workspace.js?v=20261113-gantt-days-v3'
 import { routineMigrationPlan } from './planner-routine-migration.js?v=20261113-unified-v1'
 import {
   parsePlanCycleConfig,planCycleConfigRecord,planCycleConfigId,
