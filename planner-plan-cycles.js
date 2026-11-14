@@ -1,3 +1,6 @@
+import {parseRotationConfig,rotationConfigId,taskRecurrence,recurrenceCycleIndex,rotationAssigneesAtIndex}
+  from './planner-recurrence.js?v=20261113-plan-rotation-v1'
+
 /* Ciclos de planos do IPCVT.
    Configuração interna usa um registro técnico excluído, tal como o rodízio,
    para ser compatível com as regras Firestore existentes.
@@ -101,6 +104,25 @@ export function planCycleLabel(config,date){
   const value=currentPlanCycle(config,date)
   return value?new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'}).format(d(value)):''
 }
+// A rotação usa o índice do ciclo e não o número de tarefas concluídas.
+export function planCycleIndex(config,cycle){
+  if(!config||!dateOK(cycle))return 0
+  if(config.unit!=='month'){
+    const step=config.interval*(config.unit==='week'?7:1)
+    return Math.max(0,Math.round(distance(config.anchor,cycle)/step))
+  }
+  const from=d(config.anchor),to=d(cycle)
+  const months=(to.getUTCFullYear()-from.getUTCFullYear())*12+
+    to.getUTCMonth()-from.getUTCMonth()
+  return Math.max(0,Math.round(months/config.interval))
+}
+export function assigneesForPlanCycle(config,template,rotation,cycle,dueDate){
+  if(!rotation)return (template.assignees||[]).map(person=>({...person}))
+  const originalRule=taskRecurrence(template)
+  const index=originalRule?recurrenceCycleIndex(originalRule,dueDate):
+    planCycleIndex(config,cycle)
+  return rotationAssigneesAtIndex(template,rotation,index)
+}
 export function planCycleDates(config,today,count=2){
   if(!config||!dateOK(today))return []
   const first=currentPlanCycle(config,today)
@@ -138,6 +160,8 @@ export function missingPlanCycleTasks(config,allTasks,buckets,today,count=2){
   if(!families.length)return []
   const dates=planCycleDates(config,today,count)
   const output=[]
+  const rotations=new Map(allTasks.map(parseRotationConfig).filter(Boolean)
+    .map(record=>[record.sourceId,record]))
   const sourceFamily=new Map()
   for(const group of families)for(const task of group.items)sourceFamily.set(task.id,group.root)
   for(const target of dates){
@@ -170,7 +194,7 @@ export function missingPlanCycleTasks(config,allTasks,buckets,today,count=2){
       output.push({
         id:targetIds.get(group.root),planId:config.planId,bucketId,
         title:template.title,description:template.description||'',team:template.team||'',
-        assignees:(template.assignees||[]).map(x=>({...x})),
+        assignees:assigneesForPlanCycle(config,template,rotations.get(group.root),target,dueDate),
         startDate:shift(dueDate,-duration),dueDate,
         status:'todo',priority:template.priority||'normal',
         checklist:(template.checklist||[]).map(x=>({...x,done:false})),
