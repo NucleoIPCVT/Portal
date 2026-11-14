@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="planner-sidebar-collapse.css?v=20261113-sidebar-v1">
     <link rel="stylesheet" href="planner-gantt-resize-tablet.css?v=20261113-gantt-resize-tablet-v1">
     <link rel="stylesheet" href="planner-plan-cycles.css?v=20261113-plan-rotation-v1">
+    <link rel="stylesheet" href="planner-sidebar-new-plan.css?v=20261113-new-plan-premium-v1">
     <script type="module" src="planner.js?v=20261113-plan-rotation-v1"></script>
   </head>
   <body data-interface="planner-ipcvt-verde-creme" data-revisao="20261113-teatro-v1">
@@ -127,7 +128,12 @@
                 <button class="pm-side-link" type="button" data-view="plans" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M3 7V4h7l2 3M7 12h10M7 16h7"/></svg>Meus planos</button>
                 <button class="pm-side-link" type="button" data-view="gantt" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v14H3zM7 9h7M10 13h9M7 17h8"/></svg>Gantt</button>
                 <button class="pm-side-link" type="button" data-view="calendar-all" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 11h18M8 15h3M14 15h3"/></svg>Calendário</button>
-                <div class="sidebar-plans-heading"><span class="nav-group-label">PLANOS EM QUE PARTICIPO</span><button id="new-plan-button" type="button" aria-label="Criar novo plano" title="Novo plano">+</button></div>
+                <div class="sidebar-plans-heading"><span class="nav-group-label">PLANOS EM QUE PARTICIPO</span></div>
+                <button id="new-plan-button" class="pm-new-plan-action" type="button" aria-label="Criar novo plano" title="Criar novo plano">
+                  <span class="pm-new-plan-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>
+                  <span class="pm-new-plan-label">Novo plano</span>
+                  <svg class="pm-new-plan-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+                </button>
                 <div id="sidebar-plan-list" class="sidebar-plan-list" aria-label="Planos com participação"></div>
                 <details class="nav-extras" id="nav-extras">
                   <summary>Outras ferramentas</summary>
