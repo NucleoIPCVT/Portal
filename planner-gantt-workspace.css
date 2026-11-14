@@ -78,10 +78,10 @@
 .pg-bar:disabled{cursor:default;opacity:1}
 .pg-today-line{position:absolute;top:69px;bottom:0;width:1px;background:#c79d61;z-index:3;pointer-events:none}
 .pg-today-line:before{content:'Hoje';display:block;position:absolute;top:-17px;left:0;transform:translateX(-50%);padding:2px 4px;background:#fff3e5;border:1px solid #e8cb9e;border-radius:3px;color:#997548;font-size:9px;font-weight:750;white-space:nowrap}
-.pg-links{position:absolute;top:0;left:0;z-index:4;overflow:visible;pointer-events:none}
+.pg-links{position:absolute;top:0;left:0;z-index:1;overflow:visible;pointer-events:none}
 .pg-links .pg-link{fill:none;stroke:#598c6d;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.75;vector-effect:non-scaling-stroke}
 .pg-links .pg-link.is-active{stroke:#31764e;stroke-width:2.5;opacity:1}.pg-links .pg-link.is-muted{opacity:.12}
-.pg-links .pg-link.is-backward{stroke-dasharray:5 4}
+.pg-links .pg-link.is-backward{stroke-dasharray:none}
 .pg-links .pg-link.is-trunk{stroke-width:2.1}
 .pg-links marker path{fill:#43815c;stroke:none}
 .pg-legend{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;padding:13px 16px;border-top:1px solid #e5ece5;background:#fcfdfb}
