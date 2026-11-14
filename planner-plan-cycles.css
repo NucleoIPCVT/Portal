@@ -55,3 +55,17 @@ body.pm-active #planner-app .pm-cycle-today:hover{background:#dfeee0}
 }
 @media print{body.pm-active #planner-app .pm-plan-repeat{display:none!important}
   body.pm-active #planner-app .pm-cycle-bar{break-inside:avoid}}
+
+/* Controles compactos dos ciclos dentro do cronograma Gantt. */
+.pg-workspace .pg-cycle-controls{
+  display:inline-flex;align-items:center;gap:4px;padding:3px 5px;
+  border:1px solid #dce8dc;border-radius:6px;background:#f4f8f3;
+}
+.pg-workspace .pg-cycle-date{
+  min-width:65px;text-align:center;font-size:10px;font-weight:770;
+  color:#456c50;white-space:nowrap;
+}
+:root[data-theme=dark] .pg-workspace .pg-cycle-controls{
+  background:#344a39;border-color:#4a7152;
+}
+:root[data-theme=dark] .pg-workspace .pg-cycle-date{color:#d3e7d6}
