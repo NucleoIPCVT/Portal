@@ -3,47 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f5f2ea">
-  <meta name="description" content="Portal de organização, escala, agenda e coordenação do Núcleo IPCVT.">
-  <title>Portal IPCVT | Nosso serviço em harmonia</title>
+  <meta name="theme-color" content="#f8f5ee">
+  <meta name="description" content="Núcleo IPCVT: apoio, organização e serviço das equipes de louvor, mídia e técnica.">
+  <title>Núcleo IPCVT | Louvor, Mídia e Técnica</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <script>
     (function () {
-      try {
-        document.documentElement.dataset.portalTheme =
-          localStorage.getItem('ipcvt-portal-theme') === 'dark' ? 'dark' : 'light';
-      } catch (_) {
-        document.documentElement.dataset.portalTheme = 'light';
-      }
+      var theme = 'light';
+      try { theme = localStorage.getItem('ipcvt-portal-theme') === 'dark' ? 'dark' : 'light'; } catch (error) {}
+      document.documentElement.setAttribute('data-portal-theme', theme);
     })();
   </script>
-  <link rel="stylesheet" href="portal-ui.css">
-  <link rel="stylesheet" href="portal-home.css?v=20261114-harmonia">
+  <link rel="stylesheet" href="portal-home.css?v=20261114-nucleo-pastel-v3">
 </head>
-<body class="portal-page portal-harmonia">
+<body class="portal-page portal-nucleo">
   <header class="portal-bar" id="inicio">
-    <a class="portal-brand" href="index.html" aria-label="Portal IPCVT, voltar ao início">
-      <img class="brand-mark" src="logo-nucleo-quatro-aliancas.svg" alt="" width="64" height="64">
-      <span class="brand-wordmark">Portal IPCVT<small>NÚCLEO IPCVT</small></span>
+    <a class="portal-brand" href="index.html" aria-label="Voltar ao início do Núcleo IPCVT">
+      <img class="brand-mark" src="logo-nucleo-quatro-aliancas.svg" alt="" width="69" height="69">
+      <span class="brand-title">Núcleo IPCVT<small>LOUVOR, MÍDIA E TÉCNICA</small></span>
     </a>
 
-    <nav class="portal-menu" id="portal-navigation" aria-label="Navegação principal">
+    <nav class="portal-nav" id="portal-navigation" aria-label="Navegação principal">
       <a class="is-current" href="#inicio" aria-current="page">Início</a>
-      <a href="#ferramentas">Ferramentas <i class="ph ph-caret-down" aria-hidden="true"></i></a>
-      <a href="#sobre">Sobre o Núcleo</a>
+      <a href="#ferramentas">Ferramentas</a>
       <a href="agenda-anual.html">Agenda</a>
       <a href="comissao.html">Comissão</a>
+      <a href="#sobre">Sobre</a>
     </nav>
 
-    <div class="portal-header-actions">
-      <button type="button" class="portal-theme-toggle" id="portal-theme-toggle" aria-label="Ativar modo escuro" aria-pressed="false" title="Alternar modo claro ou escuro">
+    <div class="portal-bar-actions">
+      <button class="portal-theme-toggle" id="portal-theme-toggle" type="button" aria-pressed="false" aria-label="Ativar modo escuro" title="Alternar tema claro e escuro">
         <i class="ph ph-moon-stars" id="portal-theme-icon" aria-hidden="true"></i>
-        <span id="portal-theme-text">Modo escuro</span>
+        <span id="portal-theme-label">Modo escuro</span>
       </button>
-      <button type="button" class="portal-menu-toggle" id="portal-menu-toggle" aria-expanded="false" aria-controls="portal-navigation" aria-label="Abrir menu">
+      <button class="portal-mobile-menu" id="portal-mobile-menu" type="button" aria-controls="portal-navigation" aria-expanded="false" aria-label="Abrir menu">
         <i class="ph ph-list" aria-hidden="true"></i>
       </button>
     </div>
@@ -51,141 +47,127 @@
 
   <main class="portal-main">
     <section class="portal-hero" aria-labelledby="portal-title">
-      <div class="portal-hero-ornament" aria-hidden="true"></div>
       <div class="portal-intro">
-        <div class="eyebrow">Portal IPCVT <span aria-hidden="true">·</span> Núcleo de apoio ao culto</div>
-        <h1 id="portal-title">Nosso serviço<br>em <em>harmonia</em></h1>
-        <p>Organização, escala, agenda e coordenação a serviço da adoração, em unidade.</p>
+        <div class="portal-eyebrow"><span>PORTAL IPCVT</span><i aria-hidden="true"></i></div>
+        <h1 id="portal-title">Núcleo IPCVT</h1>
+        <p class="portal-subtitle">Louvor, Mídia e Técnica</p>
+        <p class="portal-lead">O espaço de apoio, organização e serviço das equipes de louvor, mídia e técnica da IPCVT.</p>
 
-        <div class="portal-attributes" aria-label="Nosso propósito">
-          <span><i class="ph ph-sliders-horizontal" aria-hidden="true"></i> Planejamento<br>inteligente</span>
-          <span><i class="ph ph-users-three" aria-hidden="true"></i> Serviço<br>integrado</span>
-          <span><i class="ph ph-chart-bar" aria-hidden="true"></i> Mais fluidez<br>no culto</span>
+        <div class="portal-pillars" aria-label="Áreas de atuação">
+          <span><i class="ph ph-music-notes" aria-hidden="true"></i> LOUVOR</span>
+          <span><i class="ph ph-monitor" aria-hidden="true"></i> MÍDIA</span>
+          <span><i class="ph ph-sliders-horizontal" aria-hidden="true"></i> TÉCNICA</span>
         </div>
 
-        <div class="portal-hero-actions">
-          <a class="portal-cta portal-cta-primary" href="#ferramentas"><i class="ph ph-arrow-square-out" aria-hidden="true"></i> Acessar ferramentas <i class="ph ph-arrow-right" aria-hidden="true"></i></a>
-          <a class="portal-cta portal-cta-outline" href="#sobre"><i class="ph ph-play" aria-hidden="true"></i> Conheça o Núcleo</a>
+        <div class="portal-hero-links">
+          <a class="portal-action portal-action-primary" href="#ferramentas">Acessar Ferramentas <i class="ph ph-arrow-right" aria-hidden="true"></i></a>
+          <a class="portal-action portal-action-secondary" href="#sobre"><i class="ph ph-info" aria-hidden="true"></i> Sobre o Núcleo</a>
         </div>
       </div>
-      <div class="portal-hero-photo" role="img" aria-label="Visão da mixhouse durante um culto: operadores de áudio, projeção e transmissão, fotógrafo, congregação e louvor na frente da igreja"></div>
-      <span class="portal-hero-signature" aria-hidden="true">APOIO<br>TÉCNICO<br>PARA UM CULTO<br>EXCELENTE</span>
+      <div class="portal-hero-art" role="img" aria-label="Ilustração em aquarela da equipe de som, projeção e transmissão trabalhando na mixhouse durante o louvor da igreja">
+        <div class="portal-hero-image"></div>
+      </div>
     </section>
 
     <section class="portal-tools" id="ferramentas" aria-labelledby="ferramentas-title">
-      <div class="portal-toolgrid">
-        <div class="portal-tools-intro">
-          <div class="portal-tools-kicker"><span></span> FERRAMENTAS DO PORTAL</div>
-          <h2 id="ferramentas-title">Tudo o que o nosso serviço precisa, em um só lugar.</h2>
-          <div class="portal-palette" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
-        </div>
-
-        <a class="portal-card portal-card-louvor" href="https://escala-louvor-public.web.app" target="_blank" rel="noopener noreferrer" aria-label="Acessar Escala do Louvor, abre em nova aba">
-          <div class="portal-card-inner">
-            <span class="portal-card-badge"><i class="ph ph-star" aria-hidden="true"></i> Principal</span>
-            <div class="portal-icon portal-icon-louvor" aria-hidden="true"><i class="ph ph-calendar-blank"></i><i class="ph ph-music-notes"></i></div>
-            <h3>Escala do Louvor</h3>
-            <p>Monte, visualize e gerencie as escalas do ministério de louvor.</p>
-            <span class="portal-card-action">Acessar <i class="ph ph-arrow-right" aria-hidden="true"></i></span>
-          </div>
-        </a>
-
-        <a class="portal-card portal-card-agenda portal-card-horizontal" href="agenda-anual.html">
-          <div class="portal-card-inner">
-            <div class="portal-icon" aria-hidden="true"><i class="ph ph-calendar-blank"></i></div>
-            <div class="portal-card-copy">
-              <h3>Agenda Anual IPCVT</h3>
-              <p>Calendário oficial de cultos, eventos e atividades da IPCVT.</p>
-            </div>
-            <span class="portal-card-round-arrow" aria-hidden="true"><i class="ph ph-arrow-right"></i></span>
-          </div>
-        </a>
-
-        <a class="portal-card portal-card-geral portal-card-horizontal" href="escala_geral.html">
-          <div class="portal-card-inner">
-            <div class="portal-icon" aria-hidden="true"><i class="ph ph-stack"></i></div>
-            <div class="portal-card-copy">
-              <h3>Escala Geral</h3>
-              <p>Visão unificada das escalas de todos os serviços.</p>
-            </div>
-            <span class="portal-card-round-arrow" aria-hidden="true"><i class="ph ph-arrow-right"></i></span>
-          </div>
-        </a>
-
-        <a class="portal-card portal-card-vaquinhas portal-card-horizontal" href="vaquinhas.html">
-          <div class="portal-card-inner">
-            <div class="portal-icon" aria-hidden="true"><i class="ph ph-heart"></i></div>
-            <div class="portal-card-copy">
-              <h3>Vaquinhas</h3>
-              <p>Organize e acompanhe contribuições de forma simples e transparente.</p>
-            </div>
-            <span class="portal-card-round-arrow" aria-hidden="true"><i class="ph ph-arrow-right"></i></span>
-          </div>
-        </a>
-
-        <a class="portal-card portal-card-comissao" href="comissao.html">
-          <div class="portal-card-inner">
-            <div class="portal-icon" aria-hidden="true"><img src="logo-comissao.svg" alt="" width="70" height="58"></div>
-            <h3>Comissão</h3>
-            <p>Membros, atribuições e gestão do Núcleo IPCVT.</p>
-            <span class="portal-card-round-arrow" aria-hidden="true"><i class="ph ph-arrow-right"></i></span>
-            <span class="portal-card-access"><i class="ph ph-lock-key" aria-hidden="true"></i> Acesso reservado</span>
-          </div>
-        </a>
+      <div class="portal-tools-heading">
+        <h2 id="ferramentas-title">Ferramentas do Núcleo</h2>
+        <div class="portal-heading-line" aria-hidden="true"></div>
+        <span class="portal-tools-values">ORGANIZAÇÃO <span>•</span> PLANEJAMENTO <span>•</span> COLABORAÇÃO <span>•</span> SERVIÇO</span>
       </div>
+
+      <nav class="portal-cards" aria-label="Ferramentas do Núcleo IPCVT">
+        <a class="portal-card portal-card-louvor" href="https://escala-louvor-public.web.app" target="_blank" rel="noopener noreferrer" aria-label="Escala do Louvor, abre em nova aba">
+          <div class="portal-card-head">
+            <span class="portal-card-icon"><i class="ph ph-music-notes" aria-hidden="true"></i></span>
+            <h3>Escala do<br>Louvor</h3>
+            <span class="portal-card-arrow"><i class="ph ph-arrow-right" aria-hidden="true"></i></span>
+          </div>
+          <p>Escalas, equipes e informações do ministério de louvor.</p>
+        </a>
+        <a class="portal-card portal-card-agenda" href="agenda-anual.html">
+          <div class="portal-card-head">
+            <span class="portal-card-icon"><i class="ph ph-calendar-blank" aria-hidden="true"></i></span>
+            <h3>Agenda<br>Anual IPCVT</h3>
+            <span class="portal-card-arrow"><i class="ph ph-arrow-right" aria-hidden="true"></i></span>
+          </div>
+          <p>Planejamento do ano com os principais eventos da igreja.</p>
+        </a>
+        <a class="portal-card portal-card-geral" href="escala_geral.html">
+          <div class="portal-card-head">
+            <span class="portal-card-icon"><i class="ph ph-stack" aria-hidden="true"></i></span>
+            <h3>Escala<br>Geral</h3>
+            <span class="portal-card-arrow"><i class="ph ph-arrow-right" aria-hidden="true"></i></span>
+          </div>
+          <p>Visão unificada das escalas de louvor, mídia e técnica.</p>
+        </a>
+        <a class="portal-card portal-card-vaquinhas" href="vaquinhas.html">
+          <div class="portal-card-head">
+            <span class="portal-card-icon"><i class="ph ph-piggy-bank" aria-hidden="true"></i></span>
+            <h3>Vaquinhas</h3>
+            <span class="portal-card-arrow"><i class="ph ph-arrow-right" aria-hidden="true"></i></span>
+          </div>
+          <p>Campanhas e arrecadações das equipes (equipamentos, viagens, projetos etc.).</p>
+        </a>
+        <a class="portal-card portal-card-comissao" href="comissao.html">
+          <div class="portal-card-head">
+            <span class="portal-card-icon"><img src="logo-comissao.svg" alt="" width="50" height="43"></span>
+            <h3>Comissão</h3>
+            <span class="portal-card-arrow"><i class="ph ph-arrow-right" aria-hidden="true"></i></span>
+          </div>
+          <p>Composição, atribuições e informações da Comissão do Núcleo.</p>
+        </a>
+      </nav>
     </section>
   </main>
 
   <footer class="portal-footer" id="sobre">
-    <span class="footer-rule" aria-hidden="true"></span>
-    <div class="footer-lockup">
-      <img src="logo-igreja.png" alt="Logomarca da IPCVT" width="105" height="44">
+    <div class="portal-footer-brand">
+      <img id="portal-church-logo" src="logo-igreja.png" alt="Logomarca da Igreja Presbiteriana Central em Vilar dos Teles" width="118">
       <p>Igreja Presbiteriana Central em Vilar dos Teles</p>
     </div>
-    <span class="footer-rule" aria-hidden="true"></span>
+    <p class="portal-footer-note">Núcleo IPCVT · Louvor, Mídia e Técnica</p>
   </footer>
 
   <script>
     (function () {
-      const root = document.documentElement;
-      const button = document.getElementById('portal-theme-toggle');
-      const icon = document.getElementById('portal-theme-icon');
-      const text = document.getElementById('portal-theme-text');
-      const meta = document.querySelector('meta[name="theme-color"]');
-      function renderTheme() {
-        const dark = root.dataset.portalTheme === 'dark';
+      var root = document.documentElement;
+      var button = document.getElementById('portal-theme-toggle');
+      var icon = document.getElementById('portal-theme-icon');
+      var label = document.getElementById('portal-theme-label');
+      var meta = document.querySelector('meta[name="theme-color"]');
+      var logo = document.getElementById('portal-church-logo');
+      function applyTheme() {
+        var dark = root.getAttribute('data-portal-theme') === 'dark';
         button.setAttribute('aria-pressed', String(dark));
         button.setAttribute('aria-label', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
+        button.title = dark ? 'Ativar modo claro' : 'Ativar modo escuro';
         icon.className = dark ? 'ph ph-sun' : 'ph ph-moon-stars';
-        text.textContent = dark ? 'Modo claro' : 'Modo escuro';
-        if (meta) meta.content = dark ? '#1e3931' : '#f5f2ea';
+        label.textContent = dark ? 'Modo claro' : 'Modo escuro';
+        if (meta) meta.content = dark ? '#233e35' : '#f8f5ee';
+        // Atualização explícita evita depender apenas da folha CSS no cache.
+        if (logo) logo.style.filter = dark ? 'brightness(0) invert(1)' : 'none';
       }
       button.addEventListener('click', function () {
-        root.dataset.portalTheme = root.dataset.portalTheme === 'dark' ? 'light' : 'dark';
-        try { localStorage.setItem('ipcvt-portal-theme', root.dataset.portalTheme); } catch (_) {}
-        renderTheme();
+        var next = root.getAttribute('data-portal-theme') === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-portal-theme', next);
+        try { localStorage.setItem('ipcvt-portal-theme', next); } catch (error) {}
+        applyTheme();
       });
-      renderTheme();
+      applyTheme();
 
-      const menuButton = document.getElementById('portal-menu-toggle');
-      const menu = document.getElementById('portal-navigation');
-      function closeMenu() {
-        menu.classList.remove('is-open');
-        menuButton.setAttribute('aria-expanded', 'false');
-        menuButton.setAttribute('aria-label', 'Abrir menu');
-        menuButton.querySelector('i').className = 'ph ph-list';
+      var menu = document.getElementById('portal-navigation');
+      var menuButton = document.getElementById('portal-mobile-menu');
+      function setMenu(open) {
+        menu.classList.toggle('is-open', open);
+        menuButton.setAttribute('aria-expanded', String(open));
+        menuButton.setAttribute('aria-label', open ? 'Fechar menu' : 'Abrir menu');
+        menuButton.querySelector('i').className = open ? 'ph ph-x' : 'ph ph-list';
       }
-      menuButton.addEventListener('click', function () {
-        const opened = menu.classList.toggle('is-open');
-        menuButton.setAttribute('aria-expanded', String(opened));
-        menuButton.setAttribute('aria-label', opened ? 'Fechar menu' : 'Abrir menu');
-        menuButton.querySelector('i').className = opened ? 'ph ph-x' : 'ph ph-list';
-      });
-      menu.querySelectorAll('a').forEach(function (link) { link.addEventListener('click', closeMenu); });
-      document.addEventListener('keydown', function (event) { if (event.key === 'Escape') closeMenu(); });
-      document.addEventListener('click', function (event) {
-        if (!event.target.closest('.portal-bar')) closeMenu();
-      });
+      menuButton.addEventListener('click', function () { setMenu(!menu.classList.contains('is-open')); });
+      menu.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { setMenu(false); }); });
+      document.addEventListener('click', function (event) { if (!event.target.closest('.portal-bar')) setMenu(false); });
+      document.addEventListener('keydown', function (event) { if (event.key === 'Escape') setMenu(false); });
     })();
   </script>
 </body>
