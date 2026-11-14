@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link rel="stylesheet" href="comissao.css?v=20261114-previews-v1">
+    <link rel="stylesheet" href="comissao.css?v=20261114-previews-gantt-times-v2">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="comissao.js?v=20261114-acesso-painel-v1" type="module"></script>
   </head>
@@ -59,13 +59,36 @@
         <div class="tool-grid" aria-label="Ferramentas da Comissão">
           <a class="tool-card tool-card-planner" href="planner.html" data-tool="planner">
             <div class="tool-card-preview tool-card-preview-planner" aria-hidden="true">
-              <div class="preview-window">
-                <div class="preview-window-top"><span>IPCVT</span><span>Portal Comissão</span></div>
-                <div class="preview-planner-login">
-                  <img src="planner-mark.svg" alt="" width="36" height="36">
-                  <small>COMISSÃO DO NÚCLEO</small><strong>Planner</strong>
-                  <span>Projetos, eventos e demandas</span>
-                  <div class="preview-google"><b>G</b> Entrar com Google</div>
+              <div class="preview-window preview-planner-window">
+                <div class="preview-app-header">
+                  <span class="preview-app-mark">▦</span><strong>IPCVT Planner</strong>
+                  <span class="preview-app-tabs">Semana &nbsp; Planos &nbsp; <b>Gantt</b></span>
+                  <span class="preview-app-user">IP</span>
+                </div>
+                <div class="preview-gantt-content">
+                  <div class="preview-section-kicker">VISÃO DE PLANEJAMENTO</div>
+                  <div class="preview-gantt-intro"><strong>Cronograma</strong><span>Gantt</span></div>
+                  <div class="preview-gantt-controls"><span>▣ Preparação de eventos</span><span>Semana ▾</span></div>
+                  <div class="preview-gantt-board">
+                    <div class="preview-gantt-names">
+                      <div class="preview-gantt-heading">DEMANDAS</div>
+                      <div class="preview-gantt-name"><i class="preview-task-dot sage"></i>Planejamento</div>
+                      <div class="preview-gantt-name"><i class="preview-task-dot blue"></i>Definir repertório</div>
+                      <div class="preview-gantt-name"><i class="preview-task-dot sage"></i>Organizar equipe</div>
+                      <div class="preview-gantt-name"><i class="preview-task-dot gold"></i>Revisão técnica</div>
+                    </div>
+                    <div class="preview-gantt-timeline">
+                      <div class="preview-gantt-month">NOVEMBRO 2026</div>
+                      <div class="preview-gantt-days"><span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span><span>DOM</span></div>
+                      <div class="preview-gantt-tracks">
+                        <div class="preview-gantt-track"><span class="preview-gantt-bar task-1"></span></div>
+                        <div class="preview-gantt-track"><span class="preview-gantt-bar task-2"></span></div>
+                        <div class="preview-gantt-track"><span class="preview-gantt-bar task-3"></span></div>
+                        <div class="preview-gantt-track"><span class="preview-gantt-bar task-4"></span></div>
+                        <svg class="preview-gantt-connections" viewBox="0 0 280 136" preserveAspectRatio="none" aria-hidden="true"><path d="M118 49 H128 V85 H154" /><path d="M142 16 H152 V84 H154" /></svg>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -78,11 +101,43 @@
 
           <a class="tool-card tool-card-estrategico" href="planejamento-estrategico/" data-tool="tatico">
             <div class="tool-card-preview tool-card-preview-estrategico" aria-hidden="true">
-              <div class="preview-window">
-                <div class="preview-window-top"><span>IPCVT | Planejamento Estratégico</span><span>Comissão</span></div>
-                <div class="preview-strategic-body">
-                  <div class="preview-strategic-login"><small>COMISSÃO DO NÚCLEO</small><strong>Planejamento<br>Estratégico.</strong><span>Organize funções e equipes</span><div class="preview-google"><b>G</b> Entrar com Google</div></div>
-                  <div class="preview-strategic-teams"><div class="preview-team"><b>Louvor</b><i></i><i></i><i></i></div><div class="preview-team"><b>Litúrgico</b><i></i><i></i></div><div class="preview-team"><b>Mídia</b><i></i><i></i></div></div>
+              <div class="preview-window preview-strategy-window">
+                <div class="preview-app-header preview-strategy-header">
+                  <span class="preview-app-mark">▤</span><strong>Planejamento Estratégico</strong>
+                  <span class="preview-app-tabs">Visão de equipes</span>
+                </div>
+                <div class="preview-strategy-content">
+                  <div class="preview-section-kicker">ORGANIZAÇÃO DOS TIMES</div>
+                  <div class="preview-strategy-title">Planejamento de equipes <span>3 times</span></div>
+                  <div class="preview-formed-team">
+                    <div class="preview-formed-team-heading"><span class="preview-team-letter">A</span><strong>Time A</strong><small>Equipes e funções</small></div>
+                    <div class="preview-formation-grid">
+                      <div class="preview-formation-group preview-formation-louvor">
+                        <strong>♫ Louvor</strong><small>VOCAL / INSTRUMENTAL</small>
+                        <div class="preview-member"><i>A</i><span>Voz guia</span></div>
+                        <div class="preview-member"><i>B</i><span>Violão</span></div>
+                        <div class="preview-member"><i>C</i><span>Piano</span></div>
+                      </div>
+                      <div class="preview-formation-group preview-formation-liturgia">
+                        <strong>▣ Litúrgicos</strong><small>LITURGIA</small>
+                        <div class="preview-member"><i>D</i><span>Gestão</span></div>
+                        <div class="preview-member"><i>E</i><span>Projeção</span></div>
+                      </div>
+                      <div class="preview-formation-group preview-formation-midia">
+                        <strong>▧ Mídia</strong><small>COMUNICAÇÃO</small>
+                        <div class="preview-member"><i>F</i><span>Transmissão</span></div>
+                        <div class="preview-member"><i>G</i><span>Câmera</span></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="preview-formed-team preview-formed-team-secondary">
+                    <div class="preview-formed-team-heading"><span class="preview-team-letter">B</span><strong>Time B</strong><small>Equipes e funções</small></div>
+                    <div class="preview-formation-grid">
+                      <div class="preview-formation-group preview-formation-louvor"><strong>♫ Louvor</strong><div class="preview-member"><i>H</i><span>Vocal</span></div><div class="preview-member"><i>I</i><span>Guitarra</span></div></div>
+                      <div class="preview-formation-group preview-formation-liturgia"><strong>▣ Litúrgicos</strong><div class="preview-member"><i>J</i><span>Projeção</span></div></div>
+                      <div class="preview-formation-group preview-formation-midia"><strong>▧ Mídia</strong><div class="preview-member"><i>K</i><span>Transmissão</span></div></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
