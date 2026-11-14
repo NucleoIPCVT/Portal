@@ -105,7 +105,7 @@ export function selectGanttPlanContext(planId){
 export function renderGanttWorkspace(ctx){
   const {content,tasks,allTasks,plans,buckets,recurrence,
     openTask,resolveDependencies,routeDependencies,render,today,progressOf,
-    planCycleConfigOf,cycleForTask,cycleDateOf,nextCycleDate,setCycleDate}=ctx
+    planCycleConfigOf,cycleForTask,cycleDateOf,nextCycleDate,previousCycleDate,setCycleDate}=ctx
   const orderedPlans=plans.slice().sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'))
   if(!viewState.cursor)viewState.cursor=today
   if(!orderedPlans.some(plan=>plan.id===viewState.focusId))viewState.focusId=ctx.globalPlanId||orderedPlans[0]?.id||''
@@ -274,9 +274,8 @@ export function renderGanttWorkspace(ctx){
       const current=cycleDateOf(viewState.focusId)
       const cycleControls=element('div','pg-cycle-controls')
       const prev=control('‹',()=>{
-        const previous=add(current,-1)
         const rule=planCycleConfigOf(viewState.focusId)
-        const target=ctx.currentCycleDate(rule,previous)
+        const target=previousCycleDate(rule,current)
         setCycleDate(viewState.focusId,target);viewState.cursor=target;render()
       },'pg-pager')
       prev.setAttribute('aria-label','Ciclo anterior')
