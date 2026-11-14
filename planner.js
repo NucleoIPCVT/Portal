@@ -7,6 +7,10 @@ import {
 import { ganttLinkRoutes } from './planner-gantt-links.js?v=20261113-fanin-v1'
 import { renderGanttWorkspace, selectGanttPlanContext } from './planner-gantt-workspace.js?v=20261113-premium-v1'
 import { routineMigrationPlan } from './planner-routine-migration.js?v=20261113-unified-v1'
+import {
+  parsePlanCycleConfig,planCycleConfigRecord,planCycleConfigId,
+  currentPlanCycle,nextPlanCycle,cycleForPlanTask,planCycleLabel
+} from './planner-plan-cycles.js?v=20261113-plan-cycle-v1'
 import { resolveGanttDependencies } from './planner-gantt-dependencies.js?v=20261113-recurring-links-v1'
 import {
   taskRecurrence,setTaskRecurrence,recurrenceLabel,nextRecurrenceDate,
@@ -24,6 +28,40 @@ const $ = id => document.getElementById(id)
 const labels = { todo: 'Não iniciada', doing: 'Em andamento', done: 'Concluída', low: 'Baixa', normal: 'Normal', high: 'Alta', urgent: 'Urgente' }
 const teams = ['Louvor', 'Litúrgico', 'Técnica', 'Mídia', 'Comunicação', 'Comissão']
 let state = { plans: [], buckets: [], tasks: [], events: [], routines: [] }
+const pmPlanCycleSelected = new Map()
+const planCycleConfig = planId => state.tasks.map(parsePlanCycleConfig).find(config => config?.planId === planId)
+const pmPlanCycle = planId => {
+  const config=planCycleConfig(planId)
+  return config ? (pmPlanCycleSelected.get(planId) || currentPlanCycle(config,todayISO())) : ''
+}
+function pmPlanCycleTasks(planId,source=liveTasks()){
+  const config=planCycleConfig(planId),cycle=pmPlanCycle(planId)
+  return config ? source.filter(task=>task.planId===planId&&cycleForPlanTask(config,task)===cycle)
+    :source.filter(task=>task.planId===planId)
+}
+function pmPlanCycleBar(plan){
+  const config=planCycleConfig(plan.id)
+  if(!config)return null
+  const cycle=pmPlanCycle(plan.id),items=pmPlanCycleTasks(plan.id)
+  const finished=items.filter(task=>task.status==='done').length
+  const box=node('section',{class:'pm-cycle-bar','aria-label':'Período do plano recorrente'})
+  const heading=node('div',{class:'pm-cycle-heading'},[
+    node('span',{class:'pm-cycle-kicker',text:'↻ PLANO RECORRENTE'}),
+    node('strong',{text:plan.name}),
+    node('small',{text:finished+' de '+items.length+' demandas concluídas neste ciclo'})
+  ])
+  const controls=node('div',{class:'pm-cycle-controls'})
+  const setCycle=next=>{pmPlanCycleSelected.set(plan.id,next);render()}
+  const older=button('‹',()=>setCycle(currentPlanCycle(config,addDays(cycle,-1))),'pm-cycle-arrow')
+  older.setAttribute('aria-label','Ver ciclo anterior')
+  const label=node('strong',{class:'pm-cycle-date',text:formatDate(cycle)})
+  const newer=button('›',()=>setCycle(nextPlanCycle(config,cycle)),'pm-cycle-arrow')
+  newer.setAttribute('aria-label','Ver próximo ciclo')
+  const latest=button('Ciclo atual',()=>{pmPlanCycleSelected.delete(plan.id);render()},'pm-cycle-today')
+  controls.append(older,label,newer,latest)
+  box.append(heading,controls)
+  return box
+}
 let session = { status: 'checking' }
 // Os planos organizam o trabalho; o calendário é uma referência opcional.
 let currentView = 'home'
@@ -180,6 +218,12 @@ function visibleTasks({ ignorePlan = false } = {}) {
   const eventTitles = new Map(liveEvents().map(event => [event.id, event.title]))
   return liveTasks().filter(task =>
     (ignorePlan || !selectedPlan() || task.planId === selectedPlan()) &&
+    // O plano recorrente trabalha por ciclos; o calendário geral e Gantt
+    // mantêm todas as datas navegáveis.
+    (!planCycleConfig(task.planId) || currentView==='calendar-all' ||
+      currentView==='gantt' || currentView==='events' ||
+      (currentView==='calendar'&&!selectedPlan()) ||
+      cycleForPlanTask(planCycleConfig(task.planId),task)===pmPlanCycle(task.planId)) &&
     (!value('team-filter') || task.team === value('team-filter')) &&
     (!value('status-filter') || task.status === value('status-filter')) &&
     (!value('event-filter') || (value('event-filter') === '__independent__' ? !task.eventId : task.eventId === value('event-filter'))) &&
@@ -600,13 +644,16 @@ function renderPlans(content) {
   }
   const cards = node('div', { class: 'plans-grid' })
   for (const plan of plans) {
-    const tasks = liveTasks().filter(task => task.planId === plan.id)
+    const config=planCycleConfig(plan.id)
+    const tasks = config?pmPlanCycleTasks(plan.id):liveTasks().filter(task => task.planId === plan.id)
     const finished = tasks.filter(task => task.status === 'done').length
     const percentage = tasks.length ? Math.round(finished * 100 / tasks.length) : 0
     const card = node('article', { class: 'plan-card' })
     card.append(node('span', { class: 'plan-card-icon', 'aria-hidden': 'true', text: plan.name.slice(0, 1).toLocaleUpperCase('pt-BR') }))
     card.append(button(plan.name, () => openPlanBoard(plan.id), 'plan-card-title'))
-    card.append(node('p', { class: 'plan-card-description', text: plan.description || (plan.kind === 'project' ? 'Projeto da Comissão' : 'Trabalho contínuo da Comissão') }))
+    card.append(node('p', { class: 'plan-card-description',
+      text:(config?'↻ Recorrente · ciclo '+formatDate(pmPlanCycle(plan.id))+' · ':'')+
+        (plan.description || (plan.kind === 'project' ? 'Projeto da Comissão' : 'Trabalho contínuo da Comissão')) }))
     card.append(node('div', { class: 'plan-card-progress-label' }, [node('span', { text: finished + ' de ' + tasks.length + ' concluídas' }), node('strong', { text: percentage + '%' })]))
     card.append(node('div', { class: 'plan-card-progress' }, node('span', { style: 'width:' + percentage + '%' })))
     card.append(node('div', { class: 'plan-card-footer' }, [
@@ -2322,6 +2369,9 @@ function render() {
     return
   }
   const tasks = visibleTasks({ignorePlan:currentView==='gantt'})
+  if(selected&&planCycleConfig(selected.id)&&['board','list','calendar','summary'].includes(currentView)){
+    content.append(pmPlanCycleBar(selected))
+  }
   if(document.activeElement !== $('pm-search')) $('pm-search').value = $('search-filter').value
   pmRenderMain(content,tasks)
 }
