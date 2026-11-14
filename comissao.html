@@ -10,14 +10,35 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+      (function () {
+        var theme = 'light';
+        try { theme = localStorage.getItem('ipcvt-portal-theme') === 'dark' ? 'dark' : 'light'; } catch (error) {}
+        document.documentElement.setAttribute('data-portal-theme', theme);
+      })();
+    </script>
     <link rel="stylesheet" href="comissao.css?v=20261114-previews-gantt-times-v2">
+    <link rel="stylesheet" href="comissao-nucleo.css?v=20261114-comissao-pastel-v1">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="comissao.js?v=20261114-acesso-painel-v1" type="module"></script>
   </head>
   <body>
-    <header class="topbar">
-      <a class="back-link" href="index.html"><i class="ph ph-arrow-left" aria-hidden="true"></i> Portal IPCVT</a>
-      <span class="topbar-label">Área da Comissão</span>
+    <header class="topbar" id="inicio">
+      <a class="commission-brand" href="index.html" aria-label="Voltar ao Portal IPCVT">
+        <img src="logo-nucleo-quatro-aliancas.svg" class="commission-brand-mark" width="64" height="64" alt="">
+        <span class="commission-brand-title">Comissão IPCVT<small>NÚCLEO IPCVT</small></span>
+      </a>
+      <nav class="commission-topnav" aria-label="Navegação principal">
+        <a href="comissao.html" class="is-current" aria-current="page">Início</a>
+        <a href="#commission-tools">Ferramentas</a>
+        <a href="index.html#sobre">Sobre o Núcleo</a>
+      </nav>
+      <div class="commission-top-actions">
+        <a class="back-link" href="index.html"><i class="ph ph-arrow-left" aria-hidden="true"></i> Portal IPCVT</a>
+        <button class="commission-theme-toggle" id="commission-theme-toggle" type="button" aria-label="Ativar modo escuro" aria-pressed="false" title="Alternar modo claro e escuro">
+          <i id="commission-theme-icon" class="ph ph-moon-stars" aria-hidden="true"></i><span id="commission-theme-label">Modo escuro</span>
+        </button>
+      </div>
     </header>
 
     <main>
@@ -45,15 +66,21 @@
       <section id="commission-panel" class="dashboard" hidden aria-labelledby="dashboard-title">
         <div class="dashboard-header">
           <div>
-            <p class="eyebrow">Central de ferramentas</p>
-            <h1 id="dashboard-title">Comissão <em>IPCVT.</em></h1>
-            <p class="lead">Planejamento, organização das equipes e acompanhamento do trabalho do Núcleo.</p>
+            <p class="eyebrow">PORTAL IPCVT <span class="commission-dot" aria-hidden="true">·</span> NÚCLEO DE APOIO AO CULTO</p>
+            <h1 id="dashboard-title">Comissão <em>IPCVT</em></h1>
+            <p class="lead">Organização das equipes, planejamento das atividades e acompanhamento do serviço em unidade.</p>
           </div>
           <div class="session-controls">
             <span id="member-email" class="member-email"></span>
             <button id="authorization-toggle" type="button" class="exit-button" hidden aria-expanded="false" aria-controls="access-admin"><i class="ph ph-shield-check" aria-hidden="true"></i> Administrar autorizações</button>
             <button id="logout-button" type="button" class="exit-button"><i class="ph ph-sign-out" aria-hidden="true"></i> Sair</button>
           </div>
+        </div>
+
+        <div class="commission-tools-heading" id="commission-tools">
+          <h2>Ferramentas da Comissão</h2>
+          <span class="commission-heading-line" aria-hidden="true"></span>
+          <span class="commission-heading-values">ORGANIZAÇÃO <b>•</b> PLANEJAMENTO <b>•</b> COLABORAÇÃO <b>•</b> SERVIÇO</span>
         </div>
 
         <div class="tool-grid" aria-label="Ferramentas da Comissão">
@@ -183,7 +210,40 @@
       </section>
     </main>
 
-    <footer>Comissão do Núcleo · Igreja Presbiteriana Central em Vilar dos Telles</footer>
+    <footer class="commission-footer">
+      <div class="commission-footer-identity">
+        <img src="logo-igreja.png" id="commission-church-logo" alt="Logo da Igreja Presbiteriana Central em Vilar dos Teles" width="108">
+        <span>Igreja Presbiteriana Central em Vilar dos Teles</span>
+      </div>
+      <span>Comissão do Núcleo IPCVT</span>
+    </footer>
+  <script>
+      (function () {
+        var root = document.documentElement;
+        var button = document.getElementById('commission-theme-toggle');
+        var icon = document.getElementById('commission-theme-icon');
+        var label = document.getElementById('commission-theme-label');
+        var meta = document.querySelector('meta[name="theme-color"]');
+        var churchLogo = document.getElementById('commission-church-logo');
+        function renderTheme() {
+          var dark = root.getAttribute('data-portal-theme') === 'dark';
+          button.setAttribute('aria-pressed', String(dark));
+          button.setAttribute('aria-label', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
+          button.title = dark ? 'Ativar modo claro' : 'Ativar modo escuro';
+          icon.className = dark ? 'ph ph-sun' : 'ph ph-moon-stars';
+          label.textContent = dark ? 'Modo claro' : 'Modo escuro';
+          if (meta) meta.content = dark ? '#293f36' : '#f9f6ef';
+          if (churchLogo) churchLogo.style.filter = dark ? 'brightness(0) invert(1)' : 'none';
+        }
+        button.addEventListener('click', function () {
+          var next = root.getAttribute('data-portal-theme') === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-portal-theme', next);
+          try { localStorage.setItem('ipcvt-portal-theme', next); } catch (error) {}
+          renderTheme();
+        });
+        renderTheme();
+      })();
+    </script>
   </body>
 </html>
 
