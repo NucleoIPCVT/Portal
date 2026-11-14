@@ -4,6 +4,7 @@ import {
   planCycleConfigRecord,parsePlanCycleConfig,currentPlanCycle,nextPlanCycle,previousPlanCycle,
   planCycleDates,missingPlanCycleTasks,cycleForPlanTask
 } from '../planner-plan-cycles.js'
+import {rotationConfigRecord,rotationAssigneesForDate} from '../planner-recurrence.js'
 
 const plan={id:'plano-domingo',name:'Rotina Dominical'}
 const config=parsePlanCycleConfig(planCycleConfigRecord(plan,{
@@ -97,4 +98,57 @@ test('navegação anterior retorna ao domingo precedente ou ao mês anterior',()
     unit:'month',interval:1,anchor:'2026-01-31'
   }))
   assert.equal(previousPlanCycle(monthly,'2026-03-31'),'2026-02-28')
+})
+
+test('rodízio individual avança por domingo sem repetição na demanda',()=>{
+  const members=[{name:'Ana',email:''},{name:'Bruno',email:''},{name:'Carlos',email:''}]
+  const source=task('escala','Operar som','2026-11-12',{assignees:[members[0]]})
+  const rotation=rotationConfigRecord(source,{
+    sourceId:source.id,mode:'individual',advance:'scheduled',people:members,groups:[0,1,2]
+  })
+  const drafts=missingPlanCycleTasks(config,[source,rotation],buckets,'2026-11-13')
+  assert.equal(drafts.length,1)
+  assert.equal(drafts[0].cycleKey,'2026-11-22')
+  assert.deepEqual(drafts[0].assignees,[members[1]])
+})
+test('rodízio por grupos preserva participante fixo em todos os ciclos',()=>{
+  const members=[
+    {name:'Coordenador',email:''},
+    {name:'Ana',email:''},{name:'Bruno',email:''},{name:'Carlos',email:''}
+  ]
+  const source=task('equipe','Escala de projeção','2026-11-12',{assignees:[members[0],members[1],members[2]]})
+  const rotation=rotationConfigRecord(source,{
+    sourceId:source.id,mode:'groups',advance:'scheduled',people:members,groups:[-1,0,0,1]
+  })
+  const next=missingPlanCycleTasks(config,[source,rotation],buckets,'2026-11-13')
+  assert.equal(next.length,1)
+  assert.deepEqual(next[0].assignees,[members[0],members[3]])
+})
+test('rodízio legado com repetição individual mantém a ordem após conversão do plano',()=>{
+  const original=task('som','Operar mesa','2026-11-12',{
+    recurrenceId:'repeat-v1:som:week:1:2026-11-12'
+  })
+  const settings={mode:'individual',advance:'scheduled',
+    people:[{name:'Ana',email:''},{name:'Bruno',email:''}],groups:[0,1]}
+  const rotation=rotationConfigRecord(original,settings)
+  const next=missingPlanCycleTasks(config,[original,rotation],buckets,'2026-11-13')
+  assert.equal(next.length,1)
+  assert.equal(next[0].assignees[0].name,'Bruno')
+  assert.equal(rotationAssigneesForDate(original,settings,'2026-11-19')[0].name,'Bruno')
+})
+test('rodízio segue depois da virada do ano',()=>{
+  const winterConfig=parsePlanCycleConfig(planCycleConfigRecord(plan,{
+    unit:'week',interval:1,anchor:'2026-12-27'
+  }))
+  const people=[{name:'Ana',email:''},{name:'Bruno',email:''}]
+  const source=task('virada','Transmissão','2026-12-27')
+  const rotation=rotationConfigRecord(source,{
+    sourceId:source.id,mode:'individual',advance:'scheduled',people,groups:[0,1]
+  })
+  const next=missingPlanCycleTasks(winterConfig,[source,rotation],buckets,'2026-12-28')
+  assert.equal(next.length,2)
+  assert.equal(next[0].cycleKey,'2027-01-03')
+  assert.equal(next[0].assignees[0].name,'Bruno')
+  assert.equal(next[1].cycleKey,'2027-01-10')
+  assert.equal(next[1].assignees[0].name,'Ana')
 })
