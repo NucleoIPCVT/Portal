@@ -1,156 +1,119 @@
 import { getApps, initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'
 import {
-  browserLocalPersistence, getAuth, GoogleAuthProvider, onAuthStateChanged,
-  setPersistence, signInWithPopup, signOut,
+  browserSessionPersistence, getAuth, onAuthStateChanged, setPersistence, updateCurrentUser
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'
-import { doc, getFirestore, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'
+import { doc, getDoc, getFirestore, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'
+import { hasPanelEntry, clearPanelEntry } from '../comissao-entrada.js?v=20261114-v1'
 
-const config = {
+const firebaseBase = {
   apiKey: 'AIzaSyAg9w5QohkcmXUFRgLfSI5Sh1chnCD1Owc',
   authDomain: 'repertorio-ipcvt.firebaseapp.com',
-  projectId: 'repertorio-ipcvt',
-  appId: '1:774659782213:web:79a4590ad0caf6a282152c',
+  projectId: 'repertorio-ipcvt'
 }
 
-// O nome da aplicação também é utilizado pelo SDK do quadro de planejamento.
-const app = getApps().find((candidate) => candidate.name === 'ipcvt-planner')
-  ?? initializeApp(config, 'ipcvt-planner')
-const auth = getAuth(app)
-const db = getFirestore(app)
-const provider = new GoogleAuthProvider()
-provider.setCustomParameters({ prompt: 'select_account' })
-
-const ui = {
-  gate: document.getElementById('access-gate'),
-  root: document.getElementById('root'),
-  login: document.getElementById('gate-google-login'),
-  switch: document.getElementById('gate-switch-account'),
-  feedback: document.getElementById('gate-feedback'),
-  pending: document.getElementById('gate-pending'),
-  email: document.getElementById('gate-email'),
-  theme: document.getElementById('gate-theme'),
-  themeIcon: document.getElementById('gate-theme-icon'),
-  themeText: document.getElementById('gate-theme-text'),
-}
+// O painel e o Planner usam ipcvt-comissao. O quadro estratégico compilado
+// usa ipcvt-planner: espelhamos a identidade validada sem abrir outro Google.
+const panelApp = getApps().find(app => app.name === 'ipcvt-comissao')
+  ?? initializeApp({ ...firebaseBase, appId: '1:774659782213:web:5e9cbf88fec30eb382152c' }, 'ipcvt-comissao')
+const boardApp = getApps().find(app => app.name === 'ipcvt-planner')
+  ?? initializeApp({ ...firebaseBase, appId: '1:774659782213:web:79a4590ad0caf6a282152c' }, 'ipcvt-planner')
+const panelAuth = getAuth(panelApp)
+const boardAuth = getAuth(boardApp)
+const db = getFirestore(panelApp)
+const loader = document.getElementById('commission-entry-loading')
+const root = document.getElementById('root')
 
 let sequence = 0
-let unsubscribePermission = null
-let loaded = false
-let wasAuthorized = false
+let entered = false
+let permissionUnsubscribes = []
 
-function showGate(message = '', { email = '', canLogin = false, canSwitch = false, status = 'ready' } = {}) {
-  if (wasAuthorized) {
-    // Uma suspensão ou saída descarrega o quadro que já estava aberto.
-    window.location.reload()
-    return
-  }
-  ui.gate.hidden = false
-  ui.root.hidden = true
-  document.body.classList.add('gate-active')
-  ui.feedback.textContent = message
-  ui.feedback.dataset.state = status
-  ui.login.hidden = !canLogin
-  ui.switch.hidden = !canSwitch
-  ui.pending.hidden = !email
-  ui.email.textContent = email
+function returnToPanel() {
+  clearPanelEntry('tatico')
+  window.location.replace('../comissao.html')
 }
 
-function signInError(error) {
-  switch (error?.code) {
-    case 'auth/popup-blocked': return 'O navegador bloqueou a janela do Google. Permita pop-ups e tente novamente.'
-    case 'auth/popup-closed-by-user': return 'O login foi cancelado. Tente novamente quando quiser.'
-    case 'auth/unauthorized-domain': return 'O endereço do portal precisa ser autorizado no Firebase.'
-    case 'auth/operation-not-allowed': return 'O login pelo Google precisa ser ativado no Firebase.'
-    default: return 'Não foi possível entrar com Google. Tente novamente.'
-  }
+function loadingError(message) {
+  loader.textContent = message
+  loader.style.display = 'flex'
+  loader.style.flexDirection = 'column'
+  loader.style.gap = '14px'
+  const back = document.createElement('a')
+  back.href = '../comissao.html'
+  back.textContent = 'Voltar ao Painel da Comissão'
+  back.style.color = '#315f46'
+  loader.append(back)
 }
 
-async function enterPlanning() {
-  if (loaded) return
-  wasAuthorized = true
-  loaded = true
-  ui.gate.hidden = true
-  ui.root.hidden = false
+async function openBoard() {
+  if (entered) return
+  entered = true
   document.body.classList.remove('gate-active', 'gate-dark')
+  root.hidden = false
   try {
     await import('./assets/index-C8auUyjE.js')
+    loader.hidden = true
+    loader.style.display = 'none'
   } catch (error) {
-    console.error('Falha ao carregar o Planejamento Estratégico:', error)
-    loaded = false
-    wasAuthorized = false
-    showGate('Não foi possível carregar o quadro. Atualize a página e tente novamente.', { canSwitch: true })
+    console.error('Falha ao abrir Planejamento Estratégico:', error)
+    entered = false
+    root.hidden = true
+    loadingError('Não foi possível carregar o quadro. Confira sua conexão e volte ao painel.')
   }
 }
 
-ui.login.addEventListener('click', async () => {
-  ui.login.disabled = true
-  ui.feedback.textContent = 'Abrindo o Google…'
-  ui.feedback.dataset.state = 'checking'
-  try {
-    // Abre o pop-up diretamente no clique (como no Planner), inclusive em celulares.
-    const googleLogin = signInWithPopup(auth, provider)
-    await Promise.all([googleLogin, setPersistence(auth, browserLocalPersistence)])
-  } catch (error) {
-    showGate(signInError(error), { canLogin: true, status: 'error' })
-  } finally {
-    ui.login.disabled = false
-  }
-})
+// O controle de origem evita a navegação casual por link. É um controle visual;
+// a autorização real dos dados permanece no Firebase Authentication/Firestore.
+if (!hasPanelEntry('tatico')) {
+  returnToPanel()
+} else {
+  onAuthStateChanged(panelAuth, async user => {
+    const current = ++sequence
+    permissionUnsubscribes.forEach(stop => stop())
+    permissionUnsubscribes = []
 
-ui.switch.addEventListener('click', async () => {
-  ui.switch.disabled = true
-  try {
-    await signOut(auth)
-  } catch {
-    showGate('Não foi possível trocar de conta. Tente novamente.', { canSwitch: true, status: 'error' })
-  } finally {
-    ui.switch.disabled = false
-  }
-})
-
-onAuthStateChanged(auth, async (user) => {
-  const current = ++sequence
-  unsubscribePermission?.()
-  unsubscribePermission = null
-
-  if (!user) {
-    showGate('Entre com sua conta Google para continuar.', { canLogin: true })
-    return
-  }
-
-  showGate('Conferindo a permissão deste e-mail…', { status: 'checking' })
-  try {
-    const token = await user.getIdTokenResult()
-    if (current !== sequence) return
-    // Mesmos critérios de identidade usados pela Comissão e pelo Planner.
-    if (!user.email || !user.emailVerified || token.claims.firebase?.sign_in_provider !== 'google.com' || token.claims.email_verified !== true) {
-      showGate('Use uma conta Google com e-mail verificado.', { canSwitch: true, status: 'error' })
+    if (!user || !hasPanelEntry('tatico', user.uid)) {
+      returnToPanel()
       return
     }
 
-    const email = user.email.trim().toLowerCase()
-    unsubscribePermission = onSnapshot(doc(db, 'tatico_acessos', email), (snapshot) => {
+    try {
+      const token = await user.getIdTokenResult()
       if (current !== sequence) return
-      if (snapshot.exists() && snapshot.data().ativo === true) {
-        void enterPlanning()
-      } else {
-        showGate('Acesso aguardando autorização da coordenação.', { email, canSwitch: true, status: 'pending' })
+      if (!user.email || !user.emailVerified || token.claims.email_verified !== true
+          || token.claims.firebase?.sign_in_provider !== 'google.com') {
+        returnToPanel()
+        return
       }
-    }, (error) => {
-      if (current !== sequence) return
-      showGate(error.code === 'permission-denied'
-        ? 'Ainda falta configurar as permissões no Firebase.'
-        : 'Não foi possível consultar as permissões. Atualize a página e tente novamente.', { canSwitch: true, status: 'error' })
-    })
-  } catch {
-    if (current === sequence) showGate('Não foi possível verificar sua conta Google.', { canSwitch: true, status: 'error' })
-  }
-})
 
-// Tema apenas para a tela de login; o painel tem botão de modo escuro próprio.
-ui.theme.addEventListener('click', () => {
-  const dark = document.body.classList.toggle('gate-dark')
-  ui.themeIcon.textContent = dark ? '☀' : '☾'
-  ui.themeText.textContent = dark ? 'Modo claro' : 'Modo noturno'
-  ui.theme.setAttribute('aria-label', dark ? 'Ativar modo claro' : 'Ativar modo noturno')
-})
+      const email = user.email.trim().toLowerCase()
+      const [commission, toolAccess] = await Promise.all([
+        getDoc(doc(db, 'comissao_acessos', email)),
+        getDoc(doc(db, 'tatico_acessos', email))
+      ])
+      if (current !== sequence) return
+      if (!commission.exists() || commission.data().ativo !== true
+          || !toolAccess.exists() || toolAccess.data().ativo !== true) {
+        returnToPanel()
+        return
+      }
+
+      // Permite ao Firestore do quadro usar a mesma pessoa já validada pelo painel.
+      // A sessão desse segundo app expira ao fechar a aba, sem pedir novo login.
+      await setPersistence(boardAuth, browserSessionPersistence)
+      await updateCurrentUser(boardAuth, user)
+      if (current !== sequence) return
+
+      for (const name of ['comissao_acessos', 'tatico_acessos']) {
+        permissionUnsubscribes.push(onSnapshot(doc(db, name, email), snapshot => {
+          if (current !== sequence) return
+          if (!snapshot.exists() || snapshot.data().ativo !== true) returnToPanel()
+        }, () => { if (current === sequence) returnToPanel() }))
+      }
+      await openBoard()
+    } catch (error) {
+      if (current !== sequence) return
+      console.error('Falha na validação de acesso à Comissão:', error)
+      loadingError('Não foi possível validar a sessão. Volte ao painel e tente novamente.')
+    }
+  })
+}

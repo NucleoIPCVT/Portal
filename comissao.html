@@ -10,9 +10,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link rel="stylesheet" href="comissao.css?v=20261111-login-tablet">
+    <link rel="stylesheet" href="comissao.css?v=20261114-previews-v1">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="comissao.js?v=20261112-google-direto-02" type="module"></script>
+    <script src="comissao.js?v=20261114-acesso-painel-v1" type="module"></script>
   </head>
   <body>
     <header class="topbar">
@@ -57,7 +57,18 @@
         </div>
 
         <div class="tool-grid" aria-label="Ferramentas da Comissão">
-          <a class="tool-card tool-card-planner" href="planner.html">
+          <a class="tool-card tool-card-planner" href="planner.html" data-tool="planner">
+            <div class="tool-card-preview tool-card-preview-planner" aria-hidden="true">
+              <div class="preview-window">
+                <div class="preview-window-top"><span>IPCVT</span><span>Portal Comissão</span></div>
+                <div class="preview-planner-login">
+                  <img src="planner-mark.svg" alt="" width="36" height="36">
+                  <small>COMISSÃO DO NÚCLEO</small><strong>Planner</strong>
+                  <span>Projetos, eventos e demandas</span>
+                  <div class="preview-google"><b>G</b> Entrar com Google</div>
+                </div>
+              </div>
+            </div>
             <div class="tool-icon"><i class="ph ph-kanban" aria-hidden="true"></i></div>
             <div class="tool-number">01 · Planejamento e demandas</div>
             <h2>Planner</h2>
@@ -65,7 +76,16 @@
             <span class="status"><i class="ph ph-arrow-right" aria-hidden="true"></i> Abrir Planner</span>
           </a>
 
-          <a class="tool-card" href="planejamento-estrategico/" target="_blank" rel="noopener noreferrer">
+          <a class="tool-card tool-card-estrategico" href="planejamento-estrategico/" data-tool="tatico">
+            <div class="tool-card-preview tool-card-preview-estrategico" aria-hidden="true">
+              <div class="preview-window">
+                <div class="preview-window-top"><span>IPCVT | Planejamento Estratégico</span><span>Comissão</span></div>
+                <div class="preview-strategic-body">
+                  <div class="preview-strategic-login"><small>COMISSÃO DO NÚCLEO</small><strong>Planejamento<br>Estratégico.</strong><span>Organize funções e equipes</span><div class="preview-google"><b>G</b> Entrar com Google</div></div>
+                  <div class="preview-strategic-teams"><div class="preview-team"><b>Louvor</b><i></i><i></i><i></i></div><div class="preview-team"><b>Litúrgico</b><i></i><i></i></div><div class="preview-team"><b>Mídia</b><i></i><i></i></div></div>
+                </div>
+              </div>
+            </div>
             <div class="tool-icon"><i class="ph ph-users-three" aria-hidden="true"></i></div>
             <div class="tool-number">02 · Organização de equipes</div>
             <h2>Planejamento Estratégico</h2>
@@ -74,6 +94,7 @@
             <i class="ph ph-arrow-up-right tool-arrow" aria-hidden="true"></i>
           </a>
         </div>
+        <p id="launch-feedback" class="launch-feedback" role="status" aria-live="polite" hidden></p>
 
         <section id="access-admin" class="admin-section" hidden aria-labelledby="access-admin-title">
           <div class="admin-heading">
