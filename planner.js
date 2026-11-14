@@ -1,4 +1,4 @@
-import { createPlannerStore } from './planner-store.js?v=20261113-plan-cycle-v2'
+import { createPlannerStore } from './planner-store.js?v=20261113-plan-rotation-v1'
 import {
   TEAM_METADATA_PREFIX,TEAM_ICON_PRESETS,DEFAULT_TEAM_NAMES,
   normalizedTeamName,parseTeamMetadata,teamMetadataTask,
@@ -11,13 +11,13 @@ import {
   parsePlanCycleConfig,planCycleConfigRecord,planCycleConfigId,
   currentPlanCycle,nextPlanCycle,previousPlanCycle,cycleForPlanTask,planCycleLabel,
   assigneesForPlanCycle
-} from './planner-plan-cycles.js?v=20261113-plan-cycle-v2'
+} from './planner-plan-cycles.js?v=20261113-plan-cycle-v3'
 import { resolveGanttDependencies } from './planner-gantt-dependencies.js?v=20261113-recurring-links-v1'
 import {
   taskRecurrence,setTaskRecurrence,recurrenceLabel,nextRecurrenceDate,
   rotationConfigId,parseRotationConfig,rotationConfigRecord,rotationAssigneesForDate,
   recurrenceDateAt,recurrenceCycleIndex
-} from './planner-recurrence.js?v=20261113-unified-v1'
+} from './planner-recurrence.js?v=20261113-plan-rotation-v1'
 import { todayISO, addDays, formatDate, calendarCells, computeSummary, validateTask, isOverdue, taskProgress, generateWeeklyTasks } from './planner-core.js'
 import { createTaskEditor } from './planner-task-editor.js?v=20261113-rodizio-v1'
 import { taskCreationContext } from './planner-task-context.js'
