@@ -223,7 +223,9 @@ function visibleTasks({ ignorePlan = false } = {}) {
     (!planCycleConfig(task.planId) || currentView==='calendar-all' ||
       currentView==='gantt' || currentView==='events' ||
       (currentView==='calendar'&&!selectedPlan()) ||
-      cycleForPlanTask(planCycleConfig(task.planId),task)===pmPlanCycle(task.planId)) &&
+      cycleForPlanTask(planCycleConfig(task.planId),task)===
+        (selectedPlan()===task.planId?pmPlanCycle(task.planId):
+          currentPlanCycle(planCycleConfig(task.planId),todayISO()))) &&
     (!value('team-filter') || task.team === value('team-filter')) &&
     (!value('status-filter') || task.status === value('status-filter')) &&
     (!value('event-filter') || (value('event-filter') === '__independent__' ? !task.eventId : task.eventId === value('event-filter'))) &&
