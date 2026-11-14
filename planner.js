@@ -2320,8 +2320,14 @@ $('pm-sidebar-backdrop').addEventListener('click',pmSidebarClose)
 document.addEventListener('keydown',event=>{if(event.key==='Escape')pmSidebarClose()})
 function pmSyncThemeButton(){
   const dark=document.documentElement.dataset.theme==='dark'
+  const button=$('pm-sidebar-theme')
   $('pm-sidebar-theme-label').textContent=dark?'Modo claro':'Modo escuro'
-  $('pm-sidebar-theme').setAttribute('aria-label',dark?'Ativar modo claro':'Ativar modo escuro')
+  button.setAttribute('aria-label',dark?'Ativar modo claro':'Ativar modo escuro')
+  button.title=dark?'Ativar modo claro':'Ativar modo escuro'
+  const moon=button.querySelector('.pm-theme-moon')
+  const sun=button.querySelector('.pm-theme-sun')
+  if(moon)moon.hidden=dark
+  if(sun)sun.hidden=!dark
 }
 $('pm-sidebar-theme').addEventListener('click',()=>{$('theme-toggle').click();pmSyncThemeButton()})
 $('theme-toggle').addEventListener('click',()=>pmSyncThemeButton())
