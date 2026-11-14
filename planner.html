@@ -31,7 +31,8 @@
     <link rel="stylesheet" href="planner-graphite-dark.css?v=20261113-graphite-dark-v4">
     <link rel="stylesheet" href="planner-gantt-compact-header.css?v=20261113-gantt-title-v2">
     <link rel="stylesheet" href="planner-topbar-icons.css?v=20261113-theme-header-v2">
-    <script type="module" src="planner.js?v=20261114-acesso-painel-v1"></script>
+    <link rel="stylesheet" href="planner-excel-import.css?v=20261114-project-import-v1">
+    <script type="module" src="planner.js?v=20261114-project-import-v1"></script>
   </head>
   <body data-interface="planner-ipcvt-verde-creme" data-revisao="20261113-teatro-v1">
     <a class="skip-link" href="#main-content">Ir para o conteúdo</a>
@@ -318,6 +319,27 @@
         </div>
         <div class="dialog-footer"><button id="delete-plan-button" class="button button-danger" type="button" hidden>Excluir plano</button><span class="footer-spacer"></span><button class="button" type="button" data-close-dialog="plan-dialog">Cancelar</button><button class="button button-primary" type="submit">Salvar plano</button></div>
       </form>
+    </dialog>
+
+    <input id="project-import-file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden aria-label="Selecionar planilha de projeto">
+    <dialog id="project-import-dialog" class="editor-dialog pm-import-dialog" aria-labelledby="project-import-title">
+      <div class="dialog-heading">
+        <div><p class="eyebrow">Projetos · Excel</p><h2 id="project-import-title">Importar novo plano</h2></div>
+        <button class="icon-button" type="button" data-close-dialog="project-import-dialog" aria-label="Fechar importação">×</button>
+      </div>
+      <div class="dialog-body">
+        <p class="plan-dialog-explain">Confira as informações antes de criar o plano. Esta operação não modifica projetos existentes.</p>
+        <p id="project-import-filename" class="pm-import-file-name"></p>
+        <div id="project-import-overview" class="pm-import-overview"></div>
+        <div id="project-import-messages" class="pm-import-messages" role="status" aria-live="polite"></div>
+        <div id="project-import-preview" class="pm-import-preview"></div>
+        <p id="project-import-feedback" class="feedback" role="status" aria-live="polite"></p>
+      </div>
+      <div class="dialog-footer">
+        <span class="footer-spacer"></span>
+        <button class="button" type="button" data-close-dialog="project-import-dialog">Cancelar</button>
+        <button id="project-import-confirm" class="button button-primary" type="button" disabled>Criar plano e demandas</button>
+      </div>
     </dialog>
 
     <dialog id="team-dialog" class="editor-dialog pm-team-dialog" aria-labelledby="team-dialog-title">
