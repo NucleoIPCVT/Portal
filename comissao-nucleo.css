@@ -379,3 +379,226 @@ html[data-portal-theme="dark"] .commission-footer-identity img{filter:brightness
  html{scroll-behavior:auto;}
  .tool-card,.commission-theme-toggle{transition:none!important;}
 }
+
+/* Identidade grafite do Núcleo: superfícies neutras nos dois modos.
+   As miniaturas internas do Gantt e dos times mantêm suas cores informativas. */
+html:not([data-portal-theme="dark"]) { color-scheme:light; }
+html:not([data-portal-theme="dark"]) body {
+  --commission-text:#293237;
+  --commission-soft:#5c686c;
+  --commission-accent:#596970;
+  --commission-accent-strong:#4c5d63;
+  --commission-border:#bfc9cb;
+  --commission-surface:#f9faf9;
+  --commission-header:rgba(248,249,249,.95);
+  --commission-panel:#edf0f0;
+  --commission-input:#fbfcfc;
+  --commission-ink:#293237;
+  --commission-paper:#eef1f1;
+  color:var(--commission-text);
+  background:
+    radial-gradient(ellipse at 88% 10%,rgba(195,203,205,.32),transparent 40%),
+    radial-gradient(ellipse at 2% 88%,rgba(200,205,207,.30),transparent 40%),
+    linear-gradient(148deg,#f5f6f6 0%,#ecefef 55%,#e5e9e9 100%);
+}
+html:not([data-portal-theme="dark"]) .topbar {border-color:#cdd3d5;}
+html:not([data-portal-theme="dark"]) .commission-brand-mark {filter:grayscale(1) brightness(.75);}
+html:not([data-portal-theme="dark"]) .commission-topnav a.is-current {
+  background:linear-gradient(115deg,#67767b,#4e5c62);color:#fff;
+}
+html:not([data-portal-theme="dark"]) .commission-topnav a:not(.is-current):hover {
+  background:#d7ddde;
+}
+html:not([data-portal-theme="dark"]) .commission-theme-toggle,
+html:not([data-portal-theme="dark"]) .exit-button {
+  background:#f6f8f8;color:#344046;border-color:#bbc6c9;
+}
+html:not([data-portal-theme="dark"]) .commission-theme-toggle:hover,
+html:not([data-portal-theme="dark"]) .exit-button:hover {
+  background:#e4e9e9;
+}
+html:not([data-portal-theme="dark"]) .dashboard-header::after {background:#7b8b8f;}
+html:not([data-portal-theme="dark"]) .commission-heading-line {background:linear-gradient(90deg,#b4bec2,#d3d8da);}
+html:not([data-portal-theme="dark"]) .access-card {
+  background:linear-gradient(145deg,#fff,#ecefef);border-color:#cad3d4;
+  box-shadow:0 18px 44px rgba(40,55,62,.15);
+}
+html:not([data-portal-theme="dark"]) .commission-logo {
+  filter:grayscale(1) brightness(.55);
+}
+html:not([data-portal-theme="dark"]) .google-button {
+  color:#303b40;border-color:#c3cdd0;background:#fff;
+}
+html:not([data-portal-theme="dark"]) .google-button:hover {background:#f0f3f4;}
+html:not([data-portal-theme="dark"]) .pending-access {
+  color:#29363b;background:#e9eded;border-color:#c4ced0;
+}
+html:not([data-portal-theme="dark"]) .pending-access>i,
+html:not([data-portal-theme="dark"]) .pending-access strong {color:#506068;}
+html:not([data-portal-theme="dark"]) .secondary-button:hover {background:#e0e5e6;}
+html:not([data-portal-theme="dark"]) .tool-card-planner {
+  color:#29383e;background:linear-gradient(130deg,#e4edf0 0%,#d8e2e6 62%,#c8d6da 100%);
+  border-color:#eaf0f2;
+}
+html:not([data-portal-theme="dark"]) .tool-card-estrategico {
+  color:#30383c;background:linear-gradient(130deg,#edf0f0 0%,#e1e5e6 62%,#cfd6d8 100%);
+  border-color:#f7f8f8;
+}
+html:not([data-portal-theme="dark"]) .tool-card-planner::before {
+  background:linear-gradient(90deg,
+    #e0e9ed 0%,rgba(224,233,237,.98) 25%,rgba(224,233,237,.90) 45%,
+    rgba(224,233,237,.52) 73%,rgba(224,233,237,.11) 100%);
+}
+html:not([data-portal-theme="dark"]) .tool-card-estrategico::before {
+  background:linear-gradient(90deg,
+    #e9eded 0%,rgba(233,237,237,.98) 25%,rgba(233,237,237,.91) 45%,
+    rgba(233,237,237,.54) 73%,rgba(233,237,237,.12) 100%);
+}
+html:not([data-portal-theme="dark"]) .tool-card .tool-icon {
+  color:#52656d;background:#f9fcfcd1;border-color:#ffffffd1;
+}
+html:not([data-portal-theme="dark"]) .tool-card .tool-number,
+html:not([data-portal-theme="dark"]) .tool-card-estrategico .tool-number {color:#65787e;}
+html:not([data-portal-theme="dark"]) .tool-card h2{color:#2e3b40;}
+html:not([data-portal-theme="dark"]) .tool-card p {color:#4e6066;}
+html:not([data-portal-theme="dark"]) .tool-card .status {
+  color:#405a63;background:#fafdfee0;border-color:#899ca3;
+}
+html:not([data-portal-theme="dark"]) .tool-card-estrategico .status {
+  color:#4b5960;border-color:#a1afb3;
+}
+html:not([data-portal-theme="dark"]) .tool-arrow{color:#50666f;}
+html:not([data-portal-theme="dark"]) .admin-section {
+  background:linear-gradient(135deg,#fafbfb,#e9eeee);
+  border-color:#c7d0d2;
+}
+html:not([data-portal-theme="dark"]) .primary-button {background:#596d76;color:#fff;}
+html:not([data-portal-theme="dark"]) .primary-button:hover{background:#455961;}
+html:not([data-portal-theme="dark"]) .tool-filter select,
+html:not([data-portal-theme="dark"]) .member-form input {
+  background:#fafbfb;color:#29383d;border-color:#bfc9cc;
+}
+html:not([data-portal-theme="dark"]) .member-row {
+  background:#f7f9f9;border-color:#d4dcde;
+}
+html:not([data-portal-theme="dark"]) .member-badge{color:#475a61;background:#e3eaec;}
+html:not([data-portal-theme="dark"]) .member-badge.inactive{color:#855142;background:#f4e6e2;}
+html:not([data-portal-theme="dark"]) .member-action{color:#3b4c52;border-color:#aebdc1;}
+html:not([data-portal-theme="dark"]) .member-action:hover{background:#e4ebed;}
+html:not([data-portal-theme="dark"]) .commission-footer {border-color:#c8d0d2;}
+
+/* Modo escuro: grafite neutro em vez de verde. */
+html[data-portal-theme="dark"] body {
+  --commission-text:#f0f3f3;
+  --commission-soft:#bdc8cb;
+  --commission-accent:#abb9bc;
+  --commission-accent-strong:#d0dbdc;
+  --commission-border:#637077;
+  --commission-header:rgba(35,40,44,.96);
+  --commission-input:#343e43;
+  --commission-ink:#edf2f2;
+  --commission-panel:#353e42;
+  color:var(--commission-text);
+  background:
+    radial-gradient(ellipse at 83% 5%,rgba(103,115,121,.20),transparent 42%),
+    radial-gradient(ellipse at 6% 82%,rgba(106,117,125,.15),transparent 44%),
+    linear-gradient(146deg,#252b2f 0%,#30383d 52%,#242b2f 100%);
+}
+html[data-portal-theme="dark"] .topbar {border-color:#59676f;}
+html[data-portal-theme="dark"] .commission-brand-mark {
+  filter:grayscale(1) brightness(1.8);
+}
+html[data-portal-theme="dark"] .commission-topnav a.is-current {
+  color:#242f33;background:linear-gradient(115deg,#ced7da,#a6b5ba);
+}
+html[data-portal-theme="dark"] .commission-topnav a:not(.is-current):hover {
+  background:#3d464b;
+}
+html[data-portal-theme="dark"] .commission-theme-toggle,
+html[data-portal-theme="dark"] .exit-button{
+  background:#414b50;border-color:#748188;color:#f2f5f5;
+}
+html[data-portal-theme="dark"] .commission-theme-toggle:hover,
+html[data-portal-theme="dark"] .exit-button:hover {
+  background:#505c62;
+}
+html[data-portal-theme="dark"] .dashboard-header::after {background:#b3c0c3;}
+html[data-portal-theme="dark"] .commission-heading-line {
+  background:linear-gradient(90deg,#728088,#46565d);
+}
+html[data-portal-theme="dark"] .access-card {
+  background:linear-gradient(135deg,#3b454a,#2d363b);
+  border-color:#68777d;box-shadow:0 24px 45px #141b20a0;
+}
+html[data-portal-theme="dark"] .commission-logo {filter:brightness(0) invert(1);}
+html[data-portal-theme="dark"] .google-button{
+  background:#e7ecee;color:#2a3337;border-color:#ccd7dc;
+}
+html[data-portal-theme="dark"] .google-button:hover{background:#f7f9f9;}
+html[data-portal-theme="dark"] .pending-access {
+  background:#313d43;border-color:#627078;
+}
+html[data-portal-theme="dark"] .pending-access>i,
+html[data-portal-theme="dark"] .pending-access strong{color:#e1ecef;}
+html[data-portal-theme="dark"] .secondary-button{color:#f2f5f5;border-color:#75838a;}
+html[data-portal-theme="dark"] .secondary-button:hover{background:#455258;}
+html[data-portal-theme="dark"] .tool-card-planner {
+  background:linear-gradient(130deg,#43535c,#35444c 70%,#303c44);
+  border-color:#82949b;
+}
+html[data-portal-theme="dark"] .tool-card-estrategico {
+  background:linear-gradient(130deg,#454e53,#363f45 70%,#2e383e);
+  border-color:#7f8b91;
+}
+html[data-portal-theme="dark"] .tool-card-planner::before {
+  background:linear-gradient(90deg,
+    #354650 0%,rgba(53,70,80,.98) 27%,rgba(53,70,80,.94) 45%,
+    rgba(53,70,80,.64) 72%,rgba(53,70,80,.12) 100%);
+}
+html[data-portal-theme="dark"] .tool-card-estrategico::before {
+  background:linear-gradient(90deg,
+    #394247 0%,rgba(57,66,71,.98) 27%,rgba(57,66,71,.94) 45%,
+    rgba(57,66,71,.64) 72%,rgba(57,66,71,.12) 100%);
+}
+html[data-portal-theme="dark"] .tool-card .tool-icon {
+  background:#c4d0d4c4;border-color:#e6eff0;color:#354952;
+}
+html[data-portal-theme="dark"] .tool-card .tool-number {color:#d1dddf;}
+html[data-portal-theme="dark"] .tool-card h2 {color:#f8faf9;}
+html[data-portal-theme="dark"] .tool-card p {color:#e2e9eb;}
+html[data-portal-theme="dark"] .tool-card .status {
+  color:#273c44;background:#d9e5e8;border-color:#bbcbd1;
+}
+html[data-portal-theme="dark"] .tool-arrow{color:#e5eff1;}
+html[data-portal-theme="dark"] .admin-section {
+  background:linear-gradient(140deg,#3b464c,#303a40);border-color:#697981;
+}
+html[data-portal-theme="dark"] .tool-filter select,
+html[data-portal-theme="dark"] .member-form input {
+  background:#303a40;color:#f4f8f9;border-color:#738188;
+}
+html[data-portal-theme="dark"] .primary-button{color:#28373f;background:#bccbd0;}
+html[data-portal-theme="dark"] .primary-button:hover{background:#d4e0e3;}
+html[data-portal-theme="dark"] .member-row{background:#323c42;border-color:#5f7078;}
+html[data-portal-theme="dark"] .member-badge{color:#f1f5f5;background:#5a686f;}
+html[data-portal-theme="dark"] .member-badge.inactive{background:#655253;color:#ffded9;}
+html[data-portal-theme="dark"] .member-action{color:#e9f0f1;border-color:#85939a;}
+html[data-portal-theme="dark"] .member-action:hover{background:#455158;}
+html[data-portal-theme="dark"] .commission-footer {border-color:#5d6970;}
+
+/* Este tema também se aplica aos degradês específicos de celular. */
+@media(max-width:700px){
+  html:not([data-portal-theme="dark"]) .tool-card-planner::before{
+    background:linear-gradient(90deg,#e0e9ed 0%,#e0e9edf8 42%,#e0e9edc9 70%,#e0e9ed44 100%);
+  }
+  html:not([data-portal-theme="dark"]) .tool-card-estrategico::before{
+    background:linear-gradient(90deg,#e9eded 0%,#e9ededf8 42%,#e9ededc9 70%,#e9eded44 100%);
+  }
+  html[data-portal-theme="dark"] .tool-card-planner::before{
+    background:linear-gradient(90deg,#354650 0%,#354650f6 42%,#354650c9 70%,#35465044 100%);
+  }
+  html[data-portal-theme="dark"] .tool-card-estrategico::before{
+    background:linear-gradient(90deg,#394247 0%,#394247f6 42%,#394247c9 70%,#39424744 100%);
+  }
+}
+
