@@ -766,17 +766,17 @@
 @media screen {
   :root[data-theme="dark"] body.pm-active #planner-app .pm-demand-table-wrap
   .pm-demand-table tbody tr.pm-group-row td {
-    background:#343e40;
+    background:#252b2e;
     color:#e3f0e7;
-    border-top:1px solid #56635d;
-    border-bottom:1px solid #45534e;
+    border-top:1px solid #424c4d;
+    border-bottom:1px solid #394346;
     font-size:11px;
     font-weight:750;
     letter-spacing:.018em;
   }
   :root[data-theme="dark"] body.pm-active #planner-app .pm-demand-table-wrap
   .pm-demand-table tbody tr.pm-group-row:hover td {
-    background:#3b4745;
+    background:#2d3638;
     color:#e7f4e9;
   }
   :root[data-theme="dark"] body.pm-active #planner-app .pm-demand-table-wrap
