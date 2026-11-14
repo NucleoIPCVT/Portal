@@ -81,3 +81,11 @@ test('ciclos já gerados usam o identificador de seu período mesmo após altera
   })
   assert.equal(cycleForPlanTask(config,t),'2026-11-22')
 })
+
+test('uma ocorrência individual excluída não reaparece ao converter o plano',()=>{
+  const root=task('a','Rotina','2026-11-12')
+  const deleted=task('repeat-a-2026-11-19','Rotina','2026-11-19',{
+    sourceTaskId:'a',deleted:true
+  })
+  assert.deepEqual(missingPlanCycleTasks(config,[root,deleted],buckets,'2026-11-13'),[])
+})
