@@ -1,4 +1,5 @@
 import { createPlannerStore } from './planner-store.js?v=20261113-plan-rotation-v1'
+import { downloadProjectTemplate, readProjectFile } from './planner-excel-import.js?v=20261114-project-import-v1'
 import { hasPanelEntry, clearPanelEntry } from './comissao-entrada.js?v=20261114-v1'
 
 // O link isolado não abre o Planner: a entrada precisa ser iniciada no painel.
@@ -83,6 +84,8 @@ const calendarSelection = new Set()
 let draggedTask = ''
 let draggedTaskGroup = ''
 let importBusy = false
+let pendingProjectImport = null
+let excelLibraryPromise = null
 const integrationRange = { from: addDays(todayISO(), -30), to: addDays(todayISO(), 180) }
 let authEpoch = 0
 let calendarConfig = { calendarId: publicCalendar.id, sourceUrl: publicCalendar.sourceUrl }
@@ -632,11 +635,140 @@ function openPlanBoard(planId) {
   changeView('board', { preserveFilters: true })
 }
 
+
+// O Excel só é carregado quando alguém usa uma das duas ações.
+function plannerExcelLibrary() {
+  if (window.XLSX) return Promise.resolve(window.XLSX)
+  if (!excelLibraryPromise) excelLibraryPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script')
+    script.src = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js'
+    script.async = true
+    script.onload = () => window.XLSX ? resolve(window.XLSX) : reject(new Error('Não foi possível abrir o suporte a arquivos Excel.'))
+    script.onerror = () => reject(new Error('Falha ao carregar o leitor Excel. Verifique sua conexão.'))
+    document.head.append(script)
+  }).catch(error => { excelLibraryPromise = null; throw error })
+  return excelLibraryPromise
+}
+function projectImportPreview(result, filename = '') {
+  pendingProjectImport = result?.errors?.length ? null : result
+  $('project-import-filename').textContent = filename ? 'Arquivo: ' + filename : ''
+  $('project-import-feedback').textContent = ''
+  const stats = $('project-import-overview')
+  stats.replaceChildren()
+  if (result?.plan) {
+    for (const [label, text] of [
+      ['Novo plano', result.plan.name],
+      ['Demandas', result.tasks.length + ' tarefas · ' + result.buckets.length + ' etapas'],
+      ['Período', (result.plan.startDate ? formatDate(result.plan.startDate) : 'Sem início') +
+        ' → ' + (result.plan.dueDate ? formatDate(result.plan.dueDate) : 'Sem prazo')]
+    ]) stats.append(node('div', { class: 'pm-import-stat' }, [
+      node('small', { text: label }), node('strong', { text })
+    ]))
+  }
+  const messages = $('project-import-messages')
+  messages.replaceChildren()
+  for (const [items, className, prefix] of [
+    [result?.errors || [], 'pm-import-message pm-import-error', 'Erro: '],
+    [result?.warnings || [], 'pm-import-message pm-import-warning', 'Atenção: ']
+  ]) {
+    for (const message of items.slice(0, 12)) messages.append(node('p', { class: className, text: prefix + message }))
+    if (items.length > 12) messages.append(node('p', { class: className, text: 'Mais ' + (items.length - 12) + ' aviso(s). Corrija a planilha e tente novamente.' }))
+  }
+  const container = $('project-import-preview')
+  container.replaceChildren()
+  if (result?.tasks?.length) {
+    const table = node('table', { class: 'pm-import-table' })
+    table.append(node('thead', {}, node('tr', {}, ['Demanda', 'Responsáveis / equipe', 'Início', 'Prazo', 'Dependências'].map(label => node('th', { text: label })))))
+    const body = node('tbody')
+    const taskNameById = new Map(result.tasks.map(task => [task.id, task.title]))
+    for (const task of result.tasks.slice(0, 20)) body.append(node('tr', {}, [
+      node('td', {}, [node('span', { text: task.title }), node('small', { text: task.priority === 'urgent' ? 'Urgente' : task.priority === 'high' ? 'Alta prioridade' : '' })]),
+      node('td', { text: [...task.assignees.map(person => person.name || person.email), task.team].filter(Boolean).join(' · ') || 'A definir' }),
+      node('td', { text: task.startDate ? formatDate(task.startDate) : '—' }),
+      node('td', { text: task.dueDate ? formatDate(task.dueDate) : '—' }),
+      node('td', { text: task.dependencyIds.map(id => taskNameById.get(id) || '?').join('; ') || '—' })
+    ]))
+    table.append(body)
+    container.append(table)
+    if (result.tasks.length > 20) container.append(node('p', { class: 'pm-import-hint', text: 'Exibidas as primeiras 20 demandas de ' + result.tasks.length + '. Todas serão importadas.' }))
+  }
+  $('project-import-confirm').disabled = !pendingProjectImport || importBusy
+  if (!$('project-import-dialog').open) $('project-import-dialog').showModal()
+}
+async function openProjectExcel() {
+  if (session.status !== 'authorized' || importBusy) return
+  $('project-import-file').click()
+}
+$('project-import-file').addEventListener('change', async event => {
+  const file = event.target.files?.[0]
+  event.target.value = ''
+  if (!file || importBusy || session.status !== 'authorized') return
+  try {
+    const xlsx = await plannerExcelLibrary()
+    projectImportPreview(await readProjectFile(file, xlsx), file.name)
+  } catch (error) {
+    projectImportPreview({ errors: [error.message || 'Não foi possível ler o arquivo.'], warnings: [] }, file.name)
+  }
+})
+$('project-import-confirm').addEventListener('click', async () => {
+  if (!pendingProjectImport || importBusy || session.status !== 'authorized') return
+  const { plan, buckets, tasks } = pendingProjectImport
+  const invalid = tasks.flatMap(task => validateTask(task, tasks))
+  if (invalid.length) {
+    projectImportPreview({ errors: [...new Set(invalid)], warnings: [] })
+    return
+  }
+  const confirm = $('project-import-confirm')
+  importBusy = true
+  confirm.disabled = true
+  let createdPlan = false
+  let savedTasks = 0
+  const feedback = $('project-import-feedback')
+  async function saveGroup(kind, records, onSaved = () => {}) {
+    for (let index = 0; index < records.length; index += 5) {
+      // Cada gravação preserva as regras e a versão própria do documento.
+      const results = await Promise.allSettled(records.slice(index, index + 5).map(record => save(kind, record)))
+      for (const result of results) if (result.status === 'fulfilled') onSaved()
+      const failure = results.find(result => result.status === 'rejected')
+      if (failure) throw failure.reason
+    }
+  }
+  try {
+    await action(async () => {
+      feedback.textContent = 'Criando o novo plano…'
+      await save('plans', plan)
+      createdPlan = true
+      feedback.textContent = 'Criando as colunas do quadro…'
+      await saveGroup('buckets', buckets)
+      await saveGroup('tasks', tasks, () => {
+        savedTasks++
+        feedback.textContent = 'Importando demandas: ' + savedTasks + ' de ' + tasks.length
+      })
+    }, 'Projeto "' + plan.name + '" importado com ' + tasks.length + ' demandas.')
+    pendingProjectImport = null
+    $('project-import-dialog').close()
+    $('plan-filter').value = plan.id
+    openPlanBoard(plan.id)
+  } catch (error) {
+    feedback.textContent = createdPlan
+      ? 'Importação interrompida: ' + (error.message || 'erro desconhecido') + '. O plano já foi criado e pode conter ' + savedTasks + ' demanda(s). Confira-o antes de tentar importar o mesmo arquivo novamente.'
+      : 'Não foi possível criar o plano: ' + (error.message || 'erro desconhecido')
+  } finally {
+    importBusy = false
+    confirm.disabled = !pendingProjectImport
+  }
+})
+
 function renderPlans(content) {
   const allPlans=activePlans().sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'))
   const mine=allPlans.filter(pmIsMyPlan)
   const plans=pmShowAllPlans?allPlans:mine
   content.append(pmHeader('Organização','Meus planos',mine.length+' plano(s) com participação',[
+    button('↓ Base Excel',async()=>{
+      try { downloadProjectTemplate(await plannerExcelLibrary()) }
+      catch (error) { reportError(error) }
+    },'pm-excel-action'),
+    button('↑ Importar Excel',openProjectExcel,'pm-excel-action pm-excel-action-primary'),
     pmCreationButton('plan',()=>pmNewPlan())
   ]))
   const switcher=pmGroup('div','pm-plans-switch',[
