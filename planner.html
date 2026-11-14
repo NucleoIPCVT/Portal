@@ -290,8 +290,17 @@
           <label class="field" for="plan-description">Descrição <span class="optional-tag">Opcional</span><textarea id="plan-description" rows="3" maxlength="5000" placeholder="Que tipos de demandas serão organizados aqui?"></textarea></label>
           <details id="plan-advanced" class="task-editor-advanced">
             <summary>Configurações do plano (opcional)</summary>
-            <label class="field" for="plan-kind">Tipo de trabalho<select id="plan-kind"><option value="continuous">Trabalho contínuo</option><option value="project">Projeto com prazo</option></select></label>
-            <div class="field-grid"><label class="field" for="plan-start">Início<input id="plan-start" type="date"></label><label class="field" for="plan-due">Prazo do projeto<input id="plan-due" type="date"></label></div>
+            <label class="field" for="plan-kind">Tipo de trabalho<select id="plan-kind"><option value="continuous">Trabalho contínuo</option><option value="project">Projeto com prazo</option><option value="recurring">Plano recorrente</option></select></label>
+            <section class="pm-plan-repeat" id="plan-repeat-fields" hidden aria-label="Configuração da recorrência do plano">
+              <p>O plano funciona como modelo permanente. Cada período terá suas próprias demandas, com progresso e histórico independentes.</p>
+              <div class="field-grid">
+                <label class="field" for="plan-repeat-interval">Repetir a cada<input id="plan-repeat-interval" type="number" min="1" max="999" step="1" value="1"></label>
+                <label class="field" for="plan-repeat-unit">Unidade<select id="plan-repeat-unit"><option value="day">Dia(s)</option><option value="week" selected>Semana(s)</option><option value="month">Mês(es)</option></select></label>
+              </div>
+              <label class="field" for="plan-repeat-anchor">Data de referência do ciclo<input id="plan-repeat-anchor" type="date"><small>Para a rotina dominical, escolha a data de um domingo. As demandas mantêm o dia da semana do seu prazo original.</small></label>
+              <small class="pm-repeat-migration">Ao converter um plano existente, as demandas já registradas permanecem no histórico. As próximas execuções serão controladas pelo plano, sem repetir cada demanda duas vezes.</small>
+            </section>
+            <div class="field-grid" id="plan-date-fields"><label class="field" for="plan-start">Início<input id="plan-start" type="date"></label><label class="field" for="plan-due">Prazo do projeto<input id="plan-due" type="date"></label></div>
             <label class="field" for="plan-buckets">Colunas do quadro<textarea id="plan-buckets" rows="4" required aria-describedby="buckets-help" placeholder="A fazer&#10;Em andamento&#10;Concluído"></textarea><small id="buckets-help">Já preenchemos A fazer, Em andamento e Concluído. Altere somente se precisar de outras etapas.</small></label>
           </details>
           <p id="plan-feedback" class="feedback" role="status" aria-live="polite"></p>
