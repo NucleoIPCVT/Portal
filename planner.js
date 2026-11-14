@@ -1,4 +1,8 @@
 import { createPlannerStore } from './planner-store.js?v=20261113-plan-rotation-v1'
+import { hasPanelEntry, clearPanelEntry } from './comissao-entrada.js?v=20261114-v1'
+
+// O link isolado não abre o Planner: a entrada precisa ser iniciada no painel.
+if (!hasPanelEntry('planner')) window.location.replace('comissao.html')
 import {
   TEAM_METADATA_PREFIX,TEAM_ICON_PRESETS,DEFAULT_TEAM_NAMES,
   normalizedTeamName,parseTeamMetadata,teamMetadataTask,
@@ -2948,7 +2952,11 @@ $('google-login').addEventListener('click', async () => {
   $('auth-feedback').textContent = 'Abrindo o Google…'
   try { await store.login() } catch (error) { $('auth-feedback').textContent = error.message } finally { $('google-login').disabled = false }
 })
-for (const id of ['logout-button', 'switch-account']) $(id).addEventListener('click', async () => { try { await store.logout() } catch (error) { reportError(error) } })
+for (const id of ['logout-button', 'switch-account']) $(id).addEventListener('click', async () => {
+  clearPanelEntry('planner')
+  try { await store.logout() } catch (error) { reportError(error) }
+  window.location.replace('comissao.html')
+})
 
 function openCalendarSettings() {
   if (session.status !== 'authorized' || !session.isAdmin) return
@@ -3021,6 +3029,12 @@ $('calendar-notifications-refresh').addEventListener('click', async () => {
 
 const store = createPlannerStore({
   onSession(next) {
+    if (['signed-out', 'pending', 'error'].includes(next.status)
+        || (next.status === 'authorized' && !hasPanelEntry('planner', next.user?.uid))) {
+      clearPanelEntry('planner')
+      window.location.replace('comissao.html')
+      return
+    }
     const previousEmail = session.email
     const wasAdmin = session.isAdmin
     session = next
@@ -3039,7 +3053,7 @@ const store = createPlannerStore({
         $('notice').hidden = true
       }
     }
-    $('access-gate').hidden = allowed
+    $('access-gate').hidden = true
     $('planner-app').hidden = !allowed
     $('auth-feedback').textContent = next.message || (next.status === 'checking' ? 'Verificando sua sessão…' : '')
     $('access-pending').hidden = next.status !== 'pending'
