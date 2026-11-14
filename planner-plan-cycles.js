@@ -142,6 +142,10 @@ export function missingPlanCycleTasks(config,allTasks,buckets,today,count=2){
     }
     for(const group of families){
       if(existingByRoot.has(group.root))continue
+      // Uma ocorrência excluída é intencional: não recrie o mesmo ciclo.
+      if(allTasks.some(task=>task.planId===config.planId&&task.deleted
+        &&task.id!==config.id&&taskPlanFamily(task)===group.root
+        &&cycleForPlanTask(config,task)===target))continue
       const template=group.source
       const originalCycle=cycleForPlanTask(config,template)
       if(!originalCycle||originalCycle>target)continue
