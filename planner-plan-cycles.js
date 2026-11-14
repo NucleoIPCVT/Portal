@@ -75,6 +75,14 @@ export function nextPlanCycle(config,current){
     d(current).getUTCMonth()-d(config.anchor).getUTCMonth())/config.interval)+1)*config.interval)
     :shift(current,config.interval*(config.unit==='week'?7:1))
 }
+export function previousPlanCycle(config,current){
+  if(!config||!dateOK(current))return ''
+  if(config.unit!=='month')return shift(current,-config.interval*(config.unit==='week'?7:1))
+  const a=d(config.anchor),c=d(current)
+  const elapsed=(c.getUTCFullYear()-a.getUTCFullYear())*12+c.getUTCMonth()-a.getUTCMonth()
+  const index=Math.round(elapsed/config.interval)-1
+  return monthAt(config.anchor,index*config.interval)
+}
 export function cycleForPlanTask(config,task){
   if(!config||!task)return ''
   if(task.templateKey===INSTANCE&&dateOK(task.cycleKey))return task.cycleKey
