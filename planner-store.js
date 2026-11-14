@@ -9,8 +9,8 @@ import {
 import { createGoogleLogin } from './ipcvt-google-login.js?v=20261112-google-direto-02'
 import { nextRecurringTask, taskRecurrence, rotationConfigId, rotationConfigRecord,
   parseRotationConfig, recurrenceOccurrenceAt, scheduledUpcomingDates
-} from './planner-recurrence.js?v=20261113-unified-v1'
-import {parsePlanCycleConfig,missingPlanCycleTasks} from './planner-plan-cycles.js?v=20261113-plan-cycle-v2'
+} from './planner-recurrence.js?v=20261113-plan-rotation-v1'
+import {parsePlanCycleConfig,missingPlanCycleTasks} from './planner-plan-cycles.js?v=20261113-plan-cycle-v3'
 
 const googleLogin = createGoogleLogin({
   getAccounts: () => window.google?.accounts,
