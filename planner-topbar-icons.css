@@ -29,6 +29,29 @@
     overflow:hidden;white-space:nowrap;clip:rect(0,0,0,0);
     clip-path:inset(50%);border:0;
   }
+  /* Cabeçalho legado: só serve antes do login.
+     Na área autorizada a nova barra substitui integralmente a antiga. */
+  body.pm-active > header.site-header {
+    display:none!important;
+  }
+  /* O símbolo acompanha o tema mesmo se algum ícone for atualizado
+     antes dos event listeners JavaScript estarem prontos. */
+  :root:not([data-theme="dark"]) .theme-toggle svg.pm-theme-moon,
+  :root:not([data-theme="dark"]) #pm-sidebar-theme svg.pm-theme-moon{
+    display:block!important;
+  }
+  :root:not([data-theme="dark"]) .theme-toggle svg.pm-theme-sun,
+  :root:not([data-theme="dark"]) #pm-sidebar-theme svg.pm-theme-sun{
+    display:none!important;
+  }
+  :root[data-theme="dark"] .theme-toggle svg.pm-theme-moon,
+  :root[data-theme="dark"] #pm-sidebar-theme svg.pm-theme-moon{
+    display:none!important;
+  }
+  :root[data-theme="dark"] .theme-toggle svg.pm-theme-sun,
+  :root[data-theme="dark"] #pm-sidebar-theme svg.pm-theme-sun{
+    display:block!important;
+  }
   /* A tela de acesso mantém seu próprio controle; durante o uso,
      o tema é alternado exclusivamente na barra do Planner. */
   body.pm-active .site-header #theme-toggle-gate{display:none!important}
