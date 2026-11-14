@@ -4,10 +4,11 @@ import {
   signInWithPopup, signInWithCredential, signOut
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'
 import {
-  getFirestore, collection, doc, onSnapshot,
+  getFirestore, collection, doc, getDoc, onSnapshot,
   setDoc, updateDoc, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'
 import { createGoogleLogin } from './ipcvt-google-login.js?v=20261112-google-direto-02'
+import { grantPanelEntry, clearPanelEntry } from './comissao-entrada.js?v=20261114-v1'
 
 const firebaseConfig = {
   apiKey: 'AIzaSyAg9w5QohkcmXUFRgLfSI5Sh1chnCD1Owc',
@@ -45,7 +46,7 @@ const ui = Object.fromEntries([
   'pending-email', 'switch-account', 'commission-panel', 'member-email',
   'logout-button', 'authorization-toggle', 'authorization-tool',
   'authorization-tool-hint', 'access-admin', 'member-form', 'new-member-email',
-  'new-member-name', 'member-feedback', 'member-list'
+  'new-member-name', 'member-feedback', 'member-list', 'launch-feedback'
 ].map(id => [id, document.getElementById(id)]))
 
 let stopOwnAccess = null
@@ -53,6 +54,7 @@ let stopMemberList = null
 let sessionSequence = 0
 let adminEmail = null
 let watchedTool = ''
+let dashboardReady = false
 
 function clearListeners() {
   stopOwnAccess?.()
@@ -64,6 +66,8 @@ function clearListeners() {
 }
 
 function showGate(message = '', pendingEmail = '') {
+  dashboardReady = false
+  clearPanelEntry()
   ui['commission-panel'].hidden = true
   ui['access-admin'].hidden = true
   ui['authorization-toggle'].hidden = true
@@ -76,6 +80,8 @@ function showGate(message = '', pendingEmail = '') {
 }
 
 function showDashboard(email, isAdmin) {
+  dashboardReady = true
+  ui['launch-feedback'].hidden = true
   ui['access-gate'].hidden = true
   ui['commission-panel'].hidden = false
   ui['member-email'].textContent = email
@@ -133,6 +139,46 @@ ui['google-login'].addEventListener('click', async () => {
 
 ui['switch-account'].addEventListener('click', logout)
 ui['logout-button'].addEventListener('click', logout)
+
+// A ferramenta só é aberta depois de uma entrada iniciada no painel autenticado.
+// Cada destino valida novamente a identidade e as permissões no Firebase.
+document.querySelectorAll('.tool-card[data-tool]').forEach(card => {
+  card.addEventListener('click', async event => {
+    event.preventDefault()
+    if (card.dataset.opening === 'true') return
+    const tool = card.dataset.tool
+    const user = auth.currentUser
+    const feedback = ui['launch-feedback']
+    if (!dashboardReady || !user?.uid) {
+      feedback.textContent = 'Entre no Painel da Comissão para abrir esta ferramenta.'
+      feedback.hidden = false
+      return
+    }
+    card.dataset.opening = 'true'
+    feedback.hidden = true
+    try {
+      if (tool === 'tatico') {
+        // A autorização específica continua obrigatória para o Planejamento Estratégico.
+        const email = (user.email || '').trim().toLowerCase()
+        const access = await getDoc(doc(db, 'tatico_acessos', email))
+        if (!access.exists() || access.data().ativo !== true) {
+          throw new Error('Seu e-mail ainda não está autorizado no Planejamento Estratégico.')
+        }
+      }
+      if (!dashboardReady || auth.currentUser?.uid !== user.uid) {
+        throw new Error('Sua sessão mudou. Entre novamente pela Comissão.')
+      }
+      if (!grantPanelEntry(tool, user.uid)) {
+        throw new Error('Não foi possível iniciar a ferramenta. Habilite o armazenamento desta aba.')
+      }
+      window.location.assign(card.href)
+    } catch (error) {
+      feedback.textContent = error.message || 'Não foi possível abrir a ferramenta.'
+      feedback.hidden = false
+      card.dataset.opening = 'false'
+    }
+  })
+})
 
 onAuthStateChanged(auth, async (user) => {
   const currentSequence = ++sessionSequence
