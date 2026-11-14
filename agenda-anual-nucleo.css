@@ -275,3 +275,49 @@
   }
   .event-key{background:#e0eadb!important;box-shadow:inset 0 0 0 .15mm rgba(103,147,108,.28);}
 }
+
+
+/* Marca da Agenda: mesmo calendário Phosphor e mesma paleta do cartão no Portal. */
+@media screen {
+  .app-bar .home-link .agenda-brand-icon {
+    display:grid;
+    place-items:center;
+    flex:0 0 64px;
+    width:64px;
+    height:64px;
+    border:1px solid #d0dfcd;
+    border-radius:19px;
+    background:#d9e5d4;
+    color:#526b55;
+  }
+  .app-bar .home-link .agenda-brand-icon i {
+    font-size:38px;
+    line-height:1;
+    color:inherit;
+  }
+  html[data-portal-theme="dark"] .app-bar .home-link .agenda-brand-icon {
+    background:#9dbea1;
+    color:#355b44;
+    border-color:#b4d0ad;
+  }
+  @media(max-width:760px){
+    .app-bar .home-link .agenda-brand-icon{
+      flex-basis:44px;
+      width:44px;
+      height:44px;
+      border-radius:14px;
+    }
+    .app-bar .home-link .agenda-brand-icon i{font-size:27px;}
+    .app-bar .home-link .agenda-brand-copy{font-size:clamp(19px,4.1vw,27px);}
+  }
+  @media(max-width:390px){
+    .app-bar .home-link .agenda-brand-icon{
+      flex-basis:35px;
+      width:35px;
+      height:35px;
+      border-radius:11px;
+    }
+    .app-bar .home-link .agenda-brand-icon i{font-size:23px;}
+    .app-bar .home-link .agenda-brand-copy{font-size:19px;}
+  }
+}
