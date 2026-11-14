@@ -2,13 +2,15 @@
 // Não grava dados: a confirmação e as permissões ficam no Planner/Firestore.
 export const PROJECT_FIELDS = ['Campo', 'Valor'];
 export const TASK_FIELDS = [
-  'ID', 'Título', 'Descrição', 'Etapa', 'Equipe', 'Responsáveis',
+  'Título', 'Descrição', 'Etapa', 'Equipe', 'Responsáveis',
   'Início', 'Prazo', 'Status', 'Prioridade', 'Depende de', 'Checklist'
 ];
 
 const standardBuckets = ['A fazer', 'Em andamento', 'Concluído'];
 const normalize = value => String(value ?? '').trim()
-  .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').toLowerCase();
+export const existingProjectByName = (name, plans = []) => plans.find(plan =>
+  plan && !plan.deleted && normalize(plan.name) === normalize(name));
 const clean = value => String(value ?? '').trim();
 const splitItems = value => clean(value).split(/[;\n]+/).map(item => item.trim()).filter(Boolean);
 const has = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key);
@@ -27,26 +29,25 @@ export function downloadProjectTemplate(XLSX) {
   XLSX.utils.book_append_sheet(book, project, 'Projeto');
   const tasks = XLSX.utils.aoa_to_sheet([TASK_FIELDS]);
   tasks['!cols'] = [
-    { wch: 12 }, { wch: 36 }, { wch: 50 }, { wch: 24 }, { wch: 22 },
-    { wch: 45 }, { wch: 16 }, { wch: 16 }, { wch: 21 }, { wch: 16 },
-    { wch: 22 }, { wch: 55 }
+    { wch: 36 }, { wch: 50 }, { wch: 24 }, { wch: 22 }, { wch: 45 },
+    { wch: 16 }, { wch: 16 }, { wch: 21 }, { wch: 16 }, { wch: 35 }, { wch: 55 }
   ];
   XLSX.utils.book_append_sheet(book, tasks, 'Demandas');
   const instructions = XLSX.utils.aoa_to_sheet([
     ['MODELO IPCVT PLANNER', 'Preencha as abas Projeto e Demandas. Não renomeie abas ou cabeçalhos.'],
     ['Preenchimento com IA', 'Envie este arquivo vazio para a IA, peça o plano completo e solicite que preserve a estrutura.'],
     ['Projeto', 'Informe o nome. Descrição e datas gerais são opcionais; se omitidas, o Planner deduz as datas das tarefas.'],
-    ['Demandas', 'Cada linha é uma tarefa. ID e Título são obrigatórios.'],
-    ['ID', 'Código único na planilha: T01, T02, T03. Nunca repita um ID.'],
+    ['Demandas', 'Cada linha é uma tarefa. O Título é obrigatório e não pode se repetir dentro deste projeto.'],
+    ['Título', 'Use títulos diferentes para cada demanda do projeto. O Planner cria os IDs internos automaticamente.'],
     ['Etapa', 'Coluna do Kanban. Ex.: Planejamento, Execução, Revisão. Vazia = etapa sugerida pelo status.'],
     ['Responsáveis', 'Separe por ponto e vírgula. Ex.: Ana <ana@exemplo.com>; João. Máximo: 10.'],
     ['Datas', 'Use DD/MM/AAAA ou AAAA-MM-DD. A data final não pode ser anterior ao início.'],
     ['Status', 'Não iniciada; Em andamento; Concluída. Vazio = Não iniciada.'],
     ['Prioridade', 'Baixa; Normal; Alta; Urgente. Vazio = Normal.'],
-    ['Depende de', 'IDs de outras demandas separados por ponto e vírgula. Ex.: T01; T03. Sem ciclos.'],
+    ['Depende de', 'Títulos exatos de outras demandas, separados por ponto e vírgula. Ex.: Definir repertório; Elaborar arranjos. Sem ciclos.'],
     ['Checklist', 'Itens separados por ponto e vírgula. Máximo de 20 itens, até 300 caracteres cada.'],
-    ['Exemplo apenas nesta aba', 'ID T03: "Montar estrutura" depende de T01; T02. Não inclua linhas de exemplo em Demandas.'],
-    ['Segurança', 'Importa um NOVO plano; não altera planos existentes. Confira a prévia antes de confirmar.']
+    ['Exemplo apenas nesta aba', 'Demanda "Ensaio geral" depende de "Definir repertório; Elaborar arranjos". Não inclua exemplos em Demandas.'],
+    ['Segurança', 'Importa um NOVO plano. Se o nome já estiver em uso, o Planner bloqueia e exibe "Projeto já existente".']
   ]);
   instructions['!cols'] = [{ wch: 28 }, { wch: 110 }];
   XLSX.utils.book_append_sheet(book, instructions, 'Instruções');
@@ -165,13 +166,12 @@ export function parseProjectWorkbook(workbook, XLSX, createId = () => crypto.ran
   if (rows.length > 100) errors.push('Demandas: importe até 100 tarefas por projeto.');
 
   const planId = createId();
-  const codes = new Map();
+  const taskTitles = new Map();
   const draftTasks = [];
   const buckets = [...standardBuckets];
   const bucketIndex = new Map(buckets.map((bucket, i) => [normalize(bucket), i]));
   for (const { index, cells } of rows.slice(0, 100)) {
     const label = 'Demandas, linha ' + index;
-    const code = clean(cells.ID);
     const title = clean(cells['Título']);
     const taskStart = readDate(cells['Início']);
     const taskDue = readDate(cells['Prazo']);
@@ -182,9 +182,11 @@ export function parseProjectWorkbook(workbook, XLSX, createId = () => crypto.ran
     const stage = clean(cells.Etapa) || ({ todo: 'A fazer', doing: 'Em andamento', done: 'Concluído' })[status];
     const checklistTexts = splitItems(cells.Checklist);
     const dependencies = splitItems(cells['Depende de']);
-    if (!code || code.length > 100) errors.push(label + ': ID obrigatório, até 100 caracteres.');
-    if (codes.has(normalize(code))) errors.push(label + ': ID "' + code + '" repetido.');
     if (!title || title.length > 160) errors.push(label + ': título obrigatório, até 160 caracteres.');
+    if (title && taskTitles.has(normalize(title))) {
+      errors.push(label + ': a demanda "' + title + '" tem o mesmo título da linha ' +
+        taskTitles.get(normalize(title)).row + '. Dê nomes diferentes para identificar as dependências.');
+    }
     if (text.length > 10000) errors.push(label + ': descrição limitada a 10.000 caracteres.');
     if (team.length > 120) errors.push(label + ': nome da equipe limitado a 120 caracteres.');
     if (stage.length > 80) errors.push(label + ': etapa limitada a 80 caracteres.');
@@ -195,12 +197,12 @@ export function parseProjectWorkbook(workbook, XLSX, createId = () => crypto.ran
     if (dependencies.length > 20) errors.push(label + ': máximo de 20 dependências.');
     if (!bucketIndex.has(normalize(stage))) { bucketIndex.set(normalize(stage), buckets.length); buckets.push(stage); }
     const id = createId();
-    if (code) codes.set(normalize(code), id);
+    if (title && !taskTitles.has(normalize(title))) taskTitles.set(normalize(title), { id, row: index });
     draftTasks.push({
       id, planId, title, description: text, team,
       assignees: readAssignees(cells['Responsáveis'], label, errors),
       startDate: taskStart || '', dueDate: taskDue || '',
-      status, priority, stage, dependencyCodes: dependencies,
+      status, priority, stage, dependencyTitles: dependencies,
       checklist: checklistTexts.map(value => ({ id: createId(), text: value, done: false })),
       dateMode: 'manual', eventId: '', dueOffsetDays: null, deleted: false
     });
@@ -209,13 +211,13 @@ export function parseProjectWorkbook(workbook, XLSX, createId = () => crypto.ran
   const bucketRecords = buckets.map((bucket, order) => ({ id: createId(), planId, name: bucket, order }));
   const bucketIds = new Map(bucketRecords.map(bucket => [normalize(bucket.name), bucket.id]));
   const tasks = draftTasks.map(task => {
-    const dependencyIds = task.dependencyCodes.map(code => {
-      const id = codes.get(normalize(code));
-      if (!id) errors.push('Demanda "' + task.title + '": dependência "' + code + '" não existe na coluna ID.');
-      if (id === task.id) errors.push('Demanda "' + task.title + '": não pode depender de si mesma.');
-      return id;
+    const dependencyIds = task.dependencyTitles.map(title => {
+      const target = taskTitles.get(normalize(title));
+      if (!target) errors.push('Demanda "' + task.title + '": a dependência "' + title + '" não corresponde a nenhum título de demanda nesta planilha.');
+      if (target?.id === task.id) errors.push('Demanda "' + task.title + '": não pode depender de si mesma.');
+      return target?.id;
     }).filter(Boolean);
-    const { stage, dependencyCodes, ...rest } = task;
+    const { stage, dependencyTitles, ...rest } = task;
     return { ...rest, bucketId: bucketIds.get(normalize(stage)), dependencyIds: [...new Set(dependencyIds)] };
   });
   const byId = new Map(tasks.map(task => [task.id, task]));
