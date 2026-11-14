@@ -38,7 +38,15 @@
         ::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 4px; }
     </style>
     <link rel="stylesheet" href="portal-ui.css">
+    <script>
+        (function () {
+            var mode = 'light';
+            try { mode = localStorage.getItem('ipcvt-portal-theme') === 'dark' ? 'dark' : 'light'; } catch (_) {}
+            document.documentElement.setAttribute('data-portal-theme', mode);
+        })();
+    </script>
     <link rel="stylesheet" href="vaquinhas-ui.css?v=20261107-titulos-privados">
+    <link rel="stylesheet" href="vaquinhas-nucleo.css?v=20261114-vaquinhas-responsive-grafite-v1">
 </head>
 <body class="campaign-page min-h-screen font-sans selection:bg-presb-gold selection:text-presb-green">
 
@@ -48,7 +56,23 @@
         <p class="text-presb-green font-black uppercase text-xs tracking-widest">Sincronizando Projetos</p>
     </div>
 
-    <header class="campaign-header"><div class="campaign-header-inner"><a href="vaquinhas.html" class="campaign-brand" aria-label="Início das Vaquinhas"><img src="logo-vaquinhas.svg" alt="">Núcleo <span>IPCVT</span></a><nav aria-label="Navegação"><button id="nav-btn-list" onclick="window.switchView('list')">Vaquinhas</button><button id="nav-btn-form" onclick="window.requireAuth('create')"><i data-lucide="plus" aria-hidden="true"></i><span>Nova arrecadação</span></button><button id="vaquinhas-session-button" onclick="window.toggleManagementLogin()" aria-label="Entrar com Google">Entrar</button><a href="index.html" class="portal-return" aria-label="Voltar ao Portal IPCVT"><i data-lucide="arrow-left" aria-hidden="true"></i><span>Portal IPCVT</span></a></nav></div></header>
+    <header class="campaign-header">
+        <div class="campaign-header-inner">
+            <a href="vaquinhas.html" class="campaign-brand" aria-label="Início das Vaquinhas">
+                <img src="logo-vaquinhas.svg" alt="" width="55" height="55">
+                <span class="campaign-brand-copy">Vaquinhas IPCVT<small>NÚCLEO IPCVT</small></span>
+            </a>
+            <nav aria-label="Navegação">
+                <button id="nav-btn-list" onclick="window.switchView('list')">Vaquinhas</button>
+                <button id="nav-btn-form" onclick="window.requireAuth('create')"><i data-lucide="plus" aria-hidden="true"></i><span>Nova arrecadação</span></button>
+                <button id="vaquinhas-session-button" onclick="window.toggleManagementLogin()" aria-label="Entrar com Google">Entrar</button>
+                <a href="index.html" class="portal-return" aria-label="Voltar ao Portal IPCVT"><i data-lucide="arrow-left" aria-hidden="true"></i><span>Portal IPCVT</span></a>
+                <button id="vaquinhas-theme-toggle" class="campaign-theme-toggle" type="button" aria-pressed="false" aria-label="Ativar modo escuro" title="Alternar modo claro ou escuro">
+                    <i data-lucide="moon-star" aria-hidden="true" class="campaign-theme-icon"></i><span id="vaquinhas-theme-label">Modo escuro</span>
+                </button>
+            </nav>
+        </div>
+    </header>
     <main class="max-w-7xl mx-auto px-6 py-12 relative">
         
         <!-- ================= LISTA ================= -->
@@ -260,6 +284,14 @@
             </div>
         </div>
     </main>
+
+    <footer class="campaign-footer">
+        <div class="campaign-footer-lockup">
+            <img id="vaquinhas-church-logo" src="logo-igreja.png" width="95" alt="Logomarca da Igreja Presbiteriana Central em Vilar dos Teles">
+            <span>Igreja Presbiteriana Central em Vilar dos Teles</span>
+        </div>
+        <span>Vaquinhas · Núcleo IPCVT</span>
+    </footer>
 
     <!-- Confirmação de registro financeiro e envio de comprovante -->
     <div id="contribution-confirmation" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[150] hidden flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="contribution-confirmation-title">
@@ -1362,6 +1394,37 @@
             }
         };
 
+    </script>
+
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var button = document.getElementById('vaquinhas-theme-toggle');
+        var label = document.getElementById('vaquinhas-theme-label');
+        var churchLogo = document.getElementById('vaquinhas-church-logo');
+        var meta = document.querySelector('meta[name="theme-color"]');
+        function syncTheme() {
+          var dark = root.getAttribute('data-portal-theme') === 'dark';
+          button.setAttribute('aria-pressed', String(dark));
+          button.setAttribute('aria-label', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
+          button.setAttribute('title', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
+          label.textContent = dark ? 'Modo claro' : 'Modo escuro';
+          var icon = button.querySelector('i');
+          if (icon) {
+            icon.setAttribute('data-lucide', dark ? 'sun' : 'moon-star');
+            if (window.lucide && window.lucide.createIcons) window.lucide.createIcons({ nodes: [icon] });
+          }
+          if (churchLogo) churchLogo.style.filter = dark ? 'brightness(0) invert(1)' : 'none';
+          if (meta) meta.content = dark ? '#282e32' : '#f3f5f4';
+        }
+        button.addEventListener('click', function () {
+          var next = root.getAttribute('data-portal-theme') === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-portal-theme', next);
+          try { localStorage.setItem('ipcvt-portal-theme', next); } catch (_) {}
+          syncTheme();
+        });
+        syncTheme();
+      })();
     </script>
 </body>
 </html>
