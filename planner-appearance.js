@@ -8,22 +8,30 @@
     document.documentElement.dataset.theme = theme
     const meta = document.querySelector('meta[name="theme-color"]')
     if (meta) meta.content = dark ? '#2b3034' : '#d8e0d2'
-    const button = document.getElementById('theme-toggle')
-    if (!button) return
     const label = dark ? 'Ativar modo claro' : 'Ativar modo noturno'
-    button.setAttribute('aria-pressed', String(dark))
-    button.setAttribute('aria-label', label)
-    button.title = label
-    button.querySelector('.theme-icon').textContent = dark ? '☀' : '☾'
-    button.querySelector('.theme-label').textContent = dark ? 'Modo claro' : 'Modo noturno'
+    for (const id of ['theme-toggle', 'theme-toggle-gate']) {
+      const button = document.getElementById(id)
+      if (!button) continue
+      button.setAttribute('aria-pressed', String(dark))
+      button.setAttribute('aria-label', label)
+      button.title = label
+      const moon = button.querySelector('.pm-theme-moon')
+      const sun = button.querySelector('.pm-theme-sun')
+      if (moon) moon.hidden = dark
+      if (sun) sun.hidden = !dark
+      const caption = button.querySelector('.theme-label')
+      if (caption) caption.textContent = dark ? 'Modo claro' : 'Modo noturno'
+    }
   }
   apply()
   document.addEventListener('DOMContentLoaded', () => {
     apply()
-    document.getElementById('theme-toggle')?.addEventListener('click', () => {
-      theme = theme === 'light' ? 'dark' : 'light'
-      apply()
-      try { localStorage.setItem(key, theme) } catch {}
-    })
+    for (const id of ['theme-toggle', 'theme-toggle-gate']) {
+      document.getElementById(id)?.addEventListener('click', () => {
+        theme = theme === 'light' ? 'dark' : 'light'
+        apply()
+        try { localStorage.setItem(key, theme) } catch {}
+      })
+    }
   })
 })()
