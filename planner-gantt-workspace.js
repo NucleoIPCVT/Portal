@@ -3,7 +3,7 @@ const viewState = {
   mode:'focus', focusId:'', selectedIds:null, zoom:'weeks',
   cursor:'', collapsedPlans:new Set(), collapsedBuckets:new Set(),
   expandedSeries:new Set(), groupRecurrences:true, showAllLinks:false,
-  selectedTaskId:'', portfolioInitialized:false
+  selectedTaskId:'', portfolioInitialized:false, cycleOnly:true, cycleFocusPlan:''
 }
 let drawCurrent=null
 if(typeof window!=='undefined')window.addEventListener('resize',()=>drawCurrent?.())
@@ -104,7 +104,8 @@ export function selectGanttPlanContext(planId){
 }
 export function renderGanttWorkspace(ctx){
   const {content,tasks,allTasks,plans,buckets,recurrence,
-    openTask,resolveDependencies,routeDependencies,render,today,progressOf}=ctx
+    openTask,resolveDependencies,routeDependencies,render,today,progressOf,
+    planCycleConfigOf,cycleForTask,cycleDateOf,nextCycleDate,setCycleDate}=ctx
   const orderedPlans=plans.slice().sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'))
   if(!viewState.cursor)viewState.cursor=today
   if(!orderedPlans.some(plan=>plan.id===viewState.focusId))viewState.focusId=ctx.globalPlanId||orderedPlans[0]?.id||''
@@ -114,10 +115,21 @@ export function renderGanttWorkspace(ctx){
   const selectedIds=viewState.mode==='focus'?[viewState.focusId]:
     viewState.selectedIds===null?orderedPlans.map(plan=>plan.id):viewState.selectedIds
   const chosen=orderedPlans.filter(plan=>selectedIds.includes(plan.id))
+  const recurringFocused=viewState.mode==='focus'&&planCycleConfigOf?.(viewState.focusId)
+  if(recurringFocused&&viewState.cycleOnly&&viewState.cycleFocusPlan!==viewState.focusId){
+    viewState.cursor=cycleDateOf(viewState.focusId)||today
+    viewState.cycleFocusPlan=viewState.focusId
+  }
+  if(!recurringFocused)viewState.cycleFocusPlan=''
   const totalDays={weeks:35,months:91,quarter:182}[viewState.zoom]||35
   const step={weeks:7,months:7,quarter:14}[viewState.zoom]||7
   const start=monday(viewState.cursor),end=add(start,totalDays-1)
-  const relevant=tasks.filter(task=>selectedIds.includes(task.planId))
+  const relevant=tasks.filter(task=>{
+    if(!selectedIds.includes(task.planId))return false
+    const rule=planCycleConfigOf?.(task.planId)
+    return !viewState.cycleOnly||!rule||
+      cycleForTask(rule,task)===cycleDateOf(task.planId)
+  })
   const dated=relevant.filter(task=>inWindow(taskRange(task),start,end))
   const resolved=resolveDependencies(allTasks,dated)
   const rows=[]
@@ -249,6 +261,35 @@ export function renderGanttWorkspace(ctx){
     ()=>{viewState.groupRecurrences=!viewState.groupRecurrences;render()},'pg-tool-button')
   toggleSeries.setAttribute('aria-pressed',String(viewState.groupRecurrences))
   toolbar.append(toggleLinks,toggleSeries)
+  if(chosen.some(plan=>planCycleConfigOf?.(plan.id))){
+    const scope=control(viewState.cycleOnly?'Ciclo selecionado':'Todos os ciclos',()=>{
+      viewState.cycleOnly=!viewState.cycleOnly
+      if(viewState.cycleOnly&&recurringFocused)viewState.cursor=cycleDateOf(viewState.focusId)||today
+      render()
+    },'pg-tool-button')
+    scope.title='Alternar entre execuções selecionadas e histórico completo dos planos recorrentes'
+    scope.setAttribute('aria-pressed',String(viewState.cycleOnly))
+    toolbar.append(scope)
+    if(recurringFocused&&viewState.cycleOnly){
+      const current=cycleDateOf(viewState.focusId)
+      const cycleControls=element('div','pg-cycle-controls')
+      const prev=control('‹',()=>{
+        const previous=add(current,-1)
+        const rule=planCycleConfigOf(viewState.focusId)
+        const target=ctx.currentCycleDate(rule,previous)
+        setCycleDate(viewState.focusId,target);viewState.cursor=target;render()
+      },'pg-pager')
+      prev.setAttribute('aria-label','Ciclo anterior')
+      const cycleDate=element('strong','pg-cycle-date',dateLabel(current))
+      const next=control('›',()=>{
+        const target=nextCycleDate(planCycleConfigOf(viewState.focusId),current)
+        setCycleDate(viewState.focusId,target);viewState.cursor=target;render()
+      },'pg-pager')
+      next.setAttribute('aria-label','Próximo ciclo')
+      cycleControls.append(prev,cycleDate,next)
+      toolbar.append(cycleControls)
+    }
+  }
   if(viewState.mode==='portfolio'){
     const allCollapsed=chosen.every(plan=>viewState.collapsedPlans.has(plan.id))
     toolbar.append(control(allCollapsed?'Expandir planos':'Recolher planos',()=>{
