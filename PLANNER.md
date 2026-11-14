@@ -124,6 +124,45 @@ A seção **Outras agendas Google (opcional)** mantém o fluxo OAuth anterior,
 usado apenas quando a administração desejar importar outros calendários. Esse
 fluxo continua manual e temporário, sem acesso de escrita ao Google.
 
+## Importar projeto com Excel e IA
+
+Em **Meus planos**, clique em **↓ Base Excel** para baixar a planilha vazia
+e em **↑ Importar Excel** para importar um projeto pronto. A IA que a pessoa
+preferir prepara o Excel em seu próprio computador e não acessa o Firebase.
+
+A aba **Projeto** contém nome obrigatório, descrição, início e conclusão.
+A aba **Demandas** reúne uma tarefa por linha com ID, Título, Descrição,
+Etapa, Equipe, Responsáveis, Início, Prazo, Status, Prioridade, Depende de
+e Checklist. A aba **Instruções** explica os campos e contém exemplos.
+
+Os IDs das demandas são temporários dentro do Excel (T01, T02 etc.).
+Em **Depende de**, liste IDs separados por ponto e vírgula (T01; T03).
+O importador conecta essas referências e impede IDs repetidos, dependências
+inexistentes e ciclos. Responsáveis: Nome; Nome <email@exemplo.com>; outro@email.com.
+Datas: DD/MM/AAAA ou AAAA-MM-DD. Status: Não iniciada, Em andamento,
+Concluída. Prioridade: Baixa, Normal, Alta, Urgente.
+Checklist: itens separados por ponto e vírgula.
+
+Limites: 100 demandas, 30 etapas, 10 responsáveis por demanda,
+20 itens de checklist, 20 dependências por demanda e Excel .xlsx de 5 MB.
+Fórmulas são recusadas nas abas importadas. A importação mostra uma prévia
+e exige confirmação. Sempre cria um NOVO plano: não sobrescreve os atuais.
+
+O Firestore usa as autorizações Google já existentes da Comissão. Como as
+regras exigem que o plano e as etapas existam ao salvar demandas, a gravação
+ocorre em fases. Se a conexão falhar, o novo plano pode ter ficado
+parcialmente criado; a tela informa o ocorrido. Confira ou arquive
+esse plano antes de tentar importar novamente para evitar duplicação.
+
+### Pedido sugerido para a IA
+
+> Preencha a planilha Modelo_Projeto_Planner_IPCVT.xlsx anexada, preservando
+> as abas e os cabeçalhos. Defina o plano, suas datas e todas as demandas.
+> Use IDs únicos T01, T02 etc.; inclua responsáveis, prazos, prioridades,
+> etapas, checklist e dependências pelos IDs. Evite dependências circulares.
+> Siga a aba Instruções e gere o arquivo Excel final apenas com valores,
+> sem fórmulas.
+
 ## Validação
 
 Com Node.js 22 ou superior:
