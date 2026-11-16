@@ -68,7 +68,7 @@ function pmPlanCycleBar(plan){
   const setCycle=next=>{pmPlanCycleSelected.set(plan.id,next);render()}
   const older=button('‹',()=>setCycle(previousPlanCycle(config,cycle)),'pm-cycle-arrow')
   older.setAttribute('aria-label','Ver ciclo anterior')
-  const label=node('strong',{class:'pm-cycle-date',text:windowDates ? formatDate(windowDates.start)+' – '+formatDate(windowDates.due) : formatDate(cycle)})
+  const label=node('strong',{class:'pm-cycle-date',text:config.unit==='week'&&windowDates ? formatDate(windowDates.start)+' – '+formatDate(windowDates.due) : formatDate(cycle)})
   const newer=button('›',()=>setCycle(nextPlanCycle(config,cycle)),'pm-cycle-arrow')
   newer.setAttribute('aria-label','Ver próximo ciclo')
   const latest=button('Ciclo atual',()=>{pmPlanCycleSelected.delete(plan.id);render()},'pm-cycle-today')
@@ -3026,7 +3026,7 @@ $('plan-start').addEventListener('change',()=>{
 $('plan-due').addEventListener('change',pmUpdatePlanRepeatFields)
 $('plan-form').addEventListener('submit', async event => {
   event.preventDefault()
-  const submit = event.submitter
+  const submit = event.submitter || $('plan-form').querySelector('[type=submit]')
   submit.disabled = true
   try {
     const old = byId('plans', value('plan-id'))
