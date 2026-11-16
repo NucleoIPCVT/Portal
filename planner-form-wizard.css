@@ -277,3 +277,70 @@
   .pm-wizard-dialog .pm-wizard-panel { animation:none; }
   .pm-wizard-dialog .pm-wizard-fill { transition:none; }
 }
+
+/* Agrupamento editorial das demandas: sem acordeões redundantes. */
+#task-dialog.pm-wizard-dialog #task-details,
+#task-dialog.pm-wizard-dialog #task-advanced { display:none!important; }
+#task-dialog.pm-wizard-dialog .pm-wizard-panel > .task-editor-section {
+  margin:0;
+  padding:0;
+  border:0;
+  background:transparent;
+}
+#task-dialog.pm-wizard-dialog .pm-wizard-panel > .task-editor-section > h3 {
+  margin:0 0 10px;
+  color:#375943;
+  font-size:12px;
+  font-weight:750;
+  letter-spacing:-.01em;
+}
+#task-dialog.pm-wizard-dialog .pm-wizard-panel > #task-dependencies-title {
+  margin:2px 0 -4px;
+  color:#375943;
+  font-size:12px;
+  font-weight:750;
+  letter-spacing:-.01em;
+}
+#task-dialog.pm-wizard-dialog .pm-wizard-panel > .task-event-section {
+  margin:0;
+  padding:13px 0 0;
+  border:0;
+  border-top:1px solid #dce5d9;
+  background:transparent;
+}
+#task-dialog.pm-wizard-dialog .pm-wizard-panel > .task-people-section {
+  margin:0;
+  padding:0;
+  border:0;
+  background:transparent;
+}
+#task-dialog.pm-wizard-dialog .pm-wizard-panel > .task-repeat-section {
+  margin:1px 0 0;
+  padding:15px 0 0;
+  border:0;
+  border-top:1px solid #dce5d9;
+  background:transparent;
+}
+#task-dialog.pm-wizard-dialog .pm-wizard-panel > label.field {
+  margin:0;
+}
+#task-dialog.pm-wizard-dialog .pm-wizard-panel > #task-rotation-roster,
+#task-dialog.pm-wizard-dialog .pm-wizard-panel > #task-rotation-preview-wrap {
+  margin:0;
+}
+#task-dialog.pm-wizard-dialog .pm-wizard-panel > #task-history {
+  margin:8px 0 0;
+  border:0;
+  border-top:1px solid #dce5d9;
+  border-radius:0;
+  background:transparent;
+}
+:root[data-theme="dark"] #task-dialog.pm-wizard-dialog .pm-wizard-panel > .task-editor-section > h3,
+:root[data-theme="dark"] #task-dialog.pm-wizard-dialog .pm-wizard-panel > #task-dependencies-title {
+  color:#cfe5d2;
+}
+:root[data-theme="dark"] #task-dialog.pm-wizard-dialog .pm-wizard-panel > .task-event-section,
+:root[data-theme="dark"] #task-dialog.pm-wizard-dialog .pm-wizard-panel > .task-repeat-section,
+:root[data-theme="dark"] #task-dialog.pm-wizard-dialog .pm-wizard-panel > #task-history {
+  border-color:#435b48;
+}
