@@ -647,3 +647,63 @@ body.pm-active .pm-kanban-task .pm-kanban-title-line .pm-kanban-title {
     max-width:min(260px,calc(100vw - 95px));
   }
 }
+
+/* Confirmação temporária de edição da demanda. */
+#pm-task-update-toast {
+  position:fixed;
+  right:max(20px,env(safe-area-inset-right));
+  bottom:max(22px,env(safe-area-inset-bottom));
+  z-index:10050;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:max-content;
+  max-width:min(340px,calc(100vw - 32px));
+  min-height:47px;
+  padding:12px 16px;
+  margin:0;
+  background:#edf5ed;
+  color:#31583d;
+  border:1px solid #bad3be;
+  border-radius:7px;
+  box-shadow:0 12px 30px rgba(19,44,28,.17);
+  font:600 12px/1.5 Inter,Arial,sans-serif;
+  animation:pm-task-toast-enter .22s ease-out;
+}
+#pm-task-update-toast[hidden] { display:none!important; }
+#pm-task-update-toast::before {
+  content:"✓";
+  display:grid;
+  place-items:center;
+  flex:0 0 20px;
+  width:20px;
+  height:20px;
+  background:#467b54;
+  color:#fff;
+  border-radius:50%;
+  font:700 12px/1 Inter,Arial,sans-serif;
+}
+:root[data-theme="dark"] #pm-task-update-toast {
+  background:#2e4433;
+  color:#e5f3e6;
+  border-color:#5b8665;
+  box-shadow:0 12px 32px rgba(0,0,0,.32);
+}
+:root[data-theme="dark"] #pm-task-update-toast::before {
+  background:#88b996;
+  color:#203529;
+}
+@keyframes pm-task-toast-enter {
+  from { opacity:0;transform:translateY(9px); }
+  to { opacity:1;transform:translateY(0); }
+}
+@media(max-width:760px) {
+  #pm-task-update-toast {
+    right:16px;
+    bottom:max(16px,env(safe-area-inset-bottom));
+    font-size:11px;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  #pm-task-update-toast { animation:none; }
+}
