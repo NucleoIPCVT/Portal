@@ -9,6 +9,9 @@ const DAY=86400000
 const PREFIX='plan_cycle_v1_'
 const KEY='plan-cycle-v1'
 const INSTANCE='plan-instance-v1'
+const FAMILY_SEED='plan-family-source-v1'
+const STOP_KEY='plan-family-stop-v1'
+const STOP_PREFIX='plan_family_stop_v1_'
 const UNITS=['day','week','month']
 const dateOK=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)
   &&Number.isFinite(Date.parse(value+'T00:00:00Z'))
@@ -91,6 +94,32 @@ export function cycleForPlanTask(config,task){
   if(task.templateKey===INSTANCE&&dateOK(task.cycleKey))return task.cycleKey
   return currentPlanCycle(config,task.dueDate)
 }
+// Uma exclusão isolada da origem mantém o modelo técnico para os próximos ciclos.
+export function keepPlanFamilySource(task) {
+  return {...task, deleted:true, templateKey:FAMILY_SEED}
+}
+// A interrupção é um registro técnico invisível às visões, separado do
+// histórico: assim excluir as próximas não apaga as semanas anteriores.
+export function planFamilyStopId(planId,sourceId) {
+  const key=String(planId||'')+'::'+String(sourceId||'')
+  if(!planId||!sourceId)throw new Error('Família da demanda inválida.')
+  let hash=2166136261
+  for(let i=0;i<key.length;i++)hash=Math.imul(hash^key.charCodeAt(i),16777619)
+  return STOP_PREFIX+(hash>>>0).toString(16).padStart(8,'0')+'_'+encodeURIComponent(String(sourceId)).slice(0,110)
+}
+export function planFamilyStopRecord(task,stopCycle,previous=null) {
+  if(!task?.planId||!task?.id||!dateOK(stopCycle))throw new Error('Período inválido para interromper a recorrência.')
+  const root=taskPlanFamily(task)
+  const cutoff=previous?.templateKey===STOP_KEY && dateOK(previous.cycleKey)&&previous.cycleKey<stopCycle
+    ?previous.cycleKey:stopCycle
+  return {...(previous||{}),id:planFamilyStopId(task.planId,root),
+    planId:task.planId,bucketId:'',title:'Interrupção interna: demanda recorrente',
+    description:'',team:'',assignees:[],startDate:'',dueDate:'',
+    status:'todo',priority:'normal',checklist:[],dependencyIds:[],
+    eventId:'',dateMode:'manual',dueOffsetDays:null,
+    routineId:'',cycleKey:cutoff,sourceTaskId:root,recurrenceId:'',
+    deleted:true,templateKey:STOP_KEY}
+}
 export function taskPlanFamily(task){
   if(!task)return ''
   if(task.sourceTaskId)return task.sourceTaskId
@@ -152,8 +181,10 @@ export function planOccurrenceId(sourceId,cycle){
   return 'plan_occ_'+enc.slice(0,120)+'_'+(hash>>>0).toString(16).padStart(8,'0')+'_'+cycle
 }
 function planFamilies(allTasks,config){
-  const tasks=allTasks.filter(task=>task.planId===config.planId&&!task.deleted
-    &&dateOK(task.dueDate)&&!String(task.id||'').startsWith(PREFIX))
+  const tasks=allTasks.filter(task=>task.planId===config.planId
+    &&(!task.deleted||task.templateKey===FAMILY_SEED)
+    &&dateOK(task.dueDate)&&!String(task.id||'').startsWith(PREFIX)
+    &&!String(task.id||'').startsWith(STOP_PREFIX))
   const families=new Map()
   for(const task of tasks){
     const root=taskPlanFamily(task)
@@ -163,7 +194,7 @@ function planFamilies(allTasks,config){
   }
   const rows=[]
   for(const [root,items] of families){
-    if(allTasks.some(task=>task.id===root&&task.deleted))continue
+    if(allTasks.some(task=>task.id===root&&task.deleted&&task.templateKey!==FAMILY_SEED))continue
     const source=items.find(t=>t.id===root)||
       items.slice().sort((a,b)=>a.dueDate.localeCompare(b.dueDate))[0]
     rows.push({root,source,items})
@@ -189,6 +220,10 @@ export function missingPlanCycleTasks(config,allTasks,buckets,today,count=2){
     }
     for(const group of families){
       if(existingByRoot.has(group.root))continue
+      // A interrupção vale a partir da ocorrência escolhida, sem apagar o passado.
+      const stop=allTasks.find(task=>task.id===planFamilyStopId(config.planId,group.root)
+        &&task.deleted&&task.templateKey===STOP_KEY&&dateOK(task.cycleKey))
+      if(stop&&target>=stop.cycleKey)continue
       // Uma ocorrência excluída é intencional: não recrie o mesmo ciclo.
       if(allTasks.some(task=>task.planId===config.planId&&task.deleted
         &&task.id!==config.id&&taskPlanFamily(task)===group.root
