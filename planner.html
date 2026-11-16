@@ -34,7 +34,7 @@
     <link rel="stylesheet" href="planner-excel-import.css?v=20261114-project-import-v1">
     <link rel="stylesheet" href="planner-reports.css?v=20261116-relatorios-v3">
     <link rel="stylesheet" href="planner-reports-dashboard.css?v=20261116-aging-v1">
-    <script type="module" src="planner.js?v=20261116-calendar-name-v3"></script>
+    <link rel="stylesheet" href="planner-form-wizard.css?v=20261116-v1"><script type="module" src="planner.js?v=20261116-wizard-cycles-v1"></script>
   </head>
   <body data-interface="planner-ipcvt-verde-creme" data-revisao="20261113-teatro-v1">
     <a class="skip-link" href="#main-content">Ir para o conteúdo</a>
@@ -311,10 +311,10 @@
                 <label class="field" for="plan-repeat-interval">Repetir a cada<input id="plan-repeat-interval" type="number" min="1" max="999" step="1" value="1"></label>
                 <label class="field" for="plan-repeat-unit">Unidade<select id="plan-repeat-unit"><option value="day">Dia(s)</option><option value="week" selected>Semana(s)</option><option value="month">Mês(es)</option></select></label>
               </div>
-              <label class="field" for="plan-repeat-anchor">Data de referência do ciclo<input id="plan-repeat-anchor" type="date"><small>Para a rotina dominical, escolha a data de um domingo. As demandas mantêm o dia da semana do seu prazo original.</small></label>
+              <label class="field" for="plan-repeat-anchor">Referência do ciclo<input id="plan-repeat-anchor" type="date"><small>Para repetições mensais ou diárias, escolha a data que serve de referência.</small></label>
               <small class="pm-repeat-migration">Ao converter um plano existente, as demandas já registradas permanecem no histórico. As próximas execuções serão controladas pelo plano, sem repetir cada demanda duas vezes.</small>
             </section>
-            <div class="field-grid" id="plan-date-fields"><label class="field" for="plan-start">Início<input id="plan-start" type="date"></label><label class="field" for="plan-due">Prazo do projeto<input id="plan-due" type="date"></label></div>
+            <div class="field-grid" id="plan-date-fields"><label class="field" for="plan-start"><span id="plan-start-caption">Início</span><input id="plan-start" type="date"></label><label class="field" for="plan-due"><span id="plan-due-caption">Prazo do projeto</span><input id="plan-due" type="date"></label></div><p id="plan-cycle-preview" class="pm-cycle-preview" aria-live="polite" hidden></p>
             <label class="field" for="plan-buckets">Colunas do quadro<textarea id="plan-buckets" rows="4" required aria-describedby="buckets-help" placeholder="A fazer&#10;Em andamento&#10;Concluído"></textarea><small id="buckets-help">Já preenchemos A fazer, Em andamento e Concluído. Altere somente se precisar de outras etapas.</small></label>
           </details>
           <p id="plan-feedback" class="feedback" role="status" aria-live="polite"></p>
