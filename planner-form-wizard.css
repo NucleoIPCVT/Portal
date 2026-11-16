@@ -344,3 +344,240 @@
 :root[data-theme="dark"] #task-dialog.pm-wizard-dialog .pm-wizard-panel > #task-history {
   border-color:#435b48;
 }
+
+/* Listas em linha no estilo Keep: tipografia discreta, sem cartões por item. */
+#task-dialog.pm-wizard-dialog #task-assignees-editor .task-editor-list,
+#task-dialog.pm-wizard-dialog #task-checklist-editor .task-editor-list {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:1px;
+  padding:0;
+  margin:0 0 8px;
+}
+#task-dialog.pm-wizard-dialog .keep-person-row,
+#task-dialog.pm-wizard-dialog .keep-checklist-row {
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-width:0;
+  min-height:42px;
+  padding:4px 3px;
+  margin:0;
+  border:0;
+  border-bottom:1px solid rgba(113,145,118,.18);
+  border-radius:0;
+  background:transparent;
+}
+#task-dialog.pm-wizard-dialog .keep-person-row.is-drag-target,
+#task-dialog.pm-wizard-dialog .keep-checklist-row.is-drag-target {
+  background:rgba(94,150,103,.11);
+  box-shadow:inset 0 2px 0 #5d9566;
+}
+#task-dialog.pm-wizard-dialog .keep-person-row.is-dragging,
+#task-dialog.pm-wizard-dialog .keep-checklist-row.is-dragging { opacity:.55; }
+#task-dialog.pm-wizard-dialog .keep-list-grip {
+  flex:0 0 14px;
+  text-align:center;
+  font-size:17px;
+  font-weight:600;
+  line-height:1;
+  letter-spacing:-4px;
+  color:#9baa9b;
+  cursor:grab;
+  user-select:none;
+  touch-action:none;
+}
+#task-dialog.pm-wizard-dialog .keep-list-grip:active { cursor:grabbing; }
+#task-dialog.pm-wizard-dialog .keep-person-row .assignee-chip-avatar {
+  flex:0 0 26px;
+  width:26px;
+  height:26px;
+  font-size:9px;
+}
+#task-dialog.pm-wizard-dialog .keep-person-text,
+#task-dialog.pm-wizard-dialog .keep-checklist-row .checklist-row-text {
+  flex:1 1 0;
+  width:0;
+  min-width:0;
+  min-height:33px;
+  height:auto;
+  padding:6px 4px;
+  border:1px solid transparent;
+  border-radius:3px;
+  background:transparent;
+  color:#293e2e;
+  text-decoration:none;
+  box-shadow:none;
+  font:500 12px/1.45 Inter,Arial,sans-serif;
+}
+#task-dialog.pm-wizard-dialog .keep-person-text:hover,
+#task-dialog.pm-wizard-dialog .keep-checklist-row .checklist-row-text:hover {
+  border-color:#c7d7c8;
+}
+#task-dialog.pm-wizard-dialog .keep-person-text:focus,
+#task-dialog.pm-wizard-dialog .keep-checklist-row .checklist-row-text:focus {
+  outline:1px solid #759983;
+  outline-offset:0;
+  background:rgba(255,255,255,.55);
+}
+#task-dialog.pm-wizard-dialog .keep-checklist-row.is-done .checklist-row-text {
+  color:#86958b;
+  text-decoration:line-through;
+}
+#task-dialog.pm-wizard-dialog .keep-checklist-row input[type="checkbox"] {
+  flex:0 0 17px;
+  width:17px!important;
+  height:17px;
+  min-height:17px!important;
+  accent-color:#4c7957;
+  cursor:pointer;
+}
+#task-dialog.pm-wizard-dialog .keep-order-actions {
+  display:flex;
+  flex:0 0 auto;
+  align-items:center;
+  gap:0;
+}
+#task-dialog.pm-wizard-dialog .keep-order-arrow {
+  display:grid;
+  place-items:center;
+  width:23px;
+  height:27px;
+  min-width:23px;
+  min-height:27px;
+  padding:0;
+  border:0;
+  border-radius:3px;
+  background:transparent;
+  color:#789080;
+  font:600 14px/1 Inter,Arial,sans-serif;
+  cursor:pointer;
+}
+#task-dialog.pm-wizard-dialog .keep-order-arrow:hover:not(:disabled),
+#task-dialog.pm-wizard-dialog .task-editor-remove:hover,
+#task-dialog.pm-wizard-dialog .assignee-chip-remove:hover { background:#e1ebe0; color:#2e6240; }
+#task-dialog.pm-wizard-dialog .keep-order-arrow:disabled { opacity:.22;cursor:default; }
+#task-dialog.pm-wizard-dialog .keep-person-row .assignee-chip-remove,
+#task-dialog.pm-wizard-dialog .keep-checklist-row .task-editor-remove {
+  flex:0 0 24px;
+  width:24px;
+  min-width:24px;
+  height:28px;
+  min-height:28px;
+  border-radius:3px;
+  color:#86988b;
+  font-size:17px;
+}
+#task-dialog.pm-wizard-dialog #task-assignees-editor .task-editor-add,
+#task-dialog.pm-wizard-dialog #task-checklist-editor .task-editor-add {
+  gap:8px;
+  align-items:center;
+  padding:2px 0;
+}
+#task-dialog.pm-wizard-dialog #task-assignees-editor .task-editor-add::before,
+#task-dialog.pm-wizard-dialog #task-checklist-editor .task-editor-add::before {
+  content:"+";
+  flex:0 0 18px;
+  text-align:center;
+  font-size:19px;
+  line-height:1;
+  color:#64926d;
+}
+#task-dialog.pm-wizard-dialog #task-assignees-editor .task-editor-add .task-editor-input,
+#task-dialog.pm-wizard-dialog #task-checklist-editor .task-editor-add .task-editor-input {
+  border:0;
+  border-bottom:1px solid #cedccf;
+  border-radius:0;
+  min-height:38px;
+  background:transparent;
+  box-shadow:none;
+}
+#task-dialog.pm-wizard-dialog #task-assignees-editor .task-editor-add .task-editor-input:focus,
+#task-dialog.pm-wizard-dialog #task-checklist-editor .task-editor-add .task-editor-input:focus {
+  outline:0;
+  border-bottom:2px solid #5c8c67;
+}
+#task-dialog.pm-wizard-dialog #task-assignees-editor .task-editor-add .button,
+#task-dialog.pm-wizard-dialog #task-checklist-editor .task-editor-add .button {
+  min-height:32px;
+  height:32px;
+  padding:5px 10px;
+  border-radius:4px;
+  font-size:10px;
+}
+#task-dialog.pm-wizard-dialog .task-editor-empty { margin:6px 0 10px;font-size:11px; }
+body.pm-active .pm-kanban-task .pm-kanban-title-line {
+  display:flex;
+  align-items:flex-start;
+  gap:9px;
+  min-height:27px;
+}
+body.pm-active .pm-kanban-task .pm-kanban-complete-toggle {
+  appearance:none;
+  flex:0 0 18px;
+  width:18px;
+  height:18px;
+  min-width:18px;
+  min-height:18px;
+  margin:1px 0 0;
+  padding:0;
+  border:1.4px solid #90a79a;
+  border-radius:4px;
+  background:#fff;
+  cursor:pointer;
+  position:relative;
+}
+body.pm-active .pm-kanban-task .pm-kanban-complete-toggle:hover {
+  border-color:#4e8761;
+  box-shadow:0 0 0 3px rgba(88,142,102,.12);
+}
+body.pm-active .pm-kanban-task .pm-kanban-complete-toggle:checked {
+  border-color:#4b855e;
+  background:#4b855e;
+}
+body.pm-active .pm-kanban-task .pm-kanban-complete-toggle:checked::after {
+  content:"✓";
+  position:absolute;
+  inset:0;
+  color:#fff;
+  text-align:center;
+  font:800 13px/16px Inter,Arial,sans-serif;
+}
+body.pm-active .pm-kanban-task .pm-kanban-complete-toggle:focus-visible {
+  outline:2px solid #4b855e;
+  outline-offset:2px;
+}
+body.pm-active .pm-kanban-task .pm-kanban-complete-toggle:disabled { cursor:wait;opacity:.65; }
+body.pm-active .pm-kanban-task .pm-kanban-title-line .pm-kanban-title {
+  flex:1;
+  min-width:0;
+  white-space:normal;
+  text-align:left;
+}
+:root[data-theme=dark] #task-dialog.pm-wizard-dialog .keep-person-text,
+:root[data-theme=dark] #task-dialog.pm-wizard-dialog .keep-checklist-row .checklist-row-text { color:#e0ece0; }
+:root[data-theme=dark] #task-dialog.pm-wizard-dialog .keep-checklist-row.is-done .checklist-row-text { color:#90a996; }
+:root[data-theme=dark] #task-dialog.pm-wizard-dialog .keep-person-row,
+:root[data-theme=dark] #task-dialog.pm-wizard-dialog .keep-checklist-row { border-bottom-color:#455b48; }
+:root[data-theme=dark] #task-dialog.pm-wizard-dialog .keep-list-grip,
+:root[data-theme=dark] #task-dialog.pm-wizard-dialog .keep-order-arrow { color:#a6b9a9; }
+:root[data-theme=dark] #task-dialog.pm-wizard-dialog .keep-person-text:focus,
+:root[data-theme=dark] #task-dialog.pm-wizard-dialog .keep-checklist-row .checklist-row-text:focus {
+  background:#304335;
+  border-color:#779984;
+}
+:root[data-theme=dark] #task-dialog.pm-wizard-dialog .task-editor-add .task-editor-input {
+  color:#e0ece0;
+  border-bottom-color:#576b5b;
+}
+:root[data-theme=dark] body.pm-active .pm-kanban-task .pm-kanban-complete-toggle { background:#26352b;border-color:#a9bfac; }
+:root[data-theme=dark] body.pm-active .pm-kanban-task .pm-kanban-complete-toggle:checked { background:#83b395;border-color:#83b395; }
+:root[data-theme=dark] body.pm-active .pm-kanban-task .pm-kanban-complete-toggle:checked::after { color:#142d1b; }
+@media(max-width:760px) {
+  #task-dialog.pm-wizard-dialog .keep-person-row,
+  #task-dialog.pm-wizard-dialog .keep-checklist-row {gap:4px;padding:5px 0;}
+  #task-dialog.pm-wizard-dialog .keep-order-arrow {width:25px;min-width:25px;height:30px;}
+  #task-dialog.pm-wizard-dialog .keep-list-grip {flex-basis:12px;}
+  #task-dialog.pm-wizard-dialog .keep-person-row .assignee-chip-avatar {width:23px;flex-basis:23px;height:23px;}
+  #task-dialog.pm-wizard-dialog .keep-order-actions {gap:1px;}
+}
