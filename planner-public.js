@@ -3,7 +3,7 @@ import { googleCalendarPublicApiKey } from './google-calendar-public-config.js?v
 // Fonte pública da igreja, sem OAuth dos integrantes do Planner.
 export const publicCalendar = Object.freeze({
   id: 'ipbcentralvilar.calendario@gmail.com',
-  name: 'Agenda IPCVT',
+  name: 'IPCVT Calendário',
   sourceUrl: 'https://calendar.google.com/calendar/ical/ipbcentralvilar.calendario%40gmail.com/public/basic.ics',
   snapshotUrl: 'https://raw.githubusercontent.com/NucleoIPCVT/Portal/main/agenda-ipcvt.json'
 })
@@ -61,7 +61,7 @@ async function stableEventId(calendarId, sourceEventId) {
   return [...new Uint8Array(hash)].map(value => value.toString(16).padStart(2, '0')).join('')
 }
 
-async function normalizeGoogleEvent(event, calendarId) {
+async function normalizeGoogleEvent(event, calendarId, calendarName) {
   const start = event.start?.dateTime || event.start?.date
   const end = event.end?.dateTime || event.end?.date || start
   if (typeof start !== 'string' || typeof end !== 'string' || !event.iCalUID) return null
@@ -85,7 +85,7 @@ async function normalizeGoogleEvent(event, calendarId) {
   const id = await stableEventId(calendarId, sourceEventId)
   return {
     id, source: 'google', sourceCalendarId: calendarId, sourceEventId,
-    sourceKey: `public-ical:${calendarId}:${sourceEventId}`, calendarName: publicCalendar.name,
+    sourceKey: `public-ical:${calendarId}:${sourceEventId}`, calendarName,
     status: 'confirmed', title: event.summary || 'Evento sem título',
     description: event.description || '', location: event.location || '', htmlLink: event.htmlLink || '',
     sourceUpdatedAt: event.updated || '', recurringEventId: event.recurringEventId || '',
@@ -95,7 +95,21 @@ async function normalizeGoogleEvent(event, calendarId) {
   }
 }
 
+async function readGoogleCalendarName(calendarId, fetchImpl, apiKey) {
+  try {
+    const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}?key=${encodeURIComponent(apiKey)}`
+    const response = await fetchImpl(url, { cache: 'no-store', signal: AbortSignal.timeout(12000) })
+    if (!response.ok) return publicCalendar.name
+    const data = await response.json()
+    return typeof data.summary === 'string' && data.summary.trim()
+      ? data.summary.trim().slice(0, 160) : publicCalendar.name
+  } catch {
+    return publicCalendar.name
+  }
+}
+
 async function readGoogleCalendar({ calendarId, fetchImpl, now, apiKey }) {
+  const calendarName = await readGoogleCalendarName(calendarId, fetchImpl, apiKey)
   const currentYear = new Date(now).getUTCFullYear()
   const endpoint = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`
   const entries = []
@@ -117,10 +131,10 @@ async function readGoogleCalendar({ calendarId, fetchImpl, now, apiKey }) {
     entries.push(...result.items.filter(entry => entry.status !== 'cancelled'))
     pageToken = result.nextPageToken || ''
     if (!pageToken) {
-      const normalized = await Promise.all(entries.map(entry => normalizeGoogleEvent(entry, calendarId)))
+      const normalized = await Promise.all(entries.map(entry => normalizeGoogleEvent(entry, calendarId, calendarName)))
       const events = [...new Map(normalized.filter(Boolean).map(event => [event.id, event])).values()]
         .sort((a, b) => a.startDate.localeCompare(b.startDate) || a.id.localeCompare(b.id))
-      return { calendarId, calendarName: publicCalendar.name, generatedAt: new Date().toISOString(),
+      return { calendarId, calendarName, generatedAt: new Date().toISOString(),
         sourceKind: 'google-api', events }
     }
   }
