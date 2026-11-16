@@ -2,9 +2,9 @@ import { googleCalendarPublicApiKey } from './google-calendar-public-config.js?v
 
 // Fonte pública da igreja, sem OAuth dos integrantes do Planner.
 export const publicCalendar = Object.freeze({
-  id: '0d88300041a5eeef838f5f57c87594ebbd4e2ae41b4f5745335825299acdc5de@group.calendar.google.com',
+  id: 'ipbcentralvilar.calendario@gmail.com',
   name: 'Agenda IPCVT',
-  sourceUrl: 'https://calendar.google.com/calendar/u/1?cid=MGQ4ODMwMDA0MWE1ZWVlZjgzOGY1ZjU3Yzg3NTk0ZWJiZDRlMmFlNDFiNGY1NzQ1MzM1ODI1Mjk5YWNkYzVkZUBncm91cC5jYWxlbmRhci5nb29nbGUuY29t',
+  sourceUrl: 'https://calendar.google.com/calendar/ical/ipbcentralvilar.calendario%40gmail.com/public/basic.ics',
   snapshotUrl: 'https://raw.githubusercontent.com/NucleoIPCVT/Portal/main/agenda-ipcvt.json'
 })
 
