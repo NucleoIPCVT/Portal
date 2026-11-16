@@ -163,6 +163,33 @@ service cloud.firestore {
       allow delete: if plnrMember() && kind in ['buckets', 'tasks', 'events', 'routines']
         && (kind != 'events' || resource.data.source != 'google' || plnrAdmin());
     }
+    // Histórico do Planner: novos eventos são imutáveis e atribuídos à conta Google.
+    // Integrar este bloco às regras de produção antes de publicar o histórico.
+    function plnrActivity(d) {
+      return d.keys().hasOnly([
+          'entityType', 'entityId', 'title', 'action', 'actor', 'actorUid',
+          'planId', 'team', 'dueDate', 'changes', 'timestamp'
+        ])
+        && d.keys().hasAll([
+          'entityType', 'entityId', 'title', 'action', 'actor', 'actorUid',
+          'planId', 'team', 'dueDate', 'changes', 'timestamp'
+        ])
+        && d.entityType in ['plans', 'buckets', 'tasks', 'events', 'routines']
+        && plnrId(d.entityId)
+        && plnrText(d.title, 160)
+        && d.action in ['created', 'updated', 'completed', 'reopened', 'deleted', 'archived']
+        && d.actor == plnrEmail() && d.actorUid == request.auth.uid
+        && plnrText(d.planId, 200) && plnrText(d.team, 120)
+        && plnrDate(d.dueDate)
+        && d.changes is list && d.changes.size() <= 25
+        && d.timestamp is timestamp && d.timestamp == request.time;
+    }
+    match /comissao_planner/main/activity/{id} {
+      allow read: if plnrMember();
+      allow create: if plnrMember() && plnrId(id) && plnrActivity(request.resource.data);
+      allow update, delete: if false;
+    }
+
     // Somente o endereço público da agenda é legível sem autenticação.
     // Este caminho já está excluído da regra abrangente.
     match /comissao_planner/main/config/calendar {
