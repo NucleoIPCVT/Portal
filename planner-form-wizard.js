@@ -63,7 +63,20 @@ export function setupPlannerWizards() {
     const stepHint = el('p', 'pm-wizard-current-hint');
     stepCopy.append(stepTitle, stepHint);
     const stepCounter = el('span', 'pm-wizard-counter');
-    status.append(stepCopy, stepCounter);
+    const jumpField = el('label', 'pm-wizard-jump');
+    jumpField.append(el('span', 'pm-wizard-jump-label', 'Ir para'));
+    const jumpSelect = el('select', 'pm-wizard-jump-select');
+    jumpSelect.setAttribute('aria-label', 'Ir diretamente para uma seção da demanda');
+    stages.forEach((step, index) => {
+      const choice = el('option', '', step.title);
+      choice.value = String(index);
+      jumpSelect.append(choice);
+    });
+    jumpField.append(jumpSelect);
+    jumpField.hidden = true;
+    const position = el('div', 'pm-wizard-position');
+    position.append(stepCounter, jumpField);
+    status.append(stepCopy, position);
     const progress = el('div', 'pm-wizard-progress');
     progress.setAttribute('aria-label', 'Progresso do preenchimento');
     const fill = el('div', 'pm-wizard-fill');
@@ -73,6 +86,8 @@ export function setupPlannerWizards() {
     progress.append(fill);
     const panels = el('div', 'pm-wizard-panels');
     let current = 0;
+    let editing = false;
+    jumpSelect.addEventListener('change', () => show(Number(jumpSelect.value)));
 
     // Guardar todas as referências antes de mover o DOM evita perder campos
     // que originalmente estavam dentro de <details> ou de outras seções.
@@ -119,7 +134,9 @@ export function setupPlannerWizards() {
     next.type = 'button';
     previous.addEventListener('click', () => show(Math.max(0, current - 1)));
     next.addEventListener('click', () => {
-      if (validateRange(current, current + 1)) show(Math.min(stages.length - 1, current + 1));
+      if (editing || validateRange(current, current + 1)) {
+        show(Math.min(stages.length - 1, current + 1));
+      }
     });
     saveButton.classList.add('pm-wizard-submit');
     saveButton.textContent = name === 'task' ? 'Salvar demanda' : 'Salvar plano';
@@ -211,9 +228,15 @@ export function setupPlannerWizards() {
       stepTitle.textContent = stages[index].title;
       stepHint.textContent = stages[index].hint;
       stepCounter.textContent = 'Etapa ' + (index + 1) + ' de ' + stages.length;
+      jumpSelect.value = String(index);
+      jumpField.hidden = !editing;
+      stepCounter.hidden = editing;
       previous.hidden = index === 0;
       next.hidden = index === stages.length - 1;
-      saveButton.hidden = index !== stages.length - 1;
+      saveButton.hidden = !editing && index !== stages.length - 1;
+      saveButton.textContent = editing
+        ? 'Salvar alterações' : (name === 'task' ? 'Salvar demanda' : 'Salvar plano');
+      next.textContent = editing ? 'Próxima seção' : 'Continuar';
       fill.style.width = ((index + 1) / stages.length * 100) + '%';
       progress.setAttribute('aria-valuenow', String(index + 1));
       if (index === stages.length - 1) renderReview();
@@ -222,7 +245,7 @@ export function setupPlannerWizards() {
       }
     }
     form.addEventListener('submit', event => {
-      if (current < stages.length - 1) {
+      if (!editing && current < stages.length - 1) {
         event.preventDefault();
         event.stopImmediatePropagation();
         if (validateRange(0, current + 1)) show(current + 1);
@@ -234,7 +257,12 @@ export function setupPlannerWizards() {
     dialog.dataset.wizardReady = 'true';
     show(0);
     return {
-      reset() { show(0); message.textContent = ''; },
+      reset({ editing: isEditing = false } = {}) {
+        editing = name === 'task' && Boolean(isEditing);
+        dialog.classList.toggle('pm-wizard-edit-mode', editing);
+        show(0);
+        message.textContent = '';
+      },
       last() { show(stages.length - 1); }
     };
   }
