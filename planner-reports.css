@@ -6,6 +6,7 @@ body.pm-active #planner-app .pm-commission-back {
   background:#ecf4ec;color:#355d44;text-decoration:none;font-size:11px;font-weight:750;
 }
 body.pm-active #planner-app .pm-commission-back:hover {background:#dcebdd;}
+body.pm-active #planner-app .pm-commission-back-short {display:none;}
 body.pm-active #planner-app .pm-commission-back:focus-visible {outline:2px solid #4d916a;outline-offset:2px;}
 .pm-report-shell{display:grid;gap:18px;color:#334c3e}
 .pm-report-heading{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px}
@@ -79,4 +80,11 @@ button.pm-report-stat:hover{border-color:#83af90;background:#f6fbf5}
 :root[data-theme=dark] .pm-report-row strong{color:#b8d4bc}
 @media(max-width:1250px){.pm-report-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:760px){.pm-report-panels{grid-template-columns:1fr}.pm-report-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.pm-report-heading{align-items:flex-start}.pm-report-filters select{max-width:145px}}
-@media(max-width:510px){body.pm-active #planner-app .pm-commission-back{padding:7px 8px;font-size:10px}.pm-report-stats{gap:8px}.pm-report-card{padding:13px}.pm-report-heading h2{font-size:22px}}
+@media(max-width:760px){body.pm-active #planner-app .pm-commission-back-full{display:none}body.pm-active #planner-app .pm-commission-back-short{display:inline}}
+@media(max-width:540px){
+  body.pm-active #planner-app .pm-topbar{height:auto!important;min-height:68px;flex-wrap:wrap;padding:7px 10px;row-gap:5px}
+  body.pm-active #planner-app .pm-toolbar{order:3;flex:1 0 100%;width:100%;margin-left:0;gap:5px;justify-content:flex-end;padding-bottom:4px}
+  body.pm-active #planner-app .pm-toolbar .pm-global-search{flex:1 1 70px;min-width:70px;max-width:none;width:auto}
+  body.pm-active #planner-app .pm-commission-back{padding:7px 8px;font-size:10px}
+}
+@media(max-width:510px){.pm-report-stats{gap:8px}.pm-report-card{padding:13px}.pm-report-heading h2{font-size:22px}}
