@@ -15,8 +15,8 @@ export function setupPlannerWizards() {
         selectors: ['.task-primary-title', '.task-primary-grid', '#task-advanced label[for="task-start"]', '#task-advanced label[for="task-bucket"]']
       },
       {
-        title: 'Execução',
-        hint: 'Orientações, checklist, evento e dependências',
+        title: 'Detalhamento',
+        hint: 'Descrição, checklist, evento e dependências',
         selectors: ['#task-details .task-editor-section', '.task-event-section', '#legacy-relative-dates', '#task-dependencies-title', '#task-dependencies-editor']
       },
       {
@@ -24,7 +24,7 @@ export function setupPlannerWizards() {
         hint: 'Responsáveis, repetição e rodízios',
         selectors: ['#task-advanced label[for="task-team"]', '.task-people-section', '.task-repeat-section', '#task-rotation-roster', '#task-rotation-preview-wrap']
       },
-      { title: 'Revisão', hint: 'Confira antes de salvar', selectors: ['#task-history'] }
+      { title: 'Revisão', hint: 'Confira antes de salvar', selectors: [] }
     ]
   };
   const controllers = {};
@@ -92,6 +92,10 @@ export function setupPlannerWizards() {
         panel.append(el('h3', 'pm-wizard-review-title', 'Pronto para salvar?'));
         panel.append(el('p', 'pm-wizard-review-hint', 'Confira os principais dados. Você pode voltar a qualquer etapa para editar.'));
         panel.append(el('dl', 'pm-wizard-review'));
+        if (name === 'task') {
+          const history = body.querySelector('#task-history');
+          if (history) panel.append(history);
+        }
       }
       panels.append(panel);
       return panel;
@@ -106,7 +110,7 @@ export function setupPlannerWizards() {
         if (leftover) leftover.hidden = true;
       }
       const instructions = document.getElementById('task-details-title');
-      if (instructions) instructions.textContent = 'Descrição';
+      if (instructions) instructions.textContent = 'Orientações e checklist';
     }
 
     const previous = el('button', 'button button-quiet pm-wizard-back', 'Voltar');
@@ -141,9 +145,12 @@ export function setupPlannerWizards() {
       return [
         ['Demanda', get('task-title').value || 'Sem título'],
         ['Plano', caption(get('task-plan'))],
+        ['Início', labelDate(get('task-start').value)],
         ['Entrega', labelDate(get('task-due').value)],
         ['Situação', caption(get('task-status'))],
+        ['Coluna', caption(get('task-bucket')) || 'Sem coluna'],
         ['Prioridade', caption(get('task-priority'))],
+        ['Equipe', get('task-team').value || 'Não definida'],
         ['Repetição', get('task-repeat-mode').closest('.field').hidden ? 'Controlada pelo plano' : caption(get('task-repeat-mode'))],
         ['Evento-alvo', caption(get('task-event')) || 'Sem evento-alvo']
       ];
