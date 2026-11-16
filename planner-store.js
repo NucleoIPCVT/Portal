@@ -185,7 +185,7 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
       if(data.tasks.some(task=>task.routineId===template.routineId&&
         !!template.routineId&&!task.deleted&&
         (task.dueDate===date||task.cycleKey===weekStart)))continue
-      await runTransaction(db,async tx=>{
+      const generated=await runTransaction(db,async tx=>{
         const currentSetting=await tx.get(setting)
         const currentOriginal=await tx.get(original)
         const exists=await tx.get(target)
@@ -200,7 +200,9 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
         tx.set(target,{...payloadFor('tasks',latest),version:1,
           createdAt:serverTimestamp(),createdBy:actor.email,
           updatedAt:serverTimestamp(),updatedBy:actor.email})
+        return latest
       })
+      if(generated)await auditChange('tasks',occurrence.id,null,generated,requireSession(),false,'automatic')
     }
   }
   async function refreshScheduledSeries(){
@@ -230,7 +232,7 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
       const targets=missingPlanCycleTasks(config,data.tasks,data.buckets,localDay(),2)
       for(const draft of targets){
         if(session.status!=='authorized')return
-        await runTransaction(db,async tx=>{
+        const generated=await runTransaction(db,async tx=>{
           const configDoc=await tx.get(itemRef('tasks',config.id))
           const planDoc=await tx.get(itemRef('plans',config.planId))
           const target=itemRef('tasks',draft.id)
@@ -241,7 +243,9 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
           tx.set(target,{...payloadFor('tasks',draft),version:1,
             createdAt:serverTimestamp(),createdBy:actor.email,
             updatedAt:serverTimestamp(),updatedBy:actor.email})
+          return draft
         })
+        if(generated)await auditChange('tasks',draft.id,null,generated,requireSession(),false,'automatic')
       }
     }
   }
@@ -299,7 +303,7 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
   const activityFields=(before,after,kind)=>FIELDS[kind].filter(key=>
     JSON.stringify(before?.[key]??null)!==JSON.stringify(after?.[key]??null)
   ).map(field=>({field,before:summaryValue(before?.[field]),after:summaryValue(after?.[field])})).slice(0,25)
-  async function auditChange(kind,id,before,after,actor,removed=false){
+  async function auditChange(kind,id,before,after,actor,removed=false,origin='manual'){
     // Templates internos são configurações de recorrência, não atividades humanas.
     if(kind==='tasks'&&(id.startsWith('rotation_v1_')||id.startsWith('plan_cycle_v1_')))return
     const changes=removed?[]:activityFields(before,after,kind)
@@ -312,7 +316,7 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
       await setDoc(doc(collection(db,'comissao_planner','main','activity')),{
         entityType:kind,entityId:id,
         title:String(after?.title||after?.name||before?.title||before?.name||id).slice(0,160),
-        action,actor:actor.email,actorUid:actor.user.uid,
+        action,origin,actor:actor.email,actorUid:actor.user.uid,
         planId:after?.planId||before?.planId|| (kind==='plans'?id:''),
         team:after?.team||before?.team||'',
         dueDate:after?.dueDate||before?.dueDate||'',
@@ -522,9 +526,11 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
               updatedAt: serverTimestamp(), updatedBy: actor.email
             })
           }
-          return { value:{ ...fields, id: item.id, version }, before:previous.exists()?previous.data():null }
+          return { value:{ ...fields, id: item.id, version }, before:previous.exists()?previous.data():null,
+            nextCreated:Boolean(continues&&!nextSnapshot.exists()) }
         })
         await auditChange(kind,item.id,saved.before,fields,actor)
+        if(saved.nextCreated&&nextTask)await auditChange('tasks',nextTask.id,null,nextTask,actor,false,'automatic')
         return saved.value
       } catch (cause) { throw readableError(cause) }
     },
