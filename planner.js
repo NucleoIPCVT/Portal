@@ -1938,14 +1938,23 @@ function pmKanbanView(content,tasks) {
       const card=pmGroup('article','pm-kanban-task')
       card.draggable=boardGrouping!=='dueDate';card.setAttribute('data-task-id',task.id)
       card.addEventListener('dragstart',e=>{draggedTask=task.id;draggedTaskGroup=group.id;e.dataTransfer?.setData('text/plain',task.id)})
-      if(task.status==='done'){
-        card.append(pmGroup('div','pm-kanban-done-line',[
-          pmText('span','pm-done-symbol','✓'),
-          pmButton(task.title,()=>openTask(task),'pm-kanban-title')
-        ]))
-      } else {
-        card.append(pmButton(task.title,()=>openTask(task),'pm-kanban-title'))
-      }
+      const doneToggle=node('input',{
+        type:'checkbox',
+        class:'pm-kanban-complete-toggle',
+        checked:task.status==='done',
+        'aria-label':(task.status==='done'?'Reabrir demanda: ':'Concluir demanda: ')+task.title,
+        title:task.status==='done'?'Reabrir demanda':'Concluir demanda',
+        onChange:async event=>{
+          const control=event.currentTarget
+          control.disabled=true
+          try{await pmComplete(task,control.checked)}
+          catch{control.checked=task.status==='done'}
+          finally{control.disabled=false}
+        }
+      })
+      card.append(pmGroup('div','pm-kanban-title-line',[
+        doneToggle,pmButton(task.title,()=>openTask(task),'pm-kanban-title')
+      ]))
       if(taskRecurrence(task))card.append(pmText('small','task-repeat-badge','↻ '+recurrenceLabel(task)))
       card.append(pmText('small','pm-kanban-plan',planName(task.planId)))
       const assigned=(task.assignees||[]).map(person=>person.name||person.email).filter(Boolean)
