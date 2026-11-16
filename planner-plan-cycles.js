@@ -100,6 +100,21 @@ export function taskPlanFamily(task){
   }
   return task.id||''
 }
+// O registro do plano guarda as datas do primeiro ciclo como modelo.
+// O identificador 'anchor' representa o fim do intervalo técnico, mantendo
+// a associação histórica das demandas já cadastradas.
+export function planCycleWindow(config,plan,cycle){
+  if(!config||!dateOK(cycle))return null
+  const step=config.interval*(config.unit==='week'?7:1)
+  if(config.unit!=='week'&&config.unit!=='day'){
+    return {start:cycle,due:cycle}
+  }
+  const startBase=dateOK(plan?.startDate)?plan.startDate:shift(config.anchor,-(step-1))
+  const dueBase=dateOK(plan?.dueDate)?plan.dueDate:config.anchor
+  const offset=distance(config.anchor,cycle)
+  return {start:shift(startBase,offset),due:shift(dueBase,offset)}
+}
+
 export function planCycleLabel(config,date){
   const value=currentPlanCycle(config,date)
   return value?new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'}).format(d(value)):''
