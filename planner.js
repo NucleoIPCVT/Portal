@@ -1,5 +1,6 @@
 import { createPlannerStore } from './planner-store.js?v=20261116-audit-v2'
-import { renderPlannerReports, renderTaskActivity } from './planner-reports.js?v=20261116-relatorios-v3'
+import { renderTaskActivity } from './planner-reports.js?v=20261116-relatorios-v3'
+import { renderPlannerDashboard } from './planner-reports-dashboard.js?v=20261116-aging-v2'
 import { downloadProjectTemplate, readProjectFile, existingProjectByName } from './planner-excel-import.js?v=20261114-project-import-v2'
 import { hasPanelEntry, clearPanelEntry } from './comissao-entrada.js?v=20261114-v1'
 
@@ -2398,7 +2399,7 @@ function pmTodayView(content) {
   content.append(pmGroup('div','pm-today-layout',[work,agenda]))
 }
 function pmRenderMain(content,tasks){
-  if(currentView==='reports')return renderPlannerReports({
+  if(currentView==='reports')return renderPlannerDashboard({
     content,tasks:liveTasks(),plans:activePlans(),buckets:state.buckets,
     activities:activity,activityState,activityError,today:todayISO(),
     openTask,rerender:render
