@@ -33,7 +33,7 @@
     <link rel="stylesheet" href="planner-topbar-icons.css?v=20261113-theme-header-v2">
     <link rel="stylesheet" href="planner-excel-import.css?v=20261114-project-import-v1">
     <link rel="stylesheet" href="planner-reports.css?v=20261116-relatorios-v1">
-    <script type="module" src="planner.js?v=20261114-project-import-v2"></script>
+    <script type="module" src="planner.js?v=20261116-relatorios-historico-v1"></script>
   </head>
   <body data-interface="planner-ipcvt-verde-creme" data-revisao="20261113-teatro-v1">
     <a class="skip-link" href="#main-content">Ir para o conteúdo</a>
@@ -286,6 +286,7 @@
               <label class="field" for="task-offset">Dias em relação ao evento<input id="task-offset" type="number" min="-365" max="365" step="1" value="0" aria-describedby="offset-help"><small id="offset-help">Recurso antigo, preservado apenas para tarefas já existentes.</small></label>
             </div>
           </details>
+          <details id="task-history" hidden><summary>Histórico de alterações</summary></details>
           <p id="task-feedback" class="feedback" role="status" aria-live="polite"></p>
         </div>
         <div class="dialog-footer"><button id="delete-task-button" class="button button-danger" type="button" hidden>Excluir demanda</button><span class="footer-spacer"></span><button id="complete-task-button" class="button button-complete" type="button" hidden>Concluir demanda</button><button class="button button-quiet" type="button" data-close-dialog="task-dialog">Cancelar</button><button class="button button-primary" type="submit">Salvar</button></div>
