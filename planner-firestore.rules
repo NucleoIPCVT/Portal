@@ -167,17 +167,18 @@ service cloud.firestore {
     // Integrar este bloco às regras de produção antes de publicar o histórico.
     function plnrActivity(d) {
       return d.keys().hasOnly([
-          'entityType', 'entityId', 'title', 'action', 'actor', 'actorUid',
+          'entityType', 'entityId', 'title', 'action', 'origin', 'actor', 'actorUid',
           'planId', 'team', 'dueDate', 'changes', 'timestamp'
         ])
         && d.keys().hasAll([
-          'entityType', 'entityId', 'title', 'action', 'actor', 'actorUid',
+          'entityType', 'entityId', 'title', 'action', 'origin', 'actor', 'actorUid',
           'planId', 'team', 'dueDate', 'changes', 'timestamp'
         ])
         && d.entityType in ['plans', 'buckets', 'tasks', 'events', 'routines']
         && plnrId(d.entityId)
         && plnrText(d.title, 160)
         && d.action in ['created', 'updated', 'completed', 'reopened', 'deleted', 'archived']
+        && d.origin in ['manual', 'automatic']
         && d.actor == plnrEmail() && d.actorUid == request.auth.uid
         && plnrText(d.planId, 200) && plnrText(d.team, 120)
         && plnrDate(d.dueDate)
