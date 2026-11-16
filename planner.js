@@ -30,7 +30,7 @@ import { createTaskEditor } from './planner-task-editor.js?v=20261113-rodizio-v1
 import { taskCreationContext } from './planner-task-context.js'
 import { BOARD_GROUPINGS, groupBoardTasks, moveBoardTask } from './planner-board.js?v=20261112-planner-01'
 import { GoogleCalendarClient } from './planner-google.js'
-import { setupPlannerWizards } from './planner-form-wizard.js?v=20261116-v3'
+import { setupPlannerWizards } from './planner-form-wizard.js?v=20261116-v4'
 import { publicCalendar, readPublicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl, summarizeCalendarEvents, diffCalendarEvents } from './planner-public.js?v=20261116-name-google-v4'
 
 const $ = id => document.getElementById(id)
