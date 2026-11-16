@@ -113,7 +113,7 @@ function donut(model,rerender){
  p.append(txt('p','ip-annotation','Atrasadas têm prioridade sobre bloqueadas na divisão visual; nenhuma demanda é contada duas vezes.'))
  return p
 }
-function weekly(model,rerender){
+function weekly(model,rerender,auditReady){
  const p=box('Fluxo semanal','Prazo atual das demandas × conclusões registradas em cada semana.','ip-panel-week')
  const head=element('div','ip-keyline')
  head.append(element('span','',[txt('i','ip-mini-square ip-planned'),txt('span','','Prazos atuais')]))
@@ -126,9 +126,11 @@ function weekly(model,rerender){
   const barArea=element('div','ip-week-pair')
   for(const [type,quantity,cls] of [['weekPlanned',wk.planned,'ip-bar-planned'],['weekDone',wk.delivered,'ip-bar-delivered']]){
    const b=action('',()=>{
+    if(type==='weekDone'&&!auditReady)return
     STATE.focus=type;STATE.week=wk.key;STATE.visible=12;STATE.bucketKey='';rerender();jumpToTasks()
    },'ip-week-bar '+cls)
-   b.style.height=Math.max(3,quantity/max*100)+'%'
+   b.disabled=type==='weekDone'&&!auditReady
+   b.style.height=type==='weekDone'&&!auditReady?'0%':Math.max(3,quantity/max*100)+'%'
    b.title=(type==='weekPlanned'?'Prazos':'Conclusões')+' na semana de '+labelDate(wk.key)+': '+quantity+'. Clique para detalhar.'
    b.setAttribute('aria-label',b.title)
    barArea.append(b)
@@ -137,7 +139,9 @@ function weekly(model,rerender){
   chart.append(col)
  }
  p.append(chart)
- p.append(txt('p','ip-annotation','Semanas iniciam na segunda-feira. A barra de conclusões utiliza apenas registros de auditoria disponíveis.'))
+ p.append(txt('p','ip-annotation',auditReady
+   ?'Semanas iniciam na segunda-feira. A barra de conclusões utiliza apenas registros de auditoria disponíveis.'
+   :'Histórico não carregado: conclusões ficam ocultas para evitar confundir ausência de dados com zero entregas.'))
  return p
 }
 function horizontal(title,description,entries,opts={}){
@@ -497,7 +501,7 @@ export function renderPlannerDashboard({
   kpi('Em aberto',format(model.openTotal),'Demandas pendentes','neutral',
    'Total de demandas não concluídas, independentemente da data de criação.',()=>changeFocus('all',rerender)),
   kpi('Atrasadas',format(model.late.length),
-   model.avgDelay===null?'Sem atrasos':format(model.avgDelay)+' dias de atraso médio','danger',
+   model.avgDelay===null?'Sem atrasos':(pct(model.late.length,model.openTotal)||0)+'% das abertas · '+format(model.avgDelay)+'d em média','danger',
    'Abertas com prazo anterior a hoje.',()=>changeFocus('late',rerender)),
   kpi('Bloqueadas',format(model.blocked.length),'Dependências pendentes','violet',
    'Abertas que dependem de outras demandas não concluídas.',()=>changeFocus('blocked',rerender)),
@@ -525,7 +529,7 @@ export function renderPlannerDashboard({
  if(STATE.tab==='overview'){
   root.append(snapshot(model,rerender))
   const grid=element('div','ip-panels-2')
-  grid.append(donut(model,rerender),weekly(model,rerender))
+  grid.append(donut(model,rerender),weekly(model,rerender,activityState==='loaded'))
   root.append(grid)
   root.append(oldTasksPanel(model,openTask,rerender))
   root.append(taskList(model,openTask,rerender))
