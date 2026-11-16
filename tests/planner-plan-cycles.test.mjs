@@ -2,7 +2,8 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   planCycleConfigRecord,parsePlanCycleConfig,currentPlanCycle,nextPlanCycle,previousPlanCycle,
-  planCycleDates,missingPlanCycleTasks,cycleForPlanTask,planCycleWindow
+  planCycleDates,missingPlanCycleTasks,cycleForPlanTask,planCycleWindow,
+  taskPlanFamily,keepPlanFamilySource,planFamilyStopId,planFamilyStopRecord
 } from '../planner-plan-cycles.js'
 import {rotationConfigRecord,rotationAssigneesForDate} from '../planner-recurrence.js'
 
@@ -181,4 +182,43 @@ test('planos semanais antigos sem datas próprias mantêm a âncora histórica',
   assert.deepEqual(planCycleWindow(old,{startDate:'',dueDate:''},'2026-11-22'),
     {start:'2026-11-16',due:'2026-11-22'})
   assert.equal(currentPlanCycle(old,'2026-11-12'),'2026-11-15')
+})
+
+test('excluir somente a primeira ocorrência mantém a geração semanal futura',()=>{
+  const root=task('gl-som','Demanda acidental','2026-11-12')
+  const only=keepPlanFamilySource(root)
+  assert.equal(only.deleted,true)
+  assert.equal(only.templateKey,'plan-family-source-v1')
+  const drafts=missingPlanCycleTasks(config,[only],buckets,'2026-11-13')
+  assert.deepEqual(drafts.map(draft=>draft.cycleKey),['2026-11-22'])
+  assert.equal(drafts[0].sourceTaskId,root.id)
+})
+test('excluir uma ocorrência gerada não recria aquela semana, mas mantém próximas',()=>{
+  const root=task('origem','Rotina semanal','2026-11-12')
+  const removed=task('semana-removida','Rotina semanal','2026-11-19',{
+    sourceTaskId:root.id,cycleKey:'2026-11-22',templateKey:'plan-instance-v1',deleted:true
+  })
+  const drafts=missingPlanCycleTasks(config,[root,removed],buckets,'2026-11-19',2)
+  assert.deepEqual(drafts.map(draft=>draft.cycleKey),['2026-11-29'])
+})
+test('interromper esta e as próximas preserva as ocorrências anteriores',()=>{
+  const root=task('guilherme','Demanda eventual','2026-11-12')
+  const current=task('guilherme-22','Demanda eventual','2026-11-19',{
+    sourceTaskId:root.id,cycleKey:'2026-11-22',templateKey:'plan-instance-v1'
+  })
+  const stop=planFamilyStopRecord(current,'2026-11-22')
+  assert.equal(stop.deleted,true)
+  assert.equal(stop.sourceTaskId,root.id)
+  assert.equal(stop.id,planFamilyStopId(root.planId,root.id))
+  assert.equal(stop.templateKey,'plan-family-stop-v1')
+  assert.equal(taskPlanFamily(current),root.id)
+  assert.deepEqual(missingPlanCycleTasks(config,[root,current,stop],buckets,'2026-11-20',2),[])
+  // A origem histórica permanece visível, enquanto só o futuro é ocultado/excluído.
+  assert.equal(root.deleted,undefined)
+})
+test('uma interrupção já anterior nunca é deslocada para um ciclo posterior',()=>{
+  const root=task('guilherme','Demanda eventual','2026-11-12')
+  const previous=planFamilyStopRecord(root,'2026-11-22')
+  const next=planFamilyStopRecord(root,'2026-11-29',previous)
+  assert.equal(next.cycleKey,'2026-11-22')
 })
