@@ -2579,7 +2579,7 @@ function fillBucketSelect(select, planId, current = '') {
 function openTask(task = null, defaults = {}) {
   if (!task && !requirePlan()) return
   $('task-form').reset()
-  formWizards.task?.reset()
+  formWizards.task?.reset({ editing: Boolean(task) })
   $('task-feedback').textContent = ''
   if (task?.reviewRequired) $('task-feedback').textContent = task.reviewReason
   const current = task || { title: '', planId: defaults.planId || selectedPlan() || activePlans()[0]?.id, bucketId: defaults.bucketId || '', startDate: defaults.startDate || '', dueDate: defaults.dueDate || '', status: 'todo', priority: 'normal', dateMode: 'manual', ...defaults }
@@ -2625,8 +2625,6 @@ function openTask(task = null, defaults = {}) {
   renderTaskActivity($('task-history'),task,activity,activityState)
   updateTaskEventFields()
   $('delete-task-button').hidden = !task
-  $('complete-task-button').hidden = !task
-  $('complete-task-button').textContent = current.status === 'done' ? 'Reabrir demanda' : 'Concluir demanda'
   $('task-dialog').showModal()
   $('task-title').focus()
 }
@@ -2926,14 +2924,6 @@ $('task-form').addEventListener('submit', async event => {
     $('task-dialog').close()
   } catch (error) { $('task-feedback').textContent = error.message }
   finally { submit.disabled = false }
-})
-$('complete-task-button').addEventListener('click', () => {
-  const status = value('task-status') === 'done' ? 'todo' : 'done'
-  $('task-status').value = status
-  const bucket = standardBucket(value('task-plan'), status)
-  if (bucket) $('task-bucket').value = bucket.id
-  formWizards.task?.last()
-  $('task-form').requestSubmit()
 })
 async function deleteTask(task) {
   if (!task || !await confirmAction('Excluir demanda?', 'A demanda “' + task.title + '” deixará de aparecer nas visões. As tarefas que dependem dela precisarão de revisão.')) return
