@@ -1,0 +1,72 @@
+/* Planner IPCVT · formulários guiados para planos e demandas.
+   Mantém identidade verde/pastel e responsividade para desktop, tablet e celular. */
+#plan-dialog.pm-wizard-dialog,#task-dialog.pm-wizard-dialog{
+  width:min(810px,calc(100vw - 24px));max-width:810px;max-height:min(92dvh,940px);
+  border-radius:16px;overflow:hidden;
+}
+.pm-wizard-dialog form{display:flex;flex-direction:column;max-height:min(92dvh,940px);min-height:0}
+.pm-wizard-dialog .dialog-heading{flex-shrink:0}
+.pm-wizard-dialog .dialog-body{overflow-y:auto;overscroll-behavior:contain;flex:1;min-height:0}
+.pm-wizard-dialog .dialog-footer{flex-shrink:0;gap:9px;flex-wrap:wrap}
+.pm-wizard-dialog .pm-wizard-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:0 0 14px}
+.pm-wizard-dialog .pm-wizard-step{
+  display:flex;align-items:center;gap:8px;text-align:left;min-width:0;
+  padding:11px 10px;border:1px solid #d8e3d8;background:#f5f8f3;
+  color:#617368;border-radius:10px;cursor:pointer;
+}
+.pm-wizard-dialog .pm-wizard-step[disabled]{cursor:default;opacity:.75}
+.pm-wizard-dialog .pm-wizard-step.is-current{background:#e7f1e5;color:#234a31;border-color:#8bb394}
+.pm-wizard-dialog .pm-wizard-step.is-complete{background:#f0f7ed;color:#366347;border-color:#bfdbc3}
+.pm-wizard-dialog .pm-wizard-step-number{flex:0 0 26px;width:26px;height:26px;display:grid;place-items:center;border-radius:50%;border:1px solid #bccfbe;font-size:11px;font-weight:800}
+.pm-wizard-dialog .pm-wizard-step.is-current .pm-wizard-step-number{background:#37694b;color:white;border-color:#37694b}
+.pm-wizard-dialog .pm-wizard-step.is-complete .pm-wizard-step-number{background:#d4e9d5;border-color:#d4e9d5}
+.pm-wizard-dialog .pm-wizard-step-copy{display:flex;flex-direction:column;gap:2px;min-width:0;line-height:1.2}
+.pm-wizard-dialog .pm-wizard-step-copy strong{font-size:11px;line-height:1.3}
+.pm-wizard-dialog .pm-wizard-step-copy small{font-size:9px;line-height:1.25;font-weight:400}
+.pm-wizard-dialog .pm-wizard-progress{height:4px;background:#e3eae1;border-radius:99px;overflow:hidden;margin-bottom:22px}
+.pm-wizard-dialog .pm-wizard-fill{height:100%;width:25%;background:linear-gradient(90deg,#8ab694,#497956);border-radius:99px;transition:width .2s ease}
+.pm-wizard-dialog .pm-wizard-panel{display:grid;gap:15px;animation:pm-wizard-enter .16s ease}
+.pm-wizard-dialog .pm-wizard-panel[hidden],.pm-wizard-dialog .pm-wizard-back[hidden],
+.pm-wizard-dialog .pm-wizard-next[hidden],.pm-wizard-dialog .pm-wizard-submit[hidden]{display:none!important}
+.pm-wizard-dialog .pm-wizard-panel>.field{margin:0}
+.pm-wizard-dialog #plan-repeat-fields{margin:0}
+.pm-wizard-dialog #plan-date-fields{margin:0}
+.pm-wizard-dialog #task-advanced,.pm-wizard-dialog #task-details{width:100%}
+.pm-wizard-dialog .pm-wizard-review-title{margin:0;font-size:21px;font-weight:700;letter-spacing:-.025em;color:#31583e}
+.pm-wizard-dialog .pm-wizard-review-hint{margin:0;color:#6b8170;font-size:12px;line-height:1.5}
+.pm-wizard-dialog .pm-wizard-review{display:grid;gap:0;background:#f8faf6;border:1px solid #dde8dd;border-radius:12px;margin:4px 0 10px;padding:6px 17px}
+.pm-wizard-dialog .pm-wizard-review-row{display:grid;grid-template-columns:minmax(90px,32%) 1fr;gap:14px;padding:11px 0;border-bottom:1px solid #e6eee4}
+.pm-wizard-dialog .pm-wizard-review-row:last-child{border-bottom:0}
+.pm-wizard-dialog .pm-wizard-review dt{font-size:11px;color:#738375;font-weight:600}
+.pm-wizard-dialog .pm-wizard-review dd{font-size:12px;color:#263c30;margin:0;font-weight:600;overflow-wrap:anywhere}
+.pm-wizard-dialog .pm-wizard-next,.pm-wizard-dialog .pm-wizard-submit{min-width:115px}
+.pm-cycle-preview{margin:0;padding:12px 14px;border:1px solid #cddfcd;border-radius:10px;background:#eff7ed;color:#365a43;font-size:12px;line-height:1.5}
+.pm-wizard-dialog .pm-cycle-preview[hidden],.pm-wizard-dialog #plan-date-fields[hidden],
+.pm-wizard-dialog #plan-repeat-fields[hidden]{display:none!important}
+.pm-wizard-dialog #plan-repeat-fields .field[hidden]{display:none!important}
+@keyframes pm-wizard-enter{from{opacity:.65;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+:root[data-theme=dark] .pm-wizard-dialog .pm-wizard-step{background:#293c31;border-color:#465e4d;color:#c1d2c4}
+:root[data-theme=dark] .pm-wizard-dialog .pm-wizard-step.is-current{background:#36543e;border-color:#8eb89b;color:#edf7ec}
+:root[data-theme=dark] .pm-wizard-dialog .pm-wizard-step.is-complete{background:#304d39;color:#e1f0e3}
+:root[data-theme=dark] .pm-wizard-dialog .pm-wizard-progress{background:#354b3c}
+:root[data-theme=dark] .pm-wizard-dialog .pm-wizard-review{background:#263a2d;border-color:#4d654f}
+:root[data-theme=dark] .pm-wizard-dialog .pm-wizard-review-title,
+:root[data-theme=dark] .pm-wizard-dialog .pm-wizard-review dd{color:#e6f4e8}
+:root[data-theme=dark] .pm-wizard-dialog .pm-wizard-review-row{border-color:#425a49}
+:root[data-theme=dark] .pm-wizard-dialog .pm-wizard-review dt,
+:root[data-theme=dark] .pm-wizard-dialog .pm-wizard-review-hint{color:#b6c7b7}
+:root[data-theme=dark] .pm-cycle-preview{background:#304a36;border-color:#5f8567;color:#d7edd9}
+@media(max-width:760px){
+ #plan-dialog.pm-wizard-dialog,#task-dialog.pm-wizard-dialog{width:calc(100vw - 14px);max-height:94dvh;border-radius:11px}
+ .pm-wizard-dialog form{max-height:94dvh}
+ .pm-wizard-dialog .pm-wizard-steps{gap:4px}
+ .pm-wizard-dialog .pm-wizard-step{flex-direction:column;justify-content:center;gap:4px;padding:8px 3px;text-align:center}
+ .pm-wizard-dialog .pm-wizard-step-number{width:23px;height:23px;flex-basis:23px}
+ .pm-wizard-dialog .pm-wizard-step-copy strong{font-size:9px}
+ .pm-wizard-dialog .pm-wizard-step-copy small{display:none}
+ .pm-wizard-dialog .pm-wizard-progress{margin-bottom:16px}
+ .pm-wizard-dialog .dialog-footer{gap:7px}
+ .pm-wizard-dialog .pm-wizard-next,.pm-wizard-dialog .pm-wizard-submit{min-width:0}
+ .pm-wizard-dialog .pm-wizard-review-row{grid-template-columns:96px 1fr}
+}
+@media(prefers-reduced-motion:reduce){.pm-wizard-dialog .pm-wizard-panel{animation:none}.pm-wizard-dialog .pm-wizard-fill{transition:none}}
