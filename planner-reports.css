@@ -17,7 +17,7 @@ body.pm-active #planner-app .pm-commission-back:focus-visible {outline:2px solid
 .pm-report-tabs{display:flex;flex-wrap:wrap;gap:8px;border-bottom:1px solid #dfe8dd;padding-bottom:10px}
 .pm-report-tabs button{background:transparent;border:1px solid transparent;border-radius:8px;padding:9px 13px;color:#66806c;font-size:12px;font-weight:750}
 .pm-report-tabs button[aria-pressed=true]{color:#265b3d;background:#e4eee4;border-color:#cde0ce}
-.pm-report-stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:11px}
+.pm-report-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
 .pm-report-stat{min-width:0;background:#fff;border:1px solid #e0e8dc;padding:15px;border-radius:10px;display:grid;gap:7px;text-align:left;color:#526a58}
 .pm-report-stat strong{display:block;font-size:25px;line-height:1.1;color:#2c4d38}
 .pm-report-stat span{font-size:11px;line-height:1.4}
