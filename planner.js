@@ -96,6 +96,9 @@ const integrationRange = { from: addDays(todayISO(), -30), to: addDays(todayISO(
 let authEpoch = 0
 let calendarConfig = { calendarId: publicCalendar.id, sourceUrl: publicCalendar.sourceUrl }
 let calendarConfigError = ''
+function officialCalendarName() {
+  return (publicSnapshot?.calendarName || publicEvents.find(event => event.calendarName)?.calendarName || publicCalendar.name).trim()
+}
 let publicSnapshot = null
 let publicEvents = []
 let calendarLoadError = ''
@@ -496,7 +499,7 @@ function renderCalendar(content, tasks) {
   const title = calendarMode === 'week'
     ? 'Semana de ' + formatDate(calendarDates()[0]) + ' a ' + formatDate(calendarDates()[6])
     : new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(calendarDate + 'T12:00:00Z'))
-  heading.append(node('strong', { text: title }), node('span', { text: globalCalendar ? 'Demandas e referências da Agenda IPCVT' : 'Prazos das demandas deste plano' }))
+  heading.append(node('strong', { text: title }), node('span', { text: globalCalendar ? 'Demandas e referências de ' + officialCalendarName() : 'Prazos das demandas deste plano' }))
   const mode = node('select', { 'aria-label': 'Período do calendário', onChange: event => { calendarMode = event.target.value; selectedCalendarDay = calendarDate; render() } }, [
     node('option', { value: 'week', text: 'Semana', selected: calendarMode === 'week' }),
     node('option', { value: 'month', text: 'Mês', selected: calendarMode === 'month' })
@@ -572,7 +575,7 @@ function renderCalendar(content, tasks) {
   if (!dayTasks.length && !dayEvents.length) dayDetails.append(node('p', { class: 'calendar-day-details-empty', text: 'Nenhuma demanda ou evento para este dia.' }))
   else {
     for (const task of dayTasks) dayDetails.append(node('div', { class: 'calendar-detail-row' }, [node('span', { class: 'calendar-detail-dot task-dot' }), button(task.title, () => openTask(task), 'task-title'), node('small', { text: planName(task.planId) })]))
-    for (const event of dayEvents) dayDetails.append(node('div', { class: 'calendar-detail-row' }, [node('span', { class: 'calendar-detail-dot event-dot' }), button(event.title, () => openEvent(event), 'task-title'), node('small', { text: 'Agenda IPCVT' })]))
+    for (const event of dayEvents) dayDetails.append(node('div', { class: 'calendar-detail-row' }, [node('span', { class: 'calendar-detail-dot event-dot' }), button(event.title, () => openEvent(event), 'task-title'), node('small', { text: officialCalendarName() })]))
   }
   content.append(header, node('div', { class: 'calendar-wrap' }, grid), dayDetails)
   const undated = (globalCalendar && !calendarShowTasks ? [] : tasks).filter(task => !task.dueDate && !task.startDate)
@@ -845,7 +848,7 @@ function renderEvents(content) {
   const relevant = events.filter(event => event.startDate.startsWith(String(eventsYear)) && (!query ||
     [event.title, event.description || ''].join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(query)))
     .sort((a, b) => a.startDate.localeCompare(b.startDate) || a.title.localeCompare(b.title, 'pt-BR'))
-  if (!relevant.length) return content.append(empty('Nenhum evento encontrado neste ano na Agenda IPCVT.'))
+  if (!relevant.length) return content.append(empty('Nenhum evento encontrado neste ano em ' + officialCalendarName() + '.'))
   const months = new Map()
   for (const event of relevant) {
     const key = event.startDate.slice(0, 7)
@@ -981,7 +984,7 @@ document.addEventListener('visibilitychange', () => {
 
 function renderPublicIntegration(content) {
   const section = node('section', { class: 'integration-card' }, [
-    node('h3', { text: 'Agenda IPCVT · calendário oficial' }),
+    node('h3', { text: officialCalendarName() + ' · calendário oficial' }),
     node('p', { text: 'Os eventos públicos aparecem na seção Agenda da igreja, para consulta e para vincular como evento-alvo de uma demanda. Nenhum integrante precisa conectar a própria conta Google. O Planner não escreve na agenda da igreja.' }),
     node('p', { class: 'calendar-sync-status', text: calendarLoadError
       ? calendarLoadError
@@ -1588,7 +1591,7 @@ function pmYearView(content,tasks) {
 function pmDayDetails(date,tasks) {
   const dialog=pmGroup('dialog','editor-dialog compact-dialog')
   const heading=pmGroup('div','dialog-heading',[
-    pmGroup('div','',[pmText('p','eyebrow','Agenda IPCVT'),pmText('h2','',pmShort(date,{day:'numeric',month:'long',timeZone:'UTC'}))]),
+    pmGroup('div','',[pmText('p','eyebrow',officialCalendarName()),pmText('h2','',pmShort(date,{day:'numeric',month:'long',timeZone:'UTC'}))]),
     pmButton('×',()=>dialog.close(),'icon-button')
   ])
   heading.querySelector('button').setAttribute('aria-label','Fechar detalhes do dia')
@@ -2388,7 +2391,7 @@ function pmTodayView(content) {
   }
   if(!due.length&&!late.length)work.append(pmText('p','pm-muted','Tudo em dia! Nenhuma tarefa sua vence hoje e não há pendências atrasadas.'))
   work.append(pmButton('Ver minhas tarefas',()=>{pmDemandTab='mine';changeView('list')},'pm-text-link'))
-  const agenda=pmGroup('section','pm-today-card',[pmText('h3','','Agenda IPCVT de hoje')])
+  const agenda=pmGroup('section','pm-today-card',[pmText('h3','',officialCalendarName() + ' de hoje')])
   if(!events.length)agenda.append(pmText('p','pm-muted','Nenhum evento da igreja cadastrado para hoje.'))
   for(const event of events){
     const item=pmButton('',()=>openEvent(event),'pm-today-event')
@@ -3075,7 +3078,7 @@ function openEvent(event = null) {
   $('event-form').querySelector('[type=submit]').hidden = external
   $('delete-event-button').hidden = !event || (external && (event.sourceKey?.startsWith('public-ical:') || !session.isAdmin || !byId('events', event.id)))
   $('delete-event-button').textContent = external ? 'Ocultar no Planner' : 'Excluir evento'
-  if (external) $('event-feedback').textContent = (event.status === 'cancelled' ? 'Evento cancelado no Google. Revise as demandas vinculadas. ' : '') + 'Origem: ' + event.calendarName + '. Os dados são atualizados pelo Google Agenda.'
+  if (external) $('event-feedback').textContent = (event.status === 'cancelled' ? 'Evento cancelado no Google. Revise as demandas vinculadas. ' : '') + 'Origem: ' + (event.sourceCalendarId === calendarConfig.calendarId ? officialCalendarName() : event.calendarName || 'Google Agenda') + '. Os dados são atualizados pelo Google Agenda.'
   $('event-dialog').showModal()
 }
 $('event-form').addEventListener('submit', async event => {
