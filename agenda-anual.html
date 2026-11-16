@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="agenda-anual.css?v=20261110-responsive">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="agenda-anual-nucleo.css?v=20261114-agenda-logo-calendario-v2">
-    <script type="module" src="agenda-anual.js?v=20261116-calendar-principal"></script>
+    <script type="module" src="agenda-anual.js?v=20261116-config-admin-v2"></script>
   </head>
   <body>
     <header class="app-bar screen-only">
@@ -50,7 +50,8 @@
             <select id="year-select" disabled aria-label="Escolher ano da agenda"><option>Carregando...</option></select>
           </label>
           <button id="refresh-button" class="button button-secondary" type="button" title="Consultar os eventos mais recentes da Agenda IPCVT">↻ <span>Atualizar</span></button>
-          <a class="button button-secondary" href="https://calendar.google.com/calendar/embed?src=ipbcentralvilar.calendario%40gmail.com&amp;ctz=America%2FSao_Paulo" target="_blank" rel="noopener noreferrer" title="Consultar a agenda original diretamente no Google">Ver no Google ↗</a>
+          <a id="agenda-google-link" class="button button-secondary" href="https://calendar.google.com/calendar/embed?src=ipbcentralvilar.calendario%40gmail.com&amp;ctz=America%2FSao_Paulo" target="_blank" rel="noopener noreferrer" title="Consultar a agenda original diretamente no Google">Ver no Google ↗</a>
+          <button id="agenda-config-button" class="button button-secondary agenda-config-button" type="button" title="Configurações da fonte oficial da agenda"><i class="ph ph-gear-six" aria-hidden="true"></i> <span>Configurar</span></button>
           <button id="print-button" class="button button-primary" type="button" disabled>▤ <span>Imprimir frente e verso / Salvar PDF</span></button>
         </div>
       </div>
@@ -93,9 +94,30 @@
       <div id="booklet-print-area" class="booklet-print-area" aria-label="Prévia das páginas para impressão"></div>
       <footer class="screen-footer screen-only">
         <a href="index.html">← Voltar ao Portal</a>
-        <p>Os eventos vêm da Agenda IPCVT no Google e são consultados novamente ao clicar em Atualizar.</p>
+        <p>Os eventos vêm do calendário oficial no Google e são consultados novamente ao clicar em Atualizar.</p>
       </footer>
     </main>
+    <dialog id="agenda-config-dialog" class="agenda-source-dialog screen-only" aria-labelledby="agenda-config-title">
+      <div class="agenda-source-header">
+        <div><span class="eyebrow">Administração</span><h2 id="agenda-config-title">Fonte da agenda oficial</h2></div>
+        <button type="button" id="agenda-config-close" class="agenda-dialog-close" aria-label="Fechar configurações">×</button>
+      </div>
+      <p class="agenda-source-intro">A alteração é compartilhada com o Planner. Apenas administradores autorizados da Comissão podem salvar outro calendário público.</p>
+      <div id="agenda-config-guest" class="agenda-source-body">
+        <p id="agenda-access-message">Entre com a conta Google autorizada para gerenciar a agenda.</p>
+        <button id="agenda-config-login" class="button button-secondary" type="button">Entrar com Google</button>
+      </div>
+      <form id="agenda-config-form" class="agenda-source-body" hidden>
+        <label for="agenda-config-url">Link público do Google Agenda</label>
+        <input type="url" id="agenda-config-url" autocomplete="off" spellcheck="false" required maxlength="2000" placeholder="https://calendar.google.com/calendar/ical/.../public/basic.ics">
+        <p class="agenda-source-hint">Use o endereço iCal público (.ics) ou o link de incorporação do Google Agenda. A fonte será atualizada nas duas ferramentas.</p>
+        <div class="agenda-source-actions">
+          <button class="button button-secondary" id="agenda-config-cancel" type="button">Cancelar</button>
+          <button class="button button-primary" id="agenda-config-save" type="submit">Salvar calendário</button>
+        </div>
+      </form>
+      <p id="agenda-config-feedback" class="agenda-source-feedback" role="status" aria-live="polite"></p>
+    </dialog>
     <script>
       (function () {
         var root = document.documentElement;
