@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   planCycleConfigRecord,parsePlanCycleConfig,currentPlanCycle,nextPlanCycle,previousPlanCycle,
-  planCycleDates,missingPlanCycleTasks,cycleForPlanTask
+  planCycleDates,missingPlanCycleTasks,cycleForPlanTask,planCycleWindow
 } from '../planner-plan-cycles.js'
 import {rotationConfigRecord,rotationAssigneesForDate} from '../planner-recurrence.js'
 
@@ -151,4 +151,34 @@ test('rodízio segue depois da virada do ano',()=>{
   assert.equal(next[0].assignees[0].name,'Bruno')
   assert.equal(next[1].cycleKey,'2027-01-10')
   assert.equal(next[1].assignees[0].name,'Ana')
+})
+
+test('plano semanal mantém dias da semana de início e prazo por vários ciclos',()=>{
+  const weekly=parsePlanCycleConfig(planCycleConfigRecord(plan,{
+    unit:'week',interval:1,anchor:'2026-11-22'
+  }))
+  const template={startDate:'2026-11-16',dueDate:'2026-11-20'}
+  const c1=currentPlanCycle(weekly,'2026-11-16')
+  const c2=nextPlanCycle(weekly,c1)
+  const c3=nextPlanCycle(weekly,c2)
+  assert.deepEqual(planCycleWindow(weekly,template,c1),{start:'2026-11-16',due:'2026-11-20'})
+  assert.deepEqual(planCycleWindow(weekly,template,c2),{start:'2026-11-23',due:'2026-11-27'})
+  assert.deepEqual(planCycleWindow(weekly,template,c3),{start:'2026-11-30',due:'2026-12-04'})
+})
+test('ciclo quinzenal conserva janela ao atravessar o mês',()=>{
+  const biweekly=parsePlanCycleConfig(planCycleConfigRecord(plan,{
+    unit:'week',interval:2,anchor:'2026-11-29'
+  }))
+  const template={startDate:'2026-11-16',dueDate:'2026-11-27'}
+  const next=nextPlanCycle(biweekly,'2026-11-29')
+  assert.deepEqual(planCycleWindow(biweekly,template,next),
+    {start:'2026-11-30',due:'2026-12-11'})
+})
+test('planos semanais antigos sem datas próprias mantêm a âncora histórica',()=>{
+  const old=parsePlanCycleConfig(planCycleConfigRecord(plan,{
+    unit:'week',interval:1,anchor:'2026-11-15'
+  }))
+  assert.deepEqual(planCycleWindow(old,{startDate:'',dueDate:''},'2026-11-22'),
+    {start:'2026-11-16',due:'2026-11-22'})
+  assert.equal(currentPlanCycle(old,'2026-11-12'),'2026-11-15')
 })
