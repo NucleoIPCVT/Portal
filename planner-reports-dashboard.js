@@ -462,7 +462,7 @@ export function renderPlannerDashboard({
  content,tasks,plans,buckets,activities,activityState='loading',activityError='',today,openTask,rerender
 }){
  const activePlans=(plans||[]).filter(p=>!p.deleted)
- const availableTeams=[...new Set((tasks||[]).filter(t=>t&&!t.deleted&&t.title).map(t=>t.team||'Sem equipe'))].sort((a,b)=>a.localeCompare(b,'pt-BR'))
+ const availableTeams=[...new Set((tasks||[]).filter(t=>t&&!t.deleted&&t.title&&(!STATE.planId||t.planId===STATE.planId)).map(t=>t.team||'Sem equipe'))].sort((a,b)=>a.localeCompare(b,'pt-BR'))
  if(STATE.planId&&!activePlans.some(p=>p.id===STATE.planId))STATE.planId=''
  if(STATE.team&&!availableTeams.includes(STATE.team))STATE.team=''
  const model=buildReportModel({tasks,plans:activePlans,buckets,activities,today,
