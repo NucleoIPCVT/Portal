@@ -4,7 +4,7 @@ import ical from 'node-ical';
 
 // The link shared by the church identifies this public Google Calendar.
 let calendarId = 'ipbcentralvilar.calendario@gmail.com';
-const calendarName = 'Agenda IPCVT';
+let calendarName = 'IPCVT Calendário';
 const outputFile = new URL('../../agenda-ipcvt.json', import.meta.url);
 const zone = 'America/Sao_Paulo';
 
@@ -116,6 +116,12 @@ async function main() {
   const calendarUrl = `https://calendar.google.com/calendar/ical/${encodeURIComponent(calendarId)}/public/basic.ics`;
   const content = await fetchCalendar(calendarUrl);
 
+  // Google inclui o nome da agenda no cabeçalho do iCal; preservar a identidade oficial.
+  const nameMatch = content.match(/^X-WR-CALNAME(?:;[^:\r\n]*)?:([^\r\n]*(?:\r?\n[ \t][^\r\n]*)*)/mi);
+  if (nameMatch) {
+    const name = nameMatch[1].replace(/\r?\n[ \t]/g, '').replace(/\\([,;\\])/g, '$1').trim();
+    if (name) calendarName = name.slice(0, 160);
+  }
   const parsed = ical.sync.parseICS(content);
   const year = new Date().getUTCFullYear();
   const from = new Date(`${year - 1}-01-01T00:00:00Z`);
