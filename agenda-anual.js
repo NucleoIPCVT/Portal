@@ -1,6 +1,6 @@
 import { publicCalendar, readPublicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl } from './planner-public.js?v=20261116-name-google-v2';
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 import { getFirestore, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
 const app = getApps().find(item => item.name === 'ipcvt-comissao') || initializeApp({
@@ -468,8 +468,9 @@ loginButton.addEventListener('click', async () => {
   loginButton.disabled = true;
   configFeedback.textContent = 'Verificando autorização…';
   try {
-    if (auth.currentUser) await signOut(auth);
-    await signInWithPopup(auth, new GoogleAuthProvider());
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    await signInWithPopup(auth, provider);
   } catch (error) {
     configFeedback.textContent = error.code === 'auth/popup-blocked'
       ? 'O navegador bloqueou a janela do Google. Permita pop-ups para este site.'
@@ -510,6 +511,9 @@ configForm.addEventListener('submit', async event => {
   configFeedback.textContent = 'Validando e salvando…';
   try {
     const { calendarId, sourceUrl } = parseCalendarSourceUrl(byId('agenda-config-url').value);
+    configFeedback.textContent = 'Verificando se a agenda está pública…';
+    await readPublicCalendar({ calendarId });
+    configFeedback.textContent = 'Agenda validada. Salvando…';
     await setDoc(calendarConfigRef, {
       calendarId, sourceUrl, updatedBy: managingEmail, updatedAt: serverTimestamp()
     });
