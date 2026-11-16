@@ -70,3 +70,8 @@
  .pm-wizard-dialog .pm-wizard-review-row{grid-template-columns:96px 1fr}
 }
 @media(prefers-reduced-motion:reduce){.pm-wizard-dialog .pm-wizard-panel{animation:none}.pm-wizard-dialog .pm-wizard-fill{transition:none}}
+
+/* Estado de validação de períodos e detalhes ocultos do formulário legado. */
+.pm-wizard-dialog #plan-advanced[hidden]{display:none!important}
+.pm-wizard-dialog .pm-cycle-preview.is-invalid{background:#fff2e8;border-color:#ecc6ad;color:#854b25}
+:root[data-theme=dark] .pm-wizard-dialog .pm-cycle-preview.is-invalid{background:#65422e;border-color:#9a6848;color:#ffddc1}
