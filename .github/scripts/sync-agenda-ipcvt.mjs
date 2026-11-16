@@ -120,7 +120,7 @@ async function main() {
   const nameMatch = content.match(/^X-WR-CALNAME(?:;[^:\r\n]*)?:([^\r\n]*(?:\r?\n[ \t][^\r\n]*)*)/mi);
   if (nameMatch) {
     const name = nameMatch[1].replace(/\r?\n[ \t]/g, '').replace(/\\([,;\\])/g, '$1').trim();
-    if (name && name !== calendarId && !/^[^@\\s]+@[^@\\s]+$/.test(name)) calendarName = name.slice(0, 160);
+    if (name && name !== calendarId && !name.includes('@')) calendarName = name.slice(0, 160);
   }
   const parsed = ical.sync.parseICS(content);
   const year = new Date().getUTCFullYear();
