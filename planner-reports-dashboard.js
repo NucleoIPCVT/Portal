@@ -2,7 +2,7 @@
 import { AGING_BANDS, buildReportModel, focusTasks, dateISO, days, addDay, labelDate, pct } from './planner-reports-data.js?v=20261116-aging-v1'
 
 const STATE={tab:'overview',period:'30',planId:'',team:'',focus:'all',agingKey:'',week:null,
- search:'',historySearch:'',historyAction:'all',visible:12}
+ search:'',historySearch:'',historyAction:'all',visible:12,bucketKey:''}
 const COLORS={done:'#5c9e79',danger:'#cc796c',violet:'#9a8abf',warning:'#d5aa63',sage:'#8ab6b0'}
 const ACTIONS={created:'Criou',updated:'Editou',completed:'Concluiu',reopened:'Reabriu',
  deleted:'Excluiu',archived:'Arquivou'}
@@ -58,10 +58,13 @@ function infoBubble(message){
  n.title=message;n.setAttribute('aria-label',message);n.setAttribute('role','img')
  return n
 }
+function jumpToTasks(){
+ requestAnimationFrame(()=>document.getElementById('ip-report-actions')?.scrollIntoView({behavior:'smooth',block:'start'}))
+}
 function changeFocus(focus,rerender){
- STATE.focus=focus;STATE.week=null;STATE.agingKey=''
- STATE.visible=12;STATE.tab=focus==='aging14'?'aging':STATE.tab
- rerender()
+ STATE.focus=focus;STATE.week=null;STATE.agingKey='';STATE.bucketKey=''
+ STATE.visible=12;STATE.tab=focus==='aging14'?'aging':'overview'
+ rerender();jumpToTasks()
 }
 function makeSelect(label,items,value,cb){
  const wrap=element('label','ip-filter')
@@ -123,7 +126,7 @@ function weekly(model,rerender){
   const barArea=element('div','ip-week-pair')
   for(const [type,quantity,cls] of [['weekPlanned',wk.planned,'ip-bar-planned'],['weekDone',wk.delivered,'ip-bar-delivered']]){
    const b=action('',()=>{
-    STATE.focus=type;STATE.week=wk.key;STATE.visible=12;rerender()
+    STATE.focus=type;STATE.week=wk.key;STATE.visible=12;STATE.bucketKey='';rerender();jumpToTasks()
    },'ip-week-bar '+cls)
    b.style.height=Math.max(3,quantity/max*100)+'%'
    b.title=(type==='weekPlanned'?'Prazos':'Conclusões')+' na semana de '+labelDate(wk.key)+': '+quantity+'. Clique para detalhar.'
@@ -160,7 +163,7 @@ function agingBands(model,rerender){
   [...model.aging.map(b=>({...b,label:b.label,color:b.min>=15?'warning':'sage'})),
    ...(model.unknownAging.length?[{key:'unknown',label:'Sem data verificável',count:model.unknownAging.length,color:'violet'}]:[])],
   {extra:'ip-panel-aging',limit:8,click:band=>{
-   STATE.agingKey=band.key;STATE.focus='agingBand';STATE.week=null;STATE.visible=12;rerender()
+   STATE.agingKey=band.key;STATE.focus='agingBand';STATE.week=null;STATE.visible=12;STATE.bucketKey='';rerender();jumpToTasks()
   }})
 }
 function snapshot(model,rerender){
@@ -182,6 +185,7 @@ function snapshot(model,rerender){
 }
 function getFilteredRows(model){
  let selected=focusTasks(model,STATE.focus)
+ if(STATE.bucketKey)selected=selected.filter(t=>t.planId+':'+(t.bucketId||'none')===STATE.bucketKey)
  if(STATE.focus==='agingBand'){
   selected=STATE.agingKey==='unknown'?model.unknownAging:
    model.aging.find(x=>x.key===STATE.agingKey)?.tasks||[]
@@ -246,8 +250,9 @@ function taskList(model,openTask,rerender,opts={}){
  const more=action('Mostrar mais demandas',()=>{STATE.visible+=12;draw()},'ip-more')
  function draw(){
   let items=getFilteredRows(model)
-  subtitle.textContent=(titleOfFocus[STATE.focus]||'Demandas')+' · '+items.length+' resultado(s)'+
-    (STATE.week?' · semana de '+labelDate(STATE.week):'')
+  const bucket=STATE.bucketKey?model.bucketStats.find(b=>b.key===STATE.bucketKey):null
+  subtitle.textContent=(bucket?'Bucket: '+bucket.name:(titleOfFocus[STATE.focus]||'Demandas'))+
+    ' · '+items.length+' resultado(s)'+(STATE.week?' · semana de '+labelDate(STATE.week):'')
   list.replaceChildren()
   if(!items.length)list.append(muted('Nenhuma demanda encontrada com os filtros atuais.'))
   for(const t of items.slice(0,STATE.visible)){
@@ -297,8 +302,8 @@ function bottlenecks(model,openTask,rerender){
  area.append(horizontal('Onde os prazos mais vencem','Buckets com mais demandas atrasadas.',
   buckets,{click:bucket=>{
    STATE.focus='all';STATE.search='';STATE.tab='aging';STATE.agingKey=''
-   const section=document.getElementById('ip-report-actions')
-   if(section)section.scrollIntoView({behavior:'smooth',block:'start'})
+   STATE.bucketKey=bucket.tasks?.[0]?bucket.tasks[0].planId+':'+(bucket.tasks[0].bucketId||'none'):''
+   STATE.visible=12;rerender();jumpToTasks()
   }}))
  const deps=box('Principais bloqueios','Demandas que impedem o avanço de outras tarefas.')
  if(!model.topBlockers.length)deps.append(muted('Nenhuma dependência pendente identificada.'))
@@ -323,7 +328,7 @@ function bottlenecks(model,openTask,rerender){
  area.append(revision)
  area.append(horizontal('Carga em aberto por equipe','Quantidade de demandas pendentes.',
   model.teams.map(x=>({label:x.name,count:x.open,color:'sage'})),
-  {click:x=>{STATE.team=x.label==='Sem equipe'?'Sem equipe':x.label;STATE.focus='all';rerender()}}))
+  {click:x=>{STATE.team=x.label==='Sem equipe'?'Sem equipe':x.label;STATE.focus='all';STATE.bucketKey='';rerender()}}))
  return area
 }
 function teamSection(model,rerender){
@@ -469,17 +474,17 @@ export function renderPlannerDashboard({
  filters.append(makeSelect('Atividades',[['7','7 dias'],['30','30 dias'],['90','90 dias'],['all','Todo o histórico']],
   STATE.period,x=>{STATE.period=x;rerender()}))
  filters.append(makeSelect('Plano',[['','Todos os planos'],...activePlans.map(p=>[p.id,p.name])],
-  STATE.planId,x=>{STATE.planId=x;STATE.focus='all';STATE.search='';STATE.week=null;rerender()}))
+  STATE.planId,x=>{STATE.planId=x;STATE.focus='all';STATE.search='';STATE.week=null;STATE.bucketKey='';rerender()}))
  filters.append(makeSelect('Equipe',[['','Todas as equipes'],...availableTeams.map(t=>[t,t])],
-  STATE.team,x=>{STATE.team=x;STATE.focus='all';STATE.search='';STATE.week=null;rerender()}))
+  STATE.team,x=>{STATE.team=x;STATE.focus='all';STATE.search='';STATE.week=null;STATE.bucketKey='';rerender()}))
  const reset=action('Limpar filtros',()=>{
   STATE.planId='';STATE.team='';STATE.period='30';STATE.focus='all';STATE.agingKey=''
-  STATE.week=null;STATE.search='';rerender()
+  STATE.week=null;STATE.search='';STATE.bucketKey='';rerender()
  },'ip-reset')
  filters.append(reset);hero.append(heading,filters);root.append(hero)
  const tabs=element('nav','ip-tabs');tabs.setAttribute('aria-label','Seções dos relatórios')
  for(const [id,label] of TAB){
-  const b=action(label,()=>{STATE.tab=id;STATE.week=null;STATE.focus='all';STATE.search='';STATE.visible=12;rerender()},'ip-tab')
+  const b=action(label,()=>{STATE.tab=id;STATE.week=null;STATE.focus='all';STATE.search='';STATE.bucketKey='';STATE.visible=12;rerender()},'ip-tab')
   b.setAttribute('aria-current',STATE.tab===id?'page':'false');tabs.append(b)
  }
  root.append(tabs)
@@ -504,15 +509,19 @@ export function renderPlannerDashboard({
    ()=>{STATE.tab='aging';changeFocus('aging14',rerender)}),
   kpi('Sem atualização',format(model.stale.length),'Há 7 dias ou mais','neutral',
    'Última alteração de demanda há pelo menos sete dias.',()=>changeFocus('stale',rerender)),
-  kpi('Concluídas',format(model.recentCompletions.length),'Registros no período','done',
+  kpi('Concluídas',activityState==='loaded'?format(model.recentCompletions.length):'—',
+   activityState==='loaded'?'Registros no período':'Aguardando histórico','done',
    'Eventos de conclusão efetivamente gravados no histórico durante o período selecionado.',
    ()=>{STATE.tab='history';rerender()}),
-  kpi('No prazo',model.proven.length?format(model.onTimePercent)+'%':'—',
+  kpi('No prazo',activityState==='loaded'&&model.proven.length?format(model.onTimePercent)+'%':'—',
    format(model.proven.length)+' conclusão(ões) auditáveis','done',
    'Percentual apenas da amostra com data real de conclusão e prazo verificável.',
    ()=>{STATE.tab='history';rerender()})
  )
  root.append(kpis)
+ if(activityState==='error')root.append(txt('p','ip-warning',
+  'Indicadores históricos indisponíveis: '+(activityError||'não foi possível consultar o histórico do Firestore')+
+  '. Os indicadores da carteira continuam disponíveis.'))
  if(STATE.tab==='overview'){
   root.append(snapshot(model,rerender))
   const grid=element('div','ip-panels-2')
