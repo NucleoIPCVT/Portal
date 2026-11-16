@@ -3,7 +3,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import ical from 'node-ical';
 
 // The link shared by the church identifies this public Google Calendar.
-let calendarId = '0d88300041a5eeef838f5f57c87594ebbd4e2ae41b4f5745335825299acdc5de@group.calendar.google.com';
+let calendarId = 'ipbcentralvilar.calendario@gmail.com';
 const calendarName = 'Agenda IPCVT';
 const outputFile = new URL('../../agenda-ipcvt.json', import.meta.url);
 const zone = 'America/Sao_Paulo';
