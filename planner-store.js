@@ -313,7 +313,7 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
   ).map(field=>({field,before:summaryValue(before?.[field]),after:summaryValue(after?.[field])})).slice(0,25)
   async function auditChange(kind,id,before,after,actor,removed=false,origin='manual'){
     // Templates internos são configurações de recorrência, não atividades humanas.
-    if(kind==='tasks'&&(id.startsWith('rotation_v1_')||id.startsWith('plan_cycle_v1_')))return
+    if(kind==='tasks'&&(id.startsWith('rotation_v1_')||id.startsWith('plan_cycle_v1_')||id.startsWith('plan_family_stop_v1_')))return
     const changes=removed?[]:activityFields(before,after,kind)
     if(before&&!removed&&!changes.length)return
     let action=removed?'deleted':!before?'created':'updated'
