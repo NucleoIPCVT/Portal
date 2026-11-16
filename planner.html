@@ -435,6 +435,29 @@
       <div class="dialog-footer"><button id="calendar-notifications-refresh" class="button" type="button">Verificar agora</button><button class="button button-primary" type="button" data-close-dialog="calendar-notifications-dialog">Fechar</button></div>
     </dialog>
 
+    <dialog id="recurring-delete-dialog" class="confirm-dialog pm-recurring-delete-dialog" aria-labelledby="recurring-delete-title" aria-describedby="recurring-delete-message">
+      <div class="dialog-heading">
+        <h2 id="recurring-delete-title">Excluir demanda recorrente</h2>
+      </div>
+      <div class="dialog-body">
+        <p id="recurring-delete-message"></p>
+        <p class="pm-recurring-delete-hint">Escolha o que deseja remover. Os ciclos anteriores não serão alterados.</p>
+        <div class="pm-recurring-delete-options">
+          <button id="recurring-delete-single" class="pm-recurring-delete-option" type="button">
+            <strong>Somente esta ocorrência</strong>
+            <span>Remove a demanda desta semana, mas mantém a repetição dos próximos ciclos.</span>
+          </button>
+          <button id="recurring-delete-future" class="pm-recurring-delete-option pm-recurring-delete-option-danger" type="button">
+            <strong>Esta e as próximas</strong>
+            <span>Remove esta ocorrência e as futuras, impedindo que a demanda seja criada novamente.</span>
+          </button>
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button id="recurring-delete-cancel" class="button" type="button">Cancelar</button>
+      </div>
+    </dialog>
+
     <dialog id="confirm-dialog" class="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-message">
       <div class="dialog-heading"><h2 id="confirm-title">Confirmar exclusão</h2></div>
       <div class="dialog-body"><p id="confirm-message"></p></div>
