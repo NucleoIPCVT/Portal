@@ -17,8 +17,8 @@ import { routineMigrationPlan } from './planner-routine-migration.js?v=20261113-
 import {
   parsePlanCycleConfig,planCycleConfigRecord,planCycleConfigId,
   currentPlanCycle,nextPlanCycle,previousPlanCycle,cycleForPlanTask,planCycleLabel,
-  assigneesForPlanCycle,planCycleWindow
-} from './planner-plan-cycles.js?v=20261116-cycle-window-v1'
+  assigneesForPlanCycle,planCycleWindow,taskPlanFamily,keepPlanFamilySource,planFamilyStopId,planFamilyStopRecord
+} from './planner-plan-cycles.js?v=20261116-delete-scope-v1'
 import { resolveGanttDependencies } from './planner-gantt-dependencies.js?v=20261113-recurring-links-v1'
 import {
   taskRecurrence,setTaskRecurrence,recurrenceLabel,nextRecurrenceDate,
@@ -2954,9 +2954,67 @@ $('task-form').addEventListener('submit', async event => {
   } catch (error) { $('task-feedback').textContent = error.message }
   finally { submit.disabled = false }
 })
+// A exclusão num plano recorrente tem escopo explícito: só esta semana
+// ou esta semana e as seguintes. O histórico anterior fica intacto.
+function chooseRecurringTaskDeletion(task) {
+  const dialog=$('recurring-delete-dialog')
+  const plan=byId('plans',task.planId)
+  $('recurring-delete-message').textContent='A demanda “'+task.title+'” faz parte do plano recorrente “'+(plan?.name||'Plano')+'”. O que deseja excluir?'
+  dialog.returnValue=''
+  return new Promise(resolve=>{
+    const single=$('recurring-delete-single')
+    const future=$('recurring-delete-future')
+    const cancel=$('recurring-delete-cancel')
+    const selectOne=()=>dialog.close('single')
+    const selectFuture=()=>dialog.close('future')
+    const dismiss=()=>dialog.close('cancel')
+    const onClose=()=>{
+      single.removeEventListener('click',selectOne)
+      future.removeEventListener('click',selectFuture)
+      cancel.removeEventListener('click',dismiss)
+      resolve(['single','future'].includes(dialog.returnValue)?dialog.returnValue:null)
+    }
+    single.addEventListener('click',selectOne)
+    future.addEventListener('click',selectFuture)
+    cancel.addEventListener('click',dismiss)
+    dialog.addEventListener('close',onClose,{once:true})
+    dialog.showModal()
+  })
+}
 async function deleteTask(task) {
-  if (!task || !await confirmAction('Excluir demanda?', 'A demanda “' + task.title + '” deixará de aparecer nas visões. As tarefas que dependem dela precisarão de revisão.')) return
-  try { await action(() => save('tasks', { ...task, deleted: true }), 'Demanda excluída.'); if ($('task-dialog').open) $('task-dialog').close() } catch {}
+  if (!task) return
+  const recurring=planCycleConfig(task.planId)
+  const choice=recurring
+    ?await chooseRecurringTaskDeletion(task)
+    :await confirmAction('Excluir demanda?', 'A demanda “'+task.title+'” deixará de aparecer nas visões. As tarefas que dependem dela precisarão de revisão.')?'single':null
+  if (!choice) return
+  try {
+    if(!recurring) {
+      await action(()=>save('tasks',{...task,deleted:true}),'Demanda excluída.')
+    }else if(choice==='single') {
+      const family=taskPlanFamily(task)
+      const occurrence=task.id===family?keepPlanFamilySource(task):{...task,deleted:true}
+      await action(()=>save('tasks',occurrence),'Somente esta ocorrência foi excluída. As próximas serão mantidas.')
+    }else{
+      const family=taskPlanFamily(task)
+      const cutoff=cycleForPlanTask(recurring,task)
+      if(!cutoff)throw new Error('Não foi possível identificar a semana da demanda.')
+      const oldStop=byId('tasks',planFamilyStopId(task.planId,family))
+      const marker=planFamilyStopRecord(task,cutoff,oldStop)
+      // A interrupção é gravada primeiro, bloqueando novas gerações inclusive
+      // em sessões de outros usuários. Depois retiramos instâncias já existentes.
+      await action(async()=>{
+        await save('tasks',marker)
+        const upcoming=state.tasks.filter(item=>item.planId===task.planId&&!item.deleted
+          &&taskPlanFamily(item)===family&&cycleForPlanTask(recurring,item)>=marker.cycleKey)
+        for(const occurrence of upcoming) {
+          await save('tasks',occurrence.id===family
+            ?keepPlanFamilySource(occurrence):{...occurrence,deleted:true})
+        }
+      },'Esta ocorrência e as próximas foram excluídas. As semanas anteriores foram preservadas.')
+    }
+    if($('task-dialog').open)$('task-dialog').close()
+  }catch(error){$('task-feedback').textContent=error?.message||'Não foi possível excluir a demanda.'}
 }
 $('delete-task-button').addEventListener('click', () => deleteTask(byId('tasks', value('task-id'))))
 
