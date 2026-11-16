@@ -41,6 +41,7 @@ export function setupPlannerWizards() {
     const saveButton = footer.querySelector('button[type="submit"]');
     const message = document.getElementById(name === 'task' ? 'task-feedback' : 'plan-feedback');
     if (!body || !footer || !saveButton) return null;
+    dialog.classList.add('pm-wizard-dialog');
 
     const steps = el('nav', 'pm-wizard-steps');
     steps.setAttribute('aria-label', 'Etapas do preenchimento');
