@@ -1,23 +1,5 @@
 import { publicCalendar, readPublicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl } from './planner-public.js?v=20261116-name-google-v2';
-import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-import { getFirestore, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
-
-const app = getApps().find(item => item.name === 'ipcvt-comissao') || initializeApp({
-  apiKey: 'AIzaSyAg9w5QohkcmXUFRgLfSI5Sh1chnCD1Owc',
-  authDomain: 'repertorio-ipcvt.firebaseapp.com',
-  projectId: 'repertorio-ipcvt',
-  storageBucket: 'repertorio-ipcvt.firebasestorage.app',
-  messagingSenderId: '774659782213',
-  appId: '1:774659782213:web:5e9cbf88fec30eb382152c'
-}, 'ipcvt-comissao');
-const auth = getAuth(app);
-const firestore = getFirestore(app);
-const calendarConfigRef = doc(firestore, 'comissao_planner', 'main', 'config', 'calendar');
 let calendarSource = { calendarId: publicCalendar.id, sourceUrl: publicCalendar.sourceUrl };
-let canManageCalendar = false;
-let managingEmail = '';
-let authCheckSequence = 0;
 let calendarRequestSequence = 0;
 
 const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -437,6 +419,32 @@ async function loadCalendar({ checkWorkflow = true } = {}) {
 }
 
 
+async function initializeAgendaConfiguration() {
+  try {
+    const [
+      { initializeApp, getApps },
+      { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup },
+      { getFirestore, doc, getDoc, onSnapshot, setDoc, serverTimestamp }
+    ] = await Promise.all([
+      import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'),
+      import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'),
+      import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js')
+    ]);
+    const app = getApps().find(item => item.name === 'ipcvt-comissao') || initializeApp({
+      apiKey: 'AIzaSyAg9w5QohkcmXUFRgLfSI5Sh1chnCD1Owc',
+      authDomain: 'repertorio-ipcvt.firebaseapp.com',
+      projectId: 'repertorio-ipcvt',
+      storageBucket: 'repertorio-ipcvt.firebasestorage.app',
+      messagingSenderId: '774659782213',
+      appId: '1:774659782213:web:5e9cbf88fec30eb382152c'
+    }, 'ipcvt-comissao');
+    const auth = getAuth(app);
+    const firestore = getFirestore(app);
+    const calendarConfigRef = doc(firestore, 'comissao_planner', 'main', 'config', 'calendar');
+    let canManageCalendar = false;
+    let managingEmail = '';
+    let authCheckSequence = 0;
+
 const dialog = byId('agenda-config-dialog');
 const configForm = byId('agenda-config-form');
 const configFeedback = byId('agenda-config-feedback');
@@ -549,6 +557,18 @@ onSnapshot(calendarConfigRef, record => {
     console.warn('A configuração de calendário publicada é inválida.', error);
   }
 }, error => console.warn('Sem acesso à configuração remota, mantendo a origem local.', error));
+
+  } catch (error) {
+    // Um bloqueio no Firebase não pode interromper a leitura pública da agenda.
+    console.warn('Administração da agenda indisponível. Mantendo a consulta pública.', error);
+    const dialog = byId('agenda-config-dialog');
+    byId('agenda-access-message').textContent = 'Não foi possível carregar o acesso administrativo. Atualize a página e tente novamente.';
+    byId('agenda-config-login').hidden = true;
+    byId('agenda-config-button').addEventListener('click', () => dialog.showModal());
+    byId('agenda-config-close').addEventListener('click', () => dialog.close());
+  }
+}
+void initializeAgendaConfiguration();
 
 yearSelect.addEventListener('change', () => {
   selectedYear = Number(yearSelect.value);
