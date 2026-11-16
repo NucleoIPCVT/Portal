@@ -17,3 +17,6 @@ body.gate-active #strategic-panel-return { display: none; }
   #strategic-panel-return { background: #30473a; border-color: #587b62; color: #f0f6f0; }
   #strategic-panel-return:hover { background: #395643; }
 }
+
+/* Substitui os dois links antigos do quadro compilado por um único retorno. */
+#root .portal-return-links { display:none !important; }
