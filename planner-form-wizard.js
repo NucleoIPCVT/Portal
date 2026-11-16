@@ -43,32 +43,26 @@ export function setupPlannerWizards() {
     if (!body || !footer || !saveButton) return null;
     dialog.classList.add('pm-wizard-dialog');
 
-    const steps = el('nav', 'pm-wizard-steps');
-    steps.setAttribute('aria-label', 'Etapas do preenchimento');
+    // Indicador editorial, sem aparência de abas ou botões.
+    const status = el('div', 'pm-wizard-status');
+    status.setAttribute('aria-live', 'polite');
+    const stepCopy = el('div', 'pm-wizard-status-copy');
+    const stepTitle = el('h3', 'pm-wizard-current-title');
+    const stepHint = el('p', 'pm-wizard-current-hint');
+    stepCopy.append(stepTitle, stepHint);
+    const stepCounter = el('span', 'pm-wizard-counter');
+    status.append(stepCopy, stepCounter);
     const progress = el('div', 'pm-wizard-progress');
+    progress.setAttribute('aria-label', 'Progresso do preenchimento');
     const fill = el('div', 'pm-wizard-fill');
     progress.setAttribute('role', 'progressbar');
     progress.setAttribute('aria-valuemin', '1');
     progress.setAttribute('aria-valuemax', String(stages.length));
     progress.append(fill);
     const panels = el('div', 'pm-wizard-panels');
-    const buttons = [];
     let current = 0;
-    let reached = 0;
 
     const allPanels = stages.map((step, index) => {
-      const selector = el('button', 'pm-wizard-step');
-      selector.type = 'button';
-      selector.innerHTML = '<span class="pm-wizard-step-number">' + (index + 1) + '</span>';
-      const words = el('span', 'pm-wizard-step-copy');
-      words.append(el('strong', '', step.title), el('small', '', step.hint));
-      selector.append(words);
-      selector.addEventListener('click', () => {
-        if (index <= current) show(index);
-        else if (index <= reached && validateRange(current, index)) show(index);
-      });
-      steps.append(selector);
-      buttons.push(selector);
       const panel = el('section', 'pm-wizard-panel');
       panel.setAttribute('aria-label', step.title);
       for (const source of step.selectors) {
@@ -101,7 +95,7 @@ export function setupPlannerWizards() {
     footer.insertBefore(next, saveButton);
     body.prepend(panels);
     body.prepend(progress);
-    body.prepend(steps);
+    body.prepend(status);
     form.noValidate = true;
 
     function rows() {
@@ -178,14 +172,10 @@ export function setupPlannerWizards() {
     }
     function show(index) {
       current = index;
-      reached = Math.max(reached, index);
       allPanels.forEach((panel, i) => { panel.hidden = i !== index; });
-      buttons.forEach((button, i) => {
-        button.classList.toggle('is-current', i === index);
-        button.classList.toggle('is-complete', i < index);
-        button.setAttribute('aria-current', i === index ? 'step' : 'false');
-        button.disabled = i > reached;
-      });
+      stepTitle.textContent = stages[index].title;
+      stepHint.textContent = stages[index].hint;
+      stepCounter.textContent = 'Etapa ' + (index + 1) + ' de ' + stages.length;
       previous.hidden = index === 0;
       next.hidden = index === stages.length - 1;
       saveButton.hidden = index !== stages.length - 1;
@@ -209,8 +199,8 @@ export function setupPlannerWizards() {
     dialog.dataset.wizardReady = 'true';
     show(0);
     return {
-      reset() { reached = 0; show(0); message.textContent = ''; },
-      last() { reached = stages.length - 1; show(stages.length - 1); }
+      reset() { show(0); message.textContent = ''; },
+      last() { show(stages.length - 1); }
     };
   }
 
