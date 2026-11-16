@@ -17,8 +17,8 @@ import { routineMigrationPlan } from './planner-routine-migration.js?v=20261113-
 import {
   parsePlanCycleConfig,planCycleConfigRecord,planCycleConfigId,
   currentPlanCycle,nextPlanCycle,previousPlanCycle,cycleForPlanTask,planCycleLabel,
-  assigneesForPlanCycle
-} from './planner-plan-cycles.js?v=20261113-plan-cycle-v3'
+  assigneesForPlanCycle,planCycleWindow
+} from './planner-plan-cycles.js?v=20261116-cycle-window-v1'
 import { resolveGanttDependencies } from './planner-gantt-dependencies.js?v=20261113-recurring-links-v1'
 import {
   taskRecurrence,setTaskRecurrence,recurrenceLabel,nextRecurrenceDate,
@@ -30,9 +30,11 @@ import { createTaskEditor } from './planner-task-editor.js?v=20261113-rodizio-v1
 import { taskCreationContext } from './planner-task-context.js'
 import { BOARD_GROUPINGS, groupBoardTasks, moveBoardTask } from './planner-board.js?v=20261112-planner-01'
 import { GoogleCalendarClient } from './planner-google.js'
+import { setupPlannerWizards } from './planner-form-wizard.js?v=20261116-v1'
 import { publicCalendar, readPublicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl, summarizeCalendarEvents, diffCalendarEvents } from './planner-public.js?v=20261116-name-google-v4'
 
 const $ = id => document.getElementById(id)
+const formWizards = setupPlannerWizards()
 const labels = { todo: 'Não iniciada', doing: 'Em andamento', done: 'Concluída', low: 'Baixa', normal: 'Normal', high: 'Alta', urgent: 'Urgente' }
 const teams = ['Louvor', 'Litúrgico', 'Técnica', 'Mídia', 'Comunicação', 'Comissão']
 let state = { plans: [], buckets: [], tasks: [], events: [], routines: [] }
@@ -54,6 +56,7 @@ function pmPlanCycleBar(plan){
   const config=planCycleConfig(plan.id)
   if(!config)return null
   const cycle=pmPlanCycle(plan.id),items=pmPlanCycleTasks(plan.id)
+  const windowDates=planCycleWindow(config,plan,cycle)
   const finished=items.filter(task=>task.status==='done').length
   const box=node('section',{class:'pm-cycle-bar','aria-label':'Período do plano recorrente'})
   const heading=node('div',{class:'pm-cycle-heading'},[
@@ -65,7 +68,7 @@ function pmPlanCycleBar(plan){
   const setCycle=next=>{pmPlanCycleSelected.set(plan.id,next);render()}
   const older=button('‹',()=>setCycle(previousPlanCycle(config,cycle)),'pm-cycle-arrow')
   older.setAttribute('aria-label','Ver ciclo anterior')
-  const label=node('strong',{class:'pm-cycle-date',text:formatDate(cycle)})
+  const label=node('strong',{class:'pm-cycle-date',text:windowDates ? formatDate(windowDates.start)+' – '+formatDate(windowDates.due) : formatDate(cycle)})
   const newer=button('›',()=>setCycle(nextPlanCycle(config,cycle)),'pm-cycle-arrow')
   newer.setAttribute('aria-label','Ver próximo ciclo')
   const latest=button('Ciclo atual',()=>{pmPlanCycleSelected.delete(plan.id);render()},'pm-cycle-today')
@@ -2564,6 +2567,7 @@ function fillBucketSelect(select, planId, current = '') {
 function openTask(task = null, defaults = {}) {
   if (!task && !requirePlan()) return
   $('task-form').reset()
+  formWizards.task?.reset()
   $('task-feedback').textContent = ''
   if (task?.reviewRequired) $('task-feedback').textContent = task.reviewReason
   const current = task || { title: '', planId: defaults.planId || selectedPlan() || activePlans()[0]?.id, bucketId: defaults.bucketId || '', startDate: defaults.startDate || '', dueDate: defaults.dueDate || '', status: 'todo', priority: 'normal', dateMode: 'manual', ...defaults }
@@ -2916,6 +2920,7 @@ $('complete-task-button').addEventListener('click', () => {
   $('task-status').value = status
   const bucket = standardBucket(value('task-plan'), status)
   if (bucket) $('task-bucket').value = bucket.id
+  formWizards.task?.last()
   $('task-form').requestSubmit()
 })
 async function deleteTask(task) {
@@ -2926,6 +2931,7 @@ $('delete-task-button').addEventListener('click', () => deleteTask(byId('tasks',
 
 function openPlan(plan = null, defaults = {}) {
   $('plan-form').reset()
+  formWizards.plan?.reset()
   $('plan-feedback').textContent = ''
   $('plan-id').value = plan?.id || ''
   $('plan-dialog').dataset.version = plan?.version ?? ''
@@ -2936,10 +2942,16 @@ function openPlan(plan = null, defaults = {}) {
   $('plan-repeat-unit').value=repeatSettings?.unit||'week'
   $('plan-repeat-interval').value=String(repeatSettings?.interval||1)
   $('plan-repeat-anchor').value=repeatSettings?.anchor||pmDefaultPlanCycleAnchor('week')
-  pmUpdatePlanRepeatFields()
   $('plan-description').value = plan?.description || ''
-  $('plan-start').value = plan?.startDate || defaults.startDate || ''
-  $('plan-due').value = plan?.dueDate || defaults.dueDate || ''
+  const weekSettings=repeatSettings?.unit==='week'?repeatSettings:null
+  const fallbackStep=(weekSettings?.interval||1)*7
+  const fallbackAnchor=weekSettings?.anchor||$('plan-repeat-anchor').value
+  $('plan-start').value = plan?.startDate || defaults.startDate ||
+    (value('plan-kind')==='recurring' ? addDays(fallbackAnchor,-(fallbackStep-1)) : '')
+  $('plan-due').value = plan?.dueDate || defaults.dueDate ||
+    (value('plan-kind')==='recurring' ? fallbackAnchor : '')
+  $('plan-start').dataset.previous=$('plan-start').value
+  pmUpdatePlanRepeatFields()
   $('plan-buckets').value = plan ? state.buckets.filter(bucket => bucket.planId === plan.id && !bucket.deleted).sort((a, b) => a.order - b.order).map(bucket => bucket.name).join('\n') : 'A fazer\nEm andamento\nConcluído'
   $('plan-advanced').open = !!plan || !!defaults.startDate
   $('delete-plan-button').hidden = !plan
