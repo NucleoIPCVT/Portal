@@ -2994,7 +2994,17 @@ async function deleteTask(task) {
     }else if(choice==='single') {
       const family=taskPlanFamily(task)
       const occurrence=task.id===family?keepPlanFamilySource(task):{...task,deleted:true}
-      await action(()=>save('tasks',occurrence),'Somente esta ocorrência foi excluída. As próximas serão mantidas.')
+      await action(async()=>{
+        // Compatibilidade: uma origem excluída antes desta melhoria pode ter
+        // cópias futuras já criadas. A escolha explícita "somente esta"
+        // conserva a origem como modelo invisível para os próximos ciclos.
+        const original=byId('tasks',family)
+        if(task.id!==family&&original?.deleted&&original.templateKey!=='plan-family-source-v1'
+          &&original.dueDate&&!byId('tasks',planFamilyStopId(task.planId,family))) {
+          await save('tasks',keepPlanFamilySource(original))
+        }
+        await save('tasks',occurrence)
+      },'Somente esta ocorrência foi excluída. As próximas serão mantidas.')
     }else{
       const family=taskPlanFamily(task)
       const cutoff=cycleForPlanTask(recurring,task)
