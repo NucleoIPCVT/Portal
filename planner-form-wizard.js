@@ -9,10 +9,22 @@ export function setupPlannerWizards() {
       { title: 'Revisão', hint: 'Confira antes de concluir', selectors: [] }
     ],
     task: [
-      { title: 'Informações', hint: 'Título, plano e prazo', selectors: ['.task-primary-title', '.task-primary-grid'] },
-      { title: 'Equipe e repetição', hint: 'Responsáveis e recorrência', selectors: ['.task-repeat-section', '.task-people-section'] },
-      { title: 'Detalhes', hint: 'Descrição, evento e dependências', selectors: ['.task-event-section', '#task-details', '#task-advanced', '#task-history'] },
-      { title: 'Revisão', hint: 'Confira a demanda', selectors: [] }
+      {
+        title: 'Informações',
+        hint: 'Identificação, datas e posição no quadro',
+        selectors: ['.task-primary-title', '.task-primary-grid', '#task-advanced label[for="task-start"]', '#task-advanced label[for="task-bucket"]']
+      },
+      {
+        title: 'Execução',
+        hint: 'Orientações, checklist, evento e dependências',
+        selectors: ['#task-details .task-editor-section', '.task-event-section', '#legacy-relative-dates', '#task-dependencies-title', '#task-dependencies-editor']
+      },
+      {
+        title: 'Equipe e recorrência',
+        hint: 'Responsáveis, repetição e rodízios',
+        selectors: ['#task-advanced label[for="task-team"]', '.task-people-section', '.task-repeat-section', '#task-rotation-roster', '#task-rotation-preview-wrap']
+      },
+      { title: 'Revisão', hint: 'Confira antes de salvar', selectors: ['#task-history'] }
     ]
   };
   const controllers = {};
@@ -62,12 +74,18 @@ export function setupPlannerWizards() {
     const panels = el('div', 'pm-wizard-panels');
     let current = 0;
 
+    // Guardar todas as referências antes de mover o DOM evita perder campos
+    // que originalmente estavam dentro de <details> ou de outras seções.
+    const stageFields = stages.map(step => step.selectors.map(source => {
+      const node = body.querySelector(source);
+      if (!node) throw new Error('Campo do assistente não encontrado: ' + source);
+      return node;
+    }));
+
     const allPanels = stages.map((step, index) => {
       const panel = el('section', 'pm-wizard-panel');
       panel.setAttribute('aria-label', step.title);
-      for (const source of step.selectors) {
-        const node = body.querySelector(source);
-        if (!node) throw new Error('Campo do assistente não encontrado: ' + source);
+      for (const node of stageFields[index]) {
         panel.append(node);
       }
       if (index === stages.length - 1) {
@@ -80,6 +98,16 @@ export function setupPlannerWizards() {
     });
     const oldAdvanced = document.getElementById('plan-advanced');
     if (name === 'plan' && oldAdvanced) oldAdvanced.hidden = true;
+    if (name === 'task') {
+      // Os antigos <details> deixam de aparecer como blocos "Mais opções".
+      // Os campos foram realocados nas etapas, preservando os seus IDs.
+      for (const id of ['task-details', 'task-advanced']) {
+        const leftover = document.getElementById(id);
+        if (leftover) leftover.hidden = true;
+      }
+      const instructions = document.getElementById('task-details-title');
+      if (instructions) instructions.textContent = 'Descrição';
+    }
 
     const previous = el('button', 'button button-quiet pm-wizard-back', 'Voltar');
     previous.type = 'button';
