@@ -321,3 +321,40 @@
     .app-bar .home-link .agenda-brand-copy{font-size:19px;}
   }
 }
+
+/* Administração da fonte: visual consistente com o Portal, sem afetar a impressão. */
+@media screen {
+  .agenda-config-button { white-space:nowrap; }
+  .agenda-config-button i { font-size:17px; }
+  .agenda-source-dialog {
+    position:fixed; inset:0; margin:auto; width:min(540px,calc(100% - 28px)); max-height:min(88vh,760px);
+    border:1px solid var(--agenda-line,#d6ddcf); border-radius:18px; padding:25px;
+    background:var(--agenda-surface,#fffaf3); color:var(--agenda-ink,#263b30);
+    box-shadow:0 28px 75px rgba(16,35,25,.24); font-family:Inter,'DM Sans',Arial,sans-serif;
+  }
+  .agenda-source-dialog::backdrop { background:rgba(20,35,27,.52); backdrop-filter:blur(3px); }
+  .agenda-source-header { display:flex; justify-content:space-between; align-items:start; gap:16px; }
+  .agenda-source-header h2 { margin:7px 0 0; font:600 31px/1.1 'Cormorant Garamond',Georgia,serif; letter-spacing:-.035em; }
+  .agenda-dialog-close { width:35px; height:35px; display:grid; place-items:center; border:1px solid var(--agenda-line,#d6ddcf); border-radius:10px; background:transparent; color:inherit; cursor:pointer; font:24px/1 Arial,sans-serif; }
+  .agenda-source-intro,.agenda-source-body p,.agenda-source-hint,.agenda-source-feedback { font:400 12px/1.6 Inter,Arial,sans-serif; color:var(--agenda-text,#526557); }
+  .agenda-source-intro { margin:17px 0; }
+  .agenda-source-body { display:grid; gap:10px; margin-top:17px; }
+  .agenda-source-body label { font-size:12px; font-weight:700; }
+  .agenda-source-body input { display:block; width:100%; min-width:0; padding:12px; border:1px solid var(--agenda-line,#d6ddcf); border-radius:9px; background:var(--agenda-surface,#fffaf3); color:inherit; font:13px/1.45 Inter,Arial,sans-serif; }
+  .agenda-source-body input:focus-visible { outline:2px solid #8aaf87; outline-offset:2px; }
+  .agenda-source-hint { margin:0; }
+  .agenda-source-actions { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:10px; margin-top:8px; }
+  .agenda-source-feedback { min-height:20px; margin:18px 0 0; overflow-wrap:anywhere; }
+  .agenda-source-dialog [hidden] { display:none!important; }
+  html[data-portal-theme="dark"] .agenda-source-dialog { background:#27382f; border-color:#56725c; color:#eaf0e8; }
+  html[data-portal-theme="dark"] .agenda-source-body input { background:#26372f; border-color:#56725c; color:#eaf0e8; }
+  html[data-portal-theme="dark"] .agenda-dialog-close { border-color:#56725c; }
+  html[data-portal-theme="dark"] .agenda-source-intro,
+  html[data-portal-theme="dark"] .agenda-source-hint,
+  html[data-portal-theme="dark"] .agenda-source-body p,
+  html[data-portal-theme="dark"] .agenda-source-feedback { color:#c6d7c8; }
+  @media(max-width:760px) {
+    .agenda-source-dialog { padding:20px 18px; }
+    .agenda-config-button { width:100%; }
+  }
+}
