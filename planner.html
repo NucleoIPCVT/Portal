@@ -151,7 +151,7 @@
               </nav>
             <div class="pm-sidebar-footer">
               <button type="button" id="pm-sidebar-theme" class="pm-theme-button" aria-label="Ativar modo escuro"><svg class="pm-theme-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.8A8.4 8.4 0 0 1 8.2 3.8a8.6 8.6 0 1 0 12 12z"/></svg><svg class="pm-theme-sun" viewBox="0 0 24 24" aria-hidden="true" hidden><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg><span id="pm-sidebar-theme-label">Modo escuro</span></button>
-              <div class="sidebar-source"><span class="status-dot" aria-hidden="true"></span><span>Agenda IPCVT<br><small>Fonte oficial dos eventos</small></span></div>
+              <div class="sidebar-source"><span class="status-dot" aria-hidden="true"></span><span><span data-calendar-source-name>IPCVT Calendário</span><br><small>Fonte oficial dos eventos</small></span></div>
             </div>
             <details class="mobile-more-menu" id="mobile-more-menu">
               <summary>Mais</summary>
@@ -261,7 +261,7 @@
           </section>
           <section class="task-editor-section task-event-section" aria-labelledby="task-organization-title">
             <h3 id="task-organization-title">Evento-alvo <span class="optional-tag">Opcional</span></h3>
-            <label class="field" for="task-event"><span class="field-visually-hidden">Evento-alvo (opcional)</span><select id="task-event"><option value="">Sem evento-alvo</option></select><small>Vincule a um evento da Agenda IPCVT, sem alterar o prazo de entrega.</small></label>
+            <label class="field" for="task-event"><span class="field-visually-hidden">Evento-alvo (opcional)</span><select id="task-event"><option value="">Sem evento-alvo</option></select><small>Vincule a um evento da agenda oficial, sem alterar o prazo de entrega.</small></label>
             <p class="task-event-context" id="task-event-hint"></p>
           </section>
           <details class="task-editor-details" id="task-details">
@@ -417,7 +417,7 @@
       <form id="calendar-settings-form">
         <div class="dialog-heading"><div><p class="eyebrow">Administração</p><h2 id="calendar-settings-title">Configurações do Planner</h2></div><button class="icon-button" type="button" data-close-dialog="calendar-settings-dialog" aria-label="Fechar configurações">×</button></div>
         <div class="dialog-body">
-          <label class="field" for="calendar-source-url">Link público da Agenda IPCVT
+          <label class="field" for="calendar-source-url">Link público do calendário oficial
             <input id="calendar-source-url" type="url" required maxlength="2000" autocomplete="off" spellcheck="false" placeholder="https://calendar.google.com/calendar/u/1?cid=...">
             <small>Este é o único calendário oficial consultado automaticamente. Use o link público obtido no Google Agenda.</small>
           </label>
