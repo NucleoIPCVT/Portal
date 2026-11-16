@@ -2969,10 +2969,39 @@ function pmDefaultPlanCycleAnchor(unit){
 }
 function pmUpdatePlanRepeatFields(){
   const recurring=value('plan-kind')==='recurring'
+  const weekly=recurring&&value('plan-repeat-unit')==='week'
+  const interval=Number(value('plan-repeat-interval'))
+  const span=Number.isInteger(interval)&&interval>0?interval*7:7
   $('plan-repeat-fields').hidden=!recurring
-  $('plan-date-fields').hidden=recurring
+  $('plan-date-fields').hidden=recurring&&!weekly
   $('plan-repeat-interval').required=recurring
-  $('plan-repeat-anchor').required=recurring
+  $('plan-repeat-anchor').required=recurring&&!weekly
+  $('plan-repeat-anchor').closest('.field').hidden=weekly
+  $('plan-start').required=weekly
+  $('plan-due').required=weekly
+  $('plan-start-caption').textContent=weekly?'Início do primeiro ciclo':'Início'
+  $('plan-due-caption').textContent=weekly?'Prazo do primeiro ciclo':'Prazo do projeto'
+  $('plan-cycle-preview').hidden=!weekly
+  if(!weekly)return
+  if(!value('plan-start')){
+    const anchor=value('plan-repeat-anchor')||pmDefaultPlanCycleAnchor('week')
+    $('plan-start').value=addDays(anchor,-(span-1))
+    $('plan-start').dataset.previous=$('plan-start').value
+  }
+  if(!value('plan-due'))$('plan-due').value=addDays(value('plan-start'),span-1)
+  const start=value('plan-start'),due=value('plan-due')
+  const end=addDays(start,span-1)
+  $('plan-repeat-anchor').value=end
+  const weekday=date=>new Intl.DateTimeFormat('pt-BR',{weekday:'long',timeZone:'UTC'})
+    .format(new Date(date+'T12:00:00Z'))
+  const correct=due>=start&&due<=end
+  $('plan-cycle-preview').textContent=correct
+    ?'Repete a cada '+interval+' semana(s). Início sempre '+weekday(start)+
+      '; prazo sempre '+weekday(due)+'. Primeiro ciclo: '+formatDate(start)+' a '+formatDate(due)+
+      '. Os próximos mantêm esses mesmos dias da semana.'
+    :'O prazo deve estar entre '+formatDate(start)+' e '+formatDate(end)+
+      ' para não ultrapassar a duração deste ciclo.'
+  $('plan-cycle-preview').classList.toggle('is-invalid',!correct)
 }
 $('plan-kind').addEventListener('change', () => {
   pmUpdatePlanRepeatFields()
@@ -2980,7 +3009,21 @@ $('plan-kind').addEventListener('change', () => {
 })
 $('plan-repeat-unit').addEventListener('change',()=>{
   if(!value('plan-id'))$('plan-repeat-anchor').value=pmDefaultPlanCycleAnchor(value('plan-repeat-unit'))
+  pmUpdatePlanRepeatFields()
 })
+$('plan-repeat-interval').addEventListener('input',pmUpdatePlanRepeatFields)
+$('plan-start').addEventListener('change',()=>{
+  if(value('plan-kind')==='recurring'&&value('plan-repeat-unit')==='week'){
+    const previous=$('plan-start').dataset.previous,next=value('plan-start')
+    if(previous&&next&&value('plan-due')){
+      const difference=Math.round((Date.parse(next+'T12:00:00Z')-Date.parse(previous+'T12:00:00Z'))/86400000)
+      if(Number.isFinite(difference))$('plan-due').value=addDays(value('plan-due'),difference)
+    }
+  }
+  $('plan-start').dataset.previous=value('plan-start')
+  pmUpdatePlanRepeatFields()
+})
+$('plan-due').addEventListener('change',pmUpdatePlanRepeatFields)
 $('plan-form').addEventListener('submit', async event => {
   event.preventDefault()
   const submit = event.submitter
@@ -2990,16 +3033,23 @@ $('plan-form').addEventListener('submit', async event => {
     if (value('plan-id') && !old) throw new Error('Este plano não está mais disponível. Feche a janela e atualize a tela.')
     if (old && String(old.version) !== $('plan-dialog').dataset.version) throw new Error('Este plano foi atualizado. Feche e abra novamente.')
     const wantsRecurrence=value('plan-kind')==='recurring'
-    const settings=wantsRecurrence?{
-      unit:value('plan-repeat-unit'),interval:Number(value('plan-repeat-interval')),
-      anchor:value('plan-repeat-anchor')
-    }:null
+    const unit=value('plan-repeat-unit')
+    const interval=Number(value('plan-repeat-interval'))
+    const weekly=wantsRecurrence&&unit==='week'
+    const firstStart=value('plan-start'),firstDue=value('plan-due')
+    const anchor=weekly?addDays(firstStart,interval*7-1):value('plan-repeat-anchor')
+    if(weekly&&(!firstStart||!firstDue||!Number.isInteger(interval)||interval<1
+      ||interval>999||firstDue<firstStart||firstDue>anchor)){
+      throw new Error('O primeiro ciclo semanal precisa de início e prazo dentro do intervalo escolhido.')
+    }
+    const settings=wantsRecurrence?{unit,interval,anchor}:null
     const plan = { ...(old || {}), id: old?.id || newId(), name: value('plan-name'),
       // A configuração recorrente ocupa um registro técnico compatível
       // com as regras atuais do Firestore.
       kind:wantsRecurrence?'continuous':value('plan-kind'),
       description:value('plan-description'),
-      startDate:value('plan-start'),dueDate:value('plan-due') }
+      startDate:weekly||!wantsRecurrence?firstStart:'',
+      dueDate:weekly||!wantsRecurrence?firstDue:'' }
     const existingCycleConfig=old?state.tasks.find(task=>task.id===planCycleConfigId(plan.id)):null
     if(settings)planCycleConfigRecord(plan,settings,existingCycleConfig)
     if (!plan.name || plan.name.length > 120 || (plan.startDate && plan.dueDate && plan.startDate > plan.dueDate)) throw new Error('Confira o nome e as datas do plano.')
