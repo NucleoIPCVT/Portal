@@ -30,7 +30,7 @@ import { createTaskEditor } from './planner-task-editor.js?v=20261113-rodizio-v1
 import { taskCreationContext } from './planner-task-context.js'
 import { BOARD_GROUPINGS, groupBoardTasks, moveBoardTask } from './planner-board.js?v=20261112-planner-01'
 import { GoogleCalendarClient } from './planner-google.js'
-import { publicCalendar, readPublicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl, summarizeCalendarEvents, diffCalendarEvents } from './planner-public.js?v=20261116-name-google-v2'
+import { publicCalendar, readPublicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl, summarizeCalendarEvents, diffCalendarEvents } from './planner-public.js?v=20261116-name-google-v3'
 
 const $ = id => document.getElementById(id)
 const labels = { todo: 'Não iniciada', doing: 'Em andamento', done: 'Concluída', low: 'Baixa', normal: 'Normal', high: 'Alta', urgent: 'Urgente' }
@@ -2509,6 +2509,7 @@ $('pm-logout').addEventListener('click',()=>$('logout-button').click())
 
 function render() {
   if (session.status !== 'authorized') return
+  document.querySelectorAll('[data-calendar-source-name]').forEach(label => { label.textContent = officialCalendarName() })
   document.body.classList.toggle('pm-gantt-active',currentView==='gantt')
   refreshFilters()
   const selected = activePlans().find(plan => plan.id === selectedPlan())
@@ -2527,7 +2528,7 @@ function render() {
   $('view-title').textContent = withinPlan ? selected.name : title
   $('view-title').parentElement.querySelector('.view-heading-note').textContent = withinPlan
     ? selected.description || 'Organize e acompanhe todas as tarefas deste plano.'
-    : ({ home: 'O que você precisa acompanhar hoje.', mine: 'Suas tarefas, em todos os planos.', plans: 'Escolha um plano para começar a trabalhar.', events: 'Datas oficiais para consulta e referência das tarefas.', 'calendar-all': ({week:'Da preparação durante a semana ao culto de domingo, com a Agenda IPCVT como referência.',month:'Visualize os compromissos do mês, unindo a Agenda IPCVT às demandas.',year:'Acompanhe os eventos e as demandas ao longo do ano.'})[calendarMode], list: 'Todas as tarefas, de todos os planos.', integrations: 'Fonte oficial e sincronização do calendário.', routines: 'Demandas que se repetem semanalmente.' })[currentView] || ''
+    : ({ home: 'O que você precisa acompanhar hoje.', mine: 'Suas tarefas, em todos os planos.', plans: 'Escolha um plano para começar a trabalhar.', events: 'Datas oficiais para consulta e referência das tarefas.', 'calendar-all': ({week:'Da preparação durante a semana ao culto de domingo, com ' + officialCalendarName() + ' como referência.',month:'Visualize os compromissos do mês, unindo ' + officialCalendarName() + ' às demandas.',year:'Acompanhe os eventos e as demandas ao longo do ano.'})[calendarMode], list: 'Todas as tarefas, de todos os planos.', integrations: 'Fonte oficial e sincronização do calendário.', routines: 'Demandas que se repetem semanalmente.' })[currentView] || ''
   document.querySelectorAll('[data-view]').forEach(control=>{
     const group=currentView==='board'?'list':currentView
     const view=control.dataset.view
