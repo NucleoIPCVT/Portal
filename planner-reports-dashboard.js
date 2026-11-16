@@ -130,7 +130,7 @@ function weekly(model,rerender,auditReady){
     STATE.focus=type;STATE.week=wk.key;STATE.visible=12;STATE.bucketKey='';rerender();jumpToTasks()
    },'ip-week-bar '+cls)
    b.disabled=type==='weekDone'&&!auditReady
-   b.style.height=type==='weekDone'&&!auditReady?'0%':Math.max(3,quantity/max*100)+'%'
+   b.style.height=type==='weekDone'&&!auditReady||quantity===0?'0%':Math.max(3,quantity/max*100)+'%'
    b.title=(type==='weekPlanned'?'Prazos':'Conclusões')+' na semana de '+labelDate(wk.key)+': '+quantity+'. Clique para detalhar.'
    b.setAttribute('aria-label',b.title)
    barArea.append(b)
