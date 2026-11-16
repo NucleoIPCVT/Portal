@@ -707,3 +707,137 @@ body.pm-active .pm-kanban-task .pm-kanban-title-line .pm-kanban-title {
 @media(prefers-reduced-motion:reduce) {
   #pm-task-update-toast { animation:none; }
 }
+
+/* Escolha explícita da exclusão em planos recorrentes. */
+.pm-recurring-delete-dialog {
+  position:fixed;
+  inset:0;
+  margin:auto;
+  width:min(490px,calc(100vw - 28px));
+  max-height:min(86dvh,700px);
+  border:1px solid #cdd8cc;
+  border-radius:7px;
+  padding:0;
+  background:#f8faf7;
+  color:#293e30;
+  box-shadow:0 25px 75px rgba(12,28,18,.26);
+}
+.pm-recurring-delete-dialog .dialog-heading {
+  padding:21px 24px 18px;
+  background:#eff3ed;
+  border-bottom:1px solid #dce5d9;
+}
+.pm-recurring-delete-dialog .dialog-heading h2 {
+  margin:0;
+  font:700 18px/1.3 Inter,Arial,sans-serif;
+  letter-spacing:-.025em;
+  color:#2d4e39;
+}
+.pm-recurring-delete-dialog .dialog-body {
+  padding:23px 24px 18px;
+  background:#f8faf7;
+}
+.pm-recurring-delete-dialog #recurring-delete-message {
+  margin:0 0 10px;
+  font-size:13px;
+  line-height:1.55;
+  color:#3e5844;
+}
+.pm-recurring-delete-dialog .pm-recurring-delete-hint {
+  margin:0 0 17px;
+  font:400 11px/1.5 Inter,Arial,sans-serif;
+  color:#728576;
+}
+.pm-recurring-delete-dialog .pm-recurring-delete-options {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:9px;
+}
+.pm-recurring-delete-dialog .pm-recurring-delete-option {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:5px;
+  width:100%;
+  padding:13px 15px;
+  background:#f0f5ee;
+  border:1px solid #d4dfd3;
+  border-radius:5px;
+  text-align:left;
+  color:#294f35;
+  cursor:pointer;
+}
+.pm-recurring-delete-dialog .pm-recurring-delete-option:hover,
+.pm-recurring-delete-dialog .pm-recurring-delete-option:focus-visible {
+  background:#e7f0e6;
+  border-color:#91b39a;
+  outline:0;
+}
+.pm-recurring-delete-dialog .pm-recurring-delete-option strong {
+  font:700 12px/1.4 Inter,Arial,sans-serif;
+}
+.pm-recurring-delete-dialog .pm-recurring-delete-option span {
+  font:400 11px/1.5 Inter,Arial,sans-serif;
+  color:#617864;
+}
+.pm-recurring-delete-dialog .pm-recurring-delete-option-danger {
+  border-color:#e6d0c8;
+  background:#fbf4f1;
+  color:#8a4038;
+}
+.pm-recurring-delete-dialog .pm-recurring-delete-option-danger:hover,
+.pm-recurring-delete-dialog .pm-recurring-delete-option-danger:focus-visible {
+  border-color:#d09a8e;
+  background:#f9ece8;
+}
+.pm-recurring-delete-dialog .pm-recurring-delete-option-danger span { color:#89645e; }
+.pm-recurring-delete-dialog .dialog-footer {
+  padding:13px 24px;
+  background:#eff3ed;
+  border-top:1px solid #dce5d9;
+}
+.pm-recurring-delete-dialog .dialog-footer .button {
+  min-height:35px;
+  padding:8px 16px;
+  border-radius:5px;
+}
+:root[data-theme="dark"] .pm-recurring-delete-dialog,
+:root[data-theme="dark"] .pm-recurring-delete-dialog .dialog-body {
+  color:#e6f0e7;
+  background:#27352b;
+  border-color:#4f6853;
+}
+:root[data-theme="dark"] .pm-recurring-delete-dialog .dialog-heading,
+:root[data-theme="dark"] .pm-recurring-delete-dialog .dialog-footer {
+  background:#303e34;
+  border-color:#4f6853;
+}
+:root[data-theme="dark"] .pm-recurring-delete-dialog .dialog-heading h2,
+:root[data-theme="dark"] .pm-recurring-delete-dialog #recurring-delete-message {
+  color:#e1efe4;
+}
+:root[data-theme="dark"] .pm-recurring-delete-dialog .pm-recurring-delete-hint { color:#aebfb1; }
+:root[data-theme="dark"] .pm-recurring-delete-dialog .pm-recurring-delete-option {
+  color:#d5e9d8;
+  background:#324638;
+  border-color:#546d59;
+}
+:root[data-theme="dark"] .pm-recurring-delete-dialog .pm-recurring-delete-option:hover {
+  background:#3b5842;
+}
+:root[data-theme="dark"] .pm-recurring-delete-dialog .pm-recurring-delete-option span {
+  color:#b8d0bc;
+}
+:root[data-theme="dark"] .pm-recurring-delete-dialog .pm-recurring-delete-option-danger {
+  color:#f7cebe;
+  background:#483733;
+  border-color:#85584d;
+}
+:root[data-theme="dark"] .pm-recurring-delete-dialog .pm-recurring-delete-option-danger span {
+  color:#e1b8aa;
+}
+@media(max-width:620px) {
+  .pm-recurring-delete-dialog .dialog-heading { padding:17px 18px; }
+  .pm-recurring-delete-dialog .dialog-body { padding:19px 18px; }
+  .pm-recurring-delete-dialog .dialog-footer { padding:12px 18px; }
+}
