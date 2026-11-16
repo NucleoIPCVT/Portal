@@ -23,7 +23,8 @@
     <link rel="stylesheet" href="planner-cards-dependencies.css?v=20261113-cards-deps-v1">
     <link rel="stylesheet" href="planner-unified-routines-gantt.css?v=20261113-unified-v1">
     <link rel="stylesheet" href="planner-team-management.css?v=20261113-teams-v1">
-    <script type="module" src="planner.js?v=20261116-calendar-name-v3"></script>
+    <link rel="stylesheet" href="planner-form-wizard.css?v=20261116-v1">
+    <script type="module" src="planner.js?v=20261116-wizard-cycles-v1"></script>
   </head>
   <body data-interface="planner-ipcvt-verde-creme" data-revisao="20261113-teatro-v1">
     <a class="skip-link" href="#main-content">Ir para o conteúdo</a>
@@ -189,7 +190,7 @@
             <label class="field" for="task-priority">Prioridade<select id="task-priority"><option value="low">Baixa</option><option value="normal" selected>Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option></select></label>
           </div>
           <section class="task-editor-section task-repeat-section" aria-labelledby="task-repeat-title">
-            <h3 id="task-repeat-title">Repetição <span class="optional-tag">Opcional</span></h3>
+            <h3 id="task-repeat-title"><span id="task-repeat-title-text">Repetição</span> <span class="optional-tag">Opcional</span></h3>
             <label class="field" for="task-repeat-mode"><span class="field-visually-hidden">Repetição da demanda</span><select id="task-repeat-mode" aria-label="Repetição da demanda" aria-describedby="task-repeat-hint"><option value="none">Não repetir</option><option value="repeat">Repetir</option></select></label>
             <div id="task-repeat-options" class="task-repeat-options" hidden>
               <span>Repetir a cada</span>
@@ -209,7 +210,7 @@
               </select>
             </label>
             <div id="task-rotation-settings" class="task-rotation-settings" hidden>
-              <label class="field" for="task-repeat-advance"><span>Criar próxima ocorrência</span>
+              <label id="task-repeat-advance-field" class="field" for="task-repeat-advance"><span>Criar próxima ocorrência</span>
                 <select id="task-repeat-advance">
                   <option value="completion">Quando a ocorrência anterior for concluída</option>
                   <option value="scheduled">Na data programada (recomendado para rodízios)</option>
@@ -267,6 +268,7 @@
               <label class="field" for="task-offset">Dias em relação ao evento<input id="task-offset" type="number" min="-365" max="365" step="1" value="0" aria-describedby="offset-help"><small id="offset-help">Recurso antigo, preservado apenas para tarefas já existentes.</small></label>
             </div>
           </details>
+          <details id="task-history" hidden><summary>Histórico de alterações</summary></details>
           <p id="task-feedback" class="feedback" role="status" aria-live="polite"></p>
         </div>
         <div class="dialog-footer"><button id="delete-task-button" class="button button-danger" type="button" hidden>Excluir demanda</button><span class="footer-spacer"></span><button id="complete-task-button" class="button button-complete" type="button" hidden>Concluir demanda</button><button class="button button-quiet" type="button" data-close-dialog="task-dialog">Cancelar</button><button class="button button-primary" type="submit">Salvar</button></div>
@@ -283,8 +285,17 @@
           <label class="field" for="plan-description">Descrição <span class="optional-tag">Opcional</span><textarea id="plan-description" rows="3" maxlength="5000" placeholder="Que tipos de demandas serão organizados aqui?"></textarea></label>
           <details id="plan-advanced" class="task-editor-advanced">
             <summary>Configurações do plano (opcional)</summary>
-            <label class="field" for="plan-kind">Tipo de trabalho<select id="plan-kind"><option value="continuous">Trabalho contínuo</option><option value="project">Projeto com prazo</option></select></label>
-            <div class="field-grid"><label class="field" for="plan-start">Início<input id="plan-start" type="date"></label><label class="field" for="plan-due">Prazo do projeto<input id="plan-due" type="date"></label></div>
+            <label class="field" for="plan-kind">Tipo de trabalho<select id="plan-kind"><option value="continuous">Trabalho contínuo</option><option value="project">Projeto com prazo</option><option value="recurring">Plano recorrente</option></select></label>
+            <section class="pm-plan-repeat" id="plan-repeat-fields" hidden aria-label="Configuração da recorrência do plano">
+              <p>O plano funciona como modelo permanente. Cada período terá suas próprias demandas, com progresso e histórico independentes.</p>
+              <div class="field-grid">
+                <label class="field" for="plan-repeat-interval">Repetir a cada<input id="plan-repeat-interval" type="number" min="1" max="999" step="1" value="1"></label>
+                <label class="field" for="plan-repeat-unit">Unidade<select id="plan-repeat-unit"><option value="day">Dia(s)</option><option value="week" selected>Semana(s)</option><option value="month">Mês(es)</option></select></label>
+              </div>
+              <label class="field" for="plan-repeat-anchor">Referência do ciclo<input id="plan-repeat-anchor" type="date"><small>Para repetições mensais ou diárias, escolha a data que serve de referência.</small></label>
+              <small class="pm-repeat-migration">Ao converter um plano existente, as demandas já registradas permanecem no histórico. As próximas execuções serão controladas pelo plano, sem repetir cada demanda duas vezes.</small>
+            </section>
+            <div class="field-grid" id="plan-date-fields"><label class="field" for="plan-start"><span id="plan-start-caption">Início</span><input id="plan-start" type="date"></label><label class="field" for="plan-due"><span id="plan-due-caption">Prazo do projeto</span><input id="plan-due" type="date"></label></div><p id="plan-cycle-preview" class="pm-cycle-preview" aria-live="polite" hidden></p>
             <label class="field" for="plan-buckets">Colunas do quadro<textarea id="plan-buckets" rows="4" required aria-describedby="buckets-help" placeholder="A fazer&#10;Em andamento&#10;Concluído"></textarea><small id="buckets-help">Já preenchemos A fazer, Em andamento e Concluído. Altere somente se precisar de outras etapas.</small></label>
           </details>
           <p id="plan-feedback" class="feedback" role="status" aria-live="polite"></p>
