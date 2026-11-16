@@ -116,7 +116,9 @@ function activityEntry(item){
   const line=$el('article','pm-report-entry')
   line.append($el('span','pm-report-dot'))
   const body=$el('div')
-  const actor=item.actor||'Sistema'
+  const actor=item.origin==='automatic'
+    ?'Geração automática (sessão de '+(item.actor||'usuário')+')'
+    :(item.actor||'Sistema')
   const verb=actions[item.action]||'alterou'
   body.append($el('strong','',actor+' '+verb+' '+(item.entityType==='tasks'?'a demanda':item.entityType==='plans'?'o plano':item.entityType==='buckets'?'o bucket':'o registro')))
   body.append($el('p','',item.title||item.entityId||'Registro'))
