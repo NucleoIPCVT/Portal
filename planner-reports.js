@@ -73,9 +73,10 @@ function daysBetween(a,b){
   const ms=Date.parse(b+'T12:00:00Z')-Date.parse(a+'T12:00:00Z')
   return Number.isFinite(ms)?Math.round(ms/86400000):0
 }
-function chart(title,entries,onSelect){
+function chart(title,entries,onSelect,showZeros=false){
   const section=panel(title)
-  const valid=entries.filter(([name,n])=>name && n>0).sort((a,b)=>b[1]-a[1]).slice(0,12)
+  const valid=entries.filter(([name,n])=>name && (showZeros||n>0))
+    .sort(showZeros?()=>0:(a,b)=>b[1]-a[1]).slice(0,12)
   if(!valid.length){section.append(muted('Sem dados para este recorte.'));return section}
   const bars=$el('div','pm-report-bars'),max=Math.max(...valid.map(v=>v[1]),1)
   valid.forEach(([name,count])=>{
@@ -202,6 +203,7 @@ export function renderPlannerReports({
   for(const item of (activities||[])){
     if(item.entityType==='tasks'&&item.action==='completed'&&!byTaskCompleted.has(item.entityId))byTaskCompleted.set(item.entityId,item)
   }
+  const risks=soon.filter(t=>t.status==='todo'||blocked.includes(t)||['high','urgent'].includes(t.priority))
   const provable=done.filter(t=>byTaskCompleted.has(t.id)&&byTaskCompleted.get(t.id).dueDate)
   const onTime=provable.filter(t=>sameDateOrEarlier(isoOf(byTaskCompleted.get(t.id).timestamp),byTaskCompleted.get(t.id).dueDate))
   const top=$el('section','pm-report-stats')
@@ -211,6 +213,7 @@ export function renderPlannerReports({
     statsCard('Atrasadas',overdue.length,'Prazo vencido',()=>{tab='bottlenecks';rerender()}),
     statsCard('Próximos 7 dias',soon.length,'Entregas pendentes',()=>{tab='bottlenecks';rerender()}),
     statsCard('Bloqueadas',blocked.length,'Dependências pendentes',()=>{tab='bottlenecks';rerender()}),
+    statsCard('Em risco',risks.length,'Vencendo sem segurança',()=>{tab='bottlenecks';rerender()}),
     statsCard('Sem responsável',unassigned.length,'Pendências sem atribuição',()=>{tab='teams';rerender()})
   )
   root.append(top)
@@ -233,7 +236,34 @@ export function renderPlannerReports({
       planCounts.set(p,(planCounts.get(p)||0)+1)
     }
     overview.append(chart('Volume por plano',[...planCounts]))
+    // Séries baseadas em conclusões efetivamente registradas, nunca em datas presumidas.
+    const mondayOf=iso=>{
+      const date=new Date(iso+'T12:00:00Z')
+      const dow=(date.getUTCDay()+6)%7
+      date.setUTCDate(date.getUTCDate()-dow)
+      return date.toISOString().slice(0,10)
+    }
+    const currentMonday=mondayOf(today)
+    const weeks=Array.from({length:8},(_,i)=>{
+      const key=new Date(Date.parse(currentMonday+'T12:00:00Z')-(7-i)*7*86400000).toISOString().slice(0,10)
+      return [key,0]
+    })
+    const byWeek=new Map(weeks)
+    for(const item of (activities||[]))if(item.entityType==='tasks'&&item.action==='completed'){
+      const day=isoOf(item.timestamp),week=day&&mondayOf(day)
+      if(byWeek.has(week))byWeek.set(week,byWeek.get(week)+1)
+    }
+    overview.append(chart('Conclusões registradas por semana',weeks.map(([d])=>[fullDate(d).slice(0,5),byWeek.get(d)]),null,true))
     root.append(overview)
+    const durations=done.map(t=>{
+      const created=isoOf(t.createdAt),completed=isoOf(byTaskCompleted.get(t.id)?.timestamp)
+      return created&&completed&&completed>=created?daysBetween(created,completed):null
+    }).filter(days=>days!==null)
+    const mean=durations.length?Math.round(durations.reduce((a,b)=>a+b,0)/durations.length*10)/10:null
+    root.append(note((mean===null
+      ?'Tempo médio de conclusão: aguardando registros históricos suficientes.'
+      :'Tempo médio de conclusão: '+mean.toLocaleString('pt-BR')+' dia(s), calculado em '+durations.length+' demanda(s) com datas verificáveis.')
+      +' As conclusões por semana consideram somente eventos registrados no histórico.'))
     root.append(note(provable.length
       ?'Entregas no prazo com data auditável: '+onTime.length+' de '+provable.length+' ('+Math.round(onTime.length/provable.length*100)+'%). Demandas antigas sem registro de conclusão não entram nessa taxa.'
       :'A taxa histórica de entregas no prazo ficará disponível à medida que novas conclusões forem registradas. Não é possível reconstruí-la com segurança só pelo status atual.'))
@@ -243,9 +273,20 @@ export function renderPlannerReports({
     const critical=panel('Dependências que bloqueiam entregas')
     showTasks(critical,blocked.sort((a,b)=>(a.dueDate||'9999').localeCompare(b.dueDate||'9999')),openTask,activePlans)
     grid.append(critical)
+    const sources=new Map()
+    for(const t of blocked)for(const depId of t.dependencyIds||[]){
+      const other=byId.get(depId)
+      if(other?.status==='done')continue
+      const label=other?.title||'Dependência ausente'
+      sources.set(label,(sources.get(label)||0)+1)
+    }
+    grid.append(chart('Demandas que mais bloqueiam outras',[...sources].map(([name,count])=>[name,count])))
     const delayed=panel('Atrasos que precisam de atenção')
     showTasks(delayed,overdue.sort((a,b)=>a.dueDate.localeCompare(b.dueDate)),openTask,activePlans)
     grid.append(delayed)
+    const atRisk=panel('Demandas em risco nesta semana')
+    showTasks(atRisk,risks.sort((a,b)=>(a.dueDate||'9999').localeCompare(b.dueDate||'9999')),openTask,activePlans)
+    grid.append(atRisk)
     const idle=panel('Demandas sem atualização há mais de 7 dias')
     const stale=pending.filter(t=>{const d=isoOf(t.updatedAt);return d&&daysBetween(d,today)>=7}).sort((a,b)=>isoOf(a.updatedAt).localeCompare(isoOf(b.updatedAt)))
     showTasks(idle,stale,openTask,activePlans)
