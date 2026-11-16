@@ -10,7 +10,7 @@ import { createGoogleLogin } from './ipcvt-google-login.js?v=20261112-google-dir
 import { nextRecurringTask, taskRecurrence, rotationConfigId, rotationConfigRecord,
   parseRotationConfig, recurrenceOccurrenceAt, scheduledUpcomingDates
 } from './planner-recurrence.js?v=20261113-plan-rotation-v1'
-import {parsePlanCycleConfig,missingPlanCycleTasks} from './planner-plan-cycles.js?v=20261113-plan-cycle-v3'
+import {parsePlanCycleConfig,missingPlanCycleTasks,planFamilyStopId} from './planner-plan-cycles.js?v=20261116-delete-scope-v1'
 
 const googleLogin = createGoogleLogin({
   getAccounts: () => window.google?.accounts,
@@ -235,10 +235,18 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
         const generated=await runTransaction(db,async tx=>{
           const configDoc=await tx.get(itemRef('tasks',config.id))
           const planDoc=await tx.get(itemRef('plans',config.planId))
+          const sourceDoc=await tx.get(itemRef('tasks',draft.sourceTaskId))
+          const stopDoc=await tx.get(itemRef('tasks',planFamilyStopId(config.planId,draft.sourceTaskId)))
           const target=itemRef('tasks',draft.id)
           const exists=await tx.get(target)
           if(exists.exists()||!configDoc.exists()||!planDoc.exists()||planDoc.data().deleted||
             parsePlanCycleConfig({...configDoc.data(),id:config.id})?.templateKey!==config.templateKey)return
+          // Proteção transacional contra outros dispositivos que ainda não leram a interrupção.
+          if(sourceDoc.exists()&&sourceDoc.data().deleted&&
+            sourceDoc.data().templateKey!=='plan-family-source-v1')return
+          if(stopDoc.exists()&&stopDoc.data().deleted&&
+            stopDoc.data().templateKey==='plan-family-stop-v1'&&
+            stopDoc.data().cycleKey<=draft.cycleKey)return
           const actor=requireSession()
           tx.set(target,{...payloadFor('tasks',draft),version:1,
             createdAt:serverTimestamp(),createdBy:actor.email,
