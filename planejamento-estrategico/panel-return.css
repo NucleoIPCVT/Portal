@@ -1,0 +1,19 @@
+
+/* Botão único de retorno da ferramenta para o Painel da Comissão. */
+#strategic-panel-return {
+  position: fixed; right: 20px; bottom: 20px; z-index: 9999;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 17px; border-radius: 10px; border: 1px solid #aac9b4;
+  box-shadow: 0 8px 28px #10271d32; background: #e7f2e8; color: #284f3a;
+  font: 700 13px Inter, Arial, sans-serif; text-decoration: none;
+}
+#strategic-panel-return:hover { background: #d5e9d9; }
+#strategic-panel-return:focus-visible { outline: 3px solid #78b48d; outline-offset: 3px; }
+body.gate-active #strategic-panel-return { display: none; }
+@media(max-width:650px) {
+  #strategic-panel-return { right: 12px; bottom: 12px; padding: 10px 12px; font-size: 12px; }
+}
+@media(prefers-color-scheme:dark) {
+  #strategic-panel-return { background: #30473a; border-color: #587b62; color: #f0f6f0; }
+  #strategic-panel-return:hover { background: #395643; }
+}
