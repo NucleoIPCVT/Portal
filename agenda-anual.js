@@ -1,4 +1,4 @@
-import { publicCalendar, readPublicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl } from './planner-public.js?v=20261116-name-google-v2';
+import { publicCalendar, readPublicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl } from './planner-public.js?v=20261116-name-google-v4';
 let calendarSource = { calendarId: publicCalendar.id, sourceUrl: publicCalendar.sourceUrl };
 let calendarRequestSequence = 0;
 
