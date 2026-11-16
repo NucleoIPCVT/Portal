@@ -26,7 +26,7 @@ import {
   recurrenceDateAt,recurrenceCycleIndex
 } from './planner-recurrence.js?v=20261113-plan-rotation-v1'
 import { todayISO, addDays, formatDate, calendarCells, computeSummary, validateTask, isOverdue, taskProgress, generateWeeklyTasks } from './planner-core.js'
-import { createTaskEditor } from './planner-task-editor.js?v=20261113-rodizio-v1'
+import { createTaskEditor } from './planner-task-editor.js?v=20261116-keep-v1'
 import { taskCreationContext } from './planner-task-context.js'
 import { BOARD_GROUPINGS, groupBoardTasks, moveBoardTask } from './planner-board.js?v=20261112-planner-01'
 import { GoogleCalendarClient } from './planner-google.js'
