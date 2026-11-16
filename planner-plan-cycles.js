@@ -91,7 +91,7 @@ export function previousPlanCycle(config,current){
 }
 export function cycleForPlanTask(config,task){
   if(!config||!task)return ''
-  if(task.templateKey===INSTANCE&&dateOK(task.cycleKey))return task.cycleKey
+  if([INSTANCE,FAMILY_SEED].includes(task.templateKey)&&dateOK(task.cycleKey))return task.cycleKey
   return currentPlanCycle(config,task.dueDate)
 }
 // Uma exclusão isolada da origem mantém o modelo técnico para os próximos ciclos.
