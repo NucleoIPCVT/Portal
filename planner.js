@@ -1,5 +1,5 @@
-import { createPlannerStore } from './planner-store.js?v=20261116-audit-v1'
-import { renderPlannerReports, renderTaskActivity } from './planner-reports.js?v=20261116-relatorios-v1'
+import { createPlannerStore } from './planner-store.js?v=20261116-audit-v2'
+import { renderPlannerReports, renderTaskActivity } from './planner-reports.js?v=20261116-relatorios-v2'
 import { downloadProjectTemplate, readProjectFile, existingProjectByName } from './planner-excel-import.js?v=20261114-project-import-v2'
 import { hasPanelEntry, clearPanelEntry } from './comissao-entrada.js?v=20261114-v1'
 
