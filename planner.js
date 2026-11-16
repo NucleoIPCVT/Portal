@@ -189,10 +189,39 @@ const byId = (kind, id) => state[kind].find(item => item.id === id)
 const newId = () => crypto.randomUUID()
 const value = id => $(id).value.trim()
 
+let taskUpdateToastTimer = null
 function notice(message, error = false) {
-  $('notice').textContent = message
-  $('notice').hidden = !message
-  $('notice').classList.toggle('error', error)
+  const generalNotice = $('notice')
+  if (!error && message === 'Demanda atualizada.') {
+    // A confirmação de edição não ocupa espaço permanente no conteúdo.
+    generalNotice.hidden = true
+    generalNotice.textContent = ''
+    generalNotice.classList.remove('error')
+    let toast = document.getElementById('pm-task-update-toast')
+    if (!toast) {
+      toast = document.createElement('div')
+      toast.id = 'pm-task-update-toast'
+      toast.className = 'pm-task-update-toast'
+      toast.setAttribute('role', 'status')
+      toast.setAttribute('aria-live', 'polite')
+      document.body.append(toast)
+    }
+    clearTimeout(taskUpdateToastTimer)
+    toast.textContent = message
+    toast.hidden = false
+    taskUpdateToastTimer = setTimeout(() => {
+      toast.hidden = true
+      taskUpdateToastTimer = null
+    }, 3500)
+    return
+  }
+  const toast = document.getElementById('pm-task-update-toast')
+  if (toast) toast.hidden = true
+  clearTimeout(taskUpdateToastTimer)
+  taskUpdateToastTimer = null
+  generalNotice.textContent = message
+  generalNotice.hidden = !message
+  generalNotice.classList.toggle('error', error)
 }
 function reportError(error) {
   notice(error?.code === 'permission-denied'
