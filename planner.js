@@ -1,4 +1,4 @@
-import { createPlannerStore } from './planner-store.js?v=20261116-audit-v2'
+import { createPlannerStore } from './planner-store.js?v=20261116-delete-scope-v1'
 import { renderTaskActivity } from './planner-reports.js?v=20261116-relatorios-v3'
 import { renderPlannerDashboard } from './planner-reports-dashboard.js?v=20261116-aging-v5'
 import { downloadProjectTemplate, readProjectFile, existingProjectByName } from './planner-excel-import.js?v=20261114-project-import-v2'
