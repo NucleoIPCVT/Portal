@@ -821,8 +821,11 @@ function renderPlans(content) {
     const card = node('article', { class: 'plan-card' })
     card.append(node('span', { class: 'plan-card-icon', 'aria-hidden': 'true', text: plan.name.slice(0, 1).toLocaleUpperCase('pt-BR') }))
     card.append(button(plan.name, () => openPlanBoard(plan.id), 'plan-card-title'))
+    const cycleDates=config?.unit==='week'?planCycleWindow(config,plan,pmPlanCycle(plan.id)):null
     card.append(node('p', { class: 'plan-card-description',
-      text:(config?'↻ Recorrente · ciclo '+formatDate(pmPlanCycle(plan.id))+' · ':'')+
+      text:(config?'↻ Recorrente · '+(cycleDates
+        ?formatDate(cycleDates.start)+' a '+formatDate(cycleDates.due)
+        :'ciclo '+formatDate(pmPlanCycle(plan.id)))+' · ':'')+
         (plan.description || (plan.kind === 'project' ? 'Projeto da Comissão' : 'Trabalho contínuo da Comissão')) }))
     card.append(node('div', { class: 'plan-card-progress-label' }, [node('span', { text: finished + ' de ' + tasks.length + ' concluídas' }), node('strong', { text: percentage + '%' })]))
     card.append(node('div', { class: 'plan-card-progress' }, node('span', { style: 'width:' + percentage + '%' })))
