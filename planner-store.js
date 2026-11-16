@@ -4,7 +4,7 @@ import {
   reauthenticateWithPopup, signOut
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'
 import {
-  getFirestore, collection, doc, onSnapshot, runTransaction, serverTimestamp, setDoc
+  getFirestore, collection, doc, onSnapshot, runTransaction, serverTimestamp, setDoc, query, orderBy, limit
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'
 import { createGoogleLogin } from './ipcvt-google-login.js?v=20261112-google-direto-02'
 import { nextRecurringTask, taskRecurrence, rotationConfigId, rotationConfigRecord,
@@ -123,7 +123,7 @@ function snapshotItem(kind, item) {
 }
 
 /** Each item is a separate versioned Firestore document; no shared board snapshot is overwritten. */
-export function createPlannerStore({ onSession = () => {}, onData = () => {}, onConfig = () => {}, onConfigError = () => {}, onError = () => {} } = {}) {
+export function createPlannerStore({ onSession = () => {}, onData = () => {}, onActivity = () => {}, onActivityError = () => {}, onConfig = () => {}, onConfigError = () => {}, onError = () => {} } = {}) {
   const app = getApps().find(candidate => candidate.name === 'ipcvt-comissao') || initializeApp(firebaseConfig, 'ipcvt-comissao')
   const auth = getAuth(app)
   const db = getFirestore(app)
@@ -282,6 +282,47 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
     return doc(db, 'comissao_planner', 'main', kind, id)
   }
 
+
+  // Atividades guardadas em uma coleção própria. Falha de auditoria é exibida,
+  // mas não bloqueia a edição anterior: as permissões do Firestore podem exigir ajuste.
+  const summaryValue=value=>{
+    if(value===null||value===undefined)return ''
+    if(typeof value==='string')return value.slice(0,180)
+    if(Array.isArray(value)){
+      return value.map(part=>part&&typeof part==='object'
+        ?(part.name||part.text||part.email||part.title||part.id||'Item')
+        :String(part)).join(', ').slice(0,180)
+    }
+    if(typeof value==='object')return JSON.stringify(value).slice(0,180)
+    return String(value)
+  }
+  const activityFields=(before,after,kind)=>FIELDS[kind].filter(key=>
+    JSON.stringify(before?.[key]??null)!==JSON.stringify(after?.[key]??null)
+  ).map(field=>({field,before:summaryValue(before?.[field]),after:summaryValue(after?.[field])})).slice(0,25)
+  async function auditChange(kind,id,before,after,actor,removed=false){
+    // Templates internos são configurações de recorrência, não atividades humanas.
+    if(kind==='tasks'&&(id.startsWith('rotation_v1_')||id.startsWith('plan_cycle_v1_')))return
+    const changes=removed?[]:activityFields(before,after,kind)
+    if(before&&!removed&&!changes.length)return
+    let action=removed?'deleted':!before?'created':'updated'
+    if(kind==='plans'&&after?.deleted&&!before?.deleted)action='archived'
+    if(kind==='tasks'&&before?.status!=='done'&&after?.status==='done')action='completed'
+    if(kind==='tasks'&&before?.status==='done'&&after?.status!=='done')action='reopened'
+    try {
+      await setDoc(doc(collection(db,'comissao_planner','main','activity')),{
+        entityType:kind,entityId:id,
+        title:String(after?.title||after?.name||before?.title||before?.name||id).slice(0,160),
+        action,actor:actor.email,actorUid:actor.user.uid,
+        planId:after?.planId||before?.planId|| (kind==='plans'?id:''),
+        team:after?.team||before?.team||'',
+        dueDate:after?.dueDate||before?.dueDate||'',
+        changes, timestamp:serverTimestamp()
+      })
+    } catch(cause) {
+      onActivityError(readableError(cause))
+    }
+  }
+
   function watchData(currentSequence) {
     if (watchingData) return
     watchingData = true
@@ -297,6 +338,13 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
       clearData()
       publishSession({ status: 'error', isAdmin: false, message: problem.message })
       onError(problem)
+    }))
+    stopData.push(onSnapshot(query(collection(db,'comissao_planner','main','activity'),
+      orderBy('timestamp','desc'),limit(500)),snapshot=>{
+      if(sequence!==currentSequence||session.status!=='authorized')return
+      onActivity(snapshot.docs.map(item=>({...item.data(),id:item.id})))
+    },cause=>{
+      if(sequence===currentSequence)onActivityError(readableError(cause))
     }))
     stopData.push(onSnapshot(doc(db, 'comissao_planner', 'main', 'config', 'calendar'), snapshot => {
       if (sequence !== currentSequence || session.status !== 'authorized') return
@@ -474,9 +522,10 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
               updatedAt: serverTimestamp(), updatedBy: actor.email
             })
           }
-          return { ...fields, id: item.id, version }
+          return { value:{ ...fields, id: item.id, version }, before:previous.exists()?previous.data():null }
         })
-        return saved
+        await auditChange(kind,item.id,saved.before,fields,actor)
+        return saved.value
       } catch (cause) { throw readableError(cause) }
     },
 
@@ -492,14 +541,16 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
         throw error('Mova as demandas e rotinas deste bucket antes de excluí-lo.', 'planner-bucket-in-use')
       }
       try {
-        return await runTransaction(db, async transaction => {
+        const previousData=await runTransaction(db, async transaction => {
           const previous = await transaction.get(ref)
           const actor = requireSession()
           if (!previous.exists()) throw error('Este registro já foi excluído.', 'conflict')
           if (!Number.isInteger(expectedVersion) || previous.data().version !== expectedVersion) throw error('Este registro mudou. Abra novamente antes de excluir.', 'conflict')
           if (kind === 'events' && previous.data().source === 'google' && !actor.isAdmin) throw error('Somente um administrador pode remover eventos importados.', 'planner-admin-required')
           transaction.delete(ref)
+          return previous.data()
         })
+        await auditChange(kind,id,previousData,null,requireSession(),true)
       } catch (cause) { throw readableError(cause) }
     },
 
