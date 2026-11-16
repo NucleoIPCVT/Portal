@@ -101,8 +101,9 @@ async function readGoogleCalendarName(calendarId, fetchImpl, apiKey) {
     const response = await fetchImpl(url, { cache: 'no-store', signal: AbortSignal.timeout(12000) })
     if (!response.ok) return publicCalendar.name
     const data = await response.json()
-    return typeof data.summary === 'string' && data.summary.trim()
-      ? data.summary.trim().slice(0, 160) : publicCalendar.name
+    const name = typeof data.summary === 'string' ? data.summary.trim() : ''
+    return name && name !== calendarId && !/^[^@\\s]+@[^@\\s]+$/.test(name)
+      ? name.slice(0, 160) : publicCalendar.name
   } catch {
     return publicCalendar.name
   }
