@@ -1,4 +1,5 @@
-import { createPlannerStore } from './planner-store.js?v=20261113-plan-rotation-v1'
+import { createPlannerStore } from './planner-store.js?v=20261116-audit-v1'
+import { renderPlannerReports, renderTaskActivity } from './planner-reports.js?v=20261116-relatorios-v1'
 import { downloadProjectTemplate, readProjectFile, existingProjectByName } from './planner-excel-import.js?v=20261114-project-import-v2'
 import { hasPanelEntry, clearPanelEntry } from './comissao-entrada.js?v=20261114-v1'
 
@@ -34,6 +35,9 @@ const $ = id => document.getElementById(id)
 const labels = { todo: 'Não iniciada', doing: 'Em andamento', done: 'Concluída', low: 'Baixa', normal: 'Normal', high: 'Alta', urgent: 'Urgente' }
 const teams = ['Louvor', 'Litúrgico', 'Técnica', 'Mídia', 'Comunicação', 'Comissão']
 let state = { plans: [], buckets: [], tasks: [], events: [], routines: [] }
+let activity = []
+let activityState = 'loading'
+let activityError = ''
 const pmPlanCycleSelected = new Map()
 const planCycleConfig = planId => state.tasks.map(parsePlanCycleConfig).find(config => config?.planId === planId)
 const pmPlanCycle = planId => {
@@ -2394,6 +2398,11 @@ function pmTodayView(content) {
   content.append(pmGroup('div','pm-today-layout',[work,agenda]))
 }
 function pmRenderMain(content,tasks){
+  if(currentView==='reports')return renderPlannerReports({
+    content,tasks:liveTasks(),plans:activePlans(),buckets:state.buckets,
+    activities:activity,activityState,activityError,today:todayISO(),
+    openTask,rerender:render
+  })
   if(currentView==='calendar-all')return calendarMode==='week'?pmWeekView(content,tasks):calendarMode==='year'?pmYearView(content,tasks):pmMonthView(content,tasks)
   if(currentView==='list')return pmDemandView(content,tasks)
   if(currentView==='board')return pmKanbanView(content,tasks)
@@ -2510,7 +2519,7 @@ function render() {
   if(!sidebarPlans.children.length)sidebarPlans.append(node('span',{class:'sidebar-plan-empty',text:'Nenhum plano associado'}))
   $('search-filter').parentElement.querySelector('span').textContent = currentView === 'events' ? 'Buscar evento' : 'Buscar demanda'
   $('search-filter').placeholder = currentView === 'events' ? 'Encontre um evento pelo nome' : 'Nome, responsável ou equipe'
-  const title = { home: 'Meu dia', mine: 'Minhas tarefas', plans: 'Meus planos', events: 'Agenda da igreja', board: 'Minhas tarefas', list: 'Minhas tarefas', calendar: 'Calendário', 'calendar-all': 'Calendário', gantt: 'Gantt', sunday: 'Domingo', teams: 'Equipes', summary: 'Gráficos', integrations: 'Google Agenda', routines: 'Rotinas semanais' }[currentView]
+  const title = { home: 'Meu dia', mine: 'Minhas tarefas', plans: 'Meus planos', events: 'Agenda da igreja', board: 'Minhas tarefas', list: 'Minhas tarefas', calendar: 'Calendário', 'calendar-all': 'Calendário', gantt: 'Gantt', reports: 'Relatórios', sunday: 'Domingo', teams: 'Equipes', summary: 'Gráficos', integrations: 'Google Agenda', routines: 'Rotinas semanais' }[currentView]
   $('view-title').textContent = withinPlan ? selected.name : title
   $('view-title').parentElement.querySelector('.view-heading-note').textContent = withinPlan
     ? selected.description || 'Organize e acompanhe todas as tarefas deste plano.'
@@ -2592,6 +2601,7 @@ function openTask(task = null, defaults = {}) {
   $('legacy-relative-dates').hidden = current.dateMode !== 'event'
   $('task-advanced').open = !!current.dependencyIds?.length || current.dateMode === 'event' || (!!task && !bucketStatus(bucketName(current.bucketId)))
   $('task-details').open = !!(current.description || current.checklist?.length)
+  renderTaskActivity($('task-history'),task,activity,activityState)
   updateTaskEventFields()
   $('delete-task-button').hidden = !task
   $('complete-task-button').hidden = !task
@@ -3180,6 +3190,19 @@ $('calendar-notifications-refresh').addEventListener('click', async () => {
 })
 
 const store = createPlannerStore({
+  onActivity(items) {
+    activity = items
+    activityState = 'loaded'
+    activityError = ''
+    if(session.status === 'authorized' && currentView === 'reports')render()
+    if($('task-dialog').open)renderTaskActivity($('task-history'),byId('tasks',value('task-id')),activity,activityState)
+  },
+  onActivityError(error) {
+    activityState = 'error'
+    activityError = error?.message || 'Falha ao consultar as atividades.'
+    if(session.status === 'authorized' && currentView === 'reports')render()
+    if($('task-dialog').open)renderTaskActivity($('task-history'),byId('tasks',value('task-id')),activity,activityState)
+  },
   onSession(next) {
     if (['signed-out', 'pending', 'error'].includes(next.status)
         || (next.status === 'authorized' && !hasPanelEntry('planner', next.user?.uid))) {
@@ -3200,6 +3223,9 @@ const store = createPlannerStore({
       document.querySelectorAll('dialog[open]').forEach(dialog => dialog.close())
       if (!allowed) {
         state = { plans: [], buckets: [], tasks: [], events: [], routines: [] }
+        activity = []
+        activityState = 'loading'
+        activityError = ''
         $('view-content').replaceChildren()
         $('notice').textContent = ''
         $('notice').hidden = true
