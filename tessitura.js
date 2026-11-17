@@ -40,7 +40,7 @@ function setTheme() {
   toggle.title = toggle.getAttribute('aria-label');
   toggle.setAttribute('aria-pressed', String(dark));
   toggle.querySelector('i').className = dark ? 'ph ph-sun' : 'ph ph-moon-stars';
-  document.querySelector('meta[name="theme-color"]').content = dark ? '#263b32' : '#f9f6ef';
+  document.querySelector('meta[name="theme-color"]').content = dark ? '#45372f' : '#f6ede3';
 }
 $('voice-theme-toggle').addEventListener('click', () => {
   const next = document.documentElement.getAttribute('data-portal-theme') === 'dark' ? 'light' : 'dark';
