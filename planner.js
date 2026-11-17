@@ -34,7 +34,7 @@ import { setupPlannerWizards } from './planner-form-wizard.js?v=20261116-dates-t
 import { publicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl, summarizeCalendarEvents, diffCalendarEvents } from './planner-public.js?v=20261116-multi-source-ids-v1'
 import { plannerPublicSources, readPlannerPublicSources } from './planner-multi-public.js?v=20261117-v3'
 import { setupPlannerCalendarSources } from './planner-calendar-sources-ui.js?v=20261117-v2'
-import { selectedHomeImageMonth, setupHomeImageSettings } from './planner-home-image-settings.js?v=20261117-jan-mar-hd-v2'
+import { selectedHomeImageMonth, setupHomeImageSettings } from './planner-home-image-settings.js?v=20261117-apr-jun-aug-hd-v3'
 
 const $ = id => document.getElementById(id)
 const formWizards = setupPlannerWizards()
@@ -2521,10 +2521,10 @@ function pmEasterDate(year) {
   const day=(h+l-7*m+114)%31+1
   return String(year)+'-'+String(month).padStart(2,'0')+'-'+String(day).padStart(2,'0')
 }
-// As artes de junho a dezembro só entram no banner após uma imagem válida ser publicada.
+// Junho, julho e agosto já possuem aquarelas HD; setembro a dezembro seguem com artes provisórias.
 // Assim não exibimos banner vazio enquanto a coleção ainda está em implantação.
-const pmWatercolorReady = new Set();
-for (let m = 6; m <= 12; m++) {
+const pmWatercolorReady = new Set([6,7,8]);
+for (let m = 9; m <= 12; m++) {
   const image = new Image();
   image.onload = () => {
     pmWatercolorReady.add(m);
@@ -2554,11 +2554,11 @@ function pmHomeSeason(date) {
     1:['Semana de Oração','Em família, começamos o ano em oração e gratidão.','planner-month-01-hd.avif'],
     2:['Homem e Mulher Presbiterianos','Homens e mulheres unidos no cuidado com a igreja.','planner-month-02-hd.avif'],
     3:['Protestantismo no Brasil','Uma história de fé, Palavra e compromisso.','planner-month-03-hd.avif'],
-    4:['Páscoa','Cristo ressuscitou. Nossa esperança se renova.','planner-month-04.webp'],
+    4:['Páscoa','Cristo ressuscitou. Nossa esperança se renova.','planner-month-04-hd.avif'],
     5:['Aniversário da IPCVT','Uma história de fé e comunhão em nossa igreja.','planner-month-05.avif'],
-    6:['Comunhão e Palavra','Crescemos juntos no conhecimento da Palavra.','planner-month-06.webp'],
-    7:['Cuidado e gratidão','Servimos uns aos outros com amor e dedicação.','planner-month-07.webp'],
-    8:['Missões e Presbiterianismo','A fé reformada a serviço do Brasil e do mundo.','planner-month-08.webp'],
+    6:['Palavra de Deus','A Palavra de Deus ilumina a fé e orienta nosso serviço.','planner-month-06-hd.avif'],
+    7:['Serviço Diaconal','Servimos ao próximo com amor, compaixão e dignidade.','planner-month-07-hd.avif'],
+    8:['Presbiterianismo Nacional e Missões','A fé reformada leva esperança ao Brasil e ao mundo.','planner-month-08-hd.avif'],
     9:['Discipulado e ensino','A Palavra orienta nosso crescimento na fé.','planner-month-09.webp'],
     10:['Reforma e Palavra','Sempre reformados pela Palavra de Deus.','planner-month-10.webp'],
     11:['Ação de Graças','Gratidão pelas bênçãos e pelo cuidado de Deus.','planner-month-11.webp'],
