@@ -2824,6 +2824,7 @@ function openTask(task = null, defaults = {}) {
   $('task-feedback').textContent = ''
   if (task?.reviewRequired) $('task-feedback').textContent = task.reviewReason
   const current = task || { title: '', planId: defaults.planId || selectedPlan() || activePlans()[0]?.id, bucketId: defaults.bucketId || '', startDate: defaults.startDate || todayISO(), dueDate: defaults.dueDate || '', status: 'todo', priority: 'normal', dateMode: 'manual', ...defaults }
+  if(!task&&!current.startDate)current.startDate=todayISO()
   $('task-dialog-title').textContent = task ? 'Editar demanda' : 'Nova demanda'
   $('task-id').value = current.id || ''
   $('task-dialog').dataset.version = current.version ?? ''
@@ -3262,8 +3263,11 @@ function openPlan(plan = null, defaults = {}) {
   const weekSettings=repeatSettings?.unit==='week'?repeatSettings:null
   const fallbackStep=(weekSettings?.interval||1)*7
   const fallbackAnchor=weekSettings?.anchor||$('plan-repeat-anchor').value
-  $('plan-start').value = plan?.startDate || defaults.startDate ||
-    (value('plan-kind')==='recurring' ? addDays(fallbackAnchor,-(fallbackStep-1)) : todayISO())
+  // Um plano novo começa hoje por padrão; ao editar, preserva uma data vazia.
+  $('plan-start').value = plan
+    ? (plan.startDate || '')
+    : (defaults.startDate || (value('plan-kind')==='recurring'
+      ? addDays(fallbackAnchor,-(fallbackStep-1)) : todayISO()))
   $('plan-due').value = plan?.dueDate || defaults.dueDate ||
     (value('plan-kind')==='recurring' ? fallbackAnchor : '')
   $('plan-start').dataset.previous=$('plan-start').value
