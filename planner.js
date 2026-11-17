@@ -3177,6 +3177,7 @@ $('plan-form').addEventListener('submit', async event => {
   event.preventDefault()
   const submit = event.submitter || $('plan-form').querySelector('[type=submit]')
   submit.disabled = true
+  let transferringOwner=false
   try {
     const old = byId('plans', value('plan-id'))
     if (value('plan-id') && !old) throw new Error('Este plano não está mais disponível. Feche a janela e atualize a tela.')
@@ -3205,6 +3206,7 @@ $('plan-form').addEventListener('submit', async event => {
     // salvamento antigo compatível com regras ainda não atualizadas.
     const originalOwner=String(old?.createdBy||session.email||'').toLowerCase()
     const ownerChanged=Boolean(old?.ownerEmail)||ownerEmail!==originalOwner
+    transferringOwner=ownerEmail!==originalOwner
     const plan = { ...(old || {}), id: old?.id || newId(), name: value('plan-name'),
       ...(ownerChanged?{ownerEmail,ownerName}:{}),
       // A configuração recorrente ocupa um registro técnico compatível
@@ -3242,7 +3244,11 @@ $('plan-form').addEventListener('submit', async event => {
     $('plan-filter').value = plan.id
     $('plan-dialog').close()
     changeView('board', { preserveFilters: true })
-  } catch (error) { $('plan-feedback').textContent = error.message }
+  } catch (error) {
+    $('plan-feedback').textContent=error?.code==='permission-denied'&&transferringOwner
+      ?'Não foi possível transferir o plano. Confirme que o responsável está ativo na Comissão e que as novas regras do Firebase foram publicadas.'
+      :error.message
+  }
   finally { submit.disabled = false }
 })
 $('delete-plan-button').addEventListener('click', async () => {
