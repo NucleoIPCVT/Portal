@@ -7,6 +7,8 @@ Mantém o tema claro/escuro e a barra superior `☀/☾ | |||`, com retorno à C
 
 - Cadastra, edita, inativa e exclui cantores. Classificações: soprano, mezzo-soprano, contralto, tenor, barítono, baixo e não classificado.
 - Separa **alcance máximo** (grave/aguda) de **tessitura confortável** (grave/aguda). Os quatro limites são opcionais no cadastro inicial, mas o alcance deve ter as duas notas para entrar nos cálculos.
+- Com os dois extremos da **tessitura confortável**, apresenta um **naipe sugerido**. A pessoa pode clicar em "Usar [naipe]" para adotar a proposta. Não altera automaticamente classificações existentes; é uma indicação aproximada, não um diagnóstico vocal, e não considera timbre ou passaggi.
+- A calculadora foi condensada: as duas notas principais ficam em destaque e o **tom original** aparece em um painel recolhível (opcional). A faixa superior tem ilustração artística de coro e piano em estilo aquarela.
 - Organiza a lista por classificação e permite busca, filtro e exibição de inativos. A edição de cada cantor acontece **dentro da linha da tabela**, sem janelas popup.
 - Na primeira abertura autorizada com acesso à nuvem, **importa automaticamente os nomes e naipes atuais** das funções Soprano/Contralto/Tenor do documento Firestore `app_ipcvt/escala_geral_dados`. O botão "Atualizar da Escala Geral" sincroniza novos cantores quando solicitado. O procedimento não preenche notas, não remove pessoas e preserva fichas já avaliadas. A gravação depende de permissões Firebase publicadas.
 - Os limites vocais e as notas da melodia são escolhidos com **12 botões circulares por oitava**, iluminando a nota selecionada; a oitava é selecionada acima. O tom original também tem botões circulares.
