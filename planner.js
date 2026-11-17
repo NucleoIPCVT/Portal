@@ -31,7 +31,7 @@ import { taskCreationContext } from './planner-task-context.js'
 import { BOARD_GROUPINGS, groupBoardTasks, moveBoardTask } from './planner-board.js?v=20261112-planner-01'
 import { GoogleCalendarClient } from './planner-google.js'
 import { setupPlannerWizards } from './planner-form-wizard.js?v=20261116-plan-owner-v1'
-import { publicCalendar, readPublicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl, summarizeCalendarEvents, diffCalendarEvents } from './planner-public.js?v=20261116-name-google-v4'
+import { publicCalendar, readPublicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl, summarizeCalendarEvents, diffCalendarEvents } from './planner-public.js?v=20261116-calendar-source-name-v5'
 
 const $ = id => document.getElementById(id)
 const formWizards = setupPlannerWizards()
@@ -100,7 +100,12 @@ let authEpoch = 0
 let calendarConfig = { calendarId: publicCalendar.id, sourceUrl: publicCalendar.sourceUrl }
 let calendarConfigError = ''
 function officialCalendarName() {
-  return (publicSnapshot?.calendarName || publicEvents.find(event => event.calendarName)?.calendarName || publicCalendar.name).trim()
+  // A fonte pode mudar enquanto a nova consulta está em andamento.
+  // Não reutilize o nome da agenda anterior nesse intervalo.
+  const matching=publicSnapshot?.calendarId===calendarConfig.calendarId?publicSnapshot:null
+  const event=publicEvents.find(item=>item.sourceCalendarId===calendarConfig.calendarId&&item.calendarName)
+  return String(matching?.calendarName||event?.calendarName||
+    (calendarConfig.calendarId===publicCalendar.id?publicCalendar.name:calendarConfig.calendarId)).trim()
 }
 let publicSnapshot = null
 let publicEvents = []
