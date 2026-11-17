@@ -12,7 +12,7 @@ export function setupPlannerWizards() {
       {
         title: 'Informações',
         hint: 'Identificação, datas e posição no quadro',
-        selectors: ['.task-primary-title', '.task-primary-grid', '#task-advanced label[for="task-start"]', '#task-advanced label[for="task-bucket"]']
+        selectors: ['.task-primary-title', '.task-primary-grid', '#task-advanced label[for="task-bucket"]']
       },
       {
         title: 'Detalhamento',
