@@ -34,7 +34,7 @@ import { setupPlannerWizards } from './planner-form-wizard.js?v=20261116-dates-t
 import { publicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl, summarizeCalendarEvents, diffCalendarEvents } from './planner-public.js?v=20261116-multi-source-ids-v1'
 import { plannerPublicSources, readPlannerPublicSources } from './planner-multi-public.js?v=20261117-v3'
 import { setupPlannerCalendarSources } from './planner-calendar-sources-ui.js?v=20261117-v2'
-import { selectedHomeImageMonth, setupHomeImageSettings } from './planner-home-image-settings.js?v=20261117-apr-jun-aug-hd-v3'
+import { selectedHomeImageMonth, setupHomeImageSettings } from './planner-home-image-settings.js?v=20261117-12meses-hd-v4'
 
 const $ = id => document.getElementById(id)
 const formWizards = setupPlannerWizards()
@@ -2521,17 +2521,8 @@ function pmEasterDate(year) {
   const day=(h+l-7*m+114)%31+1
   return String(year)+'-'+String(month).padStart(2,'0')+'-'+String(day).padStart(2,'0')
 }
-// Junho, julho e agosto já possuem aquarelas HD; setembro a dezembro seguem com artes provisórias.
-// Assim não exibimos banner vazio enquanto a coleção ainda está em implantação.
-const pmWatercolorReady = new Set([6,7,8]);
-for (let m = 9; m <= 12; m++) {
-  const image = new Image();
-  image.onload = () => {
-    pmWatercolorReady.add(m);
-    if (session.status === 'authorized' && currentView === 'home') render();
-  };
-  image.src = 'planner-month-art/planner-month-' + String(m).padStart(2, '0') + '.webp?v=20261117-hd';
-}
+// Todas as 12 aquarelas estão publicadas. Maio preserva a imagem original da IPCVT.
+const pmWatercolorReady = new Set([6,7,8,9,10,11,12]);
 function pmHomeSeason(date) {
   const month=selectedHomeImageMonth(Number(date.slice(5,7)),session.email)
   const themes={
@@ -2559,10 +2550,10 @@ function pmHomeSeason(date) {
     6:['Palavra de Deus','A Palavra de Deus ilumina a fé e orienta nosso serviço.','planner-month-06-hd.avif'],
     7:['Serviço Diaconal','Servimos ao próximo com amor, compaixão e dignidade.','planner-month-07-hd.avif'],
     8:['Presbiterianismo Nacional e Missões','A fé reformada leva esperança ao Brasil e ao mundo.','planner-month-08-hd.avif'],
-    9:['Discipulado e ensino','A Palavra orienta nosso crescimento na fé.','planner-month-09.webp'],
-    10:['Reforma e Palavra','Sempre reformados pela Palavra de Deus.','planner-month-10.webp'],
-    11:['Ação de Graças','Gratidão pelas bênçãos e pelo cuidado de Deus.','planner-month-11.webp'],
-    12:['Natal','Celebramos o nascimento do nosso Salvador.','planner-month-12.webp']
+    9:['Educação Cristã e Escola Dominical','Aprendemos e crescemos juntos na Palavra de Deus.','planner-month-09-hd.avif'],
+    10:['Reforma Protestante','Sempre reformados pela Palavra de Deus.','planner-month-10-hd.avif'],
+    11:['Ação de Graças','Gratidão pelas bênçãos e pelo cuidado de Deus.','planner-month-11-hd.avif'],
+    12:['Natal','Celebramos o nascimento do nosso Salvador.','planner-month-12-hd.avif']
   }
   if(watercolors[month] && (month<=5 || pmWatercolorReady.has(month))){
     const [label,message,picture]=watercolors[month]
