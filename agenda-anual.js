@@ -433,152 +433,141 @@ async function loadCalendar({ checkWorkflow = true } = {}) {
 
 
 async function initializeAgendaConfiguration() {
+  // A consulta da Agenda é pública. A edição só aparece depois da validação
+  // da sessão Firebase compartilhada com o Painel da Comissão.
+  const configButton=byId('agenda-config-button');
+  const dialog=byId('agenda-config-dialog');
+  const configForm=byId('agenda-config-form');
+  const feedback=byId('agenda-config-feedback');
+  configButton.hidden=true;
+  configForm.hidden=true;
+  updateCalendarSourceLabels();
   try {
     const [
       { initializeApp, getApps },
-      { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup },
-      { getFirestore, doc, getDoc, onSnapshot, setDoc, serverTimestamp }
-    ] = await Promise.all([
+      { getAuth, onAuthStateChanged },
+      { getFirestore, doc, onSnapshot, setDoc, serverTimestamp }
+    ]=await Promise.all([
       import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'),
       import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'),
       import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js')
     ]);
-    const app = getApps().find(item => item.name === 'ipcvt-comissao') || initializeApp({
-      apiKey: 'AIzaSyAg9w5QohkcmXUFRgLfSI5Sh1chnCD1Owc',
-      authDomain: 'repertorio-ipcvt.firebaseapp.com',
-      projectId: 'repertorio-ipcvt',
-      storageBucket: 'repertorio-ipcvt.firebasestorage.app',
-      messagingSenderId: '774659782213',
-      appId: '1:774659782213:web:5e9cbf88fec30eb382152c'
-    }, 'ipcvt-comissao');
-    const auth = getAuth(app);
-    const firestore = getFirestore(app);
-    const calendarConfigRef = doc(firestore, 'comissao_planner', 'main', 'config', 'calendar');
-    let canManageCalendar = false;
-    let managingEmail = '';
-    let authCheckSequence = 0;
-
-const dialog = byId('agenda-config-dialog');
-const configForm = byId('agenda-config-form');
-const configFeedback = byId('agenda-config-feedback');
-const configGuest = byId('agenda-config-guest');
-const loginButton = byId('agenda-config-login');
-
-function updateAdminControls() {
-  configForm.hidden = !canManageCalendar;
-  configGuest.hidden = canManageCalendar;
-  if (canManageCalendar) {
-    byId('agenda-config-url').value = calendarSource.sourceUrl;
-    configFeedback.textContent = 'Administrador autorizado: ' + managingEmail;
-  } else {
-    byId('agenda-access-message').textContent = auth.currentUser
-      ? 'Esta conta não possui permissão de administração da Comissão. Entre com outra conta autorizada.'
-      : 'Entre com uma conta Google autorizada como administradora da Comissão.';
-    loginButton.textContent = auth.currentUser ? 'Trocar conta Google' : 'Entrar com Google';
-  }
-}
-byId('agenda-config-button').addEventListener('click', () => {
-  updateAdminControls();
-  dialog.showModal();
-});
-byId('agenda-config-close').addEventListener('click', () => dialog.close());
-byId('agenda-config-cancel').addEventListener('click', () => dialog.close());
-dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
-
-loginButton.addEventListener('click', async () => {
-  loginButton.disabled = true;
-  configFeedback.textContent = 'Verificando autorização…';
-  try {
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' });
-    await signInWithPopup(auth, provider);
-  } catch (error) {
-    configFeedback.textContent = error.code === 'auth/popup-blocked'
-      ? 'O navegador bloqueou a janela do Google. Permita pop-ups para este site.'
-      : error.message || 'Não foi possível entrar com Google.';
-  } finally { loginButton.disabled = false; }
-});
-
-onAuthStateChanged(auth, async user => {
-  const sequence = ++authCheckSequence;
-  canManageCalendar = false;
-  managingEmail = '';
-  if (user) {
-    try {
-      const email = (user.email || '').trim().toLowerCase();
-      const token = await user.getIdTokenResult();
-      if (!email || !user.emailVerified || token.claims.firebase?.sign_in_provider !== 'google.com'
-        || token.claims.email_verified !== true) throw new Error('A conta Google precisa estar verificada.');
-      const access = await getDoc(doc(firestore, 'comissao_acessos', email));
-      if (sequence !== authCheckSequence) return;
-      canManageCalendar = access.exists() && access.data().ativo === true && access.data().perfil === 'admin';
-      if (canManageCalendar) managingEmail = email;
-    } catch (error) {
-      if (sequence !== authCheckSequence) return;
-      console.warn('Acesso de administrador da agenda não confirmado.', error);
+    const app=getApps().find(item=>item.name==='ipcvt-comissao')||initializeApp({
+      apiKey:'AIzaSyAg9w5QohkcmXUFRgLfSI5Sh1chnCD1Owc',
+      authDomain:'repertorio-ipcvt.firebaseapp.com',
+      projectId:'repertorio-ipcvt',
+      storageBucket:'repertorio-ipcvt.firebasestorage.app',
+      messagingSenderId:'774659782213',
+      appId:'1:774659782213:web:5e9cbf88fec30eb382152c'
+    },'ipcvt-comissao');
+    const auth=getAuth(app),firestore=getFirestore(app);
+    const calendarRef=doc(firestore,'comissao_planner','main','config','calendar');
+    let canManage=false,managingEmail='',sequence=0,stopPermission=null;
+    function setAccess(allowed,email='') {
+      canManage=Boolean(allowed);
+      managingEmail=canManage?email:'';
+      configButton.hidden=!canManage;
+      configForm.hidden=!canManage;
+      if(!canManage) {
+        if(dialog.open)dialog.close();
+        feedback.textContent='';
+      }
     }
-  }
-  if (sequence === authCheckSequence) updateAdminControls();
-});
-
-configForm.addEventListener('submit', async event => {
-  event.preventDefault();
-  if (!canManageCalendar || !managingEmail || !auth.currentUser) {
-    configFeedback.textContent = 'Sua conta não possui autorização para alterar a agenda.';
-    return;
-  }
-  const save = byId('agenda-config-save');
-  save.disabled = true;
-  configFeedback.textContent = 'Validando e salvando…';
-  try {
-    const { calendarId, sourceUrl } = parseCalendarSourceUrl(byId('agenda-config-url').value);
-    configFeedback.textContent = 'Verificando se a agenda está pública…';
-    await readPublicCalendar({ calendarId });
-    configFeedback.textContent = 'Agenda validada. Salvando…';
-    await setDoc(calendarConfigRef, {
-      calendarId, sourceUrl, updatedBy: managingEmail, updatedAt: serverTimestamp()
+    configButton.addEventListener('click',()=>{
+      if(!canManage||!auth.currentUser)return;
+      byId('agenda-config-url').value=calendarSource.sourceUrl;
+      updateCalendarSourceLabels();
+      feedback.textContent='Administrador autorizado: '+managingEmail;
+      dialog.showModal();
     });
-    configFeedback.textContent = 'Calendário salvo. A Agenda Anual e o Planner usarão a mesma fonte. A cópia de segurança do GitHub poderá levar alguns minutos para atualizar.';
-  } catch (error) {
-    configFeedback.textContent = error.code === 'permission-denied'
-      ? 'O Firebase não autorizou a alteração. Confirme as permissões administrativas.'
-      : error.message || 'Não foi possível salvar o calendário.';
-  } finally { save.disabled = false; }
-});
-
-// Esta configuração é pública somente para leitura; a gravação é protegida pelas regras do Firebase.
-onSnapshot(calendarConfigRef, record => {
-  if (!record.exists()) return;
-  const data = record.data();
-  try {
-    const parsed = parseCalendarSourceUrl(data.sourceUrl);
-    if (parsed.calendarId !== data.calendarId) throw new Error('A fonte informada não corresponde ao calendário configurado.');
-    if (calendarSource.calendarId !== parsed.calendarId) {
-      calendarSource = parsed;
-      snapshot = null;
-      lastSuccessfulSync = null;
-      byId('print-area').hidden = true;
-      printButton.disabled = true;
-      byId('agenda-google-link').href = calendarWebUrl(parsed.calendarId);
-      if (canManageCalendar && !dialog.open) byId('agenda-config-url').value = parsed.sourceUrl;
-      void loadCalendar();
-    } else {
-      calendarSource = parsed;
-      byId('agenda-google-link').href = calendarWebUrl(parsed.calendarId);
-    }
-  } catch (error) {
-    console.warn('A configuração de calendário publicada é inválida.', error);
-  }
-}, error => console.warn('Sem acesso à configuração remota, mantendo a origem local.', error));
-
-  } catch (error) {
-    // Um bloqueio no Firebase não pode interromper a leitura pública da agenda.
-    console.warn('Administração da agenda indisponível. Mantendo a consulta pública.', error);
-    const dialog = byId('agenda-config-dialog');
-    byId('agenda-access-message').textContent = 'Não foi possível carregar o acesso administrativo. Atualize a página e tente novamente.';
-    byId('agenda-config-login').hidden = true;
-    byId('agenda-config-button').addEventListener('click', () => dialog.showModal());
-    byId('agenda-config-close').addEventListener('click', () => dialog.close());
+    byId('agenda-config-close').addEventListener('click',()=>dialog.close());
+    byId('agenda-config-cancel').addEventListener('click',()=>dialog.close());
+    dialog.addEventListener('click',event=>{
+      if(event.target===dialog)dialog.close();
+    });
+    onAuthStateChanged(auth,async user=>{
+      const current=++sequence;
+      stopPermission?.();
+      stopPermission=null;
+      setAccess(false);
+      if(!user?.email)return;
+      try {
+        const token=await user.getIdTokenResult();
+        if(current!==sequence)return;
+        const email=user.email.trim().toLowerCase();
+        if(!email||!user.emailVerified||token.claims.email_verified!==true||
+          token.claims.firebase?.sign_in_provider!=='google.com')return;
+        // A revogação ou alteração do perfil na Comissão é refletida imediatamente.
+        stopPermission=onSnapshot(doc(firestore,'comissao_acessos',email),record=>{
+          if(current!==sequence)return;
+          const access=record.exists()?record.data():null;
+          setAccess(access?.ativo===true&&access.perfil==='admin',email);
+        },error=>{
+          if(current!==sequence)return;
+          setAccess(false);
+          console.warn('Permissão de administrador da Agenda indisponível.',error);
+        });
+      }catch(error){
+        if(current===sequence){
+          setAccess(false);
+          console.warn('Sessão da Comissão não confirmada para a Agenda.',error);
+        }
+      }
+    });
+    configForm.addEventListener('submit',async event=>{
+      event.preventDefault();
+      if(!canManage||!managingEmail||auth.currentUser?.email?.toLowerCase()!==managingEmail){
+        feedback.textContent='Somente um administrador autorizado da Comissão pode alterar a agenda.';
+        return;
+      }
+      const save=byId('agenda-config-save');
+      save.disabled=true;
+      feedback.textContent='Verificando o calendário público no Google...';
+      try {
+        const parsed=parseCalendarSourceUrl(byId('agenda-config-url').value);
+        const checked=await readPublicCalendar({calendarId:parsed.calendarId});
+        if(checked.calendarId!==parsed.calendarId)throw new Error('O calendário retornado não corresponde à origem selecionada.');
+        const name=String(checked.calendarName||parsed.calendarId).trim();
+        feedback.textContent='Agenda “'+name+'” validada. Salvando...';
+        await setDoc(calendarRef,{
+          calendarId:parsed.calendarId,sourceUrl:parsed.sourceUrl,
+          updatedBy:managingEmail,updatedAt:serverTimestamp()
+        });
+        feedback.textContent='Fonte salva: “'+name+'”. A Agenda Anual e o Planner utilizarão a mesma origem. A cópia de segurança do GitHub pode levar alguns minutos para sincronizar.';
+      }catch(error){
+        feedback.textContent=error.code==='permission-denied'
+          ?'O Firebase recusou a alteração. Confirme seu perfil de administrador ativo na Comissão.'
+          :error.message||'Não foi possível salvar a origem da agenda.';
+      }finally{save.disabled=false;}
+    });
+    // A configuração é legível publicamente; apenas a gravação exige admin.
+    onSnapshot(calendarRef,record=>{
+      if(!record.exists())return;
+      try {
+        const data=record.data();
+        const parsed=parseCalendarSourceUrl(data.sourceUrl);
+        if(parsed.calendarId!==data.calendarId)throw new Error('A configuração remota contém um calendário divergente.');
+        const changed=parsed.calendarId!==calendarSource.calendarId;
+        calendarSource=parsed;
+        if(changed){
+          snapshot=null;
+          lastSuccessfulSync=null;
+          byId('print-area').hidden=true;
+          printButton.disabled=true;
+          updateCalendarSourceLabels();
+          void loadCalendar();
+        }else{
+          updateCalendarSourceLabels();
+        }
+        if(canManage&&!dialog.open)byId('agenda-config-url').value=parsed.sourceUrl;
+      }catch(error){
+        console.warn('Configuração remota de agenda inválida.',error);
+      }
+    },error=>console.warn('Não foi possível ler a configuração compartilhada; usando a agenda original.',error));
+  }catch(error){
+    configButton.hidden=true;
+    configForm.hidden=true;
+    console.warn('Administração da Agenda Anual indisponível. Consulta pública preservada.',error);
   }
 }
 void initializeAgendaConfiguration();
