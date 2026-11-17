@@ -1,5 +1,5 @@
 // Fontes adicionais da Agenda Anual. Mantém a agenda principal compartilhada com o Planner.
-import { publicCalendar, readPublicCalendar, parseCalendarSourceUrl, calendarWebUrl } from './planner-public.js?v=20261116-calendar-source-name-v5';
+import { publicCalendar, readPublicCalendar, parseCalendarSourceUrl, calendarWebUrl } from './planner-public.js?v=20261116-multi-source-ids-v1';
 import { officialIpbEvents2026 } from './agenda-ipb-2026.js?v=20261116-v1';
 
 const BRAZIL_ID = 'pt.brazilian#holiday@group.v.calendar.google.com';
