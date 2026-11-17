@@ -54,6 +54,14 @@ html[data-theme="dark"] .ipcvt-overflow-panel .ipcvt-overflow-item:hover{backgro
 #planner-app .ipcvt-planner-more #pm-avatar{display:none!important}
 #planner-app .pm-more-menu .ipcvt-hidden-menu-command{display:none!important}
 #planner-app .pm-more-menu .ipcvt-overflow-item{color:inherit!important}
+/* Os estilos móveis antigos transformavam "Voltar" em um botão de 40 px.
+   Dentro do menu ele deve permanecer uma linha inteira e legível. */
+body.pm-active #planner-app .pm-more-menu a.pm-commission-back.ipcvt-overflow-item{
+ display:flex!important;width:100%!important;min-width:0!important;max-width:none!important;
+ height:auto!important;min-height:38px!important;flex:1 1 auto!important;
+ padding:9px 12px!important;font-size:13px!important;line-height:1.4!important;
+ justify-content:flex-start!important;text-align:left!important;
+}
 body.pm-active #planner-app .pm-toolbar>.ipcvt-theme-button{display:inline-flex!important}
 body.pm-active #planner-app .pm-toolbar>.ipcvt-theme-button .theme-label{display:none!important}
 body.pm-active #planner-app .pm-toolbar>.ipcvt-theme-button .theme-icon{display:inline-flex!important}
