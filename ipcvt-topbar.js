@@ -176,6 +176,9 @@
       standardBar({header:'header.topbar',actions:'.commission-top-actions',theme:'#commission-theme-toggle',
         move:[['.commission-top-actions .back-link','Voltar para o Portal'],['#authorization-toggle',null]],
         links:[['index.html','Voltar para o Portal']]});
+    } else if (page === 'tessitura.html') {
+      standardBar({header:'.voice-topbar',actions:'.voice-top-actions',theme:'#voice-theme-toggle',
+        links:[['comissao.html','Voltar para Comissão'],['index.html','Voltar para o Portal']]});
     } else if (page === 'agenda-anual.html') {
       standardBar({header:'.app-bar',actions:'.agenda-header-actions',theme:'#agenda-theme-toggle',
         move:[['.agenda-return','Voltar para o Portal'],['#agenda-settings-button','Configurar fontes dos calendários']],
