@@ -1,25 +1,25 @@
 /* Cartão do Mapa Vocal no Painel da Comissão */
-.tool-card-tessitura{background:linear-gradient(120deg,#f0eee2 0%,#e8edda 51%,#d0ddcc 100%)}
-.tool-card-tessitura::before{background:linear-gradient(90deg,rgba(241,239,226,.99) 0%,rgba(241,239,226,.96) 25%,rgba(241,239,226,.89) 45%,rgba(241,239,226,.25) 100%)}
-.tool-card-tessitura .tool-icon{color:#567a5c}
-.tool-card-tessitura .status{border-color:#9bab81;color:#4d694e}
+.tool-card-tessitura{background:linear-gradient(120deg,#f8eadb 0%,#edddca 51%,#ddc5ae 100%)}
+.tool-card-tessitura::before{background:linear-gradient(90deg,rgba(247,234,219,.99) 0%,rgba(247,234,219,.96) 25%,rgba(247,234,219,.89) 45%,rgba(247,234,219,.25) 100%)}
+.tool-card-tessitura .tool-icon{color:#9d7155}
+.tool-card-tessitura .status{border-color:#b79377;color:#7c543f}
 .voice-card-preview{pointer-events:none;display:flex;align-items:flex-start;justify-content:center;overflow:hidden}
-.preview-voice-window{width:440px;max-width:none;min-height:307px;padding:19px 24px;background:#fffefa;border:1px solid #cbd9c4;border-radius:17px;box-shadow:0 20px 35px #3e5b3c24;transform:rotate(2deg);font:500 12px Inter,Arial,sans-serif;color:#31463a}
-.preview-voice-header{font-weight:700;font-size:17px;display:flex;gap:12px;align-items:center;padding-bottom:13px;border-bottom:1px solid #dde8dd}
-.preview-voice-header span{width:31px;height:31px;border-radius:10px;background:#d9e9d3;color:#4d805d;display:grid;place-items:center}
-.preview-voice-header small{margin-left:auto;color:#8fa492;font-size:8px;letter-spacing:.12em}
-.preview-voice-sub{font-size:9px;letter-spacing:.18em;color:#7d9a80;margin:17px 0 8px}
-.preview-voice-result{background:#e8f3e4;border:1px solid #c4d9be;padding:13px 15px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.preview-voice-window{width:440px;max-width:none;min-height:307px;padding:19px 24px;background:#fffaf4;border:1px solid #dfc9b4;border-radius:17px;box-shadow:0 20px 35px #63483522;transform:rotate(2deg);font:500 12px Inter,Arial,sans-serif;color:#503e32}
+.preview-voice-header{font-weight:700;font-size:17px;display:flex;gap:12px;align-items:center;padding-bottom:13px;border-bottom:1px solid #ead9c9}
+.preview-voice-header span{width:31px;height:31px;border-radius:10px;background:#ecd7c2;color:#92684d;display:grid;place-items:center}
+.preview-voice-header small{margin-left:auto;color:#967e6b;font-size:8px;letter-spacing:.12em}
+.preview-voice-sub{font-size:9px;letter-spacing:.18em;color:#9c765d;margin:17px 0 8px}
+.preview-voice-result{background:#f2e3d3;border:1px solid #dbc3aa;padding:13px 15px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .preview-voice-result b{font:600 22px 'Cormorant Garamond',Georgia,serif}
-.preview-voice-result small{font-size:9px;max-width:115px;color:#51785d}
-.preview-voice-row{display:flex;align-items:center;justify-content:space-between;padding:10px 3px;border-bottom:1px solid #e0e9dd;font-size:10px}
-.preview-voice-row span{color:#7b9380;font-size:9px}
+.preview-voice-result small{font-size:9px;max-width:115px;color:#8b654c}
+.preview-voice-row{display:flex;align-items:center;justify-content:space-between;padding:10px 3px;border-bottom:1px solid #ecdece;font-size:10px}
+.preview-voice-row span{color:#9a8170;font-size:9px}
 .preview-voice-bars{display:flex;gap:5px;margin-top:13px}
-.preview-voice-bars span{height:6px;border-radius:5px;background:#b2d3b0;flex:1}
-.preview-voice-bars span:nth-child(2){background:#86b9a1}
-.preview-voice-bars span:nth-child(3){background:#d3d6af}
-html[data-portal-theme="dark"] .tool-card-tessitura{background:linear-gradient(120deg,#355146,#42624e 54%,#536b52)}
-html[data-portal-theme="dark"] .tool-card-tessitura::before{background:linear-gradient(90deg,rgba(55,79,66,.98) 0%,rgba(55,79,66,.94) 35%,rgba(55,79,66,.36) 85%,transparent 100%)}
-html[data-portal-theme="dark"] .tool-card-tessitura :is(h2,p,.tool-number){color:#f0f5ed}
-html[data-portal-theme="dark"] .tool-card-tessitura .status{background:#e2eee0;color:#2a5a3b}
+.preview-voice-bars span{height:6px;border-radius:5px;background:#dbbca2;flex:1}
+.preview-voice-bars span:nth-child(2){background:#c99b7d}
+.preview-voice-bars span:nth-child(3){background:#e7c9aa}
+html[data-portal-theme="dark"] .tool-card-tessitura{background:linear-gradient(120deg,#513f34,#645041 54%,#786252)}
+html[data-portal-theme="dark"] .tool-card-tessitura::before{background:linear-gradient(90deg,rgba(81,63,52,.98) 0%,rgba(81,63,52,.94) 35%,rgba(81,63,52,.36) 85%,transparent 100%)}
+html[data-portal-theme="dark"] .tool-card-tessitura :is(h2,p,.tool-number){color:#fff1e3}
+html[data-portal-theme="dark"] .tool-card-tessitura .status{background:#f1dcc6;color:#66452f}
 @media(max-width:780px){.voice-card-preview{opacity:.23!important;right:-150px}.tool-card-tessitura .tool-icon{position:relative}}
