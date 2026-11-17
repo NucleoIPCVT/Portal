@@ -1,4 +1,4 @@
-import { createPlannerStore } from './planner-store.js?v=20261116-plan-owner-v1'
+import { createPlannerStore } from './planner-store.js?v=20261117-source-settings-v1'
 import { renderTaskActivity } from './planner-reports.js?v=20261116-relatorios-v3'
 import { renderPlannerDashboard } from './planner-reports-dashboard.js?v=20261116-aging-v5'
 import { downloadProjectTemplate, readProjectFile, existingProjectByName } from './planner-excel-import.js?v=20261114-project-import-v2'
@@ -32,8 +32,8 @@ import { BOARD_GROUPINGS, groupBoardTasks, moveBoardTask } from './planner-board
 import { GoogleCalendarClient } from './planner-google.js'
 import { setupPlannerWizards } from './planner-form-wizard.js?v=20261116-dates-together-v1'
 import { publicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl, summarizeCalendarEvents, diffCalendarEvents } from './planner-public.js?v=20261116-multi-source-ids-v1'
-import { plannerPublicSources, readPlannerPublicSources } from './planner-multi-public.js?v=20261117-v2'
-import { setupPlannerCalendarSources } from './planner-calendar-sources-ui.js?v=20261117-v1'
+import { plannerPublicSources, readPlannerPublicSources } from './planner-multi-public.js?v=20261117-v3'
+import { setupPlannerCalendarSources } from './planner-calendar-sources-ui.js?v=20261117-v2'
 
 const $ = id => document.getElementById(id)
 const formWizards = setupPlannerWizards()
