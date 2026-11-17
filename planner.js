@@ -824,51 +824,76 @@ $('project-import-confirm').addEventListener('click', async () => {
   }
 })
 
+function pmPlanArt(plan) {
+  const name=String(plan.name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()
+  if(/louvor|musica|som|hino|ensaio|banda|cantor/.test(name))return 'music'
+  if(/estudo|ensino|escola|biblia|formacao|seminario|teologia/.test(name))return 'study'
+  if(/servico|diacon|social|cuidado|acolh|volunt|miss|visita|saf/.test(name))return 'service'
+  return 'project'
+}
 function renderPlans(content) {
   const allPlans=activePlans().sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'))
   const mine=allPlans.filter(pmIsMyPlan)
   const plans=pmShowAllPlans?allPlans:mine
-  content.append(pmHeader('Organização','Meus planos',mine.length+' plano(s) com participação',[
-    button('↓ Base Excel',async()=>{
-      try { downloadProjectTemplate(await plannerExcelLibrary()) }
-      catch (error) { reportError(error) }
-    },'pm-excel-action'),
-    button('↑ Importar Excel',openProjectExcel,'pm-excel-action pm-excel-action-primary'),
-    pmCreationButton('plan',()=>pmNewPlan())
-  ]))
+  content.append(pmHeader('Organização','Meus planos',
+    mine.length+' plano(s) com participação',[
+      button('↓ Base Excel',async()=>{
+        try {downloadProjectTemplate(await plannerExcelLibrary())}
+        catch(error){reportError(error)}
+      },'pm-excel-action'),
+      button('↑ Importar Excel',openProjectExcel,'pm-excel-action pm-excel-action-primary'),
+      pmCreationButton('plan',()=>pmNewPlan())
+    ]))
   const switcher=pmGroup('div','pm-plans-switch',[
     pmButton('Meus planos',()=>{pmShowAllPlans=false;render()},'pm-demand-tab'+(!pmShowAllPlans?' is-active':'')),
     pmButton('Todos os planos da Comissão',()=>{pmShowAllPlans=true;render()},'pm-demand-tab'+(pmShowAllPlans?' is-active':''))
   ])
-  switcher.querySelectorAll('button').forEach((button,index)=>button.setAttribute('aria-pressed',String(Boolean(index)===pmShowAllPlans)))
+  switcher.querySelectorAll('button').forEach((button,index)=>
+    button.setAttribute('aria-pressed',String(Boolean(index)===pmShowAllPlans)))
   content.append(switcher)
-  if (!plans.length) {
-    content.append(empty(pmShowAllPlans?'Nenhum plano disponível. Crie o primeiro plano da Comissão.':'Você ainda não possui planos associados ao seu e-mail. Consulte Todos os planos da Comissão ou crie um plano.'))
+  if(!plans.length){
+    content.append(empty(pmShowAllPlans?'Nenhum plano disponível. Crie o primeiro plano da Comissão.':
+      'Você ainda não possui planos associados ao seu e-mail. Consulte Todos os planos da Comissão ou crie um plano.'))
     return
   }
-  const cards = node('div', { class: 'plans-grid' })
-  for (const plan of plans) {
+  const cards=node('div',{class:'plans-grid pm-plan-stack'})
+  for(const plan of plans){
     const config=planCycleConfig(plan.id)
-    const tasks = config?pmPlanCycleTasks(plan.id):liveTasks().filter(task => task.planId === plan.id)
-    const finished = tasks.filter(task => task.status === 'done').length
-    const percentage = tasks.length ? Math.round(finished * 100 / tasks.length) : 0
-    const card = node('article', { class: 'plan-card' })
-    card.append(node('span', { class: 'plan-card-icon', 'aria-hidden': 'true', text: plan.name.slice(0, 1).toLocaleUpperCase('pt-BR') }))
-    card.append(button(plan.name, () => openPlanBoard(plan.id), 'plan-card-title'))
-    card.append(node('p',{class:'plan-card-owner',text:'Responsável: '+planOwnerDisplay(plan)}))
+    const tasks=config?pmPlanCycleTasks(plan.id):liveTasks().filter(task=>task.planId===plan.id)
+    const finished=tasks.filter(task=>task.status==='done').length
+    const percentage=tasks.length?Math.round(finished*100/tasks.length):0
     const cycleDates=config?.unit==='week'?planCycleWindow(config,plan,pmPlanCycle(plan.id)):null
-    card.append(node('p', { class: 'plan-card-description',
-      text:(config?'↻ Recorrente · '+(cycleDates
-        ?formatDate(cycleDates.start)+' a '+formatDate(cycleDates.due)
-        :'ciclo '+formatDate(pmPlanCycle(plan.id)))+' · ':'')+
-        (plan.description || (plan.kind === 'project' ? 'Projeto da Comissão' : 'Trabalho contínuo da Comissão')) }))
-    card.append(node('div', { class: 'plan-card-progress-label' }, [node('span', { text: finished + ' de ' + tasks.length + ' concluídas' }), node('strong', { text: percentage + '%' })]))
-    card.append(node('div', { class: 'plan-card-progress' }, node('span', { style: 'width:' + percentage + '%' })))
-    card.append(node('div', { class: 'plan-card-footer' }, [
-      button('Abrir plano', () => openPlanBoard(plan.id), 'button button-small button-primary'),
-      button('Editar plano', () => openPlan(plan), 'button button-small'),
-      button('+ Demanda', () => { openPlanBoard(plan.id); openTask(null, { planId: plan.id }) }, 'button button-small')
-    ]))
+    const description=(config?'Recorrente · '+(cycleDates?
+      formatDate(cycleDates.start)+' a '+formatDate(cycleDates.due):
+      'Ciclo '+formatDate(pmPlanCycle(plan.id)))+' · ':'')+
+      (plan.description||(plan.kind==='project'?'Projeto da Comissão':'Trabalho contínuo da Comissão'))
+    const card=node('article',{class:'plan-card pm-plan-stack-card'})
+    const visual=node('span',{class:'pm-plan-watermark pm-mark-'+pmPlanArt(plan),'aria-hidden':'true'})
+    const emblem=node('span',{class:'plan-card-icon pm-plan-emblem','aria-hidden':'true',
+      text:plan.name.slice(0,1).toLocaleUpperCase('pt-BR')})
+    const copy=node('div',{class:'pm-plan-copy'})
+    copy.append(
+      node('span',{class:'pm-plan-kicker',text:config?'PLANO RECORRENTE':plan.kind==='project'?'PROJETO':'PLANO DE TRABALHO'}),
+      button(plan.name,()=>openPlanBoard(plan.id),'plan-card-title'),
+      node('p',{class:'plan-card-description',text:description}),
+      node('p',{class:'plan-card-owner',text:'Responsável: '+planOwnerDisplay(plan)})
+    )
+    const progress=node('div',{class:'pm-plan-progress'})
+    progress.append(
+      node('div',{class:'plan-card-progress-label'},[
+        node('span',{text:finished+' de '+tasks.length+' demandas concluídas'}),
+        node('strong',{text:percentage+'%'})
+      ]),
+      node('div',{class:'plan-card-progress'},node('span',{style:'width:'+percentage+'%'})),
+      node('small',{class:'pm-plan-progress-note',text:
+        (tasks.length-finished)+' pendente(s) · '+tasks.filter(t=>isOverdue(t,todayISO())).length+' atrasada(s)'})
+    )
+    const footer=node('div',{class:'plan-card-footer'},[
+      button('Abrir plano',()=>openPlanBoard(plan.id),'button button-small button-primary'),
+      button('Editar plano',()=>openPlan(plan),'button button-small'),
+      button('+ Demanda',()=>{openPlanBoard(plan.id);openTask(null,{planId:plan.id})},'button button-small')
+    ])
+    card.append(visual,emblem,copy,progress,footer)
     cards.append(card)
   }
   content.append(cards)
