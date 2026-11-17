@@ -597,6 +597,41 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
       } catch (cause) { throw readableError(cause) }
     },
 
+    async saveCalendarSources(changes) {
+      const actor = requireSession()
+      if (!actor.isAdmin) throw error('Somente administradores podem alterar fontes compartilhadas.', 'planner-admin-required')
+      if (!changes || typeof changes !== 'object') throw error('Configuração de fontes inválida.', 'planner-calendar-config-invalid')
+      const patch = { updatedBy: actor.email, updatedAt: serverTimestamp() }
+      if ('additionalSources' in changes) {
+        if (!Array.isArray(changes.additionalSources) || changes.additionalSources.length > 30) {
+          throw error('Limite de 30 agendas adicionais.', 'planner-calendar-config-invalid')
+        }
+        const ids = new Set()
+        patch.additionalSources = changes.additionalSources.map(source => {
+          const id = String(source?.calendarId || '')
+          const url = String(source?.sourceUrl || '')
+          const name = String(source?.name || id).trim().slice(0,100)
+          if(!/^[-A-Za-z0-9_.@+#]{1,250}$/.test(id) || !url.startsWith('https://calendar.google.com/calendar/') || url.length > 2000 || !name || ids.has(id)) {
+            throw error('Uma das fontes adicionais é inválida ou duplicada.', 'planner-calendar-config-invalid')
+          }
+          ids.add(id)
+          return { id:'google:'+id, kind:'google', calendarId:id, sourceUrl:url,
+            name, color:/^#[a-fA-F0-9]{6}$/.test(source.color||'')?source.color:'#78977a' }
+        })
+      }
+      if ('removedSourceIds' in changes) {
+        if (!Array.isArray(changes.removedSourceIds) ||
+          changes.removedSourceIds.some(id=>!['brasil','ipb'].includes(id))) {
+          throw error('Fontes padrão inválidas.', 'planner-calendar-config-invalid')
+        }
+        patch.removedSourceIds=[...new Set(changes.removedSourceIds)]
+      }
+      if (!('additionalSources' in changes) && !('removedSourceIds' in changes)) return
+      try {
+        await setDoc(doc(db,'comissao_planner','main','config','calendar'),patch,{merge:true})
+      } catch(cause) { throw readableError(cause) }
+    },
+
     async connectGoogleCalendars() {
       const actor = requireSession()
       if (!actor.isAdmin) throw error('Somente um administrador pode disponibilizar agendas para a Comissão.', 'planner-admin-required')
