@@ -9,10 +9,10 @@ const monthlyArt=[
   {month:6,label:'Junho',theme:'Palavra de Deus',src:'planner-month-art/planner-month-06-hd.avif',ready:true},
   {month:7,label:'Julho',theme:'Serviço Diaconal',src:'planner-month-art/planner-month-07-hd.avif',ready:true},
   {month:8,label:'Agosto',theme:'Presbiterianismo Nacional e Missões',src:'planner-month-art/planner-month-08-hd.avif',ready:true},
-  {month:9,label:'Setembro',theme:'Discipulado e ensino',src:'planner-hero-reformation.svg',ready:false},
-  {month:10,label:'Outubro',theme:'Reforma e Palavra',src:'planner-hero-reformation.svg',ready:false},
-  {month:11,label:'Novembro',theme:'Ação de Graças',src:'planner-hero-mission.svg',ready:false},
-  {month:12,label:'Dezembro',theme:'Natal',src:'planner-hero-advent.svg',ready:false}
+  {month:9,label:'Setembro',theme:'Educação Cristã e Escola Dominical',src:'planner-month-art/planner-month-09-hd.avif',ready:true},
+  {month:10,label:'Outubro',theme:'Reforma Protestante',src:'planner-month-art/planner-month-10-hd.avif',ready:true},
+  {month:11,label:'Novembro',theme:'Ação de Graças',src:'planner-month-art/planner-month-11-hd.avif',ready:true},
+  {month:12,label:'Dezembro',theme:'Natal',src:'planner-month-art/planner-month-12-hd.avif',ready:true}
 ]
 const storageKey=email=>storagePrefix+(String(email||'visitante').trim().toLowerCase())
 function readSettings(email){
