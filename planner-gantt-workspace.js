@@ -19,6 +19,7 @@ const diff=(a,b)=>Math.round((parseDate(b)-parseDate(a))/86400000)
 const monday=date=>add(date,-((parseDate(date).getUTCDay()+6)%7))
 const dateLabel=(date,options={day:'2-digit',month:'short'})=>
   new Intl.DateTimeFormat('pt-BR',{timeZone:'UTC',...options}).format(parseDate(date))
+const weekDayLabel=date=>['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][parseDate(date).getUTCDay()]
 const element=(tag,cls='',text='')=>{
   const node=document.createElement(tag)
   if(cls)node.className=cls
@@ -143,7 +144,7 @@ export function renderGanttWorkspace(ctx){
   }
   const taskCount=dated.length,completed=dated.filter(t=>t.status==='done').length
   const overdue=dated.filter(t=>t.status!=='done'&&dateOk(t.dueDate)&&t.dueDate<today).length
-  const shell=element('section','pg-workspace')
+  const shell=element('section','pg-workspace pg-zoom-'+viewState.zoom)
   // Mantém o título no mesmo padrão das outras seções, fora dos filtros.
   const pageHeader=element('div','pm-page-header pg-page-header')
   const pageHeading=element('div','pm-page-heading')
@@ -399,6 +400,9 @@ export function renderGanttWorkspace(ctx){
   })
   tree.append(resize)
   const timeline=element('div','pg-timeline')
+  // Os ciclos sempre começam na segunda-feira. Uma faixa semanal permite
+  // destacar sábado e domingo sem sobrepor as barras ou as dependências.
+  timeline.style.setProperty('--pg-week-width',(7/totalDays*100)+'%')
   const dateHead=element('div','pg-date-head')
   const monthHead=element('div','pg-month-head')
   let index=0
@@ -410,13 +414,23 @@ export function renderGanttWorkspace(ctx){
     month.style.width=(length/totalDays*100)+'%'
     monthHead.append(month);index+=length
   }
-  const tickHead=element('div','pg-tick-head')
-  for(let day=0;day<totalDays;day+=step){
-    const length=Math.min(step,totalDays-day)
+  const detailedDays=viewState.zoom==='days'||viewState.zoom==='weeks'
+  const tickHead=element('div','pg-tick-head'+(detailedDays?' pg-tick-head-days':''))
+  for(let day=0;day<totalDays;day+=detailedDays?1:step){
+    const length=detailedDays?1:Math.min(step,totalDays-day)
     const date=add(start,day)
-    const tick=element('span','pg-tick',viewState.zoom==='days'
-      ?dateLabel(date,{day:'2-digit',month:'2-digit'})
-      :dateLabel(date,{day:'2-digit',month:'short'}))
+    const dayOfWeek=parseDate(date).getUTCDay()
+    const classes='pg-tick'+(dayOfWeek===6?' is-saturday':dayOfWeek===0?' is-sunday':'')
+    const tick=element('span',classes)
+    if(detailedDays){
+      tick.append(element('small','pg-weekday',weekDayLabel(date)),
+        element('strong','pg-day-number',dateLabel(date,{day:'2-digit'})))
+      tick.setAttribute('aria-label',dateLabel(date,{weekday:'long',day:'numeric',month:'long',year:'numeric'}))
+      tick.title=tick.getAttribute('aria-label')
+    }else{
+      tick.textContent=dateLabel(date,{day:'2-digit',month:'short'})
+      tick.title=dateLabel(date,{weekday:'long',day:'numeric',month:'long',year:'numeric'})
+    }
     tick.style.width=(length/totalDays*100)+'%'
     tickHead.append(tick)
   }
