@@ -2620,9 +2620,9 @@ function pmTodayView(content) {
     ])
   ])
   for(const [label,count,period,mode,date] of [
-    ['Hoje',dayEvents.length,pmShort(today,{day:'numeric',month:'short'}),'week',today],
-    ['Nesta semana',weekEvents.length,pmShort(weekStart,{day:'numeric',month:'short'})+' – '+pmShort(weekEnd,{day:'numeric',month:'short'}),'week',today],
-    ['Neste mês',monthEvents.length,pmShort(today,{month:'long',year:'numeric'}),'month',today]
+    ['Hoje',dayEvents.length,pmShort(today,{day:'numeric',month:'short',timeZone:'UTC'}),'week',today],
+    ['Nesta semana',weekEvents.length,pmShort(weekStart,{day:'numeric',month:'short',timeZone:'UTC'})+' – '+pmShort(weekEnd,{day:'numeric',month:'short',timeZone:'UTC'}),'week',today],
+    ['Neste mês',monthEvents.length,pmShort(today,{month:'long',year:'numeric',timeZone:'UTC'}),'month',today]
   ]){
     const tile=pmButton('',()=>pmHomeCalendarLink(date,mode),'pm-home-period')
     tile.append(pmGroup('span','pm-home-period-label',[
@@ -2645,7 +2645,7 @@ function pmTodayView(content) {
     const tile=pmButton('',()=>openEvent(event),'pm-home-event')
     const badge=pmGroup('span','pm-home-event-date',[
       pmText('strong','',event.startDate.slice(-2)),
-      pmText('small','',pmShort(event.startDate,{month:'short'}))
+      pmText('small','',pmShort(event.startDate,{month:'short',timeZone:'UTC'}))
     ])
     tile.append(badge,pmGroup('span','pm-home-event-copy',[
       pmText('strong','',event.title),pmText('small','',eventDateLabel(event))
