@@ -589,3 +589,11 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid
   .detail-masthead h2 { font-size: 27px; }
   .detail-year { font-size: 37px; }
 }
+
+/* Logo original da IPB no rodapé, imediatamente antes das sociedades. */
+.duplex-calendar-societies .duplex-ipb-logo {
+  width: 21mm;
+  height: 10mm;
+  object-fit: contain;
+  margin-right: 1.5mm;
+}
