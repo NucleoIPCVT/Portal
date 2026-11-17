@@ -1,4 +1,5 @@
 import { publicCalendar, readPublicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl } from './planner-public.js?v=20261116-calendar-source-name-v5';
+import { createAgendaSources } from './agenda-fontes.js?v=20261116-multi-v1';
 let calendarSource = { calendarId: publicCalendar.id, sourceUrl: publicCalendar.sourceUrl };
 let calendarRequestSequence = 0;
 function activeCalendarName() {
@@ -28,6 +29,8 @@ let snapshot = null;
 let selectedYear = null;
 let lastSuccessfulSync = null;
 let lastCalendarLoad = 0;
+// As preferências locais e as fontes adicionais não alteram o calendário principal do Planner.
+const sourceManager=createAgendaSources({getPrimary:()=>calendarSource,onChange:()=>void loadCalendar({checkWorkflow:false})});
 
 function pad(value) { return String(value).padStart(2, '0'); }
 function dateKey(year, monthIndex, day) { return `${year}-${pad(monthIndex + 1)}-${pad(day)}`; }
@@ -76,7 +79,26 @@ function renderMiniMonth(year, monthIndex, events) {
   const marked = occupiedDays(events, year, monthIndex);
   for (let day = 1; day <= lastDay(year, monthIndex); day += 1) {
     const cell = textElement('span', marked.has(day) ? 'day has-event' : 'day', String(day));
-    if (marked.has(day)) cell.setAttribute('aria-label', `${day} de ${MONTHS[monthIndex]}, com evento`);
+    if (marked.has(day)) {
+      const dayKey=dateKey(year,monthIndex,day);
+      const sourceIds=new Set();
+      for(const event of events){
+        if(event.startDate<=dayKey&&event.endDate>=dayKey){
+          for(const sourceId of event.sourceIds||[event.sourceId]) if(sourceId)sourceIds.add(sourceId);
+        }
+      }
+      const markers=textElement('span','agenda-mini-markers','');
+      for(const sourceId of [...sourceIds].slice(0,5)){
+        const source=sourceManager.info(sourceId);
+        if(!source)continue;
+        const marker=textElement('i','agenda-mini-marker','');
+        marker.style.backgroundColor=source.color;
+        marker.setAttribute('aria-hidden','true');
+        markers.append(marker);
+      }
+      cell.append(markers);
+      cell.setAttribute('aria-label',day+' de '+MONTHS[monthIndex]+': '+[...sourceIds].map(id=>sourceManager.info(id)?.name||'').filter(Boolean).join(', '));
+    }
     grid.append(cell);
   }
   monthCard.append(grid);
@@ -97,7 +119,8 @@ function rangeForMonth(event, year, monthIndex) {
 }
 
 function renderEvent(event, year, monthIndex) {
-  const item = textElement('article', 'event-row', '');
+  const item = textElement('article', 'event-row agenda-colored-event', '');
+  item.style.setProperty('--event-color',sourceManager.info(event.sourceId)?.color||'#668e74');
   const date = rangeForMonth(event, year, monthIndex);
   const dateBlock = textElement('div', 'event-date', '');
   dateBlock.append(textElement('span', 'event-weekday', date.weekday));
@@ -110,6 +133,15 @@ function renderEvent(event, year, monthIndex) {
   if (!event.allDay && event.startAt) parts.push(`Às ${formatHour(event.startAt)}`);
   if (event.location) parts.push(event.location.trim());
   if (parts.length) detail.append(textElement('p', 'event-meta', parts.join('  ·  ')));
+  const sources=textElement('div','agenda-event-source-line','');
+  for(const sourceId of event.sourceIds||[event.sourceId]){
+    const source=sourceManager.info(sourceId);
+    if(!source)continue;
+    const chip=textElement('span','agenda-event-source-chip',source.name);
+    chip.style.setProperty('--source-color',source.color);
+    sources.append(chip);
+  }
+  detail.append(sources);
   item.append(detail);
   return item;
 }
@@ -160,7 +192,8 @@ function duplexMonth(monthIndex, events) {
   panel.append(heading);
 
   for (const event of events) {
-    const row = textElement('article', 'duplex-event-row', '');
+    const row = textElement('article', 'duplex-event-row agenda-colored-event', '');
+    row.style.setProperty('--event-color',sourceManager.info(event.sourceId)?.color||'#668e74');
     const date = textElement('div', 'duplex-event-date', '');
     date.append(textElement('strong', '', event.startDate.slice(8)));
     if (event.startDate !== event.endDate) {
@@ -340,7 +373,16 @@ function render() {
   const months = MONTHS.map((_, index) => monthEvents(yearEvents, year, index));
 
   byId('cover-year').textContent = year;
-  byId('cover-summary').textContent = `${yearEvents.length} eventos registrados  ·  Fonte: ${activeCalendarName()}`;
+  byId('cover-summary').textContent = yearEvents.length+' registros no ano · '+sourceManager.active().length+' fontes ativas';
+  const legend=byId('agenda-colors-legend');
+  if(legend){
+    legend.replaceChildren();
+    for(const source of sourceManager.active()){
+      const item=textElement('span','','');
+      const dot=textElement('i','','');dot.style.backgroundColor=source.color;
+      item.append(dot,document.createTextNode(source.name));legend.append(item);
+    }
+  }
   updateCalendarSourceLabels();
   const calendarGrid = byId('calendar-grid');
   calendarGrid.replaceChildren(...months.map((items, index) => renderMiniMonth(year, index, items)));
@@ -359,14 +401,16 @@ function render() {
   const verifiedDate = !direct && lastSuccessfulSync
     ? `Última consulta automática ao Google: ${formatDate(lastSuccessfulSync)}.` : '';
   const overdue = !direct && lastSuccessfulSync && Date.now() - Date.parse(lastSuccessfulSync) > 45 * 60 * 1000;
-  const explanation = direct
-    ? 'Dados obtidos diretamente do Google Agenda. Atualizar consulta o Google novamente.'
+  const explanation = snapshot.warnings?.length
+    ? 'Algumas fontes não puderam ser atualizadas: '+snapshot.warnings.join(' | ')
+    : direct
+    ? 'Agendas Google consultadas diretamente. Datas oficiais IPB de 2026 incluídas como edição publicada.'
     : snapshot.warning || (overdue
       ? 'A sincronização automática está atrasada. Confira o Google Agenda para ver as alterações mais recentes.'
       : 'Atualizar consulta a cópia sincronizada no Portal; a integração direta ainda não está configurada.');
   status.textContent = `${yearEvents.length} eventos em ${year}. ${fileDate} ${verifiedDate} ${explanation}`;
   status.classList.remove('is-error');
-  status.classList.toggle('is-warning', Boolean(overdue || snapshot.warning));
+  status.classList.toggle('is-warning', Boolean(overdue || snapshot.warning || snapshot.warnings?.length));
 }
 
 // Exibe quando o servidor realmente consultou o Google, inclusive se não
@@ -393,7 +437,7 @@ async function loadCalendar({ checkWorkflow = true } = {}) {
   refreshButton.classList.add('is-loading');
   status.textContent = 'Buscando os eventos de ' + activeCalendarName() + '...';
   try {
-    const fresh = await readPublicCalendar({ calendarId: calendarSource.calendarId, now: Date.now() });
+    const fresh = await sourceManager.readAll();
     if (request !== calendarRequestSequence) return;
     snapshot = fresh;
     lastCalendarLoad = Date.now();
@@ -468,6 +512,9 @@ async function initializeAgendaConfiguration() {
       managingEmail=canManage?email:'';
       configButton.hidden=!canManage;
       configForm.hidden=!canManage;
+      sourceManager.setAdmin(canManage,async additionalSources=>{
+        await setDoc(calendarRef,{additionalSources,updatedBy:managingEmail,updatedAt:serverTimestamp()},{merge:true});
+      });
       if(!canManage) {
         if(dialog.open)dialog.close();
         feedback.textContent='';
@@ -532,7 +579,7 @@ async function initializeAgendaConfiguration() {
         await setDoc(calendarRef,{
           calendarId:parsed.calendarId,sourceUrl:parsed.sourceUrl,
           updatedBy:managingEmail,updatedAt:serverTimestamp()
-        });
+        },{merge:true});
         feedback.textContent='Fonte salva: “'+name+'”. A Agenda Anual e o Planner utilizarão a mesma origem. A cópia de segurança do GitHub pode levar alguns minutos para sincronizar.';
       }catch(error){
         feedback.textContent=error.code==='permission-denied'
@@ -545,6 +592,7 @@ async function initializeAgendaConfiguration() {
       if(!record.exists())return;
       try {
         const data=record.data();
+        sourceManager.setSharedSources(data.additionalSources);
         const parsed=parseCalendarSourceUrl(data.sourceUrl);
         if(parsed.calendarId!==data.calendarId)throw new Error('A configuração remota contém um calendário divergente.');
         const changed=parsed.calendarId!==calendarSource.calendarId;
