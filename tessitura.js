@@ -437,7 +437,9 @@ function renderResult(choice) {
   const people = dom('div','result-people');
   choice.evaluations.sort((a,b) => a.nome.localeCompare(b.nome,'pt-BR'));
   for (const singer of choice.evaluations) {
-    const label = singer.status === 'confortavel' ? 'Confortável' :
+    const personData = singers.find(p => p.id === singer.id);
+    const estimated = personData && !Number.isInteger(personData.confortoGrave);
+    const label = singer.status === 'confortavel' ? (estimated ? 'Compatível (estimado)' : 'Confortável') :
       singer.status === 'limite' ? 'No limite' : 'Fora do alcance';
     const card = dom('div','result-person ' + singer.status);
     card.append(dom('span','status-dot'));
