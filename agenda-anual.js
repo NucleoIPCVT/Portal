@@ -1,5 +1,5 @@
 import { publicCalendar, readPublicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl } from './planner-public.js?v=20261116-multi-source-ids-v1';
-import { createAgendaSources } from './agenda-fontes.js?v=20261116-multi-v1';
+import { createAgendaSources } from './agenda-fontes.js?v=20261117-remove-v1';
 let calendarSource = { calendarId: publicCalendar.id, sourceUrl: publicCalendar.sourceUrl };
 let calendarRequestSequence = 0;
 function activeCalendarName() {
