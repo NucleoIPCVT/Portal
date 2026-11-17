@@ -18,8 +18,23 @@
 .preview-voice-bars span{height:6px;border-radius:5px;background:#dbbca2;flex:1}
 .preview-voice-bars span:nth-child(2){background:#c99b7d}
 .preview-voice-bars span:nth-child(3){background:#e7c9aa}
-html[data-portal-theme="dark"] .tool-card-tessitura{background:linear-gradient(120deg,#513f34,#645041 54%,#786252)}
-html[data-portal-theme="dark"] .tool-card-tessitura::before{background:linear-gradient(90deg,rgba(81,63,52,.98) 0%,rgba(81,63,52,.94) 35%,rgba(81,63,52,.36) 85%,transparent 100%)}
-html[data-portal-theme="dark"] .tool-card-tessitura :is(h2,p,.tool-number){color:#fff1e3}
-html[data-portal-theme="dark"] .tool-card-tessitura .status{background:#f1dcc6;color:#66452f}
+html[data-portal-theme="dark"] .tool-card-tessitura{background:linear-gradient(120deg,#343638,#414242 54%,#514e4b)}
+html[data-portal-theme="dark"] .tool-card-tessitura::before{background:linear-gradient(90deg,rgba(52,54,56,.98) 0%,rgba(52,54,56,.94) 35%,rgba(52,54,56,.36) 85%,transparent 100%)}
+html[data-portal-theme="dark"] .tool-card-tessitura :is(h2,p,.tool-number){color:#f1eee9}
+html[data-portal-theme="dark"] .tool-card-tessitura .status{background:#e7d6c7;color:#484039}
 @media(max-width:780px){.voice-card-preview{opacity:.23!important;right:-150px}.tool-card-tessitura .tool-icon{position:relative}}
+
+/* O cartão acompanha a paleta interna; no escuro, o mockup também fica em grafite. */
+html[data-portal-theme="dark"] .tool-card-tessitura .tool-icon{color:#e0c5ae;background:#575451;border-color:#77716b}
+html[data-portal-theme="dark"] .tool-card-tessitura .preview-voice-window{background:#3e3f3e;border-color:#76706b;box-shadow:0 20px 35px #16171740;color:#f0e9e1}
+html[data-portal-theme="dark"] .tool-card-tessitura .preview-voice-header,
+html[data-portal-theme="dark"] .tool-card-tessitura .preview-voice-row{border-color:#66615c}
+html[data-portal-theme="dark"] .tool-card-tessitura .preview-voice-header span{background:#56514d;color:#e0c7b0}
+html[data-portal-theme="dark"] .tool-card-tessitura .preview-voice-header small,
+html[data-portal-theme="dark"] .tool-card-tessitura .preview-voice-sub,
+html[data-portal-theme="dark"] .tool-card-tessitura .preview-voice-row span{color:#d0c0b2}
+html[data-portal-theme="dark"] .tool-card-tessitura .preview-voice-result{background:#4e4c49;border-color:#746b63}
+html[data-portal-theme="dark"] .tool-card-tessitura .preview-voice-result small{color:#e0c9b6}
+html[data-portal-theme="dark"] .tool-card-tessitura .preview-voice-bars span{background:#a99989}
+html[data-portal-theme="dark"] .tool-card-tessitura .preview-voice-bars span:nth-child(2){background:#c0a88f}
+html[data-portal-theme="dark"] .tool-card-tessitura .preview-voice-bars span:nth-child(3){background:#8e8b88}
