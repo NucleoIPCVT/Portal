@@ -1,0 +1,408 @@
+/* Planner IPCVT | Meu Dia editorial, planos em lista e datas alinhadas.
+   Camada final: preserva estado, acessos e interações existentes. */
+body.pm-active #planner-app .pm-home-hero {
+  position:relative;
+  display:flex;
+  align-items:flex-end;
+  overflow:hidden;
+  isolation:isolate;
+  min-height:296px;
+  margin:0 0 19px;
+  padding:31px clamp(24px,3.7vw,52px);
+  border:1px solid rgba(93,130,100,.18);
+  border-radius:11px;
+  background:linear-gradient(110deg,#334e44,#88a18e);
+  box-shadow:0 14px 34px rgba(35,65,47,.12);
+}
+body.pm-active #planner-app .pm-home-pictures,
+body.pm-active #planner-app .pm-home-picture {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+}
+body.pm-active #planner-app .pm-home-pictures {z-index:0}
+body.pm-active #planner-app .pm-home-picture {
+  background-position:center right;
+  background-repeat:no-repeat;
+  background-size:cover;
+  opacity:0;
+  animation:pm-home-season-cycle 27s ease-in-out infinite;
+}
+body.pm-active #planner-app .pm-home-picture:nth-child(1) {animation-delay:0s}
+body.pm-active #planner-app .pm-home-picture:nth-child(2) {animation-delay:-18s}
+body.pm-active #planner-app .pm-home-picture:nth-child(3) {animation-delay:-9s}
+@keyframes pm-home-season-cycle {
+  0%,28%{opacity:1;transform:scale(1.008)}
+  34%,94%{opacity:0;transform:scale(1.035)}
+  100%{opacity:1;transform:scale(1.008)}
+}
+body.pm-active #planner-app .pm-home-hero::after {
+  content:'';
+  position:absolute;
+  z-index:1;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(90deg,rgba(28,55,43,.46) 0%,rgba(28,55,43,.12) 60%,rgba(28,55,43,0) 100%);
+}
+body.pm-active #planner-app .pm-home-hero-copy {
+  z-index:2;
+  position:relative;
+  display:grid;
+  justify-items:start;
+  gap:7px;
+  max-width:670px;
+  color:#fff;
+  text-shadow:0 1px 3px rgba(16,44,27,.23);
+}
+body.pm-active #planner-app .pm-home-eyebrow {
+  color:#e0efdf;
+  text-transform:uppercase;
+  font-size:10px;
+  font-weight:750;
+  letter-spacing:1.65px;
+  line-height:1.5;
+}
+body.pm-active #planner-app .pm-home-title {
+  margin:2px 0 0;
+  font:600 clamp(48px,6vw,75px)/.96 'Cormorant Garamond',Georgia,serif;
+  letter-spacing:-.025em;
+  color:#fff;
+}
+body.pm-active #planner-app .pm-home-message {
+  margin:4px 0 0;
+  color:#f6f6e9;
+  font:450 clamp(13px,1.3vw,16px)/1.55 Inter,Arial,sans-serif;
+  max-width:510px;
+}
+body.pm-active #planner-app .pm-home-date {
+  margin-top:2px;
+  color:#e5efdf;
+  font-size:11px;
+  font-weight:570;
+  text-transform:capitalize;
+}
+body.pm-active #planner-app .pm-home-hero-actions {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:17px;
+  align-items:center;
+}
+body.pm-active #planner-app .pm-home-hero-actions .pm-create-button,
+body.pm-active #planner-app .pm-home-hero-calendar {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  min-height:38px;
+  border-radius:5px;
+  padding:8px 13px;
+  font-size:11px;
+  font-weight:720;
+  cursor:pointer;
+  text-shadow:none;
+}
+body.pm-active #planner-app .pm-home-hero-actions .pm-create-button {
+  border:1px solid #f6faef;
+  background:#f6faef;
+  color:#365942;
+}
+body.pm-active #planner-app .pm-home-hero-calendar {
+  border:1px solid rgba(238,248,234,.6);
+  background:rgba(35,67,49,.33);
+  color:#f9fff8;
+}
+body.pm-active #planner-app .pm-home-hero-calendar:hover {background:rgba(35,67,49,.53)}
+body.pm-active #planner-app .pm-home-dashboard {
+  display:grid;
+  grid-template-columns:minmax(0,1.48fr) minmax(282px,.86fr);
+  align-items:start;
+  gap:18px;
+  min-width:0;
+}
+body.pm-active #planner-app .pm-home-main,
+body.pm-active #planner-app .pm-home-aside {display:grid;gap:16px;min-width:0;align-content:start}
+body.pm-active #planner-app .pm-home-main .pm-today-stats {margin:0;gap:9px}
+body.pm-active #planner-app .pm-home-main .pm-today-stat {
+  min-width:0;gap:10px;padding:15px 12px;
+  border-radius:8px;box-shadow:none;
+}
+body.pm-active #planner-app .pm-home-main .pm-today-stat strong {font-size:25px;letter-spacing:-.8px}
+body.pm-active #planner-app .pm-home-dashboard .pm-today-card {
+  min-width:0;
+  border-radius:9px;
+  padding:19px clamp(15px,2vw,23px);
+  box-shadow:0 3px 11px rgba(32,58,37,.045);
+}
+body.pm-active #planner-app .pm-home-panel-heading {display:grid;gap:4px;margin-bottom:17px}
+body.pm-active #planner-app .pm-home-panel-kicker {
+  display:block;
+  color:#7b9784;
+  font:760 9px/1.4 Inter,Arial,sans-serif;
+  letter-spacing:1.3px;
+  text-transform:uppercase;
+  overflow-wrap:anywhere;
+}
+body.pm-active #planner-app .pm-home-panel-heading h3 {
+  margin:0;
+  font-size:15px;
+  font-weight:750;
+  color:#325943;
+  line-height:1.3;
+}
+body.pm-active #planner-app .pm-home-all-clear {
+  margin:0 0 9px;
+  padding:15px;
+  border:1px solid #deecda;
+  background:#f3f9f1;
+  color:#4c7557;
+  font-size:12px;
+  line-height:1.6;
+  border-radius:6px;
+}
+body.pm-active #planner-app .pm-home-upcoming-item,
+body.pm-active #planner-app .pm-home-event,
+body.pm-active #planner-app .pm-home-period {
+  display:flex;
+  width:100%;
+  min-width:0;
+  text-align:left;
+  align-items:center;
+  cursor:pointer;
+  border:1px solid #e4ebe1;
+  border-radius:6px;
+  background:#fafcf9;
+  color:#365441;
+}
+body.pm-active #planner-app .pm-home-upcoming-item:hover,
+body.pm-active #planner-app .pm-home-event:hover,
+body.pm-active #planner-app .pm-home-period:hover {
+  border-color:#bfdbc5;background:#eff6ec;
+}
+body.pm-active #planner-app .pm-home-upcoming-item {gap:12px;padding:11px;margin-bottom:7px}
+body.pm-active #planner-app .pm-home-upcoming-date {
+  display:grid;place-items:center;flex:0 0 69px;
+  min-height:33px;
+  border-radius:5px;background:#eaf3e9;
+  color:#538067;font-size:10px;font-weight:750;
+}
+body.pm-active #planner-app .pm-home-upcoming-copy,
+body.pm-active #planner-app .pm-home-event-copy {display:grid;gap:4px;min-width:0}
+body.pm-active #planner-app .pm-home-upcoming-copy strong,
+body.pm-active #planner-app .pm-home-event-copy strong {
+  font-size:11px;font-weight:720;white-space:normal;overflow-wrap:anywhere;
+}
+body.pm-active #planner-app .pm-home-upcoming-copy small,
+body.pm-active #planner-app .pm-home-event-copy small {
+  font-size:9px;color:#839789;line-height:1.4;
+}
+body.pm-active #planner-app .pm-home-periods {display:grid;gap:8px}
+body.pm-active #planner-app .pm-home-periods .pm-home-panel-heading {margin-bottom:6px}
+body.pm-active #planner-app .pm-home-period {justify-content:space-between;gap:14px;padding:11px 14px}
+body.pm-active #planner-app .pm-home-period-label {display:grid;gap:3px}
+body.pm-active #planner-app .pm-home-period-label strong {font-size:11px;font-weight:750}
+body.pm-active #planner-app .pm-home-period-label small {font-size:9px;color:#839887;text-transform:capitalize}
+body.pm-active #planner-app .pm-home-period-count {display:flex;align-items:baseline;gap:6px;white-space:nowrap;color:#4d8660}
+body.pm-active #planner-app .pm-home-period-count strong {font-size:23px;font-weight:760;letter-spacing:-.5px}
+body.pm-active #planner-app .pm-home-period-count small {font-size:9px}
+body.pm-active #planner-app .pm-home-events {display:grid;gap:0}
+body.pm-active #planner-app .pm-home-event {gap:10px;margin-bottom:8px;padding:9px 10px}
+body.pm-active #planner-app .pm-home-event-date {
+  display:grid;place-items:center;flex:0 0 43px;gap:1px;
+  min-height:47px;
+  border-radius:5px;background:#eaf1e8;color:#4f8061;
+}
+body.pm-active #planner-app .pm-home-event-date strong {font-size:19px;line-height:1;font-weight:780}
+body.pm-active #planner-app .pm-home-event-date small {font-size:9px;text-transform:uppercase}
+body.pm-active #planner-app .pm-home-events .pm-text-link {margin-top:8px;justify-self:start}
+
+/* Cartões empilhados, cada projeto em uma linha e a marca-d'água ao fundo. */
+body.pm-active #planner-app .plans-grid.pm-plan-stack {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  align-items:stretch;
+  gap:12px;
+}
+body.pm-active #planner-app .pm-plan-stack-card {
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  display:grid;
+  grid-template-columns:54px minmax(0,1fr) minmax(170px,225px);
+  grid-template-areas:
+    "mark info progress"
+    "mark actions actions";
+  align-items:start;
+  gap:8px 17px;
+  min-height:0;
+  padding:18px 22px;
+  border-radius:9px;
+  background:linear-gradient(113deg,#ffffff,#f8fbf7 78%,#eff6ec);
+  box-shadow:0 3px 14px rgba(27,58,40,.052);
+}
+body.pm-active #planner-app .pm-plan-stack-card>*:not(.pm-plan-watermark) {position:relative;z-index:1}
+body.pm-active #planner-app .pm-plan-watermark {
+  position:absolute;z-index:0;
+  width:210px;height:195px;right:5px;top:50%;
+  transform:translateY(-50%);
+  background:center right/contain no-repeat;
+  opacity:.15;
+  pointer-events:none;
+}
+body.pm-active #planner-app .pm-mark-service {background-image:url('planner-mark-service.svg')}
+body.pm-active #planner-app .pm-mark-study {background-image:url('planner-mark-study.svg')}
+body.pm-active #planner-app .pm-mark-music {background-image:url('planner-mark-music.svg')}
+body.pm-active #planner-app .pm-mark-project {background-image:url('planner-mark-project.svg')}
+body.pm-active #planner-app .pm-plan-emblem {
+  grid-area:mark;
+  width:45px;height:45px;min-width:45px;
+  border-radius:8px;
+  font-size:20px;
+}
+body.pm-active #planner-app .pm-plan-copy {grid-area:info;display:grid;align-content:start;gap:5px;min-width:0}
+body.pm-active #planner-app .pm-plan-kicker {
+  color:#799981;letter-spacing:1.2px;
+  font:760 9px/1.3 Inter,Arial,sans-serif;
+}
+body.pm-active #planner-app .pm-plan-copy .plan-card-title {
+  font-size:18px;line-height:1.27;letter-spacing:-.35px;white-space:normal;overflow-wrap:anywhere;
+}
+body.pm-active #planner-app .pm-plan-copy .plan-card-description {
+  font-size:11px;line-height:1.5;min-height:0;margin:0;
+  max-width:720px;
+}
+body.pm-active #planner-app .pm-plan-copy .plan-card-owner {
+  background:transparent;
+  border:0;
+  padding:0;
+  font-size:10px;font-weight:620;color:#648875;overflow-wrap:anywhere;
+}
+body.pm-active #planner-app .pm-plan-progress {
+  grid-area:progress;
+  display:grid;gap:9px;
+  align-self:center;min-width:0;
+  padding:14px;
+  border:1px solid #e0e9df;
+  background:rgba(250,253,249,.88);
+  border-radius:7px;
+  backdrop-filter:blur(2px);
+}
+body.pm-active #planner-app .pm-plan-progress .plan-card-progress-label {
+  gap:8px;align-items:center;font-size:10px;
+}
+body.pm-active #planner-app .pm-plan-progress .plan-card-progress-label strong {font-size:20px;letter-spacing:-.6px}
+body.pm-active #planner-app .pm-plan-progress .plan-card-progress {height:7px}
+body.pm-active #planner-app .pm-plan-progress-note {font-size:9px;color:#779182}
+body.pm-active #planner-app .pm-plan-stack-card .plan-card-footer {
+  grid-area:actions;
+  display:flex;
+  flex-wrap:wrap;gap:7px;
+  align-items:center;
+  margin:5px 0 0;padding-top:11px;
+  border-top:1px solid #e4ebe1;
+}
+body.pm-active #planner-app .pm-plan-stack-card .plan-card-footer .button {font-size:10px;min-height:31px;padding:7px 11px}
+
+/* Datas lado a lado no assistente de criação, com início automático editável. */
+#task-dialog.pm-wizard-dialog .task-primary-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}
+#task-dialog.pm-wizard-dialog .task-primary-grid>.field {order:0!important;min-width:0}
+#task-dialog.pm-wizard-dialog .task-primary-grid>label[for="task-plan"] {grid-column:1/-1;order:-2!important}
+#task-dialog.pm-wizard-dialog .task-primary-grid>.pm-task-date-pair {
+  grid-column:1/-1;
+  order:3!important;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:0 12px;
+  min-width:0;
+}
+#task-dialog.pm-wizard-dialog .task-primary-grid>.pm-task-date-pair>.field {min-width:0;display:grid;gap:6px}
+#task-dialog.pm-wizard-dialog .task-primary-grid>.pm-task-date-pair input[type="date"] {max-width:100%;min-width:0}
+#plan-dialog.pm-wizard-dialog #plan-date-fields {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+  min-width:0;
+}
+#plan-dialog.pm-wizard-dialog #plan-date-fields>.field {min-width:0;margin:0}
+#plan-dialog.pm-wizard-dialog #plan-date-fields input[type="date"] {min-width:0;max-width:100%;width:100%}
+
+/* Cores neutras e contraste confortável no grafite. */
+:root[data-theme="dark"] body.pm-active #planner-app .pm-home-hero {
+  border-color:#466150;box-shadow:0 14px 32px rgba(0,0,0,.19);
+}
+:root[data-theme="dark"] body.pm-active #planner-app .pm-home-dashboard .pm-today-card,
+:root[data-theme="dark"] body.pm-active #planner-app .pm-home-period,
+:root[data-theme="dark"] body.pm-active #planner-app .pm-home-event,
+:root[data-theme="dark"] body.pm-active #planner-app .pm-home-upcoming-item,
+:root[data-theme="dark"] body.pm-active #planner-app .pm-plan-stack-card {
+  background:#2a3333;border-color:#44534a;color:#dce9df;
+}
+:root[data-theme="dark"] body.pm-active #planner-app .pm-home-period:hover,
+:root[data-theme="dark"] body.pm-active #planner-app .pm-home-event:hover,
+:root[data-theme="dark"] body.pm-active #planner-app .pm-home-upcoming-item:hover {background:#33483b;border-color:#5e8066}
+:root[data-theme="dark"] body.pm-active #planner-app .pm-home-panel-heading h3,
+:root[data-theme="dark"] body.pm-active #planner-app .pm-home-period-label strong,
+:root[data-theme="dark"] body.pm-active #planner-app .pm-home-upcoming-copy strong,
+:root[data-theme="dark"] body.pm-active #planner-app .pm-home-event-copy strong,
+:root[data-theme="dark"] body.pm-active #planner-app .pm-plan-copy .plan-card-title {color:#dce9df}
+:root[data-theme="dark"] body.pm-active #planner-app .pm-home-panel-kicker,
+:root[data-theme="dark"] body.pm-active #planner-app .pm-home-period-label small,
+:root[data-theme="dark"] body.pm-active #planner-app .pm-home-upcoming-copy small,
+:root[data-theme="dark"] body.pm-active #planner-app .pm-home-event-copy small,
+:root[data-theme="dark"] body.pm-active #planner-app .pm-plan-kicker {color:#b0c5b6}
+:root[data-theme="dark"] body.pm-active #planner-app .pm-home-all-clear {background:#30483b;border-color:#4d6451;color:#c4e0cb}
+:root[data-theme="dark"] body.pm-active #planner-app .pm-home-event-date,
+:root[data-theme="dark"] body.pm-active #planner-app .pm-home-upcoming-date {background:#35483b;color:#b1dfbf}
+:root[data-theme="dark"] body.pm-active #planner-app .pm-home-period-count {color:#aed4b8}
+:root[data-theme="dark"] body.pm-active #planner-app .pm-plan-progress {background:rgba(36,49,43,.9);border-color:#496150}
+:root[data-theme="dark"] body.pm-active #planner-app .pm-plan-progress-note {color:#a8c4af}
+:root[data-theme="dark"] body.pm-active #planner-app .pm-plan-watermark {opacity:.1}
+:root[data-theme="dark"] body.pm-active #planner-app .pm-plan-stack-card .plan-card-footer {border-color:#43564a}
+:root[data-theme="dark"] body.pm-active #planner-app .pm-plan-copy .plan-card-owner {color:#b6d1bf}
+
+@media(max-width:1190px) {
+  body.pm-active #planner-app .pm-home-dashboard {grid-template-columns:minmax(0,1fr) minmax(255px,.78fr);gap:12px}
+  body.pm-active #planner-app .pm-home-main .pm-today-stat {flex-direction:column;align-items:flex-start;gap:6px}
+}
+@media(max-width:900px) {
+  body.pm-active #planner-app .pm-home-dashboard {grid-template-columns:minmax(0,1fr)}
+  body.pm-active #planner-app .pm-home-aside {grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+  body.pm-active #planner-app .pm-plan-stack-card {grid-template-columns:48px minmax(0,1fr) minmax(140px,190px);gap:8px 12px;padding:16px}
+}
+@media(max-width:630px) {
+  body.pm-active #planner-app .pm-home-hero {min-height:275px;padding:23px 19px;margin-bottom:13px}
+  body.pm-active #planner-app .pm-home-title {font-size:53px}
+  body.pm-active #planner-app .pm-home-hero-copy {gap:7px}
+  body.pm-active #planner-app .pm-home-hero-actions {margin-top:10px;gap:7px}
+  body.pm-active #planner-app .pm-home-main .pm-today-stats {gap:6px}
+  body.pm-active #planner-app .pm-home-main .pm-today-stat {padding:11px 8px}
+  body.pm-active #planner-app .pm-home-main .pm-today-stat strong {font-size:22px}
+  body.pm-active #planner-app .pm-home-aside {grid-template-columns:minmax(0,1fr)}
+  body.pm-active #planner-app .pm-plan-stack-card {
+    grid-template-columns:42px minmax(0,1fr);
+    grid-template-areas:"mark info" "progress progress" "actions actions";
+    gap:10px 9px;padding:15px 13px;
+  }
+  body.pm-active #planner-app .pm-plan-copy .plan-card-title {font-size:16px}
+  body.pm-active #planner-app .pm-plan-progress {padding:12px}
+  body.pm-active #planner-app .pm-plan-stack-card .plan-card-footer {margin-top:0}
+  body.pm-active #planner-app .pm-plan-watermark {width:155px;right:-28px}
+}
+@media(max-width:430px) {
+  body.pm-active #planner-app .pm-home-main .pm-today-stat>svg {display:none}
+  body.pm-active #planner-app .pm-home-hero-actions .pm-create-button,
+  body.pm-active #planner-app .pm-home-hero-calendar {font-size:10px;padding:8px 10px}
+  #task-dialog.pm-wizard-dialog .task-primary-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+  #task-dialog.pm-wizard-dialog .task-primary-grid>.pm-task-date-pair {gap:0 7px}
+  #plan-dialog.pm-wizard-dialog #plan-date-fields {gap:7px}
+}
+@media(prefers-reduced-motion:reduce) {
+  body.pm-active #planner-app .pm-home-picture {animation:none;opacity:0;transform:none}
+  body.pm-active #planner-app .pm-home-picture:first-child {opacity:1}
+}
+@media print {
+  body.pm-active #planner-app .pm-home-picture {animation:none}
+  body.pm-active #planner-app .pm-home-picture:first-child {opacity:1}
+}
