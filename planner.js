@@ -32,7 +32,7 @@ import { BOARD_GROUPINGS, groupBoardTasks, moveBoardTask } from './planner-board
 import { GoogleCalendarClient } from './planner-google.js'
 import { setupPlannerWizards } from './planner-form-wizard.js?v=20261116-dates-together-v1'
 import { publicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl, summarizeCalendarEvents, diffCalendarEvents } from './planner-public.js?v=20261116-multi-source-ids-v1'
-import { plannerPublicSources, readPlannerPublicSources } from './planner-multi-public.js?v=20261117-v1'
+import { plannerPublicSources, readPlannerPublicSources } from './planner-multi-public.js?v=20261117-v2'
 
 const $ = id => document.getElementById(id)
 const formWizards = setupPlannerWizards()
@@ -1069,6 +1069,14 @@ function stopCalendarPolling() {
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && session.status === 'authorized'
     && Date.now() - calendarLastLoad > 60 * 1000) void refreshPublicCalendar()
+})
+
+// Alterar as fontes na Agenda Anual em outra aba atualiza o Planner aberto,
+// sem adicionar controles ou alterar sua apresentação.
+window.addEventListener('storage', event => {
+  if (event.key !== 'ipcvt:agenda:fontes:preferencias:v2') return
+  calendarConfigRevision++
+  if (session.status === 'authorized') void refreshPublicCalendar()
 })
 
 function renderPublicIntegration(content) {
