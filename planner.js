@@ -1917,7 +1917,6 @@ function pmTaskTools(content,tasks,mode){
     onInput:event=>{
       const pos=event.target.selectionStart
       $('search-filter').value=event.target.value
-      $('pm-search').value=event.target.value
       render()
       const next=$('pm-demand-search')
       if(next){next.focus({preventScroll:true});try{next.setSelectionRange(pos,pos)}catch{}}
@@ -2815,7 +2814,6 @@ function pmSyncThemeButton(){
 $('pm-sidebar-theme').addEventListener('click',()=>{$('theme-toggle').click();pmSyncThemeButton()})
 $('theme-toggle').addEventListener('click',()=>pmSyncThemeButton())
 pmSyncThemeButton()
-$('pm-search').addEventListener('input',e=>{$('search-filter').value=e.target.value;render()})
 $('pm-notifications').addEventListener('click',()=>$('planner-notifications-button').click())
 $('pm-theme').addEventListener('click',()=>{$('theme-toggle').click();$('pm-more').open=false})
 setupHomeImageSettings({
@@ -2876,7 +2874,6 @@ function render() {
   if(selected&&planCycleConfig(selected.id)&&['board','list','calendar','summary'].includes(currentView)){
     content.append(pmPlanCycleBar(selected))
   }
-  if(document.activeElement !== $('pm-search')) $('pm-search').value = $('search-filter').value
   pmRenderMain(content,tasks)
 }
 function fillBucketSelect(select, planId, current = '') {
