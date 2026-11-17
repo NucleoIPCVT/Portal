@@ -54,7 +54,7 @@
 /* Marcação discreta de cada fonte dentro dos 12 minicalendários. */
 .mini-month-grid .day{position:relative;}
 .mini-month-grid .day.has-event{color:#335d3e;}
-.agenda-mini-markers{
+.mini-month-grid .day .agenda-mini-markers{
   display:flex;justify-content:center;align-items:center;gap:2px;
   position:absolute;left:0;right:0;bottom:-1px;height:5px;pointer-events:none;
 }
