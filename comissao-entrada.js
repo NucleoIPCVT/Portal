@@ -4,7 +4,7 @@ const prefix = 'ipcvt:comissao:entrada:'
 const duration = 12 * 60 * 60 * 1000
 
 export function grantPanelEntry(tool, uid) {
-  if (!['planner', 'tatico'].includes(tool) || !uid) return false
+  if (!['planner', 'tatico', 'tessitura'].includes(tool) || !uid) return false
   try {
     sessionStorage.setItem(prefix + tool, JSON.stringify({ uid, validUntil: Date.now() + duration }))
     return true
@@ -28,7 +28,7 @@ export function hasPanelEntry(tool, uid = '') {
 
 export function clearPanelEntry(tool = '') {
   try {
-    for (const key of tool ? [tool] : ['planner', 'tatico']) {
+    for (const key of tool ? [tool] : ['planner', 'tatico', 'tessitura']) {
       sessionStorage.removeItem(prefix + key)
     }
   } catch { /* Navegação bloqueada caso o armazenamento esteja indisponível. */ }
