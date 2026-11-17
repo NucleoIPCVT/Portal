@@ -1,6 +1,18 @@
 import { publicCalendar, readPublicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl } from './planner-public.js?v=20261116-name-google-v4';
 let calendarSource = { calendarId: publicCalendar.id, sourceUrl: publicCalendar.sourceUrl };
 let calendarRequestSequence = 0;
+function activeCalendarName() {
+  if(snapshot?.calendarId===calendarSource.calendarId&&snapshot.calendarName?.trim())
+    return snapshot.calendarName.trim();
+  return calendarSource.calendarId===publicCalendar.id ? publicCalendar.name : calendarSource.calendarId;
+}
+function updateCalendarSourceLabels() {
+  const name=activeCalendarName();
+  byId('agenda-active-source-name').textContent=name;
+  byId('agenda-config-current').textContent='Fonte atual: '+name;
+  byId('agenda-google-link').href=calendarWebUrl(calendarSource.calendarId);
+  byId('agenda-google-link').title='Ver “'+name+'” diretamente no Google Agenda';
+}
 
 const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -133,7 +145,7 @@ function renderDetailSheet(year, monthIndexes, monthData, pageNumber, totalPages
   sheet.append(columns);
 
   const foot = textElement('div', 'detail-foot', '');
-  foot.append(textElement('span', '', 'Igreja Presbiteriana Central em Vilar dos Teles  ·  ' + (snapshot?.calendarName || publicCalendar.name)));
+  foot.append(textElement('span', '', 'Igreja Presbiteriana Central em Vilar dos Teles  ·  ' + activeCalendarName()));
   foot.append(textElement('span', '', `${pageNumber} / ${totalPages}`));
   sheet.append(foot);
   return sheet;
@@ -254,7 +266,7 @@ function duplexEventsPage(year, events, pageNumber, totalPages) {
   page.setAttribute('aria-label', `Verso: eventos de ${year}, parte ${pageNumber} de ${totalPages}`);
   const heading = textElement('header', 'duplex-events-heading', '');
   const headerText = textElement('div', '', '');
-  headerText.append(textElement('span', '', (snapshot?.calendarName || publicCalendar.name) + ' · Programação da igreja'));
+  headerText.append(textElement('span', '', activeCalendarName() + ' · Programação da igreja'));
   headerText.append(textElement('h2', '', 'Eventos do ano'));
   heading.append(headerText, textElement('strong', '', String(year)));
   page.append(heading);
@@ -328,7 +340,8 @@ function render() {
   const months = MONTHS.map((_, index) => monthEvents(yearEvents, year, index));
 
   byId('cover-year').textContent = year;
-  byId('cover-summary').textContent = `${yearEvents.length} eventos registrados  ·  Fonte: ${snapshot.calendarName || publicCalendar.name}`;
+  byId('cover-summary').textContent = `${yearEvents.length} eventos registrados  ·  Fonte: ${activeCalendarName()}`;
+  updateCalendarSourceLabels();
   const calendarGrid = byId('calendar-grid');
   calendarGrid.replaceChildren(...months.map((items, index) => renderMiniMonth(year, index, items)));
 
@@ -378,7 +391,7 @@ async function loadCalendar({ checkWorkflow = true } = {}) {
   const request = ++calendarRequestSequence;
   refreshButton.disabled = true;
   refreshButton.classList.add('is-loading');
-  status.textContent = 'Buscando os eventos de ' + (snapshot?.calendarName || publicCalendar.name) + '...';
+  status.textContent = 'Buscando os eventos de ' + activeCalendarName() + '...';
   try {
     const fresh = await readPublicCalendar({ calendarId: calendarSource.calendarId, now: Date.now() });
     if (request !== calendarRequestSequence) return;
