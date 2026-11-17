@@ -4,7 +4,7 @@ import {
   reauthenticateWithPopup, signOut
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'
 import {
-  getFirestore, collection, doc, onSnapshot, runTransaction, serverTimestamp, setDoc, query, orderBy, limit
+  getFirestore, collection, doc, onSnapshot, runTransaction, serverTimestamp, setDoc, getDocs, query, orderBy, limit
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'
 import { createGoogleLogin } from './ipcvt-google-login.js?v=20261112-google-direto-02'
 import { nextRecurringTask, taskRecurrence, rotationConfigId, rotationConfigRecord,
@@ -33,7 +33,7 @@ const firebaseConfig = {
 }
 const KINDS = ['plans', 'buckets', 'tasks', 'events', 'routines']
 const FIELDS = {
-  plans: ['name', 'kind', 'description', 'startDate', 'dueDate', 'deleted'],
+  plans: ['name', 'kind', 'description', 'startDate', 'dueDate', 'ownerEmail', 'ownerName', 'deleted'],
   buckets: ['planId', 'name', 'order', 'deleted'],
   tasks: ['planId', 'bucketId', 'title', 'description', 'team', 'assignees', 'startDate', 'dueDate', 'status', 'priority', 'checklist', 'dependencyIds', 'eventId', 'dateMode', 'dueOffsetDays', 'startOffsetDays', 'routineId', 'cycleKey', 'templateKey', 'sourceTaskId', 'recurrenceId', 'recurrence', 'reviewRequired', 'reviewReason', 'deleted'],
   events: ['source', 'sourceCalendarId', 'sourceEventId', 'sourceKey', 'title', 'description', 'location', 'startDate', 'endDate', 'startAt', 'endAt', 'allDay', 'timeZone', 'status', 'htmlLink', 'calendarName', 'sourceUpdatedAt', 'recurringEventId', 'originalStartTime', 'deleted'],
@@ -41,7 +41,7 @@ const FIELDS = {
 }
 const METADATA = ['id', 'version', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy']
 const DEFAULTS = {
-  plans: { name: '', kind: 'continuous', description: '', startDate: '', dueDate: '', deleted: false },
+  plans: { name: '', kind: 'continuous', description: '', startDate: '', dueDate: '', ownerEmail: '', ownerName: '', deleted: false },
   buckets: { planId: '', name: '', order: 0, deleted: false },
   tasks: { planId: '', bucketId: '', title: '', description: '', team: '', assignees: [], startDate: '', dueDate: '', status: 'todo', priority: 'normal', checklist: [], dependencyIds: [], eventId: '', dateMode: 'manual', dueOffsetDays: null, deleted: false },
   events: { source: 'manual', title: '', description: '', startDate: '', endDate: '', allDay: true, status: 'confirmed', deleted: false },
@@ -464,6 +464,21 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
         })
         return { plan, bucket }
       } catch (cause) { throw readableError(cause) }
+    },
+
+    // A listagem integral de membros só está disponível ao administrador.
+    // Os demais membros podem informar o e-mail autorizado manualmente.
+    async listActiveCommissionMembers() {
+      const actor=requireSession()
+      if(!actor.isAdmin)return []
+      try {
+        const snapshot=await getDocs(collection(db,'comissao_acessos'))
+        return snapshot.docs.map(member=>({
+          email:member.id.toLowerCase().trim(),
+          name:String(member.data().nome||'').trim(),
+          active:member.data().ativo===true
+        })).filter(member=>member.active&&member.email)
+      }catch(cause){throw readableError(cause)}
     },
 
     async login() {
