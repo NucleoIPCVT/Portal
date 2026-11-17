@@ -516,8 +516,8 @@ async function initializeAgendaConfiguration() {
       managingEmail=canManage?email:'';
       configButton.hidden=!canManage;
       configForm.hidden=!canManage;
-      sourceManager.setAdmin(canManage,async additionalSources=>{
-        await setDoc(calendarRef,{additionalSources,updatedBy:managingEmail,updatedAt:serverTimestamp()},{merge:true});
+      sourceManager.setAdmin(canManage,async changes=>{
+        await setDoc(calendarRef,{...changes,updatedBy:managingEmail,updatedAt:serverTimestamp()},{merge:true});
       });
       if(!canManage) {
         if(dialog.open)dialog.close();
@@ -596,7 +596,7 @@ async function initializeAgendaConfiguration() {
       if(!record.exists())return;
       try {
         const data=record.data();
-        sourceManager.setSharedSources(data.additionalSources);
+        sourceManager.setSharedSources(data.additionalSources,data.removedSourceIds);
         const parsed=parseCalendarSourceUrl(data.sourceUrl);
         if(parsed.calendarId!==data.calendarId)throw new Error('A configuração remota contém um calendário divergente.');
         const changed=parsed.calendarId!==calendarSource.calendarId;
