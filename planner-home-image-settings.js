@@ -1,9 +1,9 @@
 /* Seletor de imagens da página "Meu dia". A preferência fica neste navegador, por conta. */
 const storagePrefix='ipcvt-planner-meu-dia-tema-v1:'
 const monthlyArt=[
-  {month:1,label:'Janeiro',theme:'Oração',src:'planner-month-art/planner-month-01.webp',ready:true},
-  {month:2,label:'Fevereiro',theme:'Homem e Mulher Presbiterianos',src:'planner-month-art/planner-month-02.webp',ready:true},
-  {month:3,label:'Março',theme:'Protestantismo no Brasil',src:'planner-month-art/planner-month-03.webp',ready:true},
+  {month:1,label:'Janeiro',theme:'Semana de Oração',src:'planner-month-art/planner-month-01-hd.avif',ready:true},
+  {month:2,label:'Fevereiro',theme:'Homem e Mulher Presbiterianos',src:'planner-month-art/planner-month-02-hd.avif',ready:true},
+  {month:3,label:'Março',theme:'Protestantismo no Brasil',src:'planner-month-art/planner-month-03-hd.avif',ready:true},
   {month:4,label:'Abril',theme:'Páscoa',src:'planner-month-art/planner-month-04.webp',ready:true},
   {month:5,label:'Maio',theme:'Aniversário da IPCVT',src:'planner-month-art/planner-month-05.avif',ready:true},
   {month:6,label:'Junho',theme:'Comunhão e Palavra',src:'planner-hero-mission.svg',ready:false},
