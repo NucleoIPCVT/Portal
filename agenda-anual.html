@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="agenda-anual.css?v=20261110-responsive">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="agenda-anual-nucleo.css?v=20261116-source-admin-v2">
+    <link rel="stylesheet" href="agenda-fontes.css?v=20261116-multi-v1">
     <script type="module" src="agenda-anual.js?v=20261116-source-admin-v5"></script>
   </head>
   <body>
@@ -35,6 +36,7 @@
           <span class="agenda-theme-sun" aria-hidden="true">☀</span>
           <span id="agenda-theme-label">Modo escuro</span>
         </button>
+        <button id="agenda-settings-button" class="agenda-settings-button" type="button" title="Fontes do calendário" aria-label="Configurações das fontes"><i class="ph ph-gear-six" aria-hidden="true"></i></button>
       </div>
     </header>
 
@@ -86,7 +88,7 @@
           </div>
           <div id="calendar-grid" class="calendar-grid" aria-label="Calendário dos doze meses"></div>
           <div class="sheet-foot">
-            <span><i class="event-key"></i> Dias com eventos cadastrados</span>
+            <span class="agenda-print-legend" id="agenda-colors-legend"><i class="event-key"></i> Dias com eventos cadastrados</span>
             <span id="cover-summary">Fonte: Agenda IPCVT · Google Agenda</span>
           </div>
         </section>
@@ -98,6 +100,35 @@
         <p>Os eventos vêm do calendário oficial no Google e são consultados novamente ao clicar em Atualizar.</p>
       </footer>
     </main>
+    <dialog id="agenda-fontes-dialog" class="agenda-source-dialog screen-only" aria-labelledby="agenda-fontes-title">
+      <div class="agenda-source-header">
+        <div><span class="eyebrow">Configurações</span><h2 id="agenda-fontes-title">Fontes do calendário</h2></div>
+        <button type="button" id="agenda-fontes-close" class="agenda-dialog-close" aria-label="Fechar janela">×</button>
+      </div>
+      <p class="agenda-source-intro">Habilite as agendas que deseja ver. Cada fonte tem uma cor própria para identificar os dias no calendário anual.</p>
+      <h3 class="agenda-fontes-caption">Fontes cadastradas</h3>
+      <div id="agenda-fontes-list" class="agenda-source-list"></div>
+      <p class="agenda-source-hint" id="agenda-fontes-sharing-note"></p>
+      <button type="button" class="button button-secondary" id="agenda-edit-primary" hidden>Editar agenda principal (admin)</button>
+      <hr class="agenda-sources-divider">
+      <label class="agenda-merge-label"><input type="checkbox" id="agenda-merge-duplicates" checked> Unir Datas Repetidas</label>
+      <p class="agenda-source-hint">Une apenas registros com mesmo nome, data e horário, preservando as cores de todas as fontes de origem.</p>
+      <hr class="agenda-sources-divider">
+      <h3 class="agenda-fontes-caption">Adicionar fonte Google Agenda</h3>
+      <form id="agenda-add-source-form" class="agenda-add-source-grid">
+        <label>Nome da fonte
+          <input id="agenda-source-new-name" required maxlength="100" placeholder="Ex.: Agenda da UMP" autocomplete="off">
+        </label>
+        <label>Cor
+          <input id="agenda-source-new-color" type="color" value="#8d91c4">
+        </label>
+        <label class="url-field">Link público do Google Agenda
+          <input id="agenda-source-new-url" type="url" required maxlength="2000" placeholder="https://calendar.google.com/calendar/ical/.../public/basic.ics">
+        </label>
+        <button type="submit" class="button button-primary">+ Adicionar fonte</button>
+      </form>
+      <p id="agenda-fontes-feedback" class="agenda-source-feedback" role="status" aria-live="polite"></p>
+    </dialog>
     <dialog id="agenda-config-dialog" class="agenda-source-dialog screen-only" aria-labelledby="agenda-config-title">
       <div class="agenda-source-header">
         <div><span class="eyebrow">Administração</span><h2 id="agenda-config-title">Fonte da agenda oficial</h2></div>
