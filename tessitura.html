@@ -11,10 +11,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <script>try{document.documentElement.setAttribute('data-portal-theme',localStorage.getItem('ipcvt-portal-theme')==='dark'?'dark':'light')}catch(_){document.documentElement.setAttribute('data-portal-theme','light')}</script>
-  <link rel="stylesheet" href="tessitura.css?v=20261117-inline-v4">
+  <link rel="stylesheet" href="tessitura.css?v=20261117-compact-v5">
   <link rel="stylesheet" href="ipcvt-topbar.css?v=20261117-topbar-v2">
   <script defer src="ipcvt-topbar.js?v=20261117-topbar-v2"></script>
-  <script type="module" src="tessitura.js?v=20261117-inline-v4"></script>
+  <script type="module" src="tessitura.js?v=20261117-compact-v5"></script>
 </head>
 <body class="voice-page">
   <header class="voice-topbar">
@@ -34,12 +34,13 @@
       <a class="button primary" href="comissao.html">Abrir Painel da Comissão</a>
     </section>
     <div id="voice-app" hidden>
-      <div class="voice-intro voice-intro-compact">
+      <div class="voice-intro voice-intro-compact voice-banner">
         <div class="voice-summary" aria-label="Resumo do cadastro">
           <div><strong id="metric-total">0</strong><span>Cantores</span></div>
           <div><strong id="metric-measured">0</strong><span>Com alcance</span></div>
           <div><strong id="metric-types">0</strong><span>Classificações</span></div>
         </div>
+        <img class="voice-banner-art" src="mapa-vocal-aquarela.svg?v=1" width="880" height="240" alt="Ilustração artística em aquarela de um grupo vocal com acompanhamento de piano">
       </div>
       <div id="cloud-alert" class="cloud-alert" hidden role="status">
         <i class="ph ph-warning-circle" aria-hidden="true"></i>
@@ -48,23 +49,26 @@
       </div>
       <section class="surface calculator" aria-labelledby="calculator-title">
         <div class="section-head">
-          <div><p class="eyebrow">CALCULADORA DE TOM</p><h2 id="calculator-title">Qual tom funciona melhor para o grupo?</h2>
-            <p>Informe as notas extremas da melodia no tom atual. Cada voz pode cantar em uma oitava adequada.</p></div>
+          <div><h2 id="calculator-title">Calculadora de tom</h2>
+            <p>Selecione as notas extremas da melodia.</p></div>
           <span class="section-icon"><i class="ph ph-waveform" aria-hidden="true"></i></span>
         </div>
         <form id="tone-form" class="tone-form">
           <div class="tone-pickers">
-            <div class="tone-note-field"><div class="note-field-title">Nota mais grave da melodia</div><input id="melody-low" type="hidden"><div id="melody-low-picker"></div></div>
-            <div class="tone-note-field"><div class="note-field-title">Nota mais aguda da melodia</div><input id="melody-high" type="hidden"><div id="melody-high-picker"></div></div>
+            <div class="tone-note-field"><div class="note-field-title">Nota grave</div><input id="melody-low" type="hidden"><div id="melody-low-picker"></div></div>
+            <div class="tone-note-field"><div class="note-field-title">Nota aguda</div><input id="melody-high" type="hidden"><div id="melody-high-picker"></div></div>
           </div>
           <div class="tone-options">
-            <div class="tone-key-field"><div class="note-field-title">Tom original da música <small>(opcional)</small></div><input type="hidden" id="song-key"><div id="song-key-picker"></div></div>
             <label class="tone-group-field">Vozes consideradas<select id="tone-group"><option value="">Todos os cantores ativos</option></select></label>
             <button class="button primary calculate-button" type="submit"><i class="ph ph-music-notes-simple" aria-hidden="true"></i> Calcular tom</button>
           </div>
+          <details class="tone-optional">
+            <summary><i class="ph ph-sliders-horizontal" aria-hidden="true"></i> Informar tom original (opcional)</summary>
+            <div class="tone-key-field"><input type="hidden" id="song-key"><div id="song-key-picker"></div></div>
+          </details>
         </form>
         <div id="calculation-output" class="calculation-output" hidden aria-live="polite"></div>
-        <p class="calculator-note"><i class="ph ph-info" aria-hidden="true"></i> Estimativa baseada nos extremos, não na duração ou repetição das notas. Alcance máximo e tessitura confortável são diferentes; harmonia a várias vozes requer análise das partes individuais.</p>
+        <p class="calculator-note"><i class="ph ph-info" aria-hidden="true"></i> Estimativa pelos extremos da melodia e pela tessitura disponível; confira a prática musical e a harmonização.</p>
       </section>
       <section class="surface directory" aria-labelledby="directory-title">
         <div class="section-head directory-head">
