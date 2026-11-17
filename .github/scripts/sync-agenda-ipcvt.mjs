@@ -113,6 +113,9 @@ async function resolveCalendarId() {
 
 async function main() {
   calendarId = await resolveCalendarId();
+  // Se a fonte mudar, não preserve o nome anterior como fallback.
+  calendarName = calendarId === 'ipbcentralvilar.calendario@gmail.com'
+    ? 'IPCVT Calendário' : calendarId;
   const calendarUrl = `https://calendar.google.com/calendar/ical/${encodeURIComponent(calendarId)}/public/basic.ics`;
   const content = await fetchCalendar(calendarUrl);
 
@@ -142,7 +145,8 @@ async function main() {
   const sortedEvents = [...events.values()].sort((a, b) => a.startDate.localeCompare(b.startDate) || a.id.localeCompare(b.id));
   let previous;
   try { previous = JSON.parse(await readFile(outputFile, 'utf8')); } catch { /* first import */ }
-  if (previous?.calendarId === calendarId && JSON.stringify(previous.events) === JSON.stringify(sortedEvents)) {
+  if (previous?.calendarId === calendarId && previous.calendarName === calendarName
+    && JSON.stringify(previous.events) === JSON.stringify(sortedEvents)) {
     console.log(`Agenda IPCVT sem alterações: ${sortedEvents.length} eventos.`);
     return;
   }
