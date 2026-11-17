@@ -32,7 +32,10 @@
 .agenda-source-options{display:flex;align-items:center;gap:10px;flex:none;}
 .agenda-source-options input[type=color]{width:29px;height:28px;border:0;padding:2px;border-radius:7px;background:transparent;cursor:pointer;}
 .agenda-source-options a{color:#567c61;text-decoration:none;font-size:17px;}
-.agenda-source-remove{font:600 10px Inter,Arial,sans-serif;border:1px solid #d6ddd1;border-radius:8px;background:transparent;color:#777;cursor:pointer;padding:7px;}
+.agenda-source-remove{display:inline-flex;align-items:center;justify-content:center;min-width:31px;min-height:31px;padding:6px;border:1px solid #d99898;border-radius:8px;background:transparent;color:#b84c4c;cursor:pointer;font:600 10px Inter,Arial,sans-serif;transition:background .2s,border-color .2s;}
+.agenda-source-remove:hover:not(:disabled){background:#fff0f0;border-color:#bc6161;}
+.agenda-source-remove:focus-visible{outline:2px solid #b84c4c;outline-offset:2px;}
+.agenda-source-remove:disabled{opacity:.4;cursor:not-allowed;}
 .agenda-source-row.is-disabled .agenda-source-options{opacity:.75;}
 .agenda-sources-divider{height:1px;background:#dce4d6;border:0;margin:22px 0;}
 .agenda-merge-label{display:flex;align-items:center;gap:10px;font:650 12px Inter,Arial,sans-serif;cursor:pointer;color:#31513d;}
@@ -89,7 +92,7 @@
   .agenda-settings-button{width:39px;height:39px;}
   .agenda-source-row{align-items:flex-start;gap:8px;}
   .agenda-source-options{gap:6px;}
-  .agenda-source-remove{font-size:9px;padding:6px;}
+  .agenda-source-remove{min-width:32px;min-height:32px;padding:6px;}
   .agenda-source-title{font-size:11px;}
   .agenda-source-dialog{padding:18px;}
 }
@@ -108,7 +111,8 @@
   html[data-portal-theme="dark"] .agenda-add-source-grid label{color:#e1ebdf;}
   html[data-portal-theme="dark"] .agenda-add-source-grid input:not([type=color]){background:#283d31;color:#eef4eb;border-color:#65816b;}
   html[data-portal-theme="dark"] .agenda-sources-divider{background:#65816b;}
-  html[data-portal-theme="dark"] .agenda-source-remove{color:#d5e1d4;border-color:#708573;}
+  html[data-portal-theme="dark"] .agenda-source-remove{color:#f1a7a7;border-color:#9f6262;}
+  html[data-portal-theme="dark"] .agenda-source-remove:hover:not(:disabled){background:#603c3c;}
 }
 @media print {
   .agenda-settings-button,.agenda-source-dialog{display:none!important;}
