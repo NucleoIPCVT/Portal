@@ -35,7 +35,7 @@ export function plannerPublicSources(config={}) {
     if(!candidate||typeof candidate.sourceUrl!=='string'||typeof candidate.calendarId!=='string')continue;
     try{
       const parsed=parseCalendarSourceUrl(candidate.sourceUrl);
-      if(parsed.calendarId!==candidate.calendarId||used.has(candidate.calendarId)||personal.enabled['google:'+candidate.calendarId]===false)continue;
+      if(parsed.calendarId!==candidate.calendarId||used.has(candidate.calendarId)||(personal.enabled['google:'+candidate.calendarId]===false || personal.removedLocalIds.includes('google:'+candidate.calendarId)))continue;
       used.add(candidate.calendarId);
       sources.push({id:'google:'+candidate.calendarId,kind:'google',calendarId:candidate.calendarId,
         name:String(candidate.name||candidate.calendarId).trim().slice(0,100)});
