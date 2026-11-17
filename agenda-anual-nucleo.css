@@ -387,3 +387,71 @@
     background:#354e3e;border-color:#536e59;color:#d9ecde;
   }
 }
+
+
+/* Identidade denominacional IPB: marca original, preservada nas versões de tela e impressão. */
+@media screen {
+  .agenda-title-with-ipb {
+    display: inline-flex;
+    align-items: center;
+    gap: clamp(10px, 1.6vw, 22px);
+    max-width: 100%;
+  }
+  .agenda-title-with-ipb h1 { margin-right: 0; }
+  .agenda-ipb-logo-screen {
+    display: block;
+    flex: 0 0 auto;
+    width: clamp(48px, 5vw, 66px);
+    height: clamp(48px, 5vw, 66px);
+    object-fit: contain;
+    padding: 3px;
+    border-radius: 5px;
+    background: #fff;
+  }
+  @media (max-width: 760px) {
+    .agenda-title-with-ipb { gap: 10px; }
+    .agenda-ipb-logo-screen { width: 49px; height: 49px; }
+  }
+  @media (max-width: 390px) {
+    .agenda-title-with-ipb { gap: 7px; }
+    .agenda-ipb-logo-screen { width: 42px; height: 42px; padding: 2px; }
+  }
+}
+.agenda-print-ipb-mark {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.agenda-ipb-logo-print {
+  display: block;
+  width: 49px;
+  height: 49px;
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+.duplex-calendar-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4mm;
+}
+.duplex-calendar-right > strong {
+  color: #bd9e65;
+  font: normal 34pt/1 'DM Serif Display', Georgia, serif;
+}
+.duplex-calendar-right .duplex-ipb-logo {
+  display: block;
+  width: 15mm;
+  height: 15mm;
+  object-fit: contain;
+}
+@media (max-width: 720px) {
+  .agenda-print-ipb-mark .identity-side { display: none; }
+  .agenda-ipb-logo-print { width: 43px; height: 43px; }
+}
+@media print {
+  .agenda-print-ipb-mark .identity-side { display: block; }
+  .agenda-print-ipb-mark { gap: 3mm; }
+  .agenda-ipb-logo-print { width: 12mm; height: 12mm; }
+}
