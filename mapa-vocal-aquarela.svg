@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 240" role="img" aria-labelledby="title desc">
+<title id="title">Grupo vocal em aquarela</title>
+<desc id="desc">Coro misto e piano ilustrados em pinceladas suaves, com notas musicais e tons de areia, café e grafite.</desc>
+<defs>
+ <linearGradient id="paper" x2="1" y2=".4"><stop stop-color="#f8eade" stop-opacity=".15"/><stop offset=".54" stop-color="#f2dbc3" stop-opacity=".42"/><stop offset="1" stop-color="#e2c3a7" stop-opacity=".85"/></linearGradient>
+ <linearGradient id="fade"><stop stop-color="#f7ebdf" stop-opacity="0"/><stop offset=".4" stop-color="#f6e3d0" stop-opacity=".15"/><stop offset="1" stop-color="#e9c8a7" stop-opacity=".56"/></linearGradient>
+ <linearGradient id="coat" x2=".8" y2="1"><stop stop-color="#9b8b80"/><stop offset="1" stop-color="#776b65"/></linearGradient>
+ <linearGradient id="dress" x2=".6" y2="1"><stop stop-color="#ce9980"/><stop offset="1" stop-color="#ad755f"/></linearGradient>
+ <radialGradient id="wash"><stop stop-color="#c89f78" stop-opacity=".44"/><stop offset="1" stop-color="#d7b398" stop-opacity="0"/></radialGradient>
+ <filter id="soft" x="-25%" y="-25%" width="150%" height="150%"><feGaussianBlur stdDeviation="2.5"/></filter>
+ <filter id="brush" x="-18%" y="-18%" width="136%" height="136%">
+  <feTurbulence type="fractalNoise" baseFrequency=".025 .048" numOctaves="3" seed="9" result="noise"/>
+  <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G"/>
+ </filter>
+ <filter id="papertexture"><feTurbulence type="fractalNoise" baseFrequency=".17" numOctaves="2" seed="6" result="n"/><feColorMatrix in="n" type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope=".075"/></feComponentTransfer></filter>
+</defs>
+<rect width="880" height="240" fill="#f8ede2"/>
+<rect width="880" height="240" fill="url(#paper)"/>
+<ellipse cx="650" cy="155" rx="310" ry="165" fill="url(#wash)" filter="url(#soft)"/>
+<path d="M240 185Q370 105 512 144T880 126L880 240H260Z" fill="#bca799" opacity=".17" filter="url(#brush)"/>
+<path d="M325 43C449 8 557 28 700 51" fill="none" stroke="#8f765f" stroke-width="1.7" opacity=".46"/>
+<path d="M319 55C451 21 556 41 702 63M316 68C451 34 553 54 706 76M312 81C450 47 555 67 710 89M309 94C448 60 554 80 714 102" fill="none" stroke="#a58870" stroke-width="1.5" opacity=".39"/>
+<g fill="#866850" opacity=".75"><ellipse cx="389" cy="62" rx="8" ry="5" transform="rotate(-26 389 62)"/><path d="M396 61v-24l14-6v5l-11 5v22" fill="#866850"/><ellipse cx="487" cy="55" rx="8" ry="5" transform="rotate(-21 487 55)"/><path d="M493 55V30l8 8" fill="none" stroke="#866850" stroke-width="3"/><ellipse cx="603" cy="61" rx="8" ry="5" transform="rotate(-20 603 61)"/><path d="M610 61V32l13 5" fill="none" stroke="#866850" stroke-width="3"/></g>
+<!-- five softly painted choir figures -->
+<g filter="url(#brush)" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M427 177Q419 131 458 123Q499 125 501 177L504 238H412Z" fill="#d6bba9"/>
+  <path d="M436 154L461 172 482 155 504 240H412Z" fill="#edddcf" opacity=".87"/>
+  <path d="M442 98Q435 72 453 63Q472 55 483 83L480 124Q464 143 449 120Z" fill="#c68e6b"/>
+  <path d="M439 94Q432 64 455 58Q481 55 484 84L474 78 456 74 441 88Z" fill="#5b4b43"/>
+  <path d="M442 97Q435 120 437 143M481 95Q493 122 487 139" stroke="#6f5648" stroke-width="10" fill="none" opacity=".66"/>
+  <path d="M449 110Q460 119 471 108" fill="none" stroke="#7a5444" stroke-width="2" opacity=".65"/>
+  <path d="M536 191Q533 149 568 131Q611 130 623 171L628 240H525Z" fill="url(#dress)"/>
+  <path d="M549 105Q548 76 571 70Q594 67 601 92L596 127Q575 148 554 122Z" fill="#b47758"/>
+  <path d="M548 102Q541 76 566 65Q592 61 604 86L601 102Q587 83 568 82L550 97Z" fill="#40372f"/>
+  <path d="M543 102Q533 126 547 154M600 100Q611 130 598 154" stroke="#48372f" stroke-width="12" fill="none" opacity=".65"/>
+  <path d="M564 112Q578 125 589 111" fill="none" stroke="#704936" stroke-width="2"/>
+  <path d="M643 192Q637 142 681 130Q722 135 729 175L738 240H633Z" fill="#e9e0d6"/>
+  <path d="M656 102Q648 76 668 66Q698 61 705 90L700 127Q679 143 663 123Z" fill="#ca9674"/>
+  <path d="M653 88Q651 65 673 60Q701 59 706 82L699 98 686 77 659 88Z" fill="#796450"/>
+  <path d="M656 103Q643 131 648 151M702 100Q715 127 709 150" fill="none" stroke="#826c58" stroke-width="8" opacity=".65"/>
+  <path d="M666 112Q682 122 690 111" fill="none" stroke="#7d5142" stroke-width="2"/>
+  <path d="M491 159Q486 123 511 112Q536 109 550 147L551 184H493Z" fill="url(#coat)" opacity=".9"/>
+  <path d="M495 88Q493 65 514 62Q537 61 539 88L533 114Q515 127 500 110Z" fill="#c3906b"/>
+  <path d="M493 86Q490 61 513 57Q533 54 542 77L541 92Q524 69 505 79Z" fill="#685344"/>
+  <path d="M524 104Q517 112 510 103" fill="none" stroke="#714d3d" stroke-width="2"/>
+  <path d="M706 166Q713 126 749 118Q778 126 788 160L795 237H690Z" fill="#a4a29c"/>
+  <path d="M731 91Q722 65 742 54Q764 47 776 73L771 111Q750 131 737 108Z" fill="#9e6c53"/>
+  <path d="M726 81Q723 56 748 47Q771 45 778 66L772 83Q754 67 739 75Z" fill="#393b3a"/>
+  <path d="M744 103Q754 114 764 102" fill="none" stroke="#5b3a2d" stroke-width="2"/>
+ </g>
+<!-- loosely painted music folders -->
+<g fill="#584d46" opacity=".8" filter="url(#brush)">
+<path d="M460 166L506 154 519 202 483 218Z"/><path d="M509 153L552 169 527 222 519 202Z"/>
+<path d="M572 171L618 155 638 206 603 223Z"/><path d="M620 155L657 165 640 221 638 206Z"/>
+<path d="M679 175L721 161 732 206 699 221Z"/><path d="M724 161L770 165 749 219 732 206Z"/>
+</g>
+<path d="M787 137Q820 122 858 132L880 183V240H773L773 180Z" fill="#65574e" opacity=".86" filter="url(#brush)"/>
+<path d="M779 178Q821 177 879 194L880 212Q825 189 784 205Z" fill="#3c3b3b"/>
+<path d="M782 206Q826 195 880 215" stroke="#e8dfd4" stroke-width="5" stroke-dasharray="12 7" fill="none" opacity=".85"/>
+<path d="M788 128Q835 119 870 131" stroke="#947863" stroke-width="9" fill="none" opacity=".68" filter="url(#soft)"/>
+<rect width="880" height="240" fill="url(#fade)" opacity=".15"/>
+<rect width="880" height="240" filter="url(#papertexture)" opacity=".6"/>
+</svg>
