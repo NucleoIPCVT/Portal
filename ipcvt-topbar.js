@@ -183,11 +183,11 @@
     } else if (page === 'escala_geral.html') {
       standardBar({header:'.scale-topbar',actions:'.scale-topbar-actions',theme:'#scale-theme-toggle',
         move:[['.scale-topbar-actions .scale-portal-link','Voltar para o Portal']],
-        links:[['index.html','Voltar para o Portal']]});
+        links:[['comissao.html','Voltar para Comissão'],['index.html','Voltar para o Portal']]});
     } else if (page === 'vaquinhas.html') {
       standardBar({header:'.campaign-header',actions:'.campaign-header nav',theme:'#vaquinhas-theme-toggle',
         move:[['.campaign-header .portal-return','Voltar para o Portal']],
-        links:[['index.html','Voltar para o Portal']]});
+        links:[['comissao.html','Voltar para Comissão'],['index.html','Voltar para o Portal']]});
     } else if (page === 'planner.html' || page === 'planner-painel.html') {
       const legacy = document.querySelector('header.site-header .portal-links');
       const gateTheme = document.getElementById('theme-toggle-gate') || document.getElementById('theme-toggle');
