@@ -1,0 +1,242 @@
+/* IPCVT Planner — ajustes para smartphones, sem alterar os layouts desktop/tablet.
+   O conteúdo largo (Gantt, semana, Kanban e tabelas) continua com rolagem interna. */
+@media (max-width: 760px) {
+  body.pm-active #planner-app,
+  body.pm-active #planner-app .pm-stage,
+  body.pm-active #planner-app .planner-shell,
+  body.pm-active #planner-app .planner-main,
+  body.pm-active #planner-app #view-content {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+  body.pm-active #planner-app .pm-topbar {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    height: 56px !important;
+    min-height: 56px !important;
+    padding: 0 12px !important;
+    gap: 7px !important;
+  }
+  body.pm-active #planner-app .pm-sidebar-toggle {
+    display: grid !important;
+    place-items: center;
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 8px;
+  }
+  body.pm-active #planner-app .pm-brand {
+    display: inline-flex;
+    flex: 0 1 auto;
+    width: auto;
+    min-width: 0 !important;
+    gap: 6px;
+    margin: 0;
+  }
+  body.pm-active #planner-app .pm-brand-icon {
+    flex: 0 0 27px;
+    width: 27px;
+    height: 27px;
+  }
+  body.pm-active #planner-app .pm-brand > span,
+  body.pm-active #planner-app .pm-brand strong {
+    font-size: 12px;
+    line-height: 1.06;
+    white-space: nowrap;
+  }
+  body.pm-active #planner-app .pm-topbar-context { display: none !important; }
+  body.pm-active #planner-app .pm-toolbar {
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-end !important;
+    flex: 0 0 auto !important;
+    order: initial !important;
+    width: auto !important;
+    min-width: 0;
+    margin: 0 0 0 auto !important;
+    padding: 0 !important;
+    gap: 3px !important;
+  }
+  body.pm-active #planner-app .pm-commission-back {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+    padding: 0 !important;
+    font-size: 18px !important;
+  }
+  body.pm-active #planner-app .pm-commission-back-full,
+  body.pm-active #planner-app .pm-commission-back-short { display: none !important; }
+  body.pm-active #planner-app .pm-commission-back > span[aria-hidden] {
+    margin: 0;
+    line-height: 1;
+    font-size: 19px;
+  }
+  body.pm-active #planner-app .pm-toolbar .pm-theme-toggle,
+  body.pm-active #planner-app .pm-toolbar .pm-tool-icon {
+    display: inline-grid !important;
+    place-items: center;
+    flex: 0 0 40px !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 !important;
+  }
+  body.pm-active #planner-app .pm-more {
+    position: relative;
+    flex: 0 0 40px;
+    min-width: 40px;
+  }
+  body.pm-active #planner-app .pm-more > summary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+  }
+  body.pm-active #planner-app .pm-more-menu {
+    top: calc(100% + 6px);
+    right: 0;
+    width: min(260px, calc(100vw - 24px));
+    min-width: 0;
+    max-width: calc(100vw - 24px);
+    box-sizing: border-box;
+  }
+  body.pm-active #planner-app .pm-stage {
+    padding: 0 !important;
+    margin: 0;
+  }
+  body.pm-active #planner-app .planner-shell {
+    display: block !important;
+    min-height: calc(100dvh - 56px);
+    margin: 0;
+    padding: 0;
+  }
+  body.pm-active #planner-app .planner-main {
+    min-height: calc(100dvh - 56px);
+    padding: 17px 13px calc(36px + env(safe-area-inset-bottom, 0px)) !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    margin: 0;
+  }
+  body.pm-active #planner-app .planner-sidebar {
+    width: min(304px, 86vw) !important;
+    max-width: 86vw !important;
+    min-width: 0;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    top: 0 !important;
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  body.pm-active #planner-app .pm-sidebar-backdrop { touch-action: manipulation; }
+  body.pm-active #planner-app .pm-page-header,
+  body.pm-active #planner-app .pm-header-actions,
+  body.pm-active #planner-app .pm-task-toolbar {
+    min-width: 0;
+    max-width: 100%;
+  }
+  body.pm-active #planner-app .pm-page-header {
+    align-items: flex-start;
+    gap: 10px;
+  }
+  body.pm-active #planner-app .pm-header-actions { flex-wrap: wrap; }
+  body.pm-active #planner-app #view-content > * { min-width: 0; max-width: 100%; }
+  body.pm-active #planner-app .pm-today-layout,
+  body.pm-active #planner-app .pm-home-dashboard { grid-template-columns: minmax(0,1fr); }
+  body.pm-active #planner-app .pm-today-stats { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; }
+  body.pm-active #planner-app .pm-today-stat { min-width: 0; padding: 11px 9px; }
+  body.pm-active #planner-app .pm-today-stat > div { min-width: 0; }
+  body.pm-active #planner-app .pm-today-stat strong { font-size: clamp(19px,6vw,24px); }
+  body.pm-active #planner-app .pm-today-stat span { overflow-wrap: anywhere; }
+  body.pm-active #planner-app .pm-today-card { min-width: 0; padding: 16px 13px; }
+  body.pm-active #planner-app .pm-home-hero {
+    min-height: 270px;
+    padding: 22px 17px;
+  }
+  body.pm-active #planner-app .pm-home-title { font-size: clamp(42px,12vw,54px); }
+  body.pm-active #planner-app .pm-home-hero-copy { max-width: 100%; min-width: 0; }
+  body.pm-active #planner-app .pm-home-hero-actions { gap: 7px; flex-wrap: wrap; }
+  body.pm-active #planner-app .pm-task-toolbar,
+  body.pm-active #planner-app .pm-task-toolbar-start,
+  body.pm-active #planner-app .pm-task-actions,
+  body.pm-active #planner-app .pm-task-controls {
+    flex-wrap: wrap;
+  }
+  body.pm-active #planner-app .pm-task-toolbar { gap: 9px; }
+  body.pm-active #planner-app .pm-task-scopes { min-width: 0; }
+  body.pm-active #planner-app .pm-task-toolbar .pm-task-search input {
+    min-width: 0;
+    max-width: min(50vw, 210px);
+  }
+  body.pm-active #planner-app .pm-week-columns-scroll,
+  body.pm-active #planner-app .pm-premium-board,
+  body.pm-active #planner-app .pm-demand-table-wrap,
+  body.pm-active #planner-app .pm-gantt-view {
+    max-width: 100%;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  body.pm-active #planner-app .pm-month-calendar { max-width: 100%; }
+  body.pm-active #planner-app .pm-month-cell { min-width: 0; }
+  body.pm-active #planner-app .pm-month-entry {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  body.pm-active #planner-app .pm-home-aside { grid-template-columns: minmax(0,1fr); }
+  dialog {
+    box-sizing: border-box;
+    max-width: calc(100vw - 20px) !important;
+    max-height: calc(100dvh - 24px);
+    overscroll-behavior: contain;
+  }
+}
+@media (max-width: 420px) {
+  body.pm-active #planner-app .pm-topbar { padding: 0 8px !important; gap: 4px !important; }
+  body.pm-active #planner-app .pm-sidebar-toggle {
+    flex-basis: 37px; width: 37px; min-width: 37px; height: 38px; min-height: 38px;
+  }
+  body.pm-active #planner-app .pm-brand { gap: 4px; }
+  body.pm-active #planner-app .pm-brand-icon { width: 24px; height: 24px; flex-basis: 24px; }
+  body.pm-active #planner-app .pm-brand > span,
+  body.pm-active #planner-app .pm-brand strong { font-size: 11px; }
+  body.pm-active #planner-app .pm-toolbar { gap: 1px !important; }
+  body.pm-active #planner-app .pm-commission-back,
+  body.pm-active #planner-app .pm-toolbar .pm-theme-toggle,
+  body.pm-active #planner-app .pm-toolbar .pm-tool-icon,
+  body.pm-active #planner-app .pm-more,
+  body.pm-active #planner-app .pm-more > summary {
+    flex-basis: 36px !important;
+    width: 36px !important;
+    min-width: 36px;
+    height: 38px !important;
+    min-height: 38px !important;
+  }
+  body.pm-active #planner-app .planner-main {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+  body.pm-active #planner-app .pm-today-stat { padding: 10px 7px; }
+  body.pm-active #planner-app .pm-today-stat span { font-size: 10px; line-height: 1.25; }
+  body.pm-active #planner-app .pm-home-hero { padding: 20px 15px; }
+  body.pm-active #planner-app .pm-home-hero-actions .pm-create-button,
+  body.pm-active #planner-app .pm-home-hero-calendar {
+    min-height: 40px;
+    padding: 8px 10px;
+  }
+}
+@media (max-width: 350px) {
+  body.pm-active #planner-app .pm-brand > span { display: none; }
+  body.pm-active #planner-app .pm-brand { flex: 0 0 25px; }
+}
