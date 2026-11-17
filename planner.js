@@ -2554,6 +2554,9 @@ function pmTodayView(content) {
   // Aquarela própria nos meses aprovados (jan–mai); para os demais
   // mantemos temporariamente as imagens vetoriais já publicadas.
   const hero=pmGroup('section','pm-home-hero')
+  if(season.images.length===1&&season.images[0].endsWith('.webp')){
+    hero.classList.add('pm-home-hero-watercolor')
+  }
   const pictures=pmGroup('div','pm-home-pictures')
   pictures.setAttribute('aria-hidden','true')
   for(const picture of season.images){
