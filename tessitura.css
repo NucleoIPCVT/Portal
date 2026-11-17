@@ -252,3 +252,10 @@ html[data-portal-theme="dark"] .vocal-inline-box{background:#454441}
  .singer-table tr.expanded-singer-row>td{display:block;width:100%}
  .inline-note-button{width:43px;height:43px;min-width:43px}
 }
+
+/* Identifica as notas no celular quando o cabeçalho da tabela é ocultado. */
+.note-mobile-label{display:none}
+@media(max-width:740px){
+ .singer-table tbody>tr:not(.expanded-singer-row) td.note-summary-cell{display:flex;flex-direction:column;gap:6px;justify-content:center}
+ .note-mobile-label{display:block;text-align:center;color:var(--v-muted);font:600 9px/1.25 Inter,Arial,sans-serif;min-height:23px;max-width:72px}
+}
