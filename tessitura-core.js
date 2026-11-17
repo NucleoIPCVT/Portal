@@ -46,7 +46,7 @@ export function calculateTones(people, lowest, highest, originalKey = null) {
     const penalty = evaluations.reduce((sum, e) => sum + e.penalty, 0);
     // Prioridade: notas confortáveis para mais integrantes, depois alcance,
     // depois centralidade e, por fim, menor distância do tom original.
-    const score = comfortable * 100000 + reachable * 10000 - penalty * 10 - Math.abs(shift) * 2;
+    const score = comfortable * 100000 + reachable * 10000 - penalty * 10 - Math.abs(shift) * 10;
     results.push({ shift, comfortable, reachable, total: singers.length, penalty, score, evaluations,
       key: Number.isInteger(originalKey) ? (originalKey + shift + 120) % 12 : null });
   }
