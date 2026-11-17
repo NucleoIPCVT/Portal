@@ -30,7 +30,7 @@ import { createTaskEditor } from './planner-task-editor.js?v=20261116-keep-v1'
 import { taskCreationContext } from './planner-task-context.js'
 import { BOARD_GROUPINGS, groupBoardTasks, moveBoardTask } from './planner-board.js?v=20261112-planner-01'
 import { GoogleCalendarClient } from './planner-google.js'
-import { setupPlannerWizards } from './planner-form-wizard.js?v=20261116-plan-owner-v1'
+import { setupPlannerWizards } from './planner-form-wizard.js?v=20261116-dates-together-v1'
 import { publicCalendar, readPublicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl, summarizeCalendarEvents, diffCalendarEvents } from './planner-public.js?v=20261116-calendar-source-name-v5'
 
 const $ = id => document.getElementById(id)
@@ -2529,7 +2529,7 @@ function pmTodayView(content) {
   const weekStart=pmWeekStart(today),weekEnd=addDays(weekStart,6)
   const weekEvents=events.filter(event=>event.startDate<=weekEnd&&event.endDate>=weekStart)
   const monthStart=today.slice(0,7)+'-01'
-  const monthEnd=addDays(new Date(Number(today.slice(0,4)),Number(today.slice(5,7)),0,12).toISOString().slice(0,10),0)
+  const monthEnd=new Date(Date.UTC(Number(today.slice(0,4)),Number(today.slice(5,7)),0,12)).toISOString().slice(0,10)
   const monthEvents=events.filter(event=>event.startDate<=monthEnd&&event.endDate>=monthStart)
   const nextEvents=events.filter(event=>event.endDate>=today&&event.startDate<=addDays(today,30))
     .sort((a,b)=>a.startDate.localeCompare(b.startDate)||
