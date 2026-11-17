@@ -51,6 +51,7 @@ function decorate(event,source) {
 export function createAgendaSources({getPrimary,onChange}) {
   const state=getSaved();
   let shared=[];
+  let removedFixed=[];
   let isAdmin=false;
   let persistShared=null;
   const dialog=document.getElementById('agenda-fontes-dialog');
@@ -69,8 +70,8 @@ export function createAgendaSources({getPrimary,onChange}) {
     const primary=getPrimary()||{};
     const primarySource={...MAIN,calendarId:primary.calendarId||publicCalendar.id,
       sourceUrl:primary.sourceUrl||publicCalendar.sourceUrl};
-    const values=[primarySource,BRAZIL,IPB];
-    const used=new Set([primarySource.calendarId,BRAZIL_ID]);
+    const values=[primarySource,...[BRAZIL,IPB].filter(source=>!removedFixed.includes(source.id))];
+    const used=new Set(values.map(source=>source.calendarId).filter(Boolean));
     for(const raw of [...shared,...state.extras]){
       const source=sanitizeExtra(raw);
       if(!source||used.has(source.calendarId))continue;
@@ -122,7 +123,9 @@ export function createAgendaSources({getPrimary,onChange}) {
       link.target='_blank';link.rel='noopener noreferrer';
       link.title='Abrir a fonte pública';link.textContent='↗';
       options.append(link);
-      if(!source.fixed){
+      // A fonte principal é protegida. Um administrador pode remover as fontes
+      // padrão adicionais ou as fontes compartilhadas, refletindo no Planner.
+      if(!source.fixed || (isAdmin && source.id!=='ipcvt')){
         const remove=element('button','agenda-source-remove','Remover');
         remove.type='button';remove.title='Remover esta fonte';
         remove.disabled=saving || (shared.some(item=>item.calendarId===source.calendarId)&&!isAdmin);
@@ -131,9 +134,12 @@ export function createAgendaSources({getPrimary,onChange}) {
           const isShared=shared.some(item=>item.calendarId===source.calendarId);
           try {
             saving=true;render();
-            if(isShared){
+            if(source.fixed){
+              if(!isAdmin || !persistShared)throw new Error('Somente um administrador pode remover fontes oficiais.');
+              await persistShared({removedSourceIds:[...new Set([...removedFixed,source.id])]});
+            }else if(isShared){
               if(!isAdmin || !persistShared)throw new Error('Somente um administrador pode remover fontes compartilhadas.');
-              await persistShared(shared.filter(item=>item.calendarId!==source.calendarId));
+              await persistShared({additionalSources:shared.filter(item=>item.calendarId!==source.calendarId)});
             }else state.extras=state.extras.filter(item=>item.calendarId!==source.calendarId);
             delete state.enabled[source.id];delete state.colors[source.id];
             saveLocal();show('Fonte removida.');onChange();
@@ -204,10 +210,12 @@ export function createAgendaSources({getPrimary,onChange}) {
     };
   }
 
-  function setSharedSources(items) {
+  function setSharedSources(items,excluded) {
     const next=(Array.isArray(items)?items:[]).map(sanitizeExtra).filter(Boolean);
-    if(JSON.stringify(next)===JSON.stringify(shared))return;
+    const removed=(Array.isArray(excluded)?excluded:[]).filter(id=>id==='brasil'||id==='ipb');
+    if(JSON.stringify(next)===JSON.stringify(shared)&&JSON.stringify(removed)===JSON.stringify(removedFixed))return;
     shared=next;
+    removedFixed=removed;
     render();
     onChange();
   }
@@ -245,7 +253,7 @@ export function createAgendaSources({getPrimary,onChange}) {
       const extra={id:'google:'+parsed.calendarId,kind:'google',calendarId:parsed.calendarId,
         sourceUrl:parsed.sourceUrl,name:name.slice(0,100),color};
       if(isAdmin && persistShared){
-        await persistShared([...shared,extra]);
+        await persistShared({additionalSources:[...shared,extra]});
         show('Fonte compartilhada salva. Ela aparecerá para os outros visitantes.');
       }else{
         state.extras.push(extra);
