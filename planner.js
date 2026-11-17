@@ -31,7 +31,8 @@ import { taskCreationContext } from './planner-task-context.js'
 import { BOARD_GROUPINGS, groupBoardTasks, moveBoardTask } from './planner-board.js?v=20261112-planner-01'
 import { GoogleCalendarClient } from './planner-google.js'
 import { setupPlannerWizards } from './planner-form-wizard.js?v=20261116-dates-together-v1'
-import { publicCalendar, readPublicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl, summarizeCalendarEvents, diffCalendarEvents } from './planner-public.js?v=20261116-calendar-source-name-v5'
+import { publicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl, summarizeCalendarEvents, diffCalendarEvents } from './planner-public.js?v=20261116-multi-source-ids-v1'
+import { plannerPublicSources, readPlannerPublicSources } from './planner-multi-public.js?v=20261117-v1'
 
 const $ = id => document.getElementById(id)
 const formWizards = setupPlannerWizards()
@@ -97,7 +98,11 @@ let projectImportBusy = false
 let excelLibraryPromise = null
 const integrationRange = { from: addDays(todayISO(), -30), to: addDays(todayISO(), 180) }
 let authEpoch = 0
-let calendarConfig = { calendarId: publicCalendar.id, sourceUrl: publicCalendar.sourceUrl }
+let calendarConfig = { calendarId: publicCalendar.id, sourceUrl: publicCalendar.sourceUrl, additionalSources: [], removedSourceIds: [] }
+let calendarConfigRevision = 0
+function calendarSourcesSignature(config) {
+  return JSON.stringify([config.calendarId,config.additionalSources,config.removedSourceIds])
+}
 let calendarConfigError = ''
 function officialCalendarName() {
   // A fonte pode mudar enquanto a nova consulta está em andamento.
@@ -168,22 +173,28 @@ function liveTasks() {
 }
 function liveEvents() {
   const linked = new Set(state.tasks.filter(task => !task.deleted).map(task => task.eventId).filter(Boolean))
+  const configuredIds = new Set(plannerPublicSources(calendarConfig).map(source => source.calendarId))
+  const publicIds = new Set(publicEvents.map(event => event.id))
+  const isOfficial = event => event.sourceKey?.startsWith('public-ical:')
+    || event.sourceKey?.startsWith('public-ipb:')
   const items = state.events.filter(event => {
     if (event.deleted) return false
-    if (!event.sourceKey?.startsWith('public-ical:')) return true
-    if (event.sourceCalendarId !== calendarConfig.calendarId) return linked.has(event.id)
-    return !publicSnapshot || linked.has(event.id) || publicEvents.some(item => item.id === event.id)
+    if (!isOfficial(event)) return true
+    // Se a fonte foi removida, os vínculos antigos com demandas são preservados.
+    if (!configuredIds.has(event.sourceCalendarId)) return linked.has(event.id)
+    return !publicSnapshot || linked.has(event.id) || publicIds.has(event.id)
   })
   const mapped = new Map(items.map(event => [event.id, event]))
-  if (publicSnapshot?.calendarId === calendarConfig.calendarId) {
-    const activeIds = new Set(publicEvents.map(event => event.id))
+  if (publicSnapshot) {
+    const loadedIds = new Set(publicSnapshot.loadedCalendarIds || [calendarConfig.calendarId])
+    const hiddenIds = new Set(state.events.filter(stored => stored.deleted).map(stored => stored.id))
     for (const event of publicEvents) {
-      if (state.events.some(stored => stored.id === event.id && stored.deleted)) continue
+      if (hiddenIds.has(event.id)) continue
       mapped.set(event.id, { ...(mapped.get(event.id) || {}), ...event })
     }
     for (const event of items) {
-      if (event.sourceKey?.startsWith('public-ical:') && event.sourceCalendarId === calendarConfig.calendarId
-        && !activeIds.has(event.id) && linked.has(event.id)) {
+      if (isOfficial(event) && loadedIds.has(event.sourceCalendarId)
+        && !publicIds.has(event.id) && linked.has(event.id)) {
         mapped.set(event.id, { ...event, status: 'cancelled' })
       }
     }
@@ -612,7 +623,7 @@ function renderCalendar(content, tasks) {
   if (!dayTasks.length && !dayEvents.length) dayDetails.append(node('p', { class: 'calendar-day-details-empty', text: 'Nenhuma demanda ou evento para este dia.' }))
   else {
     for (const task of dayTasks) dayDetails.append(node('div', { class: 'calendar-detail-row' }, [node('span', { class: 'calendar-detail-dot task-dot' }), button(task.title, () => openTask(task), 'task-title'), node('small', { text: planName(task.planId) })]))
-    for (const event of dayEvents) dayDetails.append(node('div', { class: 'calendar-detail-row' }, [node('span', { class: 'calendar-detail-dot event-dot' }), button(event.title, () => openEvent(event), 'task-title'), node('small', { text: officialCalendarName() })]))
+    for (const event of dayEvents) dayDetails.append(node('div', { class: 'calendar-detail-row' }, [node('span', { class: 'calendar-detail-dot event-dot' }), button(event.title, () => openEvent(event), 'task-title'), node('small', { text: event.calendarName || officialCalendarName() })]))
   }
   content.append(header, node('div', { class: 'calendar-wrap' }, grid), dayDetails)
   const undated = (globalCalendar && !calendarShowTasks ? [] : tasks).filter(task => !task.dueDate && !task.startDate)
@@ -986,7 +997,7 @@ function readCalendarTracking() {
 }
 
 function writeCalendarTracking(events, unread) {
-  try { localStorage.setItem(calendarTrackingKey(), JSON.stringify({ events, unread })) } catch { /* Armazenamento indisponível. */ }
+  try { localStorage.setItem(calendarTrackingKey(), JSON.stringify({ events, unread, mode: 'multi-v1' })) } catch { /* Armazenamento indisponível. */ }
 }
 
 function updateCalendarBadge() {
@@ -1001,14 +1012,22 @@ async function refreshPublicCalendar() {
   if (session.status !== 'authorized' || calendarFetching) return
   calendarFetching = true
   const epoch = authEpoch
-  const calendarId = calendarConfig.calendarId
+  const revision = calendarConfigRevision
+  const config = calendarConfig
+  const calendarId = config.calendarId
   try {
-    const snapshot = await readPublicCalendar({ calendarId })
-    if (epoch !== authEpoch || calendarConfig.calendarId !== calendarId || session.status !== 'authorized') return
+    const snapshot = await readPlannerPublicSources(config, { previousEvents: publicEvents })
+    if (epoch !== authEpoch || calendarConfigRevision !== revision || session.status !== 'authorized') return
     const summary = summarizeCalendarEvents(snapshot.events)
     const previous = readCalendarTracking()
     const changes = previous ? diffCalendarEvents(previous.events, summary) : []
-    calendarUnread = [...(previous?.unread || []), ...changes.map(change => ({
+    // A primeira migração não cria alertas artificiais sobre as fontes
+    // adicionais. Depois, alterações em qualquer fonte são notificadas.
+    const sourceById = new Map(snapshot.events.map(event => [event.id, event.sourceCalendarId]))
+    const relevantChanges = previous?.mode === 'multi-v1'
+      ? changes
+      : changes.filter(change => change.type === 'removed' || sourceById.get(change.id) === calendarId)
+    calendarUnread = [...(previous?.unread || []), ...relevantChanges.map(change => ({
       ...change, detectedAt: new Date().toISOString()
     }))].slice(-50)
     writeCalendarTracking(summary, calendarUnread)
@@ -1019,12 +1038,12 @@ async function refreshPublicCalendar() {
     updateCalendarBadge()
     render()
   } catch (error) {
-    if (epoch !== authEpoch || calendarConfig.calendarId !== calendarId) return
+    if (epoch !== authEpoch || calendarConfigRevision !== revision) return
     calendarLoadError = error?.message || 'Não foi possível atualizar os eventos.'
     render()
   } finally {
     calendarFetching = false
-    if (session.status === 'authorized' && calendarConfig.calendarId !== calendarId) setTimeout(refreshPublicCalendar, 0)
+    if (session.status === 'authorized' && calendarConfigRevision !== revision) setTimeout(refreshPublicCalendar, 0)
   }
 }
 
@@ -3499,9 +3518,9 @@ function openEvent(event = null) {
   const external = event?.source === 'google'
   for (const id of ['event-title', 'event-start', 'event-end']) $(id).disabled = external
   $('event-form').querySelector('[type=submit]').hidden = external
-  $('delete-event-button').hidden = !event || (external && (event.sourceKey?.startsWith('public-ical:') || !session.isAdmin || !byId('events', event.id)))
+  $('delete-event-button').hidden = !event || (external && ((event.sourceKey?.startsWith('public-ical:') || event.sourceKey?.startsWith('public-ipb:')) || !session.isAdmin || !byId('events', event.id)))
   $('delete-event-button').textContent = external ? 'Ocultar no Planner' : 'Excluir evento'
-  if (external) $('event-feedback').textContent = (event.status === 'cancelled' ? 'Evento cancelado no Google. Revise as demandas vinculadas. ' : '') + 'Origem: ' + (event.sourceCalendarId === calendarConfig.calendarId ? officialCalendarName() : event.calendarName || 'Google Agenda') + '. Os dados são atualizados pelo Google Agenda.'
+  if (external) $('event-feedback').textContent = (event.status === 'cancelled' ? 'Evento cancelado ou retirado da fonte. Revise as demandas vinculadas. ' : '') + 'Origem: ' + (event.sourceCalendarId === calendarConfig.calendarId ? officialCalendarName() : event.calendarName || 'Google Agenda') + (event.sourceKey?.startsWith('public-ipb:') ? '. Calendário oficial da IPB, edição de 2026.' : '. Os dados são atualizados pelo Google Agenda.')
   $('event-dialog').showModal()
 }
 $('event-form').addEventListener('submit', async event => {
@@ -3687,17 +3706,25 @@ const store = createPlannerStore({
   onConfig(next) {
     calendarConfigError = ''
     const newConfig = next && typeof next.calendarId === 'string' && typeof next.sourceUrl === 'string'
-      ? { calendarId: next.calendarId, sourceUrl: next.sourceUrl }
-      : { calendarId: publicCalendar.id, sourceUrl: publicCalendar.sourceUrl }
-    if (newConfig.calendarId !== calendarConfig.calendarId) {
-      calendarConfig = newConfig
-      publicSnapshot = null
-      publicEvents = []
+      ? { calendarId: next.calendarId, sourceUrl: next.sourceUrl,
+          additionalSources: Array.isArray(next.additionalSources) ? next.additionalSources : [],
+          removedSourceIds: Array.isArray(next.removedSourceIds) ? next.removedSourceIds : [] }
+      : { calendarId: publicCalendar.id, sourceUrl: publicCalendar.sourceUrl,
+          additionalSources: [], removedSourceIds: [] }
+    const changed = calendarSourcesSignature(newConfig) !== calendarSourcesSignature(calendarConfig)
+    const primaryChanged = newConfig.calendarId !== calendarConfig.calendarId
+    calendarConfig = newConfig
+    if (changed) {
+      calendarConfigRevision++
+      if (primaryChanged) {
+        publicSnapshot = null
+        publicEvents = []
+        calendarUnread = readCalendarTracking()?.unread || []
+        updateCalendarBadge()
+      }
       calendarLoadError = ''
-      calendarUnread = readCalendarTracking()?.unread || []
-      updateCalendarBadge()
       if (session.status === 'authorized') setTimeout(refreshPublicCalendar, 100)
-    } else calendarConfig = newConfig
+    }
     if (session.status === 'authorized') render()
   },
   onConfigError(error) {
