@@ -18,8 +18,8 @@
     </script>
     <link rel="stylesheet" href="agenda-anual.css?v=20261110-responsive">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link rel="stylesheet" href="agenda-anual-nucleo.css?v=20261116-admin-v1">
-    <script type="module" src="agenda-anual.js?v=20261116-config-admin-v3"></script>
+    <link rel="stylesheet" href="agenda-anual-nucleo.css?v=20261116-source-admin-v2">
+    <script type="module" src="agenda-anual.js?v=20261116-source-admin-v4"></script>
   </head>
   <body>
     <header class="app-bar screen-only">
@@ -44,6 +44,7 @@
           <span class="eyebrow">Calendário oficial da igreja</span>
           <h1>Agenda Anual <em>IPCVT</em></h1>
           <p>Consulte os eventos e tenha sempre uma versão atualizada para imprimir ou salvar em PDF.</p>
+          <p class="agenda-active-source" id="agenda-active-source">Fonte dos eventos: <strong id="agenda-active-source-name">Carregando nome da agenda...</strong></p>
         </div>
         <div class="toolbar-actions">
           <label class="year-control" for="year-select">Ano
@@ -51,7 +52,7 @@
           </label>
           <button id="refresh-button" class="button button-secondary" type="button" title="Consultar os eventos mais recentes da Agenda IPCVT">↻ <span>Atualizar</span></button>
           <a id="agenda-google-link" class="button button-secondary" href="https://calendar.google.com/calendar/embed?src=ipbcentralvilar.calendario%40gmail.com&amp;ctz=America%2FSao_Paulo" target="_blank" rel="noopener noreferrer" title="Consultar a agenda original diretamente no Google">Ver no Google ↗</a>
-          <button id="agenda-config-button" class="button button-secondary agenda-config-button" type="button" title="Configurações da fonte oficial da agenda"><i class="ph ph-gear-six" aria-hidden="true"></i> <span>Configurar</span></button>
+          <button id="agenda-config-button" class="button button-secondary agenda-config-button" type="button" title="Configurações da fonte oficial da agenda" hidden><i class="ph ph-gear-six" aria-hidden="true"></i> <span>Configurar</span></button>
           <button id="print-button" class="button button-primary" type="button" disabled>▤ <span>Imprimir frente e verso / Salvar PDF</span></button>
         </div>
       </div>
@@ -102,15 +103,12 @@
         <div><span class="eyebrow">Administração</span><h2 id="agenda-config-title">Fonte da agenda oficial</h2></div>
         <button type="button" id="agenda-config-close" class="agenda-dialog-close" aria-label="Fechar configurações">×</button>
       </div>
-      <p class="agenda-source-intro">A alteração é compartilhada com o Planner. Apenas administradores autorizados da Comissão podem salvar outro calendário público.</p>
-      <div id="agenda-config-guest" class="agenda-source-body">
-        <p id="agenda-access-message">Entre com a conta Google autorizada para gerenciar a agenda.</p>
-        <button id="agenda-config-login" class="button button-secondary" type="button">Entrar com Google</button>
-      </div>
+      <p class="agenda-source-intro">A origem escolhida será exibida nesta Agenda Anual e no Planner. Apenas administradores autenticados e autorizados na Comissão podem alterá-la.</p>
+      <p id="agenda-config-current" class="agenda-source-current">Fonte atual: carregando...</p>
       <form id="agenda-config-form" class="agenda-source-body" hidden>
         <label for="agenda-config-url">Link público do Google Agenda</label>
         <input type="url" id="agenda-config-url" autocomplete="off" spellcheck="false" required maxlength="2000" placeholder="https://calendar.google.com/calendar/ical/.../public/basic.ics">
-        <p class="agenda-source-hint">Use o endereço iCal público (.ics) ou o link de incorporação do Google Agenda. A fonte será atualizada nas duas ferramentas.</p>
+        <p class="agenda-source-hint">Cole um link público iCal (.ics), de incorporação ou de compartilhamento do Google Agenda. O nome exibido será o nome original da agenda fornecido pelo Google.</p>
         <div class="agenda-source-actions">
           <button class="button button-secondary" id="agenda-config-cancel" type="button">Cancelar</button>
           <button class="button button-primary" id="agenda-config-save" type="submit">Salvar calendário</button>
