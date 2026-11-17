@@ -3,7 +3,7 @@
 export function setupPlannerWizards() {
   const definitions = {
     plan: [
-      { title: 'Identificação', hint: 'O que vamos organizar?', selectors: ['.plan-dialog-explain', '#plan-name', '#plan-description'] },
+      { title: 'Identificação', hint: 'O que vamos organizar?', selectors: ['.plan-dialog-explain', '#plan-name', '.plan-ownership', '#plan-description'] },
       { title: 'Calendário', hint: 'Tipo, frequência e período', selectors: ['#plan-kind', '#plan-repeat-fields', '#plan-date-fields', '#plan-cycle-preview'] },
       { title: 'Organização', hint: 'Defina as colunas do quadro', selectors: ['#plan-buckets'] },
       { title: 'Revisão', hint: 'Confira antes de concluir', selectors: [] }
@@ -151,6 +151,7 @@ export function setupPlannerWizards() {
       const get = id => document.getElementById(id);
       if (name === 'plan') return [
         ['Plano', get('plan-name').value || 'Sem nome'],
+        ['Responsável pelo plano', get('plan-owner-email').value || 'Não definido'],
         ['Tipo', caption(get('plan-kind'))],
         ['Periodicidade', get('plan-kind').value === 'recurring'
           ? 'A cada ' + get('plan-repeat-interval').value + ' ' + caption(get('plan-repeat-unit')).toLowerCase()
