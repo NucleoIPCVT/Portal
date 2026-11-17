@@ -14,9 +14,10 @@ function localSourcePreferences(){
     const saved=JSON.parse(localStorage.getItem(LOCAL_SETTINGS_KEY)||'{}');
     return {
       enabled:saved?.enabled&&typeof saved.enabled==='object'?saved.enabled:{},
-      extras:Array.isArray(saved?.extras)?saved.extras:[]
+      extras:Array.isArray(saved?.extras)?saved.extras:[],
+      removedLocalIds:Array.isArray(saved?.removedLocalIds)?saved.removedLocalIds:[]
     };
-  }catch{return {enabled:{},extras:[]};}
+  }catch{return {enabled:{},extras:[],removedLocalIds:[]};}
 }
 
 export function plannerPublicSources(config={}) {
@@ -27,7 +28,7 @@ export function plannerPublicSources(config={}) {
   const personal=localSourcePreferences();
   // O calendário original permanece ativo no Planner. As demais fontes
   // respeitam preferências locais de exibição definidas na Agenda Anual.
-  const sources = [primary,...[BRAZIL,IPB].filter(source=>!removed.has(source.id)&&personal.enabled[source.id]!==false)];
+  const sources = [primary,...[BRAZIL,IPB].filter(source=>!removed.has(source.id)&&!personal.removedLocalIds.includes(source.id)&&personal.enabled[source.id]!==false)];
   const used = new Set(sources.map(source=>source.calendarId));
   const additional=[...(Array.isArray(config.additionalSources)?config.additionalSources:[]),...personal.extras];
   for(const candidate of additional){
