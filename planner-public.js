@@ -96,16 +96,19 @@ async function normalizeGoogleEvent(event, calendarId, calendarName) {
 }
 
 async function readGoogleCalendarName(calendarId, fetchImpl, apiKey) {
+  // Nunca mostre o nome da agenda antiga quando a origem for alterada.
+  // Se os metadados não puderem ser obtidos, o ID da agenda identifica
+  // corretamente a fonte até o próximo snapshot iCal.
+  const fallback=calendarId===publicCalendar.id?publicCalendar.name:calendarId
   try {
-    const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}?key=${encodeURIComponent(apiKey)}`
-    const response = await fetchImpl(url, { cache: 'no-store', signal: AbortSignal.timeout(12000) })
-    if (!response.ok) return publicCalendar.name
-    const data = await response.json()
-    const name = typeof data.summary === 'string' ? data.summary.trim() : ''
-    return name && name !== calendarId && !name.includes('@')
-      ? name.slice(0, 160) : publicCalendar.name
-  } catch {
-    return publicCalendar.name
+    const url=`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}?key=${encodeURIComponent(apiKey)}`
+    const response=await fetchImpl(url,{cache:'no-store',signal:AbortSignal.timeout(12000)})
+    if (!response.ok) return fallback
+    const data=await response.json()
+    const name=typeof data.summary==='string'?data.summary.trim():''
+    return name && name!==calendarId && !name.includes('@')?name.slice(0,160):fallback
+  }catch{
+    return fallback
   }
 }
 
