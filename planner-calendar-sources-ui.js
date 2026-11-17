@@ -66,7 +66,7 @@ export function setupPlannerCalendarSources({getConfig,getSession,saveShared,onL
     const shared=new Set((Array.isArray(config.additionalSources)?config.additionalSources:[]).map(x=>x.calendarId));
     for(const raw of [...(Array.isArray(config.additionalSources)?config.additionalSources:[]),...prefs.extras]){
       const item=cleanSource(raw);
-      if(!item||used.has(item.calendarId))continue;
+      if(!item||used.has(item.calendarId)||prefs.removedLocalIds.includes(item.id))continue;
       used.add(item.calendarId);
       sources.push(item);
     }
@@ -112,7 +112,7 @@ export function setupPlannerCalendarSources({getConfig,getSession,saveShared,onL
       link.setAttribute('aria-label','Abrir '+source.name+' no site de origem');
       actions.append(link);
       if(source.id!=='ipcvt'){
-        const canRemove=admin || !source.shared;
+        const canRemove=true;
         const trash=make('button','pm-source-trash');
         trash.type='button';trash.innerHTML=icon();
         trash.disabled=busy||!canRemove;
@@ -132,6 +132,10 @@ export function setupPlannerCalendarSources({getConfig,getSession,saveShared,onL
               storePreferences(local);onLocalChange();
             }else if(source.shared&&admin){
               await saveShared({additionalSources:(config.additionalSources||[]).filter(x=>x.calendarId!==source.calendarId)});
+            }else if(source.shared){
+              const local=preferences();
+              local.removedLocalIds=[...new Set([...local.removedLocalIds,source.id])];
+              storePreferences(local);onLocalChange();
             }else{
               const local=preferences();
               local.extras=local.extras.filter(x=>x.calendarId!==source.calendarId);
@@ -171,6 +175,21 @@ export function setupPlannerCalendarSources({getConfig,getSession,saveShared,onL
         finally{busy=false;render();}
       });
       row.append(restore);list.append(row);
+    }
+    for(const raw of config.additionalSources||[]){
+      const source=cleanSource(raw);
+      if(!source||!prefs.removedLocalIds.includes(source.id))continue;
+      const row=make('div','pm-source-row pm-source-muted');
+      const copy=make('span','pm-source-copy');
+      copy.append(make('span','pm-source-name',source.name),make('small','pm-source-subtitle','Removida deste navegador'));
+      const restore=make('button','pm-source-restore','Restaurar');
+      restore.type='button';restore.disabled=busy;
+      restore.addEventListener('click',()=>{
+        const local=preferences();local.removedLocalIds=local.removedLocalIds.filter(x=>x!==source.id);
+        try{storePreferences(local);notify('Fonte restaurada.');onLocalChange();render();}
+        catch(error){notify(error.message,true);}
+      });
+      row.append(copy,restore);list.append(row);
     }
     const note=$('pm-calendar-sources-note');
     note.textContent=admin
