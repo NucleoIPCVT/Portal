@@ -51,14 +51,32 @@
 .agenda-source-feedback.is-error{color:#a34b43;}
 .agenda-fontes-caption{margin:0 0 10px;font-size:12px;font-weight:700;color:#335343;}
 #agenda-edit-primary[hidden],#agenda-config-button{display:none!important;}
-/* Marcação discreta de cada fonte dentro dos 12 minicalendários. */
-.mini-month-grid .day{position:relative;}
-.mini-month-grid .day.has-event{color:#335d3e;}
-.mini-month-grid .day .agenda-mini-markers{
-  display:flex;justify-content:center;align-items:center;gap:2px;
-  position:absolute;left:0;right:0;bottom:-1px;height:5px;pointer-events:none;
+/* Contorno dividido pelas cores das fontes, com centro neutro e número legível.
+   A regra vale também para o calendário anual impresso, inclusive em modo escuro. */
+.mini-month-grid .day.has-event.agenda-source-ring,
+.booklet-calendar-page .mini-month-grid .day.has-event.agenda-source-ring,
+.single-page-calendar-grid .mini-month-grid .day.has-event.agenda-source-ring,
+.duplex-calendar-grid .mini-month-grid .day.has-event.agenda-source-ring{
+  color:#284a37!important;
+  font-weight:700;
+  border:2px solid transparent!important;
+  border-radius:7px!important;
+  background:
+    linear-gradient(#f8fbf6,#f8fbf6) padding-box,
+    var(--agenda-ring-gradient,linear-gradient(#668e74,#668e74)) border-box!important;
+  box-shadow:none!important;
+  -webkit-print-color-adjust:exact;
+  print-color-adjust:exact;
 }
-.agenda-mini-marker{width:3.8px;height:3.8px;border-radius:50%;display:block;flex:0 0 3.8px;}
+@media print {
+  .mini-month-grid .day.has-event.agenda-source-ring,
+  .booklet-calendar-page .mini-month-grid .day.has-event.agenda-source-ring,
+  .single-page-calendar-grid .mini-month-grid .day.has-event.agenda-source-ring,
+  .duplex-calendar-grid .mini-month-grid .day.has-event.agenda-source-ring{
+    border-width:1.5px!important;
+    border-radius:5px!important;
+  }
+}
 .agenda-event-source-line{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:5px;}
 .agenda-event-source-chip{display:inline-flex;align-items:center;gap:4px;font:600 9px/1.4 Inter,Arial,sans-serif;color:#617767;}
 .agenda-event-source-chip::before{content:'';width:6px;height:6px;flex:none;border-radius:50%;background:var(--source-color,#668e74);}
@@ -94,7 +112,7 @@
 }
 @media print {
   .agenda-settings-button,.agenda-source-dialog{display:none!important;}
-  .agenda-mini-marker,.agenda-print-legend i,.agenda-event-source-chip::before{
+  .agenda-print-legend i,.agenda-event-source-chip::before{
     -webkit-print-color-adjust:exact;print-color-adjust:exact;
   }
   .agenda-event-source-chip{font-size:7px;}
