@@ -193,7 +193,10 @@
           <div class="task-primary-grid">
             <label class="field" for="task-plan">Plano<select id="task-plan" required></select></label>
             <label class="field" for="task-status">Situação<select id="task-status"><option value="todo">A fazer</option><option value="doing">Em andamento</option><option value="done">Concluída</option></select></label>
-            <label class="field" for="task-due">Data de entrega<input id="task-due" type="date"></label>
+            <div class="pm-task-date-pair" role="group" aria-label="Período da demanda">
+              <label class="field" for="task-start">Data de início<input id="task-start" type="date"></label>
+              <label class="field" for="task-due">Data de entrega<input id="task-due" type="date"></label>
+            </div>
             <label class="field" for="task-priority">Prioridade<select id="task-priority"><option value="low">Baixa</option><option value="normal" selected>Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option></select></label>
           </div>
           <section class="task-editor-section task-repeat-section" aria-labelledby="task-repeat-title">
@@ -265,7 +268,7 @@
             <summary>Mais opções: datas, colunas e dependências</summary>
             <div class="task-editor-grid task-extra-grid">
               <label class="field" for="task-bucket">Coluna do quadro<select id="task-bucket"></select></label>
-              <label class="field" for="task-start">Data de início<input id="task-start" type="date"></label>
+
             </div>
             <label class="field" for="task-team">Equipe<input id="task-team" type="text" maxlength="80" placeholder="Ex.: Louvor, Litúrgico, Técnica" list="team-suggestions"></label>
             <h3 id="task-dependencies-title">Depende de outras demandas</h3>
