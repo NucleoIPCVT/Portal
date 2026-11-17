@@ -232,14 +232,7 @@ function duplexCalendarPage(year, months, totalEvents) {
   identity.append(textElement('span', '', 'Igreja Presbiteriana Central em Vilar dos Teles'));
   identity.append(textElement('h2', '', 'Calendário anual'));
   brand.append(identity);
-  const headingRight = textElement('div', 'duplex-calendar-right', '');
-  headingRight.append(textElement('strong', '', String(year)));
-  const ipbLogo = document.createElement('img');
-  ipbLogo.className = 'duplex-ipb-logo';
-  ipbLogo.src = byId('agenda-ipb-logo-screen').src;
-  ipbLogo.alt = 'Logomarca oficial da Igreja Presbiteriana do Brasil';
-  headingRight.append(ipbLogo);
-  heading.append(brand, headingRight);
+  heading.append(brand, textElement('strong', '', String(year)));
   page.append(heading);
 
   const grid = textElement('div', 'duplex-calendar-grid', '');
@@ -249,6 +242,12 @@ function duplexCalendarPage(year, months, totalEvents) {
   const footer = textElement('footer', 'duplex-calendar-footer', '');
   footer.append(textElement('span', '', `● Dias com eventos  ·  ${totalEvents} compromissos no ano`));
   const societies = textElement('div', 'duplex-calendar-societies', '');
+  // A logomarca oficial da IPB fica no rodapé, antes das sociedades internas.
+  const ipbLogo = document.createElement('img');
+  ipbLogo.className = 'duplex-ipb-logo';
+  ipbLogo.src = 'https://www.ipb.org.br/content/Downloads/LOGOIPB.png';
+  ipbLogo.alt = 'Logomarca oficial da Igreja Presbiteriana do Brasil';
+  societies.append(ipbLogo);
   for (const [name, label] of [
     ['saf', 'Sociedade Auxiliadora Feminina'],
     ['uph', 'União Presbiteriana de Homens'],
