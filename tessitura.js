@@ -8,7 +8,7 @@ import { hasPanelEntry } from './comissao-entrada.js?v=20261117-tessitura-v1';
 import { createNotePicker } from './tessitura-notes.js?v=20261117-v1';
 import {
   NOTE_LABELS, KEY_LABELS, VOICE_TYPES, midiLabel, hasRange,
-  comfortRange, normalizePerson, calculateTones
+  comfortRange, normalizePerson, calculateTones, suggestVoiceSection
 } from './tessitura-core.js?v=20261117-v1';
 
 const app = initializeApp({
@@ -214,7 +214,7 @@ function openEditor(person = null) {
   editId = person?.id || 'new';
   draft = {
     nome: person?.nome || '',
-    classificacao: person?.classificacao || 'Soprano',
+    classificacao: person?.classificacao || 'Não classificado',
     grave: Number.isInteger(person?.grave) ? person.grave : null,
     aguda: Number.isInteger(person?.aguda) ? person.aguda : null,
     confortoGrave: Number.isInteger(person?.confortoGrave) ? person.confortoGrave : null,
@@ -262,7 +262,6 @@ function inlineEditor(person = null) {
   const type=dom('select');
   for(const v of VOICE_TYPES)type.add(new Option(v,v));
   type.value=draft.classificacao;
-  type.addEventListener('change',()=>{draft.classificacao=type.value;});
   typeLabel.append(type);
   const activeLabel=dom('label','inline-active');
   const active=dom('input');active.type='checkbox';active.checked=draft.ativo;
@@ -271,18 +270,57 @@ function inlineEditor(person = null) {
   basic.append(nameLabel,typeLabel,activeLabel);
   form.append(basic);
 
+  // Apenas sugestão: a classificação final continua sob controle da equipe.
+  const suggestion=dom('div','voice-suggestion');
+  suggestion.setAttribute('aria-live','polite');
+  const suggestionText=dom('div','voice-suggestion-text');
+  const suggestionApply=dom('button','button subtle voice-suggestion-apply');
+  suggestionApply.type='button';
+  function refreshSuggestion(){
+    const result=suggestVoiceSection(draft);
+    suggestionApply.hidden=true;
+    suggestionText.replaceChildren();
+    if(!result){
+      suggestionText.append(dom('strong','','Sugestão de naipe'));
+      suggestionText.append(dom('span','',' · Preencha grave e agudo confortáveis para receber uma indicação.'));
+      return;
+    }
+    const value=result.type;
+    const caption=result.lowConfidence||result.outOfReference
+      ? 'Indicação incerta; confirme timbre e região de passagem.'
+      : 'Indicação aproximada; confirme com a avaliação vocal.';
+    suggestionText.append(dom('strong','','Naipe sugerido: '+value));
+    suggestionText.append(dom('span','',' · '+caption));
+    if(result.lowConfidence&&result.alternate){
+      suggestionText.append(dom('span','',' Alternativa possível: '+result.alternate+'.'));
+    }
+    if(value!==draft.classificacao){
+      suggestionApply.hidden=false;
+      suggestionApply.textContent='Usar '+value;
+      suggestionApply.onclick=()=>{
+        draft.classificacao=value;
+        type.value=value;
+        refreshSuggestion();
+      };
+    }
+  }
+  type.addEventListener('change',()=>{draft.classificacao=type.value;refreshSuggestion();});
+  suggestion.append(suggestionText,suggestionApply);
+
   const rangeGrid=dom('div','inline-note-grid');
   for(const [field,label] of NOTE_FIELDS){
     const panel=dom('div','inline-note-field');
     panel.append(dom('div','note-field-title',label));
     const picker=createNotePicker({
       value:draft[field],min:24,max:96,ariaLabel:label+' de '+(person?.nome||'novo cantor'),
-      onChange(value){draft[field]=value;}
+      onChange(value){draft[field]=value;if(field==='confortoGrave'||field==='confortoAguda')refreshSuggestion();}
     });
     panel.append(picker.element);
     rangeGrid.append(panel);
   }
   form.append(rangeGrid);
+  form.append(suggestion);
+  refreshSuggestion();
   const noteLabel=dom('label','inline-notes','Observações (opcional)');
   const notes=dom('textarea');notes.rows=2;notes.maxLength=600;notes.value=draft.observacoes;
   notes.placeholder='Data da avaliação, notas menos estáveis...';
@@ -360,6 +398,9 @@ function renderDirectory(){
       const name=dom('td');
       name.append(dom('strong','singer-name',p.nome));
       if(p.observacoes)name.append(dom('small','',p.observacoes.slice(0,80)));
+      const hint=suggestVoiceSection(p);
+      if(hint&&hint.type!==p.classificacao)
+        name.append(dom('small','voice-suggestion-inline','Sugestão: '+hint.type+' · confirmar'));
       tr.append(name);
       for(const [field] of NOTE_FIELDS)tr.append(noteCell(p,field));
       const state=dom('td');
