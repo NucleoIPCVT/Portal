@@ -87,16 +87,20 @@ function renderMiniMonth(year, monthIndex, events) {
           for(const sourceId of event.sourceIds||[event.sourceId]) if(sourceId)sourceIds.add(sourceId);
         }
       }
-      const markers=textElement('span','agenda-mini-markers','');
-      for(const sourceId of [...sourceIds].slice(0,5)){
-        const source=sourceManager.info(sourceId);
-        if(!source)continue;
-        const marker=textElement('i','agenda-mini-marker','');
-        marker.style.backgroundColor=source.color;
-        marker.setAttribute('aria-hidden','true');
-        markers.append(marker);
+      // Contorno multicolorido: uma cor ocupa todo o perímetro; várias
+      // fontes dividem o contorno em segmentos proporcionais, sem pontos.
+      const colors=[...sourceIds]
+        .map(sourceId=>sourceManager.info(sourceId)?.color)
+        .filter(Boolean);
+      if(colors.length){
+        const stops=colors.map((color,index)=>{
+          const from=(index*100/colors.length).toFixed(4);
+          const to=((index+1)*100/colors.length).toFixed(4);
+          return color+' '+from+'% '+to+'%';
+        });
+        cell.classList.add('agenda-source-ring');
+        cell.style.setProperty('--agenda-ring-gradient','conic-gradient('+stops.join(', ')+')');
       }
-      cell.append(markers);
       cell.setAttribute('aria-label',day+' de '+MONTHS[monthIndex]+': '+[...sourceIds].map(id=>sourceManager.info(id)?.name||'').filter(Boolean).join(', '));
     }
     grid.append(cell);
