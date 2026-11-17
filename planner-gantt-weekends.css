@@ -1,0 +1,105 @@
+/* Gantt IPCVT | Dias da semana e finais de semana. Camada final isolada.
+   Cada faixa semanal parte da segunda-feira, sem alterar dimensões das barras. */
+.pg-workspace {
+  --pg-saturday-tint:rgba(151,173,151,.115);
+  --pg-sunday-tint:rgba(119,165,130,.175);
+  --pg-grid-line:#e7ede6;
+}
+.pg-workspace .pg-time-row {
+  /* Linhas primeiro; depois faixas translúcidas para sábados e domingos. */
+  background-image:
+    linear-gradient(to right,transparent calc(100% - 1px),var(--pg-grid-line) calc(100% - 1px)),
+    linear-gradient(to right,
+      transparent 0%,
+      transparent 71.428571%,
+      var(--pg-saturday-tint) 71.428571%,
+      var(--pg-saturday-tint) 85.714286%,
+      var(--pg-sunday-tint) 85.714286%,
+      var(--pg-sunday-tint) 100%);
+  background-size:var(--pg-grid-step) 100%,var(--pg-week-width) 100%;
+  background-repeat:repeat-x,repeat-x;
+}
+.pg-workspace .pg-tick-head.pg-tick-head-days {
+  display:flex;
+  align-items:stretch;
+}
+.pg-workspace .pg-tick-head-days .pg-tick {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:0;
+  padding:2px 0 1px;
+  line-height:1.15;
+  overflow:hidden;
+}
+.pg-workspace .pg-tick-head-days .pg-weekday {
+  display:block;
+  font-size:8px;
+  font-weight:730;
+  letter-spacing:-.15px;
+  line-height:1.2;
+}
+.pg-workspace .pg-tick-head-days .pg-day-number {
+  display:block;
+  font-size:10px;
+  font-weight:700;
+  line-height:1.25;
+  color:#4c6a56;
+}
+.pg-workspace .pg-tick.is-saturday {
+  background:#edf3ee;
+  color:#627b68;
+}
+.pg-workspace .pg-tick.is-sunday {
+  background:#e5f0e8;
+  color:#427a56;
+}
+.pg-workspace .pg-tick.is-saturday .pg-day-number {color:#53745e}
+.pg-workspace .pg-tick.is-sunday .pg-day-number {color:#386d4b}
+/* Cada coluna diária precisa ser legível sem ampliação do navegador. */
+.pg-workspace.pg-zoom-weeks .pg-grid {
+  grid-template-columns:var(--pg-outline-width,290px) minmax(980px,1fr);
+  min-width:calc(var(--pg-outline-width,290px) + 980px);
+}
+.pg-workspace.pg-zoom-days .pg-tick-head-days .pg-weekday {font-size:9px}
+.pg-workspace.pg-zoom-days .pg-tick-head-days .pg-day-number {font-size:11px}
+
+/* Modo grafite acompanha o Gantt existente, mantendo as faixas suaves. */
+:root[data-theme="dark"] body.pm-active #planner-app .pg-workspace {
+  --pg-saturday-tint:rgba(168,189,159,.105);
+  --pg-sunday-tint:rgba(143,190,149,.18);
+  --pg-grid-line:#445053;
+}
+:root[data-theme="dark"] body.pm-active #planner-app .pg-workspace .pg-time-row {
+  background-image:
+    linear-gradient(to right,transparent calc(100% - 1px),var(--pg-grid-line) calc(100% - 1px)),
+    linear-gradient(to right,
+      transparent 0%,
+      transparent 71.428571%,
+      var(--pg-saturday-tint) 71.428571%,
+      var(--pg-saturday-tint) 85.714286%,
+      var(--pg-sunday-tint) 85.714286%,
+      var(--pg-sunday-tint) 100%);
+  background-size:var(--pg-grid-step) 100%,var(--pg-week-width) 100%;
+  background-repeat:repeat-x,repeat-x;
+}
+:root[data-theme="dark"] body.pm-active #planner-app .pg-workspace .pg-tick.is-saturday {
+  background:#37433e;
+  color:#b3c8b7;
+}
+:root[data-theme="dark"] body.pm-active #planner-app .pg-workspace .pg-tick.is-sunday {
+  background:#3b4c40;
+  color:#cee1d1;
+}
+:root[data-theme="dark"] body.pm-active #planner-app .pg-workspace .pg-tick-head-days .pg-day-number {
+  color:#d2e6d6;
+}
+
+@media print {
+  .pg-workspace .pg-tick.is-saturday,
+  .pg-workspace .pg-tick.is-sunday {
+    print-color-adjust:exact;
+    -webkit-print-color-adjust:exact;
+  }
+}
