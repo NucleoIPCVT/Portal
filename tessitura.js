@@ -306,6 +306,8 @@ function inlineEditor(person = null) {
 
 function noteCell(person,field){
   const td=dom('td','note-summary-cell');
+  const captions={grave:'Grave máx.',aguda:'Agudo máx.',confortoGrave:'Grave confortável',confortoAguda:'Agudo confortável'};
+  td.append(dom('span','note-mobile-label',captions[field]));
   const num=person[field];
   const btn=dom('button','inline-note-button'+(Number.isInteger(num)?' is-set':''),Number.isInteger(num)?midiLabel(num):'+');
   btn.type='button';
