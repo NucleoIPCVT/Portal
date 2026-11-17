@@ -5,7 +5,7 @@ const monthlyArt=[
   {month:2,label:'Fevereiro',theme:'Homem e Mulher Presbiterianos',src:'planner-month-art/planner-month-02.webp',ready:true},
   {month:3,label:'Março',theme:'Protestantismo no Brasil',src:'planner-month-art/planner-month-03.webp',ready:true},
   {month:4,label:'Abril',theme:'Páscoa',src:'planner-month-art/planner-month-04.webp',ready:true},
-  {month:5,label:'Maio',theme:'Aniversário da IPCVT',src:'planner-month-art/planner-month-05.webp',ready:true},
+  {month:5,label:'Maio',theme:'Aniversário da IPCVT',src:'planner-month-art/planner-month-05.avif',ready:true},
   {month:6,label:'Junho',theme:'Comunhão e Palavra',src:'planner-hero-mission.svg',ready:false},
   {month:7,label:'Julho',theme:'Cuidado e gratidão',src:'planner-hero-worship.svg',ready:false},
   {month:8,label:'Agosto',theme:'Missões e Presbiterianismo',src:'planner-hero-mission.svg',ready:false},
