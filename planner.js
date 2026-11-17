@@ -2475,23 +2475,106 @@ function pmTeamsView(content,tasks){
   content.append(pmHeader('Pessoas e responsabilidades','Equipes',
     groups.length+' equipes',[create]),cards)
 }
+// Momentos e datas do calendário cristão/presbiteriano, sem alterar a agenda oficial.
+function pmEasterDate(year) {
+  // Cálculo gregoriano; usado apenas para a identidade visual de Páscoa.
+  const a=year%19,b=Math.floor(year/100),c=year%100
+  const d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25)
+  const g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30
+  const i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k+7)%7
+  const m=Math.floor((a+11*h+22*l)/451)
+  const month=Math.floor((h+l-7*m+114)/31)
+  const day=(h+l-7*m+114)%31+1
+  return String(year)+'-'+String(month).padStart(2,'0')+'-'+String(day).padStart(2,'0')
+}
+function pmHomeSeason(date) {
+  const year=Number(date.slice(0,4)),month=Number(date.slice(5,7))
+  const easter=pmEasterDate(year)
+  const nearEaster=Math.round((Date.parse(date+'T12:00:00Z')-Date.parse(easter+'T12:00:00Z'))/86400000)
+  const themes={
+    1:['Oração e recomeços','Uma nova etapa para servir com propósito.','worship','mission'],
+    2:['Comunidade e cuidado','Cada pessoa importa no trabalho da igreja.','mission','worship'],
+    3:['Ensino e fé','A Palavra orienta cada passo do nosso serviço.','reformation','worship'],
+    4:['Esperança e renovação','Planejar também é preparar espaço para florescer.','easter','worship'],
+    5:['Música e serviço','Talentos diferentes, um mesmo propósito.','worship','mission'],
+    6:['Comunhão e Palavra','O serviço cotidiano também constrói comunidade.','mission','reformation'],
+    7:['Cuidado e gratidão','Pequenos gestos sustentam grandes projetos.','worship','mission'],
+    8:['Missões e Presbiterianismo','Servir à igreja é também olhar para além dela.','mission','worship'],
+    9:['Discipulado e ensino','Organizar hoje para cultivar o amanhã.','reformation','mission'],
+    10:['Reforma e Palavra','Fé, serviço e renovação contínua.','reformation','worship'],
+    11:['Gratidão e serviço','O trabalho de cada pessoa faz parte da missão.','mission','worship'],
+    12:['Natal e esperança','Tempo de acolher, celebrar e cuidar.','advent','worship']
+  }
+  const item=nearEaster>=-14&&nearEaster<=14
+    ?['Páscoa e esperança','A esperança renova nossa forma de servir.','easter','worship']
+    :themes[month]
+  return {label:item[0],message:item[1],images:[item[2],item[3],month===12?'mission':month===10?'mission':'reformation']}
+}
+function pmHomeCalendarLink(date,mode) {
+  calendarDate=date
+  selectedCalendarDay=date
+  calendarMode=mode
+  changeView('calendar-all')
+}
 function pmTodayView(content) {
   const today=todayISO()
   const mine=liveTasks().filter(pmIsMine)
   const due=mine.filter(t=>t.status!=='done'&&t.dueDate===today)
   const late=mine.filter(t=>isOverdue(t,today))
   const done=mine.filter(t=>t.status==='done'&&t.dueDate===today)
-  const events=pmEvents(today)
-  content.append(pmHeader('Organização pessoal','Meu dia',
-    pmShort(today,{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'}),[
-      pmCreationButton('task',()=>pmNewTask(today))
-    ]))
-  content.append(pmGroup('div','pm-today-stats',[
-    pmGroup('div','pm-today-stat',[pmIcon('checklist'),pmGroup('div','',[pmText('strong','',String(due.length)),pmText('span','','Para hoje')])]),
-    pmGroup('div','pm-today-stat'+(late.length?' pm-today-danger':''),[pmIcon('clock'),pmGroup('div','',[pmText('strong','',String(late.length)),pmText('span','','Atrasadas')])]),
-    pmGroup('div','pm-today-stat',[pmIcon('circle'),pmGroup('div','',[pmText('strong','',String(done.length)),pmText('span','','Concluídas hoje')])])
+  const upcoming=mine.filter(t=>t.status!=='done'&&t.dueDate>today&&t.dueDate<=addDays(today,7))
+    .sort((a,b)=>a.dueDate.localeCompare(b.dueDate)).slice(0,4)
+  const events=liveEvents().filter(event=>event.status!=='cancelled'&&event.startDate&&event.endDate)
+  const dayEvents=events.filter(event=>event.startDate<=today&&event.endDate>=today)
+  const weekStart=pmWeekStart(today),weekEnd=addDays(weekStart,6)
+  const weekEvents=events.filter(event=>event.startDate<=weekEnd&&event.endDate>=weekStart)
+  const monthStart=today.slice(0,7)+'-01'
+  const monthEnd=addDays(new Date(Number(today.slice(0,4)),Number(today.slice(5,7)),0,12).toISOString().slice(0,10),0)
+  const monthEvents=events.filter(event=>event.startDate<=monthEnd&&event.endDate>=monthStart)
+  const nextEvents=events.filter(event=>event.endDate>=today&&event.startDate<=addDays(today,30))
+    .sort((a,b)=>a.startDate.localeCompare(b.startDate)||
+      (a.startAt||'').localeCompare(b.startAt||'')||a.title.localeCompare(b.title,'pt-BR')).slice(0,7)
+  const season=pmHomeSeason(today)
+
+  // Arte vetorial original hospedada no próprio Portal, alternância suave
+  // via CSS. A primeira imagem é escolhida para a época do ano.
+  const hero=pmGroup('section','pm-home-hero')
+  const pictures=pmGroup('div','pm-home-pictures')
+  pictures.setAttribute('aria-hidden','true')
+  for(const picture of season.images){
+    const layer=pmGroup('span','pm-home-picture')
+    layer.style.backgroundImage='url("planner-hero-'+picture+'.svg")'
+    pictures.append(layer)
+  }
+  const heroCopy=pmGroup('div','pm-home-hero-copy',[
+    pmText('span','pm-home-eyebrow','PLANNER IPCVT  ·  '+season.label.toLocaleUpperCase('pt-BR')),
+    pmText('h2','pm-home-title','Meu dia'),
+    pmText('p','pm-home-message',season.message),
+    pmText('span','pm-home-date',pmShort(today,{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'}))
+  ])
+  const heroActions=pmGroup('div','pm-home-hero-actions',[
+    pmCreationButton('task',()=>pmNewTask()),
+    pmButton('Ver calendário',()=>pmHomeCalendarLink(today,'week'),'pm-home-hero-calendar')
+  ])
+  heroCopy.append(heroActions)
+  hero.append(pictures,heroCopy)
+  content.append(hero)
+
+  const left=pmGroup('div','pm-home-main')
+  left.append(pmGroup('div','pm-today-stats',[
+    pmGroup('div','pm-today-stat',[pmIcon('checklist'),pmGroup('div','',[
+      pmText('strong','',String(due.length)),pmText('span','','Para hoje')])]),
+    pmGroup('div','pm-today-stat'+(late.length?' pm-today-danger':''),[pmIcon('clock'),pmGroup('div','',[
+      pmText('strong','',String(late.length)),pmText('span','','Atrasadas')])]),
+    pmGroup('div','pm-today-stat',[pmIcon('circle'),pmGroup('div','',[
+      pmText('strong','',String(done.length)),pmText('span','','Concluídas hoje')])])
   ]))
-  const work=pmGroup('section','pm-today-card',[pmText('h3','','Minhas tarefas de hoje')])
+  const work=pmGroup('section','pm-today-card pm-home-work',[
+    pmGroup('div','pm-home-panel-heading',[
+      pmText('span','pm-home-panel-kicker','SUAS PRIORIDADES'),
+      pmText('h3','','O que precisa de atenção')
+    ])
+  ])
   for(const [label,items] of [['Para hoje',due],['Atrasadas',late]]){
     if(!items.length)continue
     work.append(pmText('h4','pm-today-section-title',label))
@@ -2508,18 +2591,72 @@ function pmTodayView(content) {
       ]))
     }
   }
-  if(!due.length&&!late.length)work.append(pmText('p','pm-muted','Tudo em dia! Nenhuma tarefa sua vence hoje e não há pendências atrasadas.'))
-  work.append(pmButton('Ver minhas tarefas',()=>{pmDemandTab='mine';changeView('list')},'pm-text-link'))
-  const agenda=pmGroup('section','pm-today-card',[pmText('h3','',officialCalendarName() + ' de hoje')])
-  if(!events.length)agenda.append(pmText('p','pm-muted','Nenhum evento da igreja cadastrado para hoje.'))
-  for(const event of events){
-    const item=pmButton('',()=>openEvent(event),'pm-today-event')
-    item.append(pmIcon('calendar'),pmGroup('span','',[pmText('strong','',event.title),pmText('small','',eventDateLabel(event))]))
-    agenda.append(item)
+  if(!due.length&&!late.length)
+    work.append(pmText('p','pm-home-all-clear','Tudo em dia! Nenhuma entrega sua vence hoje e não há pendências atrasadas.'))
+  work.append(pmButton('Ver todas as minhas tarefas',()=>{pmDemandTab='mine';changeView('list')},'pm-text-link'))
+  left.append(work)
+  if(upcoming.length){
+    const next=pmGroup('section','pm-today-card pm-home-upcoming',[
+      pmGroup('div','pm-home-panel-heading',[
+        pmText('span','pm-home-panel-kicker','PRÓXIMAS ENTREGAS'),
+        pmText('h3','','Nos próximos 7 dias')
+      ])
+    ])
+    for(const task of upcoming){
+      const item=pmButton('',()=>openTask(task),'pm-home-upcoming-item')
+      item.append(pmText('span','pm-home-upcoming-date',pmShort(task.dueDate)),
+        pmGroup('span','pm-home-upcoming-copy',[
+          pmText('strong','',task.title),pmText('small','',planName(task.planId))
+        ]))
+      next.append(item)
+    }
+    left.append(next)
   }
-  agenda.append(pmButton('Ver calendário',()=>{calendarDate=today;selectedCalendarDay=today;calendarMode='week';changeView('calendar-all')},'pm-text-link'))
-  content.append(pmGroup('div','pm-today-layout',[work,agenda]))
+  const aside=pmGroup('aside','pm-home-aside')
+  const periods=pmGroup('section','pm-today-card pm-home-periods',[
+    pmGroup('div','pm-home-panel-heading',[
+      pmText('span','pm-home-panel-kicker','CALENDÁRIO DA IGREJA'),
+      pmText('h3','','Panorama dos eventos')
+    ])
+  ])
+  for(const [label,count,period,mode,date] of [
+    ['Hoje',dayEvents.length,pmShort(today,{day:'numeric',month:'short'}),'week',today],
+    ['Nesta semana',weekEvents.length,pmShort(weekStart,{day:'numeric',month:'short'})+' – '+pmShort(weekEnd,{day:'numeric',month:'short'}),'week',today],
+    ['Neste mês',monthEvents.length,pmShort(today,{month:'long',year:'numeric'}),'month',today]
+  ]){
+    const tile=pmButton('',()=>pmHomeCalendarLink(date,mode),'pm-home-period')
+    tile.append(pmGroup('span','pm-home-period-label',[
+      pmText('strong','',label),pmText('small','',period)
+    ]),pmGroup('span','pm-home-period-count',[
+      pmText('strong','',String(count)),pmText('small','',count===1?'evento':'eventos')
+    ]))
+    periods.append(tile)
+  }
+  aside.append(periods)
+  const agenda=pmGroup('section','pm-today-card pm-home-events',[
+    pmGroup('div','pm-home-panel-heading',[
+      pmText('span','pm-home-panel-kicker',officialCalendarName()),
+      pmText('h3','','Próximos eventos')
+    ])
+  ])
+  if(!nextEvents.length)agenda.append(pmText('p','pm-muted',
+    calendarFetching?'Buscando eventos da agenda...':'Nenhum evento registrado nos próximos 30 dias.'))
+  for(const event of nextEvents){
+    const tile=pmButton('',()=>openEvent(event),'pm-home-event')
+    const badge=pmGroup('span','pm-home-event-date',[
+      pmText('strong','',event.startDate.slice(-2)),
+      pmText('small','',pmShort(event.startDate,{month:'short'}))
+    ])
+    tile.append(badge,pmGroup('span','pm-home-event-copy',[
+      pmText('strong','',event.title),pmText('small','',eventDateLabel(event))
+    ]))
+    agenda.append(tile)
+  }
+  agenda.append(pmButton('Abrir calendário completo',()=>pmHomeCalendarLink(today,'month'),'pm-text-link'))
+  aside.append(agenda)
+  content.append(pmGroup('div','pm-home-dashboard',[left,aside]))
 }
+
 function pmRenderMain(content,tasks){
   if(currentView==='reports')return renderPlannerDashboard({
     content,tasks:liveTasks(),plans:activePlans(),buckets:state.buckets,
