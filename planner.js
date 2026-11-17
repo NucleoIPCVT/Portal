@@ -33,6 +33,7 @@ import { GoogleCalendarClient } from './planner-google.js'
 import { setupPlannerWizards } from './planner-form-wizard.js?v=20261116-dates-together-v1'
 import { publicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl, summarizeCalendarEvents, diffCalendarEvents } from './planner-public.js?v=20261116-multi-source-ids-v1'
 import { plannerPublicSources, readPlannerPublicSources } from './planner-multi-public.js?v=20261117-v2'
+import { setupPlannerCalendarSources } from './planner-calendar-sources-ui.js?v=20261117-v1'
 
 const $ = id => document.getElementById(id)
 const formWizards = setupPlannerWizards()
@@ -100,6 +101,7 @@ const integrationRange = { from: addDays(todayISO(), -30), to: addDays(todayISO(
 let authEpoch = 0
 let calendarConfig = { calendarId: publicCalendar.id, sourceUrl: publicCalendar.sourceUrl, additionalSources: [], removedSourceIds: [] }
 let calendarConfigRevision = 0
+let plannerSourcePopup = null
 function calendarSourcesSignature(config) {
   return JSON.stringify([config.calendarId,config.additionalSources,config.removedSourceIds])
 }
@@ -2737,7 +2739,6 @@ function pmSetSession(next){
   const avatar=$('pm-avatar')
   if(avatar)avatar.textContent=pmInitials(next.name||next.email||'IP')
   if($('pm-account-name'))$('pm-account-name').textContent=next.name||next.email||''
-  if($('pm-settings'))$('pm-settings').hidden=!active||!next.isAdmin
 }
 $('pm-brand-home').addEventListener('click',()=>{clearTaskFilters();changeView('home')})
 // Desktop: trilho compacto de ícones. Tablet e celular: gaveta existente.
@@ -2811,7 +2812,6 @@ pmSyncThemeButton()
 $('pm-search').addEventListener('input',e=>{$('search-filter').value=e.target.value;render()})
 $('pm-notifications').addEventListener('click',()=>$('planner-notifications-button').click())
 $('pm-theme').addEventListener('click',()=>{$('theme-toggle').click();$('pm-more').open=false})
-$('pm-settings').addEventListener('click',()=>{$('planner-settings-button').click();$('pm-more').open=false})
 $('pm-logout').addEventListener('click',()=>$('logout-button').click())
 
 function render() {
@@ -3701,6 +3701,7 @@ const store = createPlannerStore({
     $('google-login').hidden = next.status === 'pending'
     $('member-email').textContent = next.name || next.email || ''
     $('planner-settings-button').hidden = !allowed || !next.isAdmin
+    if ($('pm-calendar-sources-dialog')?.open) plannerSourcePopup?.render()
     if (allowed) {
       if (!calendarTimer) startCalendarPolling()
       calendarUnread = readCalendarTracking()?.unread || []
@@ -3737,6 +3738,7 @@ const store = createPlannerStore({
       calendarLoadError = ''
       if (session.status === 'authorized') setTimeout(refreshPublicCalendar, 100)
     }
+    if ($('pm-calendar-sources-dialog')?.open) plannerSourcePopup?.render()
     if (session.status === 'authorized') render()
   },
   onConfigError(error) {
@@ -3750,5 +3752,15 @@ const store = createPlannerStore({
   }
 })
 
-
-
+// Painel de fontes no menu das iniciais. Compartilha configurações com a Agenda
+// Anual; não modifica o layout ou o CSS das visualizações do Planner.
+plannerSourcePopup = setupPlannerCalendarSources({
+  getConfig:()=>calendarConfig,
+  getSession:()=>session,
+  saveShared:changes=>store.saveCalendarSources(changes),
+  onLocalChange:()=>{
+    calendarConfigRevision++
+    if(session.status==='authorized')void refreshPublicCalendar()
+  },
+  onEditPrimary:openCalendarSettings
+})
