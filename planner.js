@@ -197,7 +197,7 @@ const value = id => $(id).value.trim()
 let taskUpdateToastTimer = null
 function notice(message, error = false) {
   const generalNotice = $('notice')
-  if (!error && message === 'Demanda atualizada.') {
+  if (!error && ['Demanda atualizada.', 'Plano salvo.'].includes(message)) {
     // A confirmação de edição não ocupa espaço permanente no conteúdo.
     generalNotice.hidden = true
     generalNotice.textContent = ''
@@ -2661,7 +2661,7 @@ function openTask(task = null, defaults = {}) {
   formWizards.task?.reset({ editing: Boolean(task) })
   $('task-feedback').textContent = ''
   if (task?.reviewRequired) $('task-feedback').textContent = task.reviewReason
-  const current = task || { title: '', planId: defaults.planId || selectedPlan() || activePlans()[0]?.id, bucketId: defaults.bucketId || '', startDate: defaults.startDate || '', dueDate: defaults.dueDate || '', status: 'todo', priority: 'normal', dateMode: 'manual', ...defaults }
+  const current = task || { title: '', planId: defaults.planId || selectedPlan() || activePlans()[0]?.id, bucketId: defaults.bucketId || '', startDate: defaults.startDate || todayISO(), dueDate: defaults.dueDate || '', status: 'todo', priority: 'normal', dateMode: 'manual', ...defaults }
   $('task-dialog-title').textContent = task ? 'Editar demanda' : 'Nova demanda'
   $('task-id').value = current.id || ''
   $('task-dialog').dataset.version = current.version ?? ''
@@ -3101,7 +3101,7 @@ function openPlan(plan = null, defaults = {}) {
   const fallbackStep=(weekSettings?.interval||1)*7
   const fallbackAnchor=weekSettings?.anchor||$('plan-repeat-anchor').value
   $('plan-start').value = plan?.startDate || defaults.startDate ||
-    (value('plan-kind')==='recurring' ? addDays(fallbackAnchor,-(fallbackStep-1)) : '')
+    (value('plan-kind')==='recurring' ? addDays(fallbackAnchor,-(fallbackStep-1)) : todayISO())
   $('plan-due').value = plan?.dueDate || defaults.dueDate ||
     (value('plan-kind')==='recurring' ? fallbackAnchor : '')
   $('plan-start').dataset.previous=$('plan-start').value
