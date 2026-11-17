@@ -232,11 +232,59 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+
+    // MAPA VOCAL — somente Google verificado e membros ativos da Comissão.
+    function vocalMidi(n) {
+      return n == null || (n is int && n >= 24 && n <= 96);
+    }
+    function vocalRange(d) {
+      return vocalMidi(d.grave) && vocalMidi(d.aguda)
+        && vocalMidi(d.confortoGrave) && vocalMidi(d.confortoAguda)
+        && ((d.grave == null && d.aguda == null)
+          || (d.grave is int && d.aguda is int && d.grave < d.aguda))
+        && ((d.confortoGrave == null && d.confortoAguda == null)
+          || (d.confortoGrave is int && d.confortoAguda is int
+            && d.grave is int && d.aguda is int
+            && d.confortoGrave >= d.grave && d.confortoAguda <= d.aguda
+            && d.confortoGrave < d.confortoAguda));
+    }
+    function vocalData(d) {
+      return d.keys().hasAll([
+          'nome', 'classificacao', 'grave', 'aguda', 'confortoGrave', 'confortoAguda',
+          'ativo', 'observacoes', 'criadoPor', 'criadoEm', 'atualizadoPor', 'atualizadoEm'
+        ])
+        && d.keys().hasOnly([
+          'nome', 'classificacao', 'grave', 'aguda', 'confortoGrave', 'confortoAguda',
+          'ativo', 'observacoes', 'criadoPor', 'criadoEm', 'atualizadoPor', 'atualizadoEm'
+        ])
+        && d.nome is string && d.nome.size() > 0 && d.nome.size() <= 100
+        && d.classificacao in [
+          'Soprano', 'Mezzo-soprano', 'Contralto', 'Tenor', 'Barítono', 'Baixo', 'Não classificado'
+        ]
+        && d.ativo is bool && d.observacoes is string && d.observacoes.size() <= 600
+        && d.criadoPor is string && d.criadoPor.size() <= 254
+        && d.criadoEm is timestamp && d.atualizadoPor == comissaoEmail()
+        && d.atualizadoEm == request.time && vocalRange(d);
+    }
+    match /comissao_tessitura/{cantorId} {
+      allow get, list: if comissaoMember();
+      allow create: if comissaoMember()
+        && vocalData(request.resource.data)
+        && request.resource.data.criadoPor == comissaoEmail()
+        && request.resource.data.criadoEm == request.time;
+      allow update: if comissaoMember()
+        && vocalData(request.resource.data)
+        && request.resource.data.criadoPor == resource.data.criadoPor
+        && request.resource.data.criadoEm == resource.data.criadoEm;
+      allow delete: if comissaoMember();
+    }
+
     // Preserva as coleções existentes e isola os dados da Comissão.
     match /{colecao}/{documento=**} {
       allow read, write: if request.auth != null
         && colecao != 'comissao_acessos'
-        && colecao != 'comissao_planner';
+        && colecao != 'comissao_planner'
+        && colecao != 'comissao_tessitura';
     }
   }
 }
