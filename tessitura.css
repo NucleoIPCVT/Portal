@@ -325,3 +325,7 @@ html[data-portal-theme="dark"] .voice-suggestion strong,.voice-suggestion-inline
  .calculator .section-icon{width:35px;height:35px;font-size:19px}
  html[data-portal-theme="dark"] .voice-banner::after{background:#3436388c}
 }
+
+/* Evita herdar a tipografia e o recuo do título no ícone do microfone. */
+.voice-brand > .voice-brand-icon{padding:0;border:1px solid #d7c1ad;letter-spacing:normal;font:inherit;white-space:normal}
+html[data-portal-theme="dark"] .voice-brand > .voice-brand-icon{border-color:#6b6660}
