@@ -1,0 +1,72 @@
+/* Apenas o popup de fontes. Nenhum estilo do calendário do Planner é alterado. */
+.pm-calendar-sources-dialog {
+  width:min(630px,calc(100vw - 26px));max-width:630px;
+  max-height:min(88vh,850px);padding:0;overflow:auto;
+  border-radius:16px;
+}
+.pm-calendar-sources-dialog .dialog-heading {position:sticky;top:0;z-index:2;}
+.pm-calendar-sources-dialog .dialog-body {display:grid;gap:14px;max-height:none;overflow:visible;padding:19px 22px 24px;}
+.pm-sources-intro {margin:0;color:var(--muted,#62766a);font-size:12px;line-height:1.6;}
+.pm-sources-list {display:grid;gap:9px;}
+.pm-source-row {
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px;border:1px solid #dae4da;border-radius:11px;
+  background:rgba(235,243,232,.48);
+}
+.pm-source-row.pm-source-muted {opacity:.7;}
+.pm-source-toggle {display:flex;align-items:center;gap:10px;min-width:0;cursor:pointer;}
+.pm-source-toggle input[type=checkbox] {width:17px;height:17px;accent-color:#648b6f;flex:none;}
+.pm-source-copy {display:grid;gap:3px;min-width:0;}
+.pm-source-name {color:#31543b;font-size:12px;line-height:1.35;font-weight:700;overflow-wrap:anywhere;}
+.pm-source-subtitle {color:#748679;font-size:10px;line-height:1.4;overflow-wrap:anywhere;}
+.pm-source-actions {display:flex;align-items:center;gap:10px;flex:none;}
+.pm-source-actions input[type=color] {width:29px;height:30px;border:none;border-radius:6px;padding:2px;background:transparent;cursor:pointer;}
+.pm-source-open {text-decoration:none;color:#547a61;font-size:18px;line-height:1;min-width:20px;text-align:center;}
+.pm-source-trash {
+  border:1px solid #d48d8d;color:#bb4c4c;border-radius:8px;
+  background:transparent;cursor:pointer;display:grid;place-items:center;
+  min-width:34px;min-height:34px;padding:6px;transition:background .18s,border-color .18s;
+}
+.pm-source-trash:hover:not(:disabled) {background:#fff0f0;border-color:#bb5858;}
+.pm-source-trash:disabled {opacity:.4;cursor:not-allowed;}
+.pm-source-restore {font-size:11px;border:1px solid #c9d7c6;border-radius:8px;color:#477052;background:transparent;padding:7px 9px;cursor:pointer;}
+.pm-source-restore:disabled {opacity:.45;cursor:not-allowed;}
+.pm-source-trash:focus-visible,.pm-source-restore:focus-visible {outline:2px solid #7da88b;outline-offset:2px;}
+.pm-sources-divider {margin:7px 0;border:0;border-top:1px solid #dee6da;}
+.pm-source-heading {font-size:12px;margin:0;color:#43684b;}
+.pm-source-add-form {display:grid;gap:10px;}
+.pm-source-add-form .field {display:grid;gap:5px;margin:0;font-size:11px;}
+.pm-source-add-grid {display:grid;grid-template-columns:minmax(0,1fr) 74px;gap:12px;}
+.pm-source-add-form input:not([type=color]){
+  min-width:0;width:100%;border:1px solid #cbd7c8;border-radius:9px;
+  background:#fff;color:#304b39;padding:10px 12px;font-size:12px;
+}
+.pm-source-add-form input[type=color] {width:60px;height:38px;border:0;background:transparent;cursor:pointer;}
+.pm-source-add-form .button {justify-self:start;}
+.pm-sources-note {font-size:11px;line-height:1.5;color:#748679;}
+.pm-sources-feedback {min-height:17px;font-size:11px;line-height:1.45;color:#4f765b;margin:0;}
+.pm-sources-feedback.is-error {color:#b14e4e;}
+.pm-sources-small-action {justify-self:start;font-size:11px;}
+@media(max-width:540px){
+  .pm-calendar-sources-dialog .dialog-body {padding:14px;}
+  .pm-source-row {gap:7px;padding:9px;}
+  .pm-source-actions {gap:5px;}
+  .pm-source-name {font-size:11px;}
+  .pm-source-subtitle {font-size:9px;}
+  .pm-source-trash {min-width:31px;min-height:31px;padding:5px;}
+}
+html[data-theme="dark"] .pm-calendar-sources-dialog .pm-source-row,
+body[data-theme="dark"] .pm-calendar-sources-dialog .pm-source-row {
+  background:#35453e;border-color:#657b6e;
+}
+html[data-theme="dark"] .pm-calendar-sources-dialog .pm-source-name,
+body[data-theme="dark"] .pm-calendar-sources-dialog .pm-source-name {color:#edf3eb;}
+html[data-theme="dark"] .pm-calendar-sources-dialog .pm-source-subtitle,
+html[data-theme="dark"] .pm-calendar-sources-dialog .pm-sources-note,
+html[data-theme="dark"] .pm-calendar-sources-dialog .pm-sources-intro,
+body[data-theme="dark"] .pm-calendar-sources-dialog .pm-source-subtitle {color:#cadbd0;}
+html[data-theme="dark"] .pm-calendar-sources-dialog .pm-source-trash {color:#f1a3a3;border-color:#a46b6b;}
+html[data-theme="dark"] .pm-calendar-sources-dialog .pm-source-trash:hover {background:#583d3d;}
+html[data-theme="dark"] .pm-calendar-sources-dialog .pm-source-add-form input:not([type=color]) {
+  background:#26352e;color:#eef4ed;border-color:#657e6e;
+}
