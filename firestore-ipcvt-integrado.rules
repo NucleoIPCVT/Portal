@@ -106,10 +106,18 @@ service cloud.firestore {
     function plnrChecklist(items) { return items is list && items.size() <= 20; }
     function plnrDependencies(items) { return items is list && items.size() <= 20; }
     function plnrPlan(d) {
-      return d.keys().hasOnly(['name', 'kind', 'description', 'startDate', 'dueDate', 'deleted', 'version', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'])
+      return d.keys().hasOnly(['name', 'kind', 'description', 'startDate', 'dueDate', 'ownerEmail', 'ownerName', 'deleted', 'version', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'])
         && d.keys().hasAll(['name', 'kind', 'description', 'startDate', 'dueDate', 'deleted'])
         && plnrText(d.name, 120) && d.name.size() > 0
         && d.kind in ['continuous', 'project'] && plnrText(d.description, 5000)
+        && plnrText(d.get('ownerEmail', ''), 254) && plnrText(d.get('ownerName', ''), 120)
+        // Registros anteriores continuam válidos. Novas atribuições exigem
+        // uma conta Google ativa na Comissão, sem ampliar acesso à lista.
+        && (d.get('ownerEmail', '') == ''
+          || (d.ownerEmail.size() > 3 && !d.ownerEmail.matches('.*[/].*')
+            && d.ownerEmail == d.ownerEmail.lower()
+            && exists(/databases/$(database)/documents/comissao_acessos/$(d.ownerEmail))
+            && get(/databases/$(database)/documents/comissao_acessos/$(d.ownerEmail)).data.ativo == true))
         && plnrDate(d.startDate) && plnrDate(d.dueDate)
         && (d.startDate == '' || d.dueDate == '' || d.startDate <= d.dueDate) && d.deleted is bool;
     }
