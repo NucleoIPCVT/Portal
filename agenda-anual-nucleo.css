@@ -401,8 +401,8 @@
   .agenda-ipb-logo-screen {
     display: block;
     flex: 0 0 auto;
-    width: clamp(48px, 5vw, 66px);
-    height: clamp(48px, 5vw, 66px);
+    width: clamp(70px, 6.3vw, 88px);
+    height: clamp(48px, 5vw, 64px);
     object-fit: contain;
     padding: 3px;
     border-radius: 5px;
@@ -410,11 +410,11 @@
   }
   @media (max-width: 760px) {
     .agenda-title-with-ipb { gap: 10px; }
-    .agenda-ipb-logo-screen { width: 49px; height: 49px; }
+    .agenda-ipb-logo-screen { width: 66px; height: 49px; }
   }
   @media (max-width: 390px) {
     .agenda-title-with-ipb { gap: 7px; }
-    .agenda-ipb-logo-screen { width: 42px; height: 42px; padding: 2px; }
+    .agenda-ipb-logo-screen { width: 55px; height: 42px; padding: 2px; }
   }
 }
 .agenda-print-ipb-mark {
@@ -425,8 +425,8 @@
 }
 .agenda-ipb-logo-print {
   display: block;
-  width: 49px;
-  height: 49px;
+  width: 72px;
+  height: 54px;
   flex: 0 0 auto;
   object-fit: contain;
 }
@@ -442,16 +442,16 @@
 }
 .duplex-calendar-right .duplex-ipb-logo {
   display: block;
-  width: 15mm;
-  height: 15mm;
+  width: 23mm;
+  height: 16mm;
   object-fit: contain;
 }
 @media (max-width: 720px) {
   .agenda-print-ipb-mark .identity-side { display: none; }
-  .agenda-ipb-logo-print { width: 43px; height: 43px; }
+  .agenda-ipb-logo-print { width: 60px; height: 44px; }
 }
 @media print {
   .agenda-print-ipb-mark .identity-side { display: block; }
   .agenda-print-ipb-mark { gap: 3mm; }
-  .agenda-ipb-logo-print { width: 12mm; height: 12mm; }
+  .agenda-ipb-logo-print { width: 21mm; height: 15mm; }
 }
