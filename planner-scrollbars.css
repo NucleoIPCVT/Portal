@@ -1,0 +1,62 @@
+/* Planner IPCVT — rolagem discreta em painéis, relatórios e pop-ups.
+   Camada visual final; não altera rolagem, navegação ou interações. */
+:root {
+  --pm-scroll-thumb: rgba(95, 130, 104, .32);
+  --pm-scroll-thumb-hover: rgba(81, 121, 93, .62);
+  --pm-scroll-track: transparent;
+}
+:root[data-theme="dark"] {
+  --pm-scroll-thumb: rgba(164, 188, 169, .28);
+  --pm-scroll-thumb-hover: rgba(178, 210, 184, .57);
+}
+
+/* Firefox e navegadores com suporte às propriedades padronizadas. */
+html,
+body,
+body * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--pm-scroll-thumb) var(--pm-scroll-track);
+}
+
+/* Chromium e Safari: trilho praticamente invisível e cursor arredondado. */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+body *::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+body *::-webkit-scrollbar-track,
+html::-webkit-scrollbar-corner,
+body::-webkit-scrollbar-corner,
+body *::-webkit-scrollbar-corner {
+  background: transparent;
+}
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+body *::-webkit-scrollbar-thumb {
+  min-height: 28px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--pm-scroll-thumb);
+  background-clip: padding-box;
+}
+@media (hover:hover) and (pointer:fine) {
+  html:hover::-webkit-scrollbar-thumb,
+  body:hover::-webkit-scrollbar-thumb,
+  body *:hover::-webkit-scrollbar-thumb {
+    background: var(--pm-scroll-thumb-hover);
+    background-clip: padding-box;
+  }
+}
+
+/* Dispositivos de toque mantêm uma área de rolagem funcional. */
+@media (pointer:coarse) {
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  body *::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+}
