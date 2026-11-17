@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f9f6ef">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Tessitura Vocal · Comissão IPCVT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script>try{document.documentElement.setAttribute('data-portal-theme',localStorage.getItem('ipcvt-portal-theme')==='dark'?'dark':'light')}catch(_){document.documentElement.setAttribute('data-portal-theme','light')}</script>
+  <link rel="stylesheet" href="tessitura.css?v=20261117-v1">
+  <link rel="stylesheet" href="ipcvt-topbar.css?v=20261117-topbar-v2">
+  <script defer src="ipcvt-topbar.js?v=20261117-topbar-v2"></script>
+  <script type="module" src="tessitura.js?v=20261117-v1"></script>
+</head>
+<body class="voice-page">
+  <header class="voice-topbar">
+    <a class="voice-brand" href="comissao.html" aria-label="Voltar à Comissão">
+      <img src="logo-comissao.svg" width="55" height="55" alt="">
+      <span>Tessitura <em>Vocal</em><small>COMISSÃO · NÚCLEO IPCVT</small></span>
+    </a>
+    <div class="voice-top-actions">
+      <button type="button" id="voice-theme-toggle" aria-label="Alternar tema" title="Alternar modo claro e escuro"><i class="ph ph-moon-stars" aria-hidden="true"></i></button>
+    </div>
+  </header>
+  <main>
+    <section id="voice-gate" class="gate" role="status" aria-live="polite">
+      <div class="gate-mark"><i class="ph ph-lock-key" aria-hidden="true"></i></div>
+      <h1>Verificando acesso</h1>
+      <p id="gate-message">Conferindo a sessão do Painel da Comissão...</p>
+      <a class="button primary" href="comissao.html">Abrir Painel da Comissão</a>
+    </section>
+    <div id="voice-app" hidden>
+      <div class="voice-intro">
+        <div><p class="eyebrow">INTELIGÊNCIA MUSICAL · LOUVOR</p><h1>Mapa <em>vocal</em></h1>
+          <p>Organize as vozes do grupo e encontre transposições mais confortáveis para uma melodia.</p></div>
+        <div class="voice-summary">
+          <div><strong id="metric-total">0</strong><span>Cantores</span></div>
+          <div><strong id="metric-measured">0</strong><span>Com alcance</span></div>
+          <div><strong id="metric-types">0</strong><span>Classificações</span></div>
+        </div>
+      </div>
+      <div id="cloud-alert" class="cloud-alert" hidden role="status">
+        <i class="ph ph-warning-circle" aria-hidden="true"></i>
+        <span id="cloud-message">Não foi possível acessar a base na nuvem.</span>
+        <button type="button" id="demo-button" class="button subtle">Testar localmente</button>
+      </div>
+      <section class="surface calculator" aria-labelledby="calculator-title">
+        <div class="section-head">
+          <div><p class="eyebrow">CALCULADORA DE TOM</p><h2 id="calculator-title">Qual tom funciona melhor para o grupo?</h2>
+            <p>Informe as notas extremas da melodia no tom atual. Cada voz pode cantar em uma oitava adequada.</p></div>
+          <span class="section-icon"><i class="ph ph-waveform" aria-hidden="true"></i></span>
+        </div>
+        <form id="tone-form" class="tone-form">
+          <label>Nota mais grave da melodia<select id="melody-low" required aria-label="Nota mais grave da melodia"></select></label>
+          <label>Nota mais aguda da melodia<select id="melody-high" required aria-label="Nota mais aguda da melodia"></select></label>
+          <label>Tom original da música<select id="song-key" aria-label="Tom original da música"><option value="">Não informado</option></select></label>
+          <label>Vozes consideradas<select id="tone-group"><option value="">Todos os cantores ativos</option></select></label>
+          <button class="button primary calculate-button" type="submit"><i class="ph ph-music-notes-simple" aria-hidden="true"></i> Calcular tom</button>
+        </form>
+        <div id="calculation-output" class="calculation-output" hidden aria-live="polite"></div>
+        <p class="calculator-note"><i class="ph ph-info" aria-hidden="true"></i> Estimativa baseada nos extremos, não na duração ou repetição das notas. Alcance máximo e tessitura confortável são diferentes; harmonia a várias vozes requer análise das partes individuais.</p>
+      </section>
+      <section class="surface directory" aria-labelledby="directory-title">
+        <div class="section-head directory-head">
+          <div><p class="eyebrow">CADASTRO DE VOZES</p><h2 id="directory-title">Cantores e tessituras</h2>
+            <p>Lista por classificação vocal, com notas no padrão Dó4 = dó central.</p></div>
+          <div class="directory-actions">
+            <button id="import-scale" class="button subtle" type="button"><i class="ph ph-download-simple" aria-hidden="true"></i> Importar da Escala Geral</button>
+            <button id="add-singer" class="button primary" type="button"><i class="ph ph-plus" aria-hidden="true"></i> Novo cantor</button>
+          </div>
+        </div>
+        <div class="directory-filters">
+          <label class="search-box"><i class="ph ph-magnifying-glass" aria-hidden="true"></i><input id="singer-search" type="search" placeholder="Pesquisar cantor..." aria-label="Pesquisar cantor"></label>
+          <label>Classificação<select id="singer-filter"><option value="">Todas as vozes</option></select></label>
+          <label class="check-label"><input type="checkbox" id="show-inactive"> Exibir inativos</label>
+          <span id="directory-count" class="directory-count">0 registros</span>
+        </div>
+        <div id="singers-list" class="singers-list"></div>
+      </section>
+      <p id="page-feedback" class="page-feedback" role="status" aria-live="polite"></p>
+    </div>
+  </main>
+  <footer><span>IPCVT · Comissão do Núcleo</span><span>Planejamento vocal para o louvor</span></footer>
+
+  <dialog id="singer-dialog" aria-labelledby="singer-dialog-title">
+    <form id="singer-form" novalidate>
+      <div class="dialog-head"><div><p class="eyebrow">FICHA VOCAL</p><h2 id="singer-dialog-title">Novo cantor</h2></div>
+        <button id="close-singer" type="button" class="close-button" aria-label="Fechar"><i class="ph ph-x"></i></button></div>
+      <div class="field-grid">
+        <label class="full">Nome do cantor<input id="field-name" type="text" maxlength="100" placeholder="Nome completo" autocomplete="off" required></label>
+        <label>Classificação vocal<select id="field-type" required></select></label>
+        <label class="check-label field-active"><input id="field-active" type="checkbox" checked> Participa do grupo ativo</label>
+      </div>
+      <h3>Alcance máximo <small>extremos que consegue emitir</small></h3>
+      <div class="field-grid">
+        <label>Nota mais grave<select id="field-low"></select></label>
+        <label>Nota mais aguda<select id="field-high"></select></label>
+      </div>
+      <h3>Tessitura confortável <small>região sustentável para cantar</small></h3>
+      <div class="field-grid">
+        <label>Grave confortável<select id="field-comfort-low"></select></label>
+        <label>Agudo confortável<select id="field-comfort-high"></select></label>
+      </div>
+      <p class="field-hint">Se ainda não mediu a voz, deixe os campos sem nota. Sem tessitura confortável, o cálculo usará provisoriamente o alcance máximo.</p>
+      <label class="full notes-label">Observações<textarea id="field-notes" rows="2" maxlength="600" placeholder="Ex.: vocal principal, notas menos estáveis, data da avaliação..."></textarea></label>
+      <p id="form-error" class="form-error" role="alert"></p>
+      <div class="dialog-actions"><button id="cancel-singer" type="button" class="button subtle">Cancelar</button><button id="save-singer" type="submit" class="button primary">Salvar cantor</button></div>
+    </form>
+  </dialog>
+</body>
+</html>
