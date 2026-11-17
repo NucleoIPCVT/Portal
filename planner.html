@@ -39,6 +39,7 @@
     <link rel="stylesheet" href="planner-home-plans-refresh.css?v=20261116-home-plans-v1">
     <link rel="stylesheet" href="planner-home-monthly-watercolors.css?v=20261117-jan-may-v1">
     <link rel="stylesheet" href="planner-plan-watercolor.css?v=20261116-watercolor-v1">
+    <link rel="stylesheet" href="planner-calendar-sources.css?v=20261117-v1">
     <script type="module" src="planner.js?v=20261117-month-watercolors-multi-v3"></script>
   </head>
   <body data-interface="planner-ipcvt-verde-creme" data-revisao="20261113-teatro-v1">
@@ -91,11 +92,7 @@
           <details class="pm-more" id="pm-more"><summary id="pm-account" aria-label="Conta e mais opções"><span id="pm-avatar">IP</span></summary>
             <div class="pm-more-menu">
               <span id="pm-account-name" class="pm-account-name"></span>
-              <button type="button" data-view="plans">Planos da Comissão</button>
-              <button type="button" data-view="events">Agenda oficial</button>
-              <button type="button" data-view="list">Minhas tarefas</button>
-              <button type="button" data-view="integrations">Google Agenda</button>
-              <button type="button" id="pm-settings" hidden>Configurações da agenda</button>
+              <button type="button" id="pm-calendars">Calendários</button>
               <button type="button" id="pm-theme">Alternar tema</button>
               <button type="button" id="pm-logout">Sair</button>
             </div>
@@ -427,6 +424,37 @@
         </div>
         <div class="dialog-footer"><button id="delete-event-button" class="button button-danger" type="button" hidden>Excluir evento</button><span class="footer-spacer"></span><button class="button" type="button" data-close-dialog="event-dialog">Cancelar</button><button class="button button-primary" type="submit">Salvar evento</button></div>
       </form>
+    </dialog>
+
+    <dialog id="pm-calendar-sources-dialog" class="editor-dialog pm-calendar-sources-dialog" aria-labelledby="pm-calendar-sources-title">
+      <div class="dialog-heading">
+        <div><p class="eyebrow">Calendário do Planner</p><h2 id="pm-calendar-sources-title">Fontes de calendários</h2></div>
+        <button id="pm-calendar-sources-close" class="icon-button" type="button" aria-label="Fechar fontes de calendário">×</button>
+      </div>
+      <div class="dialog-body">
+        <p class="pm-sources-intro">Adicione Google Agendas públicos, escolha quais serão exibidos e remova fontes opcionais. A agenda principal IPCVT permanece protegida.</p>
+        <h3 class="pm-source-heading">Fontes cadastradas</h3>
+        <div id="pm-calendar-sources-list" class="pm-sources-list"></div>
+        <p id="pm-calendar-sources-note" class="pm-sources-note"></p>
+        <button id="pm-calendar-primary-edit" type="button" class="button button-small pm-sources-small-action" hidden>Editar fonte principal (admin)</button>
+        <hr class="pm-sources-divider">
+        <h3 class="pm-source-heading">Adicionar Google Agenda público</h3>
+        <form id="pm-calendar-sources-form" class="pm-source-add-form">
+          <div class="pm-source-add-grid">
+            <label class="field" for="pm-calendar-source-name">Nome da fonte
+              <input id="pm-calendar-source-name" type="text" maxlength="100" placeholder="Ex.: Agenda da UMP" required autocomplete="off">
+            </label>
+            <label class="field" for="pm-calendar-source-color">Cor
+              <input id="pm-calendar-source-color" type="color" value="#8d91c4">
+            </label>
+          </div>
+          <label class="field" for="pm-calendar-source-url">Link público do Google Agenda
+            <input id="pm-calendar-source-url" type="url" maxlength="2000" placeholder="https://calendar.google.com/calendar/ical/.../public/basic.ics" required autocomplete="off" spellcheck="false">
+          </label>
+          <button id="pm-calendar-source-submit" type="submit" class="button button-primary">+ Adicionar fonte</button>
+        </form>
+        <p id="pm-calendar-sources-feedback" class="pm-sources-feedback" role="status" aria-live="polite"></p>
+      </div>
     </dialog>
 
     <dialog id="calendar-settings-dialog" class="editor-dialog compact-dialog" aria-labelledby="calendar-settings-title">
