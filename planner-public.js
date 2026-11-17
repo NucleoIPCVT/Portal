@@ -9,7 +9,7 @@ export const publicCalendar = Object.freeze({
 })
 
 function validId(id) {
-  return typeof id === 'string' && id.length > 0 && id.length <= 250 && /^[A-Za-z0-9_.@+\-]+$/.test(id)
+  return typeof id === 'string' && id.length > 0 && id.length <= 250 && /^[A-Za-z0-9_.@+#\-]+$/.test(id)
 }
 
 export function parseCalendarSourceUrl(text) {
