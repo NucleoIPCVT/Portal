@@ -196,16 +196,42 @@
         links:[['comissao.html','Voltar para Comissão']]});
       if (page === 'planner.html') plannerTopbar();
       else {
+        // Versão auxiliar: reutiliza o menu de conta, sem criar um segundo menu.
         const pmBar=document.querySelector('#planner-app .pm-toolbar');
-        if (pmBar && !pmBar.querySelector('.ipcvt-bar-actions')) {
+        const more=document.getElementById('pm-more');
+        if (pmBar && more && !more.dataset.ipcvtStandardized) {
+          more.dataset.ipcvtStandardized='true';
+          more.classList.add('ipcvt-planner-more');
+          const summary=more.querySelector('#pm-account');
+          if (summary) {
+            const avatar=summary.querySelector('#pm-avatar');
+            summary.textContent='|||';
+            summary.title='Opções e configurações';
+            summary.setAttribute('aria-label','Abrir opções e configurações');
+            if(avatar){avatar.hidden=true;summary.append(avatar);}
+          }
+          const oldTheme=document.getElementById('pm-theme');
+          if(oldTheme)oldTheme.classList.add('ipcvt-hidden-menu-command');
+          const menu=more.querySelector('.pm-more-menu');
+          if(menu){
+            menu.querySelectorAll('a.pm-menu-link').forEach(a=>a.remove());
+            menu.append(newMenuItem('comissao.html','Voltar para Comissão'));
+          }
           const proxy=el('button','ipcvt-theme-button ipcvt-planner-legacy-theme');
           proxy.type='button';
-          proxy.innerHTML='<span class="ipcvt-fallback-symbol" aria-hidden="true">☾</span>';
-          proxy.setAttribute('aria-label','Alternar modo claro e escuro');
+          const icon=el('span','ipcvt-fallback-symbol');
+          icon.setAttribute('aria-hidden','true');
+          proxy.append(icon);
+          const sync=()=>{
+            const dark=document.documentElement.dataset.theme==='dark';
+            icon.textContent=dark?'☀':'☾';
+            proxy.setAttribute('aria-label',dark?'Ativar modo claro':'Ativar modo escuro');
+            proxy.title=proxy.getAttribute('aria-label');
+          };
           proxy.addEventListener('click',()=>document.getElementById('theme-toggle')?.click());
-          standardBar({header:'#planner-app .pm-topbar',actions:pmBar,theme:proxy,
-            move:[['#pm-settings',null]],links:[['comissao.html','Voltar para Comissão']]});
-          document.documentElement.addEventListener('click',()=>{const icon=proxy.querySelector('.ipcvt-fallback-symbol');if(icon)icon.textContent=document.documentElement.dataset.theme==='dark'?'☀':'☾';});
+          new MutationObserver(sync).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+          sync();
+          pmBar.append(proxy,more);
         }
       }
     } else if (page === 'revisao_repertorio.html') {
