@@ -90,7 +90,9 @@ function startCloud() {
     $('cloud-alert').hidden = true;
     lockActions(false);
     renderDirectory();
-    if (!bootstrapped) {
+    // Sincroniza somente após a leitura confirmada do servidor.
+    // Um primeiro snapshot vazio do cache local não significa cadastro vazio na nuvem.
+    if (!bootstrapped && !snapshot.metadata.fromCache && !snapshot.metadata.hasPendingWrites) {
       bootstrapped = true;
       void importScale(true);
     }
