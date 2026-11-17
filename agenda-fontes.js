@@ -75,7 +75,7 @@ export function createAgendaSources({getPrimary,onChange}) {
     const used=new Set(values.map(source=>source.calendarId).filter(Boolean));
     for(const raw of [...shared,...state.extras]){
       const source=sanitizeExtra(raw);
-      if(!source||used.has(source.calendarId))continue;
+      if(!source||used.has(source.calendarId)||state.removedLocalIds.includes(source.id))continue;
       used.add(source.calendarId);values.push(source);
     }
     return values.map(source=>({...source,color:validColor(state.colors[source.id]||source.color),
@@ -133,7 +133,7 @@ export function createAgendaSources({getPrimary,onChange}) {
         remove.innerHTML='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
         remove.title='Remover fonte: '+source.name;
         remove.setAttribute('aria-label','Remover fonte '+source.name);
-        remove.disabled=saving||(!isAdmin&&isSharedSource&&!state.extras.some(item=>item.calendarId===source.calendarId));
+        remove.disabled=saving;
         remove.addEventListener('click',async()=>{
           if(saving)return;
           const isShared=shared.some(item=>item.calendarId===source.calendarId);
@@ -146,9 +146,11 @@ export function createAgendaSources({getPrimary,onChange}) {
               await persistShared({removedSourceIds:[...new Set([...removedFixed,source.id])]});
             }else if(source.fixed){
               state.removedLocalIds=[...new Set([...state.removedLocalIds,source.id])];
-            }else if(isShared){
-              if(!isAdmin || !persistShared)throw new Error('Somente um administrador pode remover fontes compartilhadas.');
+            }else if(isShared&&isAdmin){
+              if(!persistShared)throw new Error('Acesso administrativo não confirmado.');
               await persistShared({additionalSources:shared.filter(item=>item.calendarId!==source.calendarId)});
+            }else if(isShared){
+              state.removedLocalIds=[...new Set([...state.removedLocalIds,source.id])];
             }else state.extras=state.extras.filter(item=>item.calendarId!==source.calendarId);
             delete state.enabled[source.id];delete state.colors[source.id];
             saveLocal();show('Fonte removida.');onChange();
@@ -183,6 +185,21 @@ export function createAgendaSources({getPrimary,onChange}) {
           show('Fonte restaurada.');
         }catch(error){show(error.message||'Falha ao restaurar a fonte.',true);}
         finally{saving=false;render();}
+      });
+      row.append(copy,restore);list.append(row);
+    }
+    for(const raw of shared){
+      const source=sanitizeExtra(raw);
+      if(!source||!state.removedLocalIds.includes(source.id))continue;
+      const row=element('div','agenda-source-row is-disabled');
+      const copy=element('span','agenda-source-copy');
+      copy.append(element('span','agenda-source-title',source.name),
+        element('small','agenda-source-meta','Fonte removida deste navegador'));
+      const restore=element('button','agenda-source-remove','Restaurar');
+      restore.type='button';restore.disabled=saving;
+      restore.addEventListener('click',()=>{
+        state.removedLocalIds=state.removedLocalIds.filter(id=>id!==source.id);
+        saveLocal();render();onChange();show('Fonte restaurada.');
       });
       row.append(copy,restore);list.append(row);
     }
