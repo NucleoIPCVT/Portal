@@ -2544,7 +2544,7 @@ function pmHomeSeason(date) {
     2:['Homem e Mulher Presbiterianos','Homens e mulheres unidos no cuidado com a igreja.','planner-month-02.webp'],
     3:['Protestantismo no Brasil','Uma história de fé, Palavra e compromisso.','planner-month-03.webp'],
     4:['Páscoa','Cristo ressuscitou. Nossa esperança se renova.','planner-month-04.webp'],
-    5:['Aniversário da IPCVT','Uma história de fé e comunhão em nossa igreja.','planner-month-05.webp']
+    5:['Aniversário da IPCVT','Uma história de fé e comunhão em nossa igreja.','planner-month-05.avif']
   }
   if(watercolors[month]){
     const [label,message,picture]=watercolors[month]
@@ -2584,14 +2584,14 @@ function pmTodayView(content) {
   // Aquarela própria nos meses aprovados (jan–mai); para os demais
   // mantemos temporariamente as imagens vetoriais já publicadas.
   const hero=pmGroup('section','pm-home-hero')
-  if(season.images.length===1&&season.images[0].endsWith('.webp')){
+  if(season.images.length===1&&/\.(webp|avif)$/.test(season.images[0])){
     hero.classList.add('pm-home-hero-watercolor')
   }
   const pictures=pmGroup('div','pm-home-pictures')
   pictures.setAttribute('aria-hidden','true')
   for(const picture of season.images){
     const layer=pmGroup('span','pm-home-picture')
-    layer.style.backgroundImage=picture.endsWith('.webp')
+    layer.style.backgroundImage=/\.(webp|avif)$/.test(picture)
       ? 'url("planner-month-art/'+picture+'")'
       : 'url("planner-hero-'+picture+'.svg")'
     pictures.append(layer)
