@@ -303,6 +303,14 @@
           <input id="plan-id" type="hidden">
           <p class="plan-dialog-explain">Um plano reúne demandas de uma equipe ou de um projeto. Os eventos da igreja podem ser vinculados individualmente a cada demanda.</p>
           <label class="field" for="plan-name">Nome do plano<input id="plan-name" type="text" required maxlength="100" placeholder="Ex.: Cultos e Eventos, Louvor & Som"></label>
+          <section class="plan-ownership" aria-label="Responsabilidade pelo plano">
+            <label class="field" for="plan-owner-email">Responsável pelo plano
+              <input id="plan-owner-email" type="email" required maxlength="254" list="plan-owner-suggestions" autocomplete="off" placeholder="nome@exemplo.com">
+              <datalist id="plan-owner-suggestions"></datalist>
+              <small>Escolha uma sugestão ou informe o e-mail de um membro autorizado da Comissão. O responsável pode ser alterado depois.</small>
+            </label>
+            <p id="plan-creator-row" class="plan-creator-row" hidden></p>
+          </section>
           <label class="field" for="plan-description">Descrição <span class="optional-tag">Opcional</span><textarea id="plan-description" rows="3" maxlength="5000" placeholder="Que tipos de demandas serão organizados aqui?"></textarea></label>
           <details id="plan-advanced" class="task-editor-advanced">
             <summary>Configurações do plano (opcional)</summary>
