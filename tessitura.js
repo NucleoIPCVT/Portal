@@ -2,9 +2,10 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebas
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 import {
   getFirestore, collection, doc, getDoc, onSnapshot, addDoc, updateDoc, deleteDoc,
-  writeBatch, serverTimestamp
+  runTransaction, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 import { hasPanelEntry } from './comissao-entrada.js?v=20261117-tessitura-v1';
+import { createNotePicker } from './tessitura-notes.js?v=20261117-v1';
 import {
   NOTE_LABELS, KEY_LABELS, VOICE_TYPES, midiLabel, hasRange,
   comfortRange, normalizePerson, calculateTones
@@ -79,6 +80,7 @@ function startCloud() {
   if (!authorized) return;
   stopSingers?.();
   mode = 'none';
+  bootstrapped = false;
   lockActions(true);
   cloudWarning('Carregando cadastro na nuvem...', false);
   stopSingers = onSnapshot(collection(db, COLLECTION), snapshot => {
@@ -88,6 +90,10 @@ function startCloud() {
     $('cloud-alert').hidden = true;
     lockActions(false);
     renderDirectory();
+    if (!bootstrapped) {
+      bootstrapped = true;
+      void importScale(true);
+    }
   }, error => {
     if (!authorized) return;
     mode = 'none';
@@ -141,36 +147,49 @@ onAuthStateChanged(auth, async user => {
   }
 });
 
-function addNoteOptions(select, allowEmpty = true, min = 24, max = 96) {
-  if (allowEmpty) select.add(new Option('Selecione a nota', ''));
-  for (let value = min; value <= max; value++) select.add(new Option(midiLabel(value), String(value)));
-}
+
+const NOTE_FIELDS = [
+  ['grave','Nota mais grave · alcance máximo'],
+  ['aguda','Nota mais aguda · alcance máximo'],
+  ['confortoGrave','Nota grave · tessitura confortável'],
+  ['confortoAguda','Nota aguda · tessitura confortável']
+];
+let draft = null;
+let bootstrapped = false;
+
 function setupControls() {
   for (const key of VOICE_TYPES) {
-    $('field-type').add(new Option(key, key));
-    $('singer-filter').add(new Option(key, key));
-    $('tone-group').add(new Option(key, key));
+    $('singer-filter').add(new Option(key,key));
+    $('tone-group').add(new Option(key,key));
   }
-  KEY_LABELS.forEach((key, n) => $('song-key').add(new Option(key, String(n))));
-  addNoteOptions($('melody-low'), true, 36, 96);
-  addNoteOptions($('melody-high'), true, 36, 96);
-  ['field-low','field-high','field-comfort-low','field-comfort-high'].forEach(id => addNoteOptions($(id)));
+  const attachPicker = (id, settings = {}) => {
+    const field = $(id);
+    const parent = $(id + '-picker');
+    const picker = createNotePicker({
+      ...settings,
+      ariaLabel: id === 'melody-low' ? 'Nota grave da melodia' :
+        id === 'melody-high' ? 'Nota aguda da melodia' : 'Tom original da música',
+      onChange(value) {
+        field.value = value === null ? '' : String(value);
+        $('calculation-output').hidden = true;
+      }
+    });
+    parent.append(picker.element);
+  };
+  attachPicker('melody-low',{min:36,max:96});
+  attachPicker('melody-high',{min:36,max:96});
+  attachPicker('song-key',{octave:false});
   ['singer-search','singer-filter','show-inactive'].forEach(id =>
     $(id).addEventListener(id === 'singer-search' ? 'input' : 'change', renderDirectory));
   $('add-singer').addEventListener('click', () => openEditor());
-  $('close-singer').addEventListener('click', closeEditor);
-  $('cancel-singer').addEventListener('click', closeEditor);
-  $('singer-dialog').addEventListener('click', event => {
-    if (event.target === $('singer-dialog')) closeEditor();
-  });
-  $('singer-form').addEventListener('submit', saveSinger);
   $('tone-form').addEventListener('submit', evaluate);
-  $('import-scale').addEventListener('click', importScale);
+  $('import-scale').addEventListener('click', () => importScale(false));
   $('demo-button').addEventListener('click', enableLocalDemo);
   lockActions(mode === 'none');
   renderDirectory();
 }
-function enableLocalDemo() {
+
+async function enableLocalDemo() {
   if (!authorized) return;
   stopSingers?.(); stopSingers = null;
   mode = 'local';
@@ -179,200 +198,295 @@ function enableLocalDemo() {
     singers = Array.isArray(raw) ? raw.filter(x => x && typeof x.nome === 'string') : [];
   } catch (_) { singers = []; }
   lockActions(false);
-  cloudWarning('Modo de teste local: os registros ficam apenas neste navegador e NÃO serão sincronizados ao Firebase.', false);
+  cloudWarning('Modo de teste local: registros somente neste navegador, sem sincronização com o Firebase.', false);
   message('Modo de teste local ativado.');
   renderDirectory();
+  if (!singers.length) await importScale(true);
 }
 function persistLocal() {
   try { localStorage.setItem(LOCAL_KEY, JSON.stringify(singers)); }
-  catch (_) { message('O navegador não permitiu salvar os dados locais.'); }
+  catch (_) { message('Não foi possível salvar neste navegador.'); }
 }
-function renderDirectory() {
-  $('metric-total').textContent = singers.filter(p => p.ativo !== false).length;
-  $('metric-measured').textContent = singers.filter(p => p.ativo !== false && hasRange(p)).length;
-  $('metric-types').textContent = new Set(singers.filter(p => p.ativo !== false).map(p => p.classificacao)).size;
-  const term = normalizePerson($('singer-search').value);
-  const type = $('singer-filter').value;
-  const showInactive = $('show-inactive').checked;
-  const filtered = singers.filter(p =>
-    (showInactive || p.ativo !== false) &&
-    (!term || normalizePerson(p.nome).includes(term)) &&
-    (!type || p.classificacao === type));
-  $('directory-count').textContent = filtered.length + (filtered.length === 1 ? ' registro' : ' registros');
-  const root = $('singers-list');
+function openEditor(person = null) {
+  if (!authorized || mode === 'none') return;
+  editId = person?.id || 'new';
+  draft = {
+    nome: person?.nome || '',
+    classificacao: person?.classificacao || 'Soprano',
+    grave: Number.isInteger(person?.grave) ? person.grave : null,
+    aguda: Number.isInteger(person?.aguda) ? person.aguda : null,
+    confortoGrave: Number.isInteger(person?.confortoGrave) ? person.confortoGrave : null,
+    confortoAguda: Number.isInteger(person?.confortoAguda) ? person.confortoAguda : null,
+    ativo: person?.ativo !== false,
+    observacoes: person?.observacoes || ''
+  };
+  if (editId === 'new') {
+    $('singer-search').value = '';
+    $('singer-filter').value = '';
+  }
+  renderDirectory();
+  const open = document.querySelector('.vocal-inline-form');
+  open?.scrollIntoView({behavior:'smooth',block:'nearest'});
+  open?.querySelector('input[name="nome"]')?.focus({preventScroll:true});
+}
+function closeEditor() {
+  editId = null;
+  draft = null;
+  renderDirectory();
+}
+
+function inlineEditor(person = null) {
+  const box = dom('div','vocal-inline-box');
+  const form = dom('form','vocal-inline-form');
+  form.noValidate = true;
+  const head = dom('div','inline-heading');
+  const heading = dom('div');
+  heading.append(dom('strong','',person ? 'Editar notas e dados de ' + person.nome : 'Adicionar cantor'));
+  heading.append(dom('small','', 'Selecione a oitava e clique na nota: o botão selecionado ficará aceso.'));
+  head.append(heading);
+  const cancelTop = dom('button','inline-cancel-top','✕');
+  cancelTop.type='button';cancelTop.title='Fechar edição';cancelTop.setAttribute('aria-label','Fechar edição');
+  cancelTop.addEventListener('click',closeEditor);
+  head.append(cancelTop);
+  form.append(head);
+
+  const basic = dom('div','inline-basics');
+  const nameLabel=dom('label','','Nome do cantor');
+  const name=dom('input');name.type='text';name.name='nome';name.maxLength=100;
+  name.required=true;name.value=draft.nome;
+  name.addEventListener('input',()=>{draft.nome=name.value;});
+  nameLabel.append(name);
+  const typeLabel=dom('label','','Classificação vocal');
+  const type=dom('select');
+  for(const v of VOICE_TYPES)type.add(new Option(v,v));
+  type.value=draft.classificacao;
+  type.addEventListener('change',()=>{draft.classificacao=type.value;});
+  typeLabel.append(type);
+  const activeLabel=dom('label','inline-active');
+  const active=dom('input');active.type='checkbox';active.checked=draft.ativo;
+  active.addEventListener('change',()=>{draft.ativo=active.checked;});
+  activeLabel.append(active,dom('span','','Cantor ativo'));
+  basic.append(nameLabel,typeLabel,activeLabel);
+  form.append(basic);
+
+  const rangeGrid=dom('div','inline-note-grid');
+  for(const [field,label] of NOTE_FIELDS){
+    const panel=dom('div','inline-note-field');
+    panel.append(dom('div','note-field-title',label));
+    const picker=createNotePicker({
+      value:draft[field],min:24,max:96,ariaLabel:label+' de '+(person?.nome||'novo cantor'),
+      onChange(value){draft[field]=value;}
+    });
+    panel.append(picker.element);
+    rangeGrid.append(panel);
+  }
+  form.append(rangeGrid);
+  const noteLabel=dom('label','inline-notes','Observações (opcional)');
+  const notes=dom('textarea');notes.rows=2;notes.maxLength=600;notes.value=draft.observacoes;
+  notes.placeholder='Data da avaliação, notas menos estáveis...';
+  notes.addEventListener('input',()=>{draft.observacoes=notes.value;});
+  noteLabel.append(notes);form.append(noteLabel);
+
+  const helper=dom('p','field-hint','Os limites confortáveis devem estar dentro do alcance máximo. Deixe sem nota enquanto não houver avaliação.');
+  const error=dom('p','form-error');
+  error.setAttribute('role','alert');
+  const actions=dom('div','inline-save-actions');
+  const cancel=dom('button','button subtle','Cancelar');
+  cancel.type='button';cancel.addEventListener('click',closeEditor);
+  const save=dom('button','button primary','Salvar alterações');
+  save.type='submit';save.prepend(dom('i','ph ph-check-circle'));
+  actions.append(cancel,save);
+  form.append(helper,error,actions);
+  form.addEventListener('submit',e=>saveSinger(e,error,save));
+  box.append(form);
+  return box;
+}
+
+function noteCell(person,field){
+  const td=dom('td','note-summary-cell');
+  const num=person[field];
+  const btn=dom('button','inline-note-button'+(Number.isInteger(num)?' is-set':''),Number.isInteger(num)?midiLabel(num):'+');
+  btn.type='button';
+  btn.setAttribute('aria-label','Editar '+field+' de '+person.nome+(Number.isInteger(num)?' ('+midiLabel(num)+')':''));
+  btn.title='Clique para selecionar uma nota na própria lista';
+  btn.addEventListener('click',()=>openEditor(person));
+  td.append(btn);
+  return td;
+}
+
+function renderDirectory(){
+  $('metric-total').textContent=singers.filter(p=>p.ativo!==false).length;
+  $('metric-measured').textContent=singers.filter(p=>p.ativo!==false&&hasRange(p)).length;
+  $('metric-types').textContent=new Set(singers.filter(p=>p.ativo!==false).map(p=>p.classificacao)).size;
+  const search=normalizePerson($('singer-search').value);
+  const filter=$('singer-filter').value;
+  const visible=singers.filter(p=>
+    ($('show-inactive').checked||p.ativo!==false) &&
+    (!search||normalizePerson(p.nome).includes(search)) &&
+    (!filter||p.classificacao===filter));
+  $('directory-count').textContent=visible.length+(visible.length===1?' registro':' registros');
+  const newArea=$('singer-new-entry');
+  newArea.replaceChildren();
+  newArea.hidden=editId!=='new'||!draft;
+  if(!newArea.hidden)newArea.append(inlineEditor());
+  const root=$('singers-list');
   root.replaceChildren();
-  if (!filtered.length) {
-    const empty = dom('div', 'empty');
-    const icon = dom('i', 'ph ph-users');
-    empty.append(icon, dom('strong', '', singers.length ? 'Nenhum cantor encontrado.' : 'Nenhum cantor cadastrado ainda.'));
-    empty.append(dom('p', '', singers.length
-      ? 'Ajuste os filtros para visualizar os demais cantores.'
-      : 'Use “Novo cantor” ou importe os nomes da Escala Geral.'));
+  if(!visible.length){
+    const empty=dom('div','empty');
+    empty.append(dom('i','ph ph-users'),dom('strong','',singers.length?'Nenhum cantor encontrado.':'Nenhum cantor cadastrado.'));
+    empty.append(dom('p','','Os cantores da Escala Geral são adicionados automaticamente quando a nuvem está disponível.'));
     root.append(empty);
     return;
   }
-  for (const typeName of VOICE_TYPES) {
-    const people = filtered.filter(p => p.classificacao === typeName)
-      .sort((a,b) => String(a.nome).localeCompare(String(b.nome), 'pt-BR'));
-    if (!people.length) continue;
-    const group = dom('section', 'singer-group');
-    const title = dom('div', 'singer-group-title');
-    title.append(dom('h3','',typeName), dom('span','group-count',String(people.length)));
-    const wrapper = dom('div', 'table-scroll');
-    const table = dom('table', 'singer-table');
-    const thead = dom('thead'), headRow = dom('tr');
-    ['Cantor','Alcance máximo','Tessitura confortável','Situação','Ações'].forEach(label => headRow.append(dom('th','',label)));
-    thead.append(headRow);
-    const tbody = dom('tbody');
-    for (const person of people) {
-      const tr = dom('tr');
-      const nameCell = dom('td');
-      nameCell.append(dom('span','singer-name',person.nome));
-      if (person.observacoes) nameCell.append(dom('small','',person.observacoes.slice(0,80)));
-      const maximum = dom('td','range-cell',hasRange(person) ? midiLabel(person.grave) + ' — ' + midiLabel(person.aguda) : 'Não medido');
-      const comfortValid = Number.isInteger(person.confortoGrave) && Number.isInteger(person.confortoAguda);
-      const comfort = dom('td','range-cell',comfortValid
-        ? midiLabel(person.confortoGrave) + ' — ' + midiLabel(person.confortoAguda)
-        : 'Não informado');
-      const status = dom('td');
-      const pill = dom('span', 'pill' + (person.ativo === false || !hasRange(person) ? ' warning' : ''),
-        person.ativo === false ? 'Inativo' : hasRange(person) ? 'Avaliado' : 'Pendente');
-      status.append(pill);
-      if (hasRange(person) && !comfortValid) status.append(dom('small','','Conforto não medido'));
-      const actions = dom('td');
-      const actionRow = dom('div', 'inline-actions');
-      const edit = dom('button','icon-action');
-      edit.type='button'; edit.title='Editar cantor'; edit.setAttribute('aria-label','Editar ' + person.nome);
-      edit.append(dom('i','ph ph-pencil-simple')); edit.addEventListener('click', () => openEditor(person));
-      const remove = dom('button','icon-action delete');
-      remove.type='button'; remove.title='Excluir cantor'; remove.setAttribute('aria-label','Excluir ' + person.nome);
-      remove.append(dom('i','ph ph-trash')); remove.addEventListener('click', () => removeSinger(person));
-      actionRow.append(edit,remove); actions.append(actionRow);
-      tr.append(nameCell,maximum,comfort,status,actions); tbody.append(tr);
+  for(const groupName of VOICE_TYPES){
+    const people=visible.filter(p=>p.classificacao===groupName).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+    if(!people.length)continue;
+    const section=dom('section','singer-group');
+    const heading=dom('div','singer-group-title');
+    heading.append(dom('h3','',groupName),dom('span','group-count',String(people.length)));
+    const scroll=dom('div','table-scroll');
+    const table=dom('table','singer-table');
+    const thead=dom('thead'),heads=dom('tr');
+    ['Cantor','Grave máx.','Agudo máx.','Grave confortável','Agudo confortável','Situação','Ações']
+      .forEach(str=>heads.append(dom('th','',str)));
+    thead.append(heads);
+    const tbody=dom('tbody');
+    for(const p of people){
+      const tr=dom('tr',editId===p.id?'is-editing':'');
+      const name=dom('td');
+      name.append(dom('strong','singer-name',p.nome));
+      if(p.observacoes)name.append(dom('small','',p.observacoes.slice(0,80)));
+      tr.append(name);
+      for(const [field] of NOTE_FIELDS)tr.append(noteCell(p,field));
+      const state=dom('td');
+      const status=p.ativo===false?'Inativo':hasRange(p)?'Avaliado':'Pendente';
+      state.append(dom('span','pill'+(status==='Avaliado'?'':' warning'),status));
+      const comfort=Number.isInteger(p.confortoGrave)&&Number.isInteger(p.confortoAguda);
+      if(hasRange(p)&&!comfort)state.append(dom('small','','Conforto não medido'));
+      tr.append(state);
+      const actions=dom('td'),buttons=dom('div','inline-actions');
+      const edit=dom('button','icon-action');
+      edit.type='button';edit.title='Editar nesta linha';edit.setAttribute('aria-label','Editar '+p.nome);
+      edit.append(dom('i','ph ph-pencil-simple'));edit.addEventListener('click',()=>openEditor(p));
+      const del=dom('button','icon-action delete');
+      del.type='button';del.title='Excluir cantor';del.setAttribute('aria-label','Excluir '+p.nome);
+      del.append(dom('i','ph ph-trash'));del.addEventListener('click',()=>removeSinger(p));
+      buttons.append(edit,del);actions.append(buttons);tr.append(actions);
+      tbody.append(tr);
+      if(editId===p.id&&draft){
+        const detail=dom('tr','expanded-singer-row');
+        const cell=dom('td');cell.colSpan=7;
+        cell.append(inlineEditor(p));
+        detail.append(cell);tbody.append(detail);
+      }
     }
-    table.append(thead,tbody); wrapper.append(table); group.append(title,wrapper); root.append(group);
+    table.append(thead,tbody);scroll.append(table);section.append(heading,scroll);root.append(section);
   }
 }
-function openEditor(person = null) {
-  if (mode === 'none') return;
-  editId = person?.id || null;
-  $('singer-form').reset();
-  $('singer-dialog-title').textContent = person ? 'Editar cantor' : 'Novo cantor';
-  $('field-name').value = person?.nome || '';
-  $('field-type').value = person?.classificacao || 'Soprano';
-  $('field-active').checked = person?.ativo !== false;
-  $('field-low').value = Number.isInteger(person?.grave) ? String(person.grave) : '';
-  $('field-high').value = Number.isInteger(person?.aguda) ? String(person.aguda) : '';
-  $('field-comfort-low').value = Number.isInteger(person?.confortoGrave) ? String(person.confortoGrave) : '';
-  $('field-comfort-high').value = Number.isInteger(person?.confortoAguda) ? String(person.confortoAguda) : '';
-  $('field-notes').value = person?.observacoes || '';
-  $('form-error').textContent = '';
-  $('singer-dialog').showModal();
-  $('field-name').focus();
-}
-function closeEditor() { $('singer-dialog').close(); }
-const selectedNote = id => $(id).value === '' ? null : Number($(id).value);
-async function saveSinger(event) {
+
+async function saveSinger(event,error,button){
   event.preventDefault();
-  if (!authorized || mode === 'none') return;
-  const nome = $('field-name').value.trim().replace(/\s+/g,' ');
-  const classificacao = $('field-type').value;
-  const grave = selectedNote('field-low');
-  const aguda = selectedNote('field-high');
-  const confortoGrave = selectedNote('field-comfort-low');
-  const confortoAguda = selectedNote('field-comfort-high');
-  const observacoes = $('field-notes').value.trim();
-  const erro = $('form-error');
-  erro.textContent = '';
-  if (!nome || nome.length > 100 || !VOICE_TYPES.includes(classificacao)) {
-    erro.textContent = 'Informe um nome e uma classificação vocal.'; return;
+  if(!authorized||mode==='none'||!draft)return;
+  error.textContent='';
+  const name=String(draft.nome).trim().replace(/\s+/g,' ');
+  const type=draft.classificacao;
+  const grave=draft.grave,aguda=draft.aguda;
+  const cLow=draft.confortoGrave,cHigh=draft.confortoAguda;
+  if(!name||name.length>100||!VOICE_TYPES.includes(type)){
+    error.textContent='Informe o nome e o naipe do cantor.';return;
   }
-  if (singers.some(p => p.id !== editId && normalizePerson(p.nome) === normalizePerson(nome))) {
-    erro.textContent = 'Este cantor já está cadastrado. Edite o registro existente.'; return;
+  if(singers.some(p=>p.id!==editId&&normalizePerson(p.nome)===normalizePerson(name))){
+    error.textContent='Esse cantor já existe. Abra o cadastro dele na lista.';return;
   }
-  if ((grave === null) !== (aguda === null) || (grave !== null && grave >= aguda)) {
-    erro.textContent = 'Informe as duas notas do alcance máximo, da mais grave à mais aguda.'; return;
+  if((grave===null)!==(aguda===null)||(grave!==null&&grave>=aguda)){
+    error.textContent='Preencha os dois extremos do alcance, do grave ao agudo.';return;
   }
-  if ((confortoGrave === null) !== (confortoAguda === null) ||
-      (confortoGrave !== null && (grave === null || confortoGrave < grave ||
-        confortoAguda > aguda || confortoGrave >= confortoAguda))) {
-    erro.textContent = 'A tessitura confortável deve ter duas notas dentro do alcance máximo.'; return;
+  if((cLow===null)!==(cHigh===null)||
+    (cLow!==null&&(grave===null||cLow<grave||cHigh>aguda||cLow>=cHigh))){
+    error.textContent='A tessitura confortável precisa ter dois extremos dentro do alcance máximo.';return;
   }
-  const data = { nome, classificacao, grave, aguda, confortoGrave, confortoAguda,
-    ativo: $('field-active').checked, observacoes, atualizadoPor: signedEmail };
-  const button = $('save-singer');
-  button.disabled = true;
-  try {
-    if (mode === 'cloud') {
-      const fields = { ...data, atualizadoEm: serverTimestamp() };
-      if (editId) await updateDoc(doc(db, COLLECTION, editId), fields);
-      else await addDoc(collection(db, COLLECTION), {
-        ...fields, criadoPor: signedEmail, criadoEm: serverTimestamp()
-      });
-    } else {
-      if (editId) singers = singers.map(p => p.id === editId ? { ...p, ...data } : p);
-      else singers.push({ id: 'local-' + Date.now() + '-' + Math.random().toString(36).slice(2,8), ...data });
-      persistLocal(); renderDirectory();
+  button.disabled=true;
+  const data={nome:name,classificacao:type,grave,aguda,confortoGrave:cLow,confortoAguda:cHigh,
+    ativo:draft.ativo,observacoes:draft.observacoes.trim(),atualizadoPor:signedEmail};
+  try{
+    if(mode==='cloud'){
+      const fields={...data,atualizadoEm:serverTimestamp()};
+      if(editId!=='new')await updateDoc(doc(db,COLLECTION,editId),fields);
+      else await addDoc(collection(db,COLLECTION),{...fields,criadoPor:signedEmail,criadoEm:serverTimestamp()});
+    }else{
+      if(editId!=='new')singers=singers.map(p=>p.id===editId?{...p,...data}:p);
+      else singers.push({id:'local-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),...data});
+      persistLocal();
     }
-    closeEditor();
-    message('Cadastro de ' + nome + ' salvo' + (mode === 'local' ? ' neste navegador.' : ' na nuvem.'));
-  } catch (error) {
-    erro.textContent = error.code === 'permission-denied'
-      ? 'Sem permissão para gravar. Publique as regras de acesso do Firestore.'
-      : 'Não foi possível salvar. Confira a conexão e tente novamente.';
-  } finally { button.disabled = false; }
+    editId=null;draft=null;renderDirectory();
+    message(name+' salvo '+(mode==='cloud'?'na nuvem.':'neste navegador (teste local).'));
+  }catch(e){
+    error.textContent=e.code==='permission-denied'?
+      'Sem permissão de gravação. Verifique as regras do Firebase.':
+      'Erro ao salvar. Confira sua conexão.';
+  }finally{button.disabled=false;}
 }
-async function removeSinger(person) {
-  if (!authorized || mode === 'none') return;
-  if (!window.confirm('Excluir o cadastro vocal de ' + person.nome + '?')) return;
-  try {
-    if (mode === 'cloud') await deleteDoc(doc(db, COLLECTION, person.id));
-    else {
-      singers = singers.filter(p => p.id !== person.id);
-      persistLocal(); renderDirectory();
-    }
-    message(person.nome + ' excluído' + (mode === 'local' ? ' do teste local.' : ' da nuvem.'));
-  } catch (_) { message('Não foi possível excluir. Verifique as permissões e a conexão.'); }
+
+async function removeSinger(p){
+  if(!authorized||mode==='none')return;
+  if(!window.confirm('Excluir o cadastro de '+p.nome+'?'))return;
+  try{
+    if(mode==='cloud')await deleteDoc(doc(db,COLLECTION,p.id));
+    else{singers=singers.filter(x=>x.id!==p.id);persistLocal();renderDirectory();}
+    if(editId===p.id){editId=null;draft=null;}
+    message(p.nome+' excluído.');
+  }catch(_){message('Não foi possível excluir.');}
 }
-async function importScale() {
-  if (!authorized || mode === 'none') return;
-  const button = $('import-scale');
-  button.disabled = true;
-  message('Lendo integrantes atuais da Escala Geral...');
-  try {
-    const snapshot = await getDoc(doc(db, 'app_ipcvt', 'escala_geral_dados'));
-    const members = snapshot.data()?.members;
-    if (!members || typeof members !== 'object') throw new Error('O cadastro da Escala Geral não está disponível.');
-    const incoming = [];
-    const names = new Set(singers.map(p => normalizePerson(p.nome)));
-    for (const type of ['Soprano','Contralto','Tenor']) {
-      for (const original of Array.isArray(members[type]) ? members[type] : []) {
-        const nome = String(original || '').trim();
-        const normalized = normalizePerson(nome);
-        if (!nome || nome.length > 100 || names.has(normalized)) continue;
+
+const scaleSingerId=name=>'escala-'+normalizePerson(name).replace(/[^a-z0-9]+/g,'-').slice(0,95);
+
+async function importScale(silent=false){
+  if(!authorized||mode==='none')return;
+  const button=$('import-scale');
+  button.disabled=true;
+  if(!silent)message('Consultando a Escala Geral...');
+  try{
+    const scale=await getDoc(doc(db,'app_ipcvt','escala_geral_dados'));
+    const members=scale.data()?.members;
+    if(!members||typeof members!=='object')throw new Error('A Escala Geral ainda não possui cadastro acessível.');
+    const names=new Set(singers.map(p=>normalizePerson(p.nome)));
+    const pending=[];
+    for(const type of ['Soprano','Contralto','Tenor']){
+      for(const nameValue of Array.isArray(members[type])?members[type]:[]){
+        const nome=String(nameValue||'').trim().replace(/\s+/g,' ');
+        const normalized=normalizePerson(nome);
+        if(!nome||nome.length>100||names.has(normalized))continue;
         names.add(normalized);
-        incoming.push({ nome, classificacao:type, grave:null, aguda:null,
-          confortoGrave:null, confortoAguda:null, ativo:true, observacoes:'',
-          atualizadoPor:signedEmail });
+        pending.push({nome,classificacao:type,grave:null,aguda:null,
+          confortoGrave:null,confortoAguda:null,ativo:true,observacoes:'',
+          atualizadoPor:signedEmail});
       }
     }
-    if (!incoming.length) { message('Nenhum novo cantor encontrado na Escala Geral.'); return; }
-    if (!window.confirm('Importar ' + incoming.length + ' cantor(es) da Escala Geral? As notas ficarão em branco até serem medidas.')) return;
-    if (mode === 'cloud') {
-      const batch = writeBatch(db);
-      for (const entry of incoming) {
-        batch.set(doc(collection(db, COLLECTION)), { ...entry, criadoPor:signedEmail,
-          criadoEm:serverTimestamp(), atualizadoEm:serverTimestamp() });
-      }
-      await batch.commit();
-    } else {
-      incoming.forEach((entry,n) => singers.push({ ...entry,id:'local-import-'+Date.now()+'-'+n }));
+    if(!pending.length){
+      if(!silent)message('Todos os cantores da Escala Geral já estão cadastrados.');
+      return;
+    }
+    if(mode==='cloud'){
+      await runTransaction(db,async tx=>{
+        const refs=pending.map(person=>doc(db,COLLECTION,scaleSingerId(person.nome)));
+        const docs=await Promise.all(refs.map(ref=>tx.get(ref)));
+        for(let i=0;i<refs.length;i++){
+          if(docs[i].exists())continue;
+          tx.set(refs[i],{...pending[i],criadoPor:signedEmail,
+            criadoEm:serverTimestamp(),atualizadoEm:serverTimestamp()});
+        }
+      });
+    }else{
+      pending.forEach((p,i)=>singers.push({id:'local-scale-'+Date.now()+'-'+i,...p}));
       persistLocal();renderDirectory();
     }
-    message(incoming.length + ' cantor(es) importados com sucesso. Preencha agora os alcances e tessituras.');
-  } catch (error) { message(error.message || 'Erro ao importar os cantores da Escala Geral.'); }
-  finally { button.disabled = false; }
+    message(pending.length+' cantor(es) da Escala Geral adicionados. As notas permanecem em branco para avaliação.');
+  }catch(e){
+    if(!silent)message(e.message||'Falha ao consultar a Escala Geral.');
+    else message('Não foi possível sincronizar os nomes da Escala Geral: '+(e.message||'verifique o acesso.'));
+  }finally{button.disabled=mode==='none';}
 }
+
 function evaluate(event) {
   event.preventDefault();
   if (!authorized || mode === 'none') return;
