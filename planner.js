@@ -3200,8 +3200,13 @@ $('plan-form').addEventListener('submit', async event => {
     const ownerName=(old?.ownerEmail||'').toLowerCase()===ownerEmail&&old?.ownerName
       ?old.ownerName
       :String(ownerCandidates.get(ownerEmail)||'').slice(0,120)
+    // Planos legados usam createdBy como responsável até serem transferidos.
+    // Não grava campos novos quando não houve transferência, mantendo o
+    // salvamento antigo compatível com regras ainda não atualizadas.
+    const originalOwner=String(old?.createdBy||session.email||'').toLowerCase()
+    const ownerChanged=Boolean(old?.ownerEmail)||ownerEmail!==originalOwner
     const plan = { ...(old || {}), id: old?.id || newId(), name: value('plan-name'),
-      ownerEmail,ownerName,
+      ...(ownerChanged?{ownerEmail,ownerName}:{}),
       // A configuração recorrente ocupa um registro técnico compatível
       // com as regras atuais do Firestore.
       kind:wantsRecurrence?'continuous':value('plan-kind'),
