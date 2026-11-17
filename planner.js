@@ -1024,9 +1024,13 @@ async function refreshPublicCalendar() {
     // A primeira migração não cria alertas artificiais sobre as fontes
     // adicionais. Depois, alterações em qualquer fonte são notificadas.
     const sourceById = new Map(snapshot.events.map(event => [event.id, event.sourceCalendarId]))
-    const relevantChanges = previous?.mode === 'multi-v1'
-      ? changes
-      : changes.filter(change => change.type === 'removed' || sourceById.get(change.id) === calendarId)
+    const oldSourceById = new Map(publicEvents.map(event => [event.id, event.sourceCalendarId]))
+    const configuredIds = new Set(plannerPublicSources(config).map(source => source.calendarId))
+    const relevantChanges = changes.filter(change => {
+      const sourceId = sourceById.get(change.id) || oldSourceById.get(change.id)
+      if (sourceId && !configuredIds.has(sourceId)) return false
+      return previous?.mode === 'multi-v1' || change.type === 'removed' || sourceId === calendarId
+    })
     calendarUnread = [...(previous?.unread || []), ...relevantChanges.map(change => ({
       ...change, detectedAt: new Date().toISOString()
     }))].slice(-50)
