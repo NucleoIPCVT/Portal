@@ -54,3 +54,40 @@ export function calculateTones(people, lowest, highest, originalKey = null) {
   return { best: results[0], alternatives: results.slice(1, 4), all: results,
     incomplete: people.filter(p => p.ativo !== false && !hasRange(p)).length };
 }
+
+
+// Sugestão orientativa de naipe (não é diagnóstico vocal).
+// Perfis de referência aproximados para canto coral, em notas MIDI.
+// Tessituras se sobrepõem; timbre, passaggi e resistência são decisivos.
+export const VOCAL_REFERENCE = Object.freeze([
+  { type: 'Soprano', low: 60, high: 81, family: 'aguda' },
+  { type: 'Mezzo-soprano', low: 57, high: 77, family: 'aguda' },
+  { type: 'Contralto', low: 53, high: 72, family: 'aguda' },
+  { type: 'Tenor', low: 48, high: 69, family: 'grave' },
+  { type: 'Barítono', low: 43, high: 64, family: 'grave' },
+  { type: 'Baixo', low: 40, high: 60, family: 'grave' }
+]);
+export function suggestVoiceSection(person) {
+  const low = person?.confortoGrave, high = person?.confortoAguda;
+  if (!Number.isInteger(low) || !Number.isInteger(high) || low >= high) return null;
+  const current = VOCAL_REFERENCE.find(p => p.type === person.classificacao);
+  const candidates = VOCAL_REFERENCE.filter(p => !current || p.family === current.family)
+    .map(p => ({
+      type: p.type,
+      score: Math.abs(low - p.low) * .85 +
+        Math.abs(high - p.high) * .85 +
+        Math.abs((low + high) / 2 - (p.low + p.high) / 2) * .6
+    }))
+    .sort((a,b) => a.score - b.score);
+  const first = candidates[0], second = candidates[1];
+  if (!first) return null;
+  const gap = second ? second.score - first.score : 999;
+  return {
+    type: first.type,
+    alternate: second?.type || null,
+    lowConfidence: gap < 3.5,
+    basis: 'tessitura confortável',
+    // Diferença expressiva de centro ou limites reduz a confiabilidade.
+    outOfReference: first.score > 16
+  };
+}
