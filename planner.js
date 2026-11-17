@@ -2521,6 +2521,17 @@ function pmEasterDate(year) {
   const day=(h+l-7*m+114)%31+1
   return String(year)+'-'+String(month).padStart(2,'0')+'-'+String(day).padStart(2,'0')
 }
+// As artes de junho a dezembro só entram no banner após uma imagem válida ser publicada.
+// Assim não exibimos banner vazio enquanto a coleção ainda está em implantação.
+const pmWatercolorReady = new Set();
+for (let m = 6; m <= 12; m++) {
+  const image = new Image();
+  image.onload = () => {
+    pmWatercolorReady.add(m);
+    if (session.status === 'authorized' && currentView === 'home') render();
+  };
+  image.src = 'planner-month-art/planner-month-' + String(m).padStart(2, '0') + '.webp?v=20261117-hd';
+}
 function pmHomeSeason(date) {
   const month=selectedHomeImageMonth(Number(date.slice(5,7)),session.email)
   const themes={
@@ -2544,9 +2555,16 @@ function pmHomeSeason(date) {
     2:['Homem e Mulher Presbiterianos','Homens e mulheres unidos no cuidado com a igreja.','planner-month-02.webp'],
     3:['Protestantismo no Brasil','Uma história de fé, Palavra e compromisso.','planner-month-03.webp'],
     4:['Páscoa','Cristo ressuscitou. Nossa esperança se renova.','planner-month-04.webp'],
-    5:['Aniversário da IPCVT','Uma história de fé e comunhão em nossa igreja.','planner-month-05.avif']
+    5:['Aniversário da IPCVT','Uma história de fé e comunhão em nossa igreja.','planner-month-05.avif'],
+    6:['Comunhão e Palavra','Crescemos juntos no conhecimento da Palavra.','planner-month-06.webp'],
+    7:['Cuidado e gratidão','Servimos uns aos outros com amor e dedicação.','planner-month-07.webp'],
+    8:['Missões e Presbiterianismo','A fé reformada a serviço do Brasil e do mundo.','planner-month-08.webp'],
+    9:['Discipulado e ensino','A Palavra orienta nosso crescimento na fé.','planner-month-09.webp'],
+    10:['Reforma e Palavra','Sempre reformados pela Palavra de Deus.','planner-month-10.webp'],
+    11:['Ação de Graças','Gratidão pelas bênçãos e pelo cuidado de Deus.','planner-month-11.webp'],
+    12:['Natal','Celebramos o nascimento do nosso Salvador.','planner-month-12.webp']
   }
-  if(watercolors[month]){
+  if(watercolors[month] && (month<=5 || pmWatercolorReady.has(month))){
     const [label,message,picture]=watercolors[month]
     // A Páscoa em ano diferente continua representada no mês escolhido
     // até que sejam ativadas as artes especiais de datas móveis.
