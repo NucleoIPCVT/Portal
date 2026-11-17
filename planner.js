@@ -34,7 +34,7 @@ import { setupPlannerWizards } from './planner-form-wizard.js?v=20261116-dates-t
 import { publicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl, summarizeCalendarEvents, diffCalendarEvents } from './planner-public.js?v=20261116-multi-source-ids-v1'
 import { plannerPublicSources, readPlannerPublicSources } from './planner-multi-public.js?v=20261117-v3'
 import { setupPlannerCalendarSources } from './planner-calendar-sources-ui.js?v=20261117-v2'
-import { selectedHomeImageMonth, setupHomeImageSettings } from './planner-home-image-settings.js?v=20261117-v1'
+import { selectedHomeImageMonth, setupHomeImageSettings } from './planner-home-image-settings.js?v=20261117-jan-mar-hd-v2'
 
 const $ = id => document.getElementById(id)
 const formWizards = setupPlannerWizards()
@@ -2551,9 +2551,9 @@ function pmHomeSeason(date) {
   // Primeira série aprovada de aquarelas: uma imagem por mês,
   // sem alternar assuntos dentro do mesmo banner.
   const watercolors={
-    1:['Oração','Um novo ano de fé, dedicação e serviço.','planner-month-01.webp'],
-    2:['Homem e Mulher Presbiterianos','Homens e mulheres unidos no cuidado com a igreja.','planner-month-02.webp'],
-    3:['Protestantismo no Brasil','Uma história de fé, Palavra e compromisso.','planner-month-03.webp'],
+    1:['Semana de Oração','Em família, começamos o ano em oração e gratidão.','planner-month-01-hd.avif'],
+    2:['Homem e Mulher Presbiterianos','Homens e mulheres unidos no cuidado com a igreja.','planner-month-02-hd.avif'],
+    3:['Protestantismo no Brasil','Uma história de fé, Palavra e compromisso.','planner-month-03-hd.avif'],
     4:['Páscoa','Cristo ressuscitou. Nossa esperança se renova.','planner-month-04.webp'],
     5:['Aniversário da IPCVT','Uma história de fé e comunhão em nossa igreja.','planner-month-05.avif'],
     6:['Comunhão e Palavra','Crescemos juntos no conhecimento da Palavra.','planner-month-06.webp'],
