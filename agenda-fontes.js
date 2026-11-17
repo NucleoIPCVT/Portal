@@ -22,9 +22,10 @@ function getSaved() {
       enabled:typeof data.enabled==='object' && data.enabled ? data.enabled : {},
       colors:typeof data.colors==='object' && data.colors ? data.colors : {},
       extras:Array.isArray(data.extras)?data.extras:[],
+      removedLocalIds:Array.isArray(data.removedLocalIds)?data.removedLocalIds:[],
       merge: data.merge!==false
     };
-  } catch { return {enabled:{},colors:{},extras:[],merge:true}; }
+  } catch { return {enabled:{},colors:{},extras:[],removedLocalIds:[],merge:true}; }
 }
 function element(tag, className='', content='') {
   const item=document.createElement(tag);
@@ -70,7 +71,7 @@ export function createAgendaSources({getPrimary,onChange}) {
     const primary=getPrimary()||{};
     const primarySource={...MAIN,calendarId:primary.calendarId||publicCalendar.id,
       sourceUrl:primary.sourceUrl||publicCalendar.sourceUrl};
-    const values=[primarySource,...[BRAZIL,IPB].filter(source=>!removedFixed.includes(source.id))];
+    const values=[primarySource,...[BRAZIL,IPB].filter(source=>!removedFixed.includes(source.id)&&!state.removedLocalIds.includes(source.id))];
     const used=new Set(values.map(source=>source.calendarId).filter(Boolean));
     for(const raw of [...shared,...state.extras]){
       const source=sanitizeExtra(raw);
@@ -125,19 +126,26 @@ export function createAgendaSources({getPrimary,onChange}) {
       options.append(link);
       // A fonte principal é protegida. Um administrador pode remover as fontes
       // padrão adicionais ou as fontes compartilhadas, refletindo no Planner.
-      if(!source.fixed || (isAdmin && source.id!=='ipcvt')){
-        const remove=element('button','agenda-source-remove','Remover');
-        remove.type='button';remove.title='Remover esta fonte';
-        remove.disabled=saving || (shared.some(item=>item.calendarId===source.calendarId)&&!isAdmin);
+      if(source.id!=='ipcvt'){
+        const isSharedSource=shared.some(item=>item.calendarId===source.calendarId);
+        const remove=element('button','agenda-source-remove','');
+        remove.type='button';
+        remove.innerHTML='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
+        remove.title='Remover fonte: '+source.name;
+        remove.setAttribute('aria-label','Remover fonte '+source.name);
+        remove.disabled=saving||(!isAdmin&&isSharedSource&&!state.extras.some(item=>item.calendarId===source.calendarId));
         remove.addEventListener('click',async()=>{
           if(saving)return;
           const isShared=shared.some(item=>item.calendarId===source.calendarId);
-          if(!window.confirm('Remover a fonte “'+source.name+'” '+(source.fixed||isShared?'da Agenda Anual e do Planner para todos?':'deste navegador?')))return;
+          const globalRemoval=isAdmin&&(source.fixed||isShared);
+          if(!window.confirm('Remover a fonte “'+source.name+'” '+(globalRemoval?'da Agenda Anual e do Planner para todos?':'deste navegador?')))return;
           try {
             saving=true;render();
-            if(source.fixed){
-              if(!isAdmin || !persistShared)throw new Error('Somente um administrador pode remover fontes oficiais.');
+            if(source.fixed&&isAdmin){
+              if(!persistShared)throw new Error('Acesso administrativo não confirmado.');
               await persistShared({removedSourceIds:[...new Set([...removedFixed,source.id])]});
+            }else if(source.fixed){
+              state.removedLocalIds=[...new Set([...state.removedLocalIds,source.id])];
             }else if(isShared){
               if(!isAdmin || !persistShared)throw new Error('Somente um administrador pode remover fontes compartilhadas.');
               await persistShared({additionalSources:shared.filter(item=>item.calendarId!==source.calendarId)});
@@ -154,7 +162,7 @@ export function createAgendaSources({getPrimary,onChange}) {
     }
     // Fontes padrão são removidas por configuração, não apagadas. Assim
     // podem ser restauradas sem recorrer a um novo calendário Google.
-    if(isAdmin)for(const source of [BRAZIL,IPB].filter(item=>removedFixed.includes(item.id))){
+    for(const source of [BRAZIL,IPB].filter(item=>(isAdmin&&removedFixed.includes(item.id))||state.removedLocalIds.includes(item.id))){
       const row=element('div','agenda-source-row is-disabled');
       const copy=element('span','agenda-source-copy');
       copy.append(element('span','agenda-source-title',source.name),
@@ -163,10 +171,15 @@ export function createAgendaSources({getPrimary,onChange}) {
       restore.type='button';
       restore.disabled=saving;
       restore.addEventListener('click',async()=>{
-        if(saving||!persistShared)return;
+        if(saving)return;
         saving=true;render();
         try{
-          await persistShared({removedSourceIds:removedFixed.filter(id=>id!==source.id)});
+          if(state.removedLocalIds.includes(source.id)){
+            state.removedLocalIds=state.removedLocalIds.filter(id=>id!==source.id);
+            saveLocal();onChange();
+          }else if(isAdmin&&persistShared){
+            await persistShared({removedSourceIds:removedFixed.filter(id=>id!==source.id)});
+          }
           show('Fonte restaurada.');
         }catch(error){show(error.message||'Falha ao restaurar a fonte.',true);}
         finally{saving=false;render();}
