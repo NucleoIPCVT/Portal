@@ -1,0 +1,83 @@
+/* Cabeçalhos consistentes em todas as ferramentas IPCVT — 17/11/2026 */
+.ipcvt-bar-actions{display:flex!important;align-items:center;justify-content:flex-end;gap:8px;flex:0 0 auto;margin-left:auto;position:relative;z-index:130}
+.ipcvt-bar-actions>*{flex:0 0 auto}
+.ipcvt-bar-actions .ipcvt-theme-button,
+.ipcvt-bar-actions .ipcvt-overflow>summary,
+#planner-app .pm-toolbar>.ipcvt-theme-button,
+#planner-app .ipcvt-planner-more>summary{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important;
+  padding:0!important;margin:0!important;gap:0!important;border-radius:10px!important;
+  border:1px solid rgba(121,145,127,.35)!important;background:rgba(255,255,255,.14)!important;
+  color:inherit!important;box-shadow:none!important;cursor:pointer;font-weight:700;
+  line-height:1!important;text-decoration:none!important;
+}
+.ipcvt-bar-actions .ipcvt-theme-button:hover,
+.ipcvt-bar-actions .ipcvt-overflow>summary:hover,
+#planner-app .pm-toolbar>.ipcvt-theme-button:hover,
+#planner-app .ipcvt-planner-more>summary:hover{background:rgba(119,159,133,.17)!important}
+.ipcvt-bar-actions .ipcvt-theme-button:focus-visible,
+.ipcvt-bar-actions .ipcvt-overflow>summary:focus-visible,
+#planner-app .ipcvt-planner-more>summary:focus-visible{outline:2px solid #61957a!important;outline-offset:2px}
+.ipcvt-bar-actions .ipcvt-theme-button :is(#portal-theme-label,#commission-theme-label,#agenda-theme-label,#scale-theme-label,#vaquinhas-theme-label,#gate-theme-text,.theme-label){display:none!important}
+.ipcvt-bar-actions .ipcvt-theme-button i{font-size:21px!important}
+.ipcvt-bar-actions .ipcvt-theme-button .ipcvt-fallback-symbol{font-size:24px;line-height:1}
+.ipcvt-overflow{position:relative!important;display:block!important;overflow:visible!important}
+.ipcvt-overflow>summary{list-style:none;font-family:Inter,system-ui,sans-serif!important;letter-spacing:1px!important;font-size:16px!important;user-select:none}
+.ipcvt-overflow>summary::marker{content:''}
+.ipcvt-overflow>summary::-webkit-details-marker{display:none}
+.ipcvt-overflow-panel{position:absolute;right:0;top:calc(100% + 9px);z-index:9999!important;
+ display:flex;flex-direction:column;gap:2px;min-width:220px;max-width:min(92vw,340px);
+ padding:8px;border:1px solid #c7d5c7;border-radius:12px;
+ background:#fffdf7;color:#254236;box-shadow:0 14px 34px rgba(19,37,30,.2);
+ font:500 13px/1.5 Inter,Arial,sans-serif}
+.ipcvt-overflow:not([open]) .ipcvt-overflow-panel{display:none!important}
+.ipcvt-overflow-panel .ipcvt-overflow-item,
+#planner-app .pm-more-menu .ipcvt-overflow-item{display:flex;align-items:center;justify-content:flex-start;
+ width:100%;min-height:38px;padding:9px 12px!important;margin:0!important;border:0!important;
+ border-radius:8px!important;color:inherit!important;text-decoration:none!important;
+ font:500 13px/1.4 Inter,Arial,sans-serif!important;white-space:normal!important;
+ background:transparent!important;text-align:left!important;box-shadow:none!important;cursor:pointer}
+.ipcvt-overflow-panel .ipcvt-overflow-item:hover,
+#planner-app .pm-more-menu .ipcvt-overflow-item:hover{background:#e8f0e7!important;color:#1b5039!important}
+.ipcvt-overflow-panel .ipcvt-overflow-item[hidden],.ipcvt-overflow-panel [hidden]{display:none!important}
+.ipcvt-menu-divider{height:1px;background:#d9e3d6;margin:5px 8px}
+html[data-portal-theme="dark"] .ipcvt-overflow-panel,
+html[data-theme="dark"] .ipcvt-overflow-panel{background:#2d4038;color:#edf6ee;border-color:#647a69;box-shadow:0 14px 34px rgba(0,0,0,.32)}
+html[data-portal-theme="dark"] .ipcvt-overflow-panel .ipcvt-overflow-item:hover,
+html[data-theme="dark"] .ipcvt-overflow-panel .ipcvt-overflow-item:hover{background:#405b49!important;color:#fff!important}
+.ipcvt-retired-nav-toggle{display:none!important}
+/* Barra de ferramentas do Planner: ||| sempre à direita, lua/sol à esquerda. */
+#planner-app .pm-toolbar>.ipcvt-theme-button{order:90;flex:0 0 40px!important}
+#planner-app .pm-toolbar>.ipcvt-planner-more{order:91;margin:0!important}
+#planner-app .ipcvt-planner-more>summary{font-size:16px!important;letter-spacing:1px!important;font-family:Inter,Arial,sans-serif!important}
+#planner-app .ipcvt-planner-more #pm-avatar{display:none!important}
+#planner-app .pm-more-menu .ipcvt-hidden-menu-command{display:none!important}
+#planner-app .pm-more-menu .ipcvt-overflow-item{color:inherit!important}
+body.pm-active #planner-app .pm-toolbar>.ipcvt-theme-button{display:inline-flex!important}
+body.pm-active #planner-app .pm-toolbar>.ipcvt-theme-button .theme-label{display:none!important}
+body.pm-active #planner-app .pm-toolbar>.ipcvt-theme-button .theme-icon{display:inline-flex!important}
+body.pm-active #planner-app .pm-toolbar>.ipcvt-theme-button .theme-icon svg{width:20px;height:20px}
+#planner-app .pm-toolbar>.ipcvt-theme-button .ipcvt-fallback-symbol{font-size:24px}
+.ipcvt-native-theme-hidden{position:absolute!important;opacity:0!important;pointer-events:none!important;width:1px!important;height:1px!important;overflow:hidden!important}
+/* React (Planejamento Estratégico) usa tema e estrutura próprios. */
+#root .topbar>.ipcvt-bar-actions{margin-left:auto}
+#root .topbar>.ipcvt-bar-actions .ipcvt-theme-button{color:inherit!important}
+/* Tema noturno básico nos dois módulos legados sem alternador próprio. */
+html[data-portal-theme="dark"] body.ipcvt-fallback-theme{background:#202c27!important;color:#e9f2e9!important}
+html[data-portal-theme="dark"] body.ipcvt-fallback-theme main,
+html[data-portal-theme="dark"] body.ipcvt-fallback-theme #app-content{color:#e9f2e9}
+html[data-portal-theme="dark"] body.ipcvt-fallback-theme .bg-white,
+html[data-portal-theme="dark"] body.ipcvt-fallback-theme .bg-slate-50{background:#2d4036!important;color:#edf6ee!important}
+html[data-portal-theme="dark"] body.ipcvt-fallback-theme .text-slate-800,
+html[data-portal-theme="dark"] body.ipcvt-fallback-theme .text-gray-800{color:#edf6ee!important}
+@media (max-width:600px){
+ .ipcvt-bar-actions{gap:6px}
+ .ipcvt-bar-actions .ipcvt-theme-button,.ipcvt-bar-actions .ipcvt-overflow>summary,
+ #planner-app .pm-toolbar>.ipcvt-theme-button,#planner-app .ipcvt-planner-more>summary{
+  width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important;border-radius:8px!important}
+ .ipcvt-overflow-panel{right:0;min-width:190px}
+ .portal-nucleo .portal-nav{display:none!important}
+ .scale-page .scale-topbar-actions,.campaign-header nav,.agenda-header-actions,.commission-top-actions{gap:6px!important}
+}
+@media print{.ipcvt-bar-actions{display:none!important}}
