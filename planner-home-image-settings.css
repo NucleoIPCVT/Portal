@@ -1,0 +1,39 @@
+/* Seletor de temas de Meu Dia — aberto pelo menu de iniciais da conta. */
+.pm-home-theme-dialog{width:min(820px,calc(100vw - 28px));max-height:min(92vh,900px);padding:0;border:1px solid var(--border-color,#cdd9ca);border-radius:18px;background:var(--surface,#fbfdf7);color:var(--text,#24372b);box-shadow:0 28px 80px rgba(13,29,22,.3);overflow:hidden}
+.pm-home-theme-dialog::backdrop{background:rgba(11,26,21,.52);backdrop-filter:blur(3px)}
+.pm-home-themes-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:22px 26px 15px;border-bottom:1px solid rgba(100,126,105,.2)}
+.pm-home-themes-eyebrow{font-size:10px;letter-spacing:.15em;font-weight:800;color:#718673}
+.pm-home-themes-head h2{font-size:23px;margin:4px 0 5px;color:inherit}
+.pm-home-themes-head p{font-size:13px;opacity:.8;margin:0}
+.pm-home-themes-close{border:0;background:transparent;color:inherit;cursor:pointer;font-size:28px;line-height:1;padding:2px 8px}
+.pm-home-themes-content{padding:16px 26px;overflow:auto;max-height:calc(92vh - 180px)}
+.pm-home-themes-modes{display:flex;flex-wrap:wrap;gap:10px;border:0;padding:0;margin:0 0 16px}
+.pm-home-themes-modes legend{font-size:13px;font-weight:700;margin-bottom:8px}
+.pm-home-themes-modes label{display:flex;align-items:center;gap:8px;flex:1 1 225px;border:1px solid rgba(90,116,95,.24);border-radius:10px;padding:12px;background:rgba(128,153,129,.06);font-weight:700;font-size:13px;cursor:pointer}
+.pm-home-themes-modes label:has(input:checked){border-color:#548766;background:rgba(126,179,137,.15)}
+.pm-home-themes-modes label small{font-weight:400;font-size:11px;opacity:.75;margin-left:auto;max-width:180px}
+.pm-home-themes-modes input{accent-color:#3f8055;flex:none}
+.pm-home-themes-preview{width:100%;aspect-ratio:3.9/1;min-height:140px;max-height:215px;position:relative;border-radius:12px;overflow:hidden;background:#d8e2d8}
+.pm-home-themes-preview img{width:100%;height:100%;object-fit:cover;display:block}
+.pm-home-themes-preview-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(23,52,38,.88) 0%,rgba(23,52,38,.56) 43%,transparent 100%)}
+.pm-home-themes-preview-text{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:4px;padding:18px 26px;color:white;text-shadow:0 1px 4px rgba(0,0,0,.25)}
+.pm-home-themes-preview-text span{font-size:10px;letter-spacing:.13em;font-weight:700}
+.pm-home-themes-preview-text strong{font-size:30px;font-weight:800}
+.pm-home-themes-preview-text small{font-size:12px}
+.pm-home-themes-hint{font-size:12px;line-height:1.5;opacity:.79;margin:10px 0 14px}
+.pm-home-themes-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.pm-home-theme-month{display:block;text-align:left;border:1px solid rgba(98,127,102,.24);border-radius:10px;background:transparent;padding:5px;color:inherit;cursor:pointer;overflow:hidden;transition:transform .15s,border-color .15s}
+.pm-home-theme-month:hover{transform:translateY(-2px);border-color:#59876b}
+.pm-home-theme-month:focus-visible{outline:3px solid #679b7d;outline-offset:2px}
+.pm-home-theme-month.is-selected{border-color:#4f865f;box-shadow:0 0 0 2px rgba(88,148,99,.28)}
+.pm-home-theme-month img{width:100%;aspect-ratio:2.6/1;object-fit:cover;border-radius:6px;display:block;background:#d8dfd4}
+.pm-home-theme-month-info{display:flex;flex-direction:column;gap:2px;padding:6px 4px 2px;min-height:41px}
+.pm-home-theme-month-info strong{font-size:12px;line-height:1.1}
+.pm-home-theme-month-info small{font-size:10px;line-height:1.25;opacity:.7}
+.pm-home-themes-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 26px;border-top:1px solid rgba(100,126,105,.2)}
+.pm-home-themes-footer span{font-size:12px;opacity:.75}
+.pm-home-themes-apply{background:#447953;color:white;border:0;border-radius:9px;padding:11px 15px;font-weight:700;cursor:pointer}
+:root[data-theme="dark"] .pm-home-theme-dialog{background:#292f30;border-color:#505b57;color:#f1f4f1}
+:root[data-theme="dark"] .pm-home-themes-modes label{background:#333a39}
+:root[data-theme="dark"] .pm-home-themes-modes label:has(input:checked){background:#385041}
+@media(max-width:680px){.pm-home-themes-head{padding:17px 16px 12px}.pm-home-themes-content{padding:14px 16px;max-height:calc(92vh - 170px)}.pm-home-themes-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pm-home-themes-footer{padding:12px 16px}.pm-home-themes-modes label small{max-width:140px}.pm-home-themes-preview-text strong{font-size:25px}}
