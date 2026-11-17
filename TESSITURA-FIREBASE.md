@@ -3,17 +3,18 @@
 Ferramenta da Comissão em `tessitura.html`, com cartão de acesso no `comissao.html`.
 Mantém o tema claro/escuro e a barra superior `☀/☾ | |||`, com retorno à Comissão.
 
-## O que a primeira versão faz
+## Funcionalidades atuais
 
 - Cadastra, edita, inativa e exclui cantores. Classificações: soprano, mezzo-soprano, contralto, tenor, barítono, baixo e não classificado.
 - Separa **alcance máximo** (grave/aguda) de **tessitura confortável** (grave/aguda). Os quatro limites são opcionais no cadastro inicial, mas o alcance deve ter as duas notas para entrar nos cálculos.
-- Organiza a lista por classificação e permite busca, filtro e exibição de inativos.
-- Importa **nomes e classificações em tempo real** das funções Soprano/Contralto/Tenor do documento Firestore `app_ipcvt/escala_geral_dados`. Não importa notas nem substitui cadastros existentes.
+- Organiza a lista por classificação e permite busca, filtro e exibição de inativos. A edição de cada cantor acontece **dentro da linha da tabela**, sem janelas popup.
+- Na primeira abertura autorizada com acesso à nuvem, **importa automaticamente os nomes e naipes atuais** das funções Soprano/Contralto/Tenor do documento Firestore `app_ipcvt/escala_geral_dados`. O botão "Atualizar da Escala Geral" sincroniza novos cantores quando solicitado. O procedimento não preenche notas, não remove pessoas e preserva fichas já avaliadas. A gravação depende de permissões Firebase publicadas.
+- Os limites vocais e as notas da melodia são escolhidos com **12 botões circulares por oitava**, iluminando a nota selecionada; a oitava é selecionada acima. O tom original também tem botões circulares.
 - Recebe a nota mais grave e a mais aguda da melodia; o tom original é opcional. Com o tom original informado, devolve a tonalidade sugerida; sem ele, devolve o intervalo de transposição.
 - Considera grupos completos ou apenas uma classificação, usando vozes ativas com alcance preenchido.
 - Testa mudanças de -6 até +6 semitons. Para cada integrante, também testa a melodia em múltiplas oitavas, priorizando compatibilidade com a tessitura confortável e depois com o alcance máximo.
 - Exibe quantos cantores podem cantar confortavelmente, quantos ficariam no limite, quantos estariam fora do alcance, alternativas e o posicionamento de cada voz.
-- Registra as avaliações na coleção `comissao_tessitura`, isolada e com regras de acesso próprias.
+- Salva as **fichas de alcance e conforto** na coleção `comissao_tessitura`, isolada e com regras de acesso próprias. A calculadora não guarda histórico de simulações nesta versão.
 
 ## Ativação do banco — etapa obrigatória
 
@@ -38,7 +39,7 @@ O método é uma heurística de transposição, **não uma determinação objeti
 
 1. Entrar em `comissao.html` com uma conta Google autorizada e abrir **Tessitura Vocal** no novo cartão.
 2. Importar os cantores reais da Escala Geral; conferir nomes e classificações (sem notas presumidas).
-3. Editar duas ou três fichas com limites completos. Testar também um cantor com a tessitura confortável em branco.
+3. Abrir a edição em linha de duas ou três pessoas e escolher as notas nos botões circulares com oitava. Testar também um cantor com a tessitura confortável em branco.
 4. Informar o tom original e as notas grave/aguda da melodia; conferir a transposição, as alternativas e os resultados por cantor.
 5. Alternar modo claro/escuro; pesquisar e filtrar a lista; testar num celular.
 6. Verificar gravação na nuvem e recarregamento da página, após publicar as regras de acesso.
