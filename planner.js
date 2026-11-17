@@ -2505,6 +2505,21 @@ function pmHomeSeason(date) {
     11:['Gratidão e serviço','O trabalho de cada pessoa faz parte da missão.','mission','worship'],
     12:['Natal e esperança','Tempo de acolher, celebrar e cuidar.','advent','worship']
   }
+  // Primeira série aprovada de aquarelas: uma imagem por mês,
+  // sem alternar assuntos dentro do mesmo banner.
+  const watercolors={
+    1:['Oração','Um novo ano de fé, dedicação e serviço.','planner-month-01.webp'],
+    2:['Homem e Mulher Presbiterianos','Homens e mulheres unidos no cuidado com a igreja.','planner-month-02.webp'],
+    3:['Protestantismo no Brasil','Uma história de fé, Palavra e compromisso.','planner-month-03.webp'],
+    4:['Páscoa','Cristo ressuscitou. Nossa esperança se renova.','planner-month-04.webp'],
+    5:['Músico Presbiteriano','Talentos e dedicação a serviço do louvor.','planner-month-05.webp']
+  }
+  if(watercolors[month]){
+    const [label,message,picture]=watercolors[month]
+    // A Páscoa em ano diferente continua representada no mês escolhido
+    // até que sejam ativadas as artes especiais de datas móveis.
+    return {label,message,images:[picture]}
+  }
   const item=nearEaster>=-14&&nearEaster<=14
     ?['Páscoa e esperança','A esperança renova nossa forma de servir.','easter','worship']
     :themes[month]
@@ -2536,14 +2551,16 @@ function pmTodayView(content) {
       (a.startAt||'').localeCompare(b.startAt||'')||a.title.localeCompare(b.title,'pt-BR')).slice(0,7)
   const season=pmHomeSeason(today)
 
-  // Arte vetorial original hospedada no próprio Portal, alternância suave
-  // via CSS. A primeira imagem é escolhida para a época do ano.
+  // Aquarela própria nos meses aprovados (jan–mai); para os demais
+  // mantemos temporariamente as imagens vetoriais já publicadas.
   const hero=pmGroup('section','pm-home-hero')
   const pictures=pmGroup('div','pm-home-pictures')
   pictures.setAttribute('aria-hidden','true')
   for(const picture of season.images){
     const layer=pmGroup('span','pm-home-picture')
-    layer.style.backgroundImage='url("planner-hero-'+picture+'.svg")'
+    layer.style.backgroundImage=picture.endsWith('.webp')
+      ? 'url("planner-month-art/'+picture+'")'
+      : 'url("planner-hero-'+picture+'.svg")'
     pictures.append(layer)
   }
   const heroCopy=pmGroup('div','pm-home-hero-copy',[
