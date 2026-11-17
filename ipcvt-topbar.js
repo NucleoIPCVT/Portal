@@ -253,6 +253,27 @@
       mount();
       if(app)new MutationObserver(mount).observe(app,{childList:true});
     } else if (isStrategy) {
+      const gateTheme=document.getElementById('gate-theme');
+      if(gateTheme) {
+        const key='ipcvt-estrategico-tema';
+        let dark=false;
+        try { dark=localStorage.getItem(key)==='dark'; } catch (_) {}
+        const render=()=>{
+          document.body.classList.toggle('gate-dark',dark);
+          const icon=document.getElementById('gate-theme-icon');
+          if(icon)icon.textContent=dark?'☀':'☾';
+          const label=document.getElementById('gate-theme-text');
+          if(label)label.textContent=dark?'Modo claro':'Modo escuro';
+          gateTheme.setAttribute('aria-label',dark?'Ativar modo claro':'Ativar modo escuro');
+          gateTheme.setAttribute('aria-pressed',String(dark));
+        };
+        gateTheme.addEventListener('click',()=>{
+          dark=!dark;
+          try{localStorage.setItem(key,dark?'dark':'light');}catch(_){}
+          render();
+        });
+        render();
+      }
       standardBar({header:'.strategic-gate-header',actions:'.strategic-gate-nav',theme:'#gate-theme',
         move:[['.strategic-gate-back','Voltar para Comissão']],
         links:[['../comissao.html','Voltar para Comissão']]});
