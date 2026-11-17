@@ -232,7 +232,14 @@ function duplexCalendarPage(year, months, totalEvents) {
   identity.append(textElement('span', '', 'Igreja Presbiteriana Central em Vilar dos Teles'));
   identity.append(textElement('h2', '', 'Calendário anual'));
   brand.append(identity);
-  heading.append(brand, textElement('strong', '', String(year)));
+  const headingRight = textElement('div', 'duplex-calendar-right', '');
+  headingRight.append(textElement('strong', '', String(year)));
+  const ipbLogo = document.createElement('img');
+  ipbLogo.className = 'duplex-ipb-logo';
+  ipbLogo.src = byId('agenda-ipb-logo-screen').src;
+  ipbLogo.alt = 'Logomarca oficial da Igreja Presbiteriana do Brasil';
+  headingRight.append(ipbLogo);
+  heading.append(brand, headingRight);
   page.append(heading);
 
   const grid = textElement('div', 'duplex-calendar-grid', '');
