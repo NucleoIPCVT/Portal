@@ -34,6 +34,7 @@ import { setupPlannerWizards } from './planner-form-wizard.js?v=20261116-dates-t
 import { publicCalendar, hasDirectGoogleAccess, parseCalendarSourceUrl, calendarWebUrl, summarizeCalendarEvents, diffCalendarEvents } from './planner-public.js?v=20261116-multi-source-ids-v1'
 import { plannerPublicSources, readPlannerPublicSources } from './planner-multi-public.js?v=20261117-v3'
 import { setupPlannerCalendarSources } from './planner-calendar-sources-ui.js?v=20261117-v2'
+import { selectedHomeImageMonth, setupHomeImageSettings } from './planner-home-image-settings.js?v=20261117-v1'
 
 const $ = id => document.getElementById(id)
 const formWizards = setupPlannerWizards()
@@ -2521,9 +2522,7 @@ function pmEasterDate(year) {
   return String(year)+'-'+String(month).padStart(2,'0')+'-'+String(day).padStart(2,'0')
 }
 function pmHomeSeason(date) {
-  const year=Number(date.slice(0,4)),month=Number(date.slice(5,7))
-  const easter=pmEasterDate(year)
-  const nearEaster=Math.round((Date.parse(date+'T12:00:00Z')-Date.parse(easter+'T12:00:00Z'))/86400000)
+  const month=selectedHomeImageMonth(Number(date.slice(5,7)),session.email)
   const themes={
     1:['Oração e recomeços','Uma nova etapa para servir com propósito.','worship','mission'],
     2:['Comunidade e cuidado','Cada pessoa importa no trabalho da igreja.','mission','worship'],
@@ -2545,7 +2544,7 @@ function pmHomeSeason(date) {
     2:['Homem e Mulher Presbiterianos','Homens e mulheres unidos no cuidado com a igreja.','planner-month-02.webp'],
     3:['Protestantismo no Brasil','Uma história de fé, Palavra e compromisso.','planner-month-03.webp'],
     4:['Páscoa','Cristo ressuscitou. Nossa esperança se renova.','planner-month-04.webp'],
-    5:['Músico Presbiteriano','Talentos e dedicação a serviço do louvor.','planner-month-05.webp']
+    5:['Aniversário da IPCVT','Uma história de fé e comunhão em nossa igreja.','planner-month-05.webp']
   }
   if(watercolors[month]){
     const [label,message,picture]=watercolors[month]
@@ -2553,9 +2552,7 @@ function pmHomeSeason(date) {
     // até que sejam ativadas as artes especiais de datas móveis.
     return {label,message,images:[picture]}
   }
-  const item=nearEaster>=-14&&nearEaster<=14
-    ?['Páscoa e esperança','A esperança renova nossa forma de servir.','easter','worship']
-    :themes[month]
+  const item=themes[month]
   return {label:item[0],message:item[1],images:[item[2],item[3],month===12?'mission':month===10?'mission':'reformation']}
 }
 function pmHomeCalendarLink(date,mode) {
@@ -2812,6 +2809,14 @@ pmSyncThemeButton()
 $('pm-search').addEventListener('input',e=>{$('search-filter').value=e.target.value;render()})
 $('pm-notifications').addEventListener('click',()=>$('planner-notifications-button').click())
 $('pm-theme').addEventListener('click',()=>{$('theme-toggle').click();$('pm-more').open=false})
+setupHomeImageSettings({
+  getEmail:()=>session.email,
+  onApply:(showHome=false)=>{
+    if(session.status!=='authorized')return
+    if(showHome&&currentView!=='home')changeView('home')
+    else render()
+  }
+})
 $('pm-logout').addEventListener('click',()=>$('logout-button').click())
 
 function render() {
