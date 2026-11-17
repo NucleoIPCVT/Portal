@@ -593,7 +593,7 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
       try {
         await setDoc(doc(db, 'comissao_planner', 'main', 'config', 'calendar'), {
           calendarId, sourceUrl, updatedBy: actor.email, updatedAt: serverTimestamp()
-        })
+        }, { merge: true })
       } catch (cause) { throw readableError(cause) }
     },
 
