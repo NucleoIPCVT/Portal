@@ -8,19 +8,33 @@ const IPB_ID = 'ipb:official-2026';
 const BRAZIL = { id:'brasil', kind:'google', calendarId:BRAZIL_ID, name:'Datas comemorativas do Brasil' };
 const IPB = { id:'ipb', kind:'ipb', calendarId:IPB_ID, name:'Datas comemorativas presbiterianas · IPB 2026' };
 
+const LOCAL_SETTINGS_KEY='ipcvt:agenda:fontes:preferencias:v2';
+function localSourcePreferences(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(LOCAL_SETTINGS_KEY)||'{}');
+    return {
+      enabled:saved?.enabled&&typeof saved.enabled==='object'?saved.enabled:{},
+      extras:Array.isArray(saved?.extras)?saved.extras:[]
+    };
+  }catch{return {enabled:{},extras:[]};}
+}
+
 export function plannerPublicSources(config={}) {
   const primary = { id:'ipcvt', kind:'google',
     calendarId:config.calendarId||publicCalendar.id,
     name:config.calendarId===publicCalendar.id||!config.calendarId?publicCalendar.name:config.calendarId };
   const removed = new Set(Array.isArray(config.removedSourceIds)?config.removedSourceIds:[]);
-  const sources = [primary,...[BRAZIL,IPB].filter(source=>!removed.has(source.id))];
+  const personal=localSourcePreferences();
+  // O calendário original permanece ativo no Planner. As demais fontes
+  // respeitam preferências locais de exibição definidas na Agenda Anual.
+  const sources = [primary,...[BRAZIL,IPB].filter(source=>!removed.has(source.id)&&personal.enabled[source.id]!==false)];
   const used = new Set(sources.map(source=>source.calendarId));
-  const additional=Array.isArray(config.additionalSources)?config.additionalSources:[];
+  const additional=[...(Array.isArray(config.additionalSources)?config.additionalSources:[]),...personal.extras];
   for(const candidate of additional){
     if(!candidate||typeof candidate.sourceUrl!=='string'||typeof candidate.calendarId!=='string')continue;
     try{
       const parsed=parseCalendarSourceUrl(candidate.sourceUrl);
-      if(parsed.calendarId!==candidate.calendarId||used.has(candidate.calendarId))continue;
+      if(parsed.calendarId!==candidate.calendarId||used.has(candidate.calendarId)||personal.enabled['google:'+candidate.calendarId]===false)continue;
       used.add(candidate.calendarId);
       sources.push({id:'google:'+candidate.calendarId,kind:'google',calendarId:candidate.calendarId,
         name:String(candidate.name||candidate.calendarId).trim().slice(0,100)});
