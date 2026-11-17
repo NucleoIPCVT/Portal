@@ -41,7 +41,7 @@ const FIELDS = {
 }
 const METADATA = ['id', 'version', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy']
 const DEFAULTS = {
-  plans: { name: '', kind: 'continuous', description: '', startDate: '', dueDate: '', ownerEmail: '', ownerName: '', deleted: false },
+  plans: { name: '', kind: 'continuous', description: '', startDate: '', dueDate: '', deleted: false },
   buckets: { planId: '', name: '', order: 0, deleted: false },
   tasks: { planId: '', bucketId: '', title: '', description: '', team: '', assignees: [], startDate: '', dueDate: '', status: 'todo', priority: 'normal', checklist: [], dependencyIds: [], eventId: '', dateMode: 'manual', dueOffsetDays: null, deleted: false },
   events: { source: 'manual', title: '', description: '', startDate: '', endDate: '', allDay: true, status: 'confirmed', deleted: false },
