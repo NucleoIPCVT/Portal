@@ -1,0 +1,49 @@
+/* IPCVT — banner Meu Dia, série mensal de aquarelas (janeiro a maio).
+   Uma arte por mês, sem rotação de assuntos dentro do mês.
+   Demais meses permanecem no comportamento anterior. */
+body.pm-active #planner-app .pm-home-hero-watercolor .pm-home-picture {
+  opacity: 1;
+  transform: none;
+  animation: none !important;
+  background-position: center right;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+body.pm-active #planner-app .pm-home-hero-watercolor::after {
+  background:linear-gradient(90deg,
+    rgba(27,51,40,.82) 0%,
+    rgba(32,59,47,.74) 27%,
+    rgba(32,59,47,.46) 47%,
+    rgba(32,59,47,.12) 72%,
+    rgba(32,59,47,0) 100%);
+}
+body.pm-active #planner-app .pm-home-hero-watercolor .pm-home-hero-copy {
+  text-shadow:0 1px 3px rgba(14,36,27,.23);
+}
+:root[data-theme="dark"] body.pm-active #planner-app .pm-home-hero-watercolor::after {
+  background:linear-gradient(90deg,
+    rgba(17,34,29,.91) 0%,
+    rgba(19,40,33,.83) 28%,
+    rgba(19,40,33,.55) 52%,
+    rgba(19,40,33,.22) 75%,
+    rgba(19,40,33,.08) 100%);
+}
+@media(max-width:760px){
+  body.pm-active #planner-app .pm-home-hero-watercolor .pm-home-picture {
+    background-position:64% center;
+  }
+  body.pm-active #planner-app .pm-home-hero-watercolor::after {
+    background:linear-gradient(90deg,
+      rgba(27,51,40,.84) 0%,
+      rgba(27,51,40,.77) 38%,
+      rgba(27,51,40,.35) 80%,
+      rgba(27,51,40,.16) 100%);
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  body.pm-active #planner-app .pm-home-hero-watercolor .pm-home-picture {
+    animation:none!important;
+    transform:none!important;
+    opacity:1;
+  }
+}
