@@ -132,6 +132,7 @@ export function createAgendaSources({getPrimary,onChange}) {
         remove.addEventListener('click',async()=>{
           if(saving)return;
           const isShared=shared.some(item=>item.calendarId===source.calendarId);
+          if(!window.confirm('Remover a fonte “'+source.name+'” '+(source.fixed||isShared?'da Agenda Anual e do Planner para todos?':'deste navegador?')))return;
           try {
             saving=true;render();
             if(source.fixed){
@@ -150,6 +151,27 @@ export function createAgendaSources({getPrimary,onChange}) {
       }
       row.append(options);
       list.append(row);
+    }
+    // Fontes padrão são removidas por configuração, não apagadas. Assim
+    // podem ser restauradas sem recorrer a um novo calendário Google.
+    if(isAdmin)for(const source of [BRAZIL,IPB].filter(item=>removedFixed.includes(item.id))){
+      const row=element('div','agenda-source-row is-disabled');
+      const copy=element('span','agenda-source-copy');
+      copy.append(element('span','agenda-source-title',source.name),
+        element('small','agenda-source-meta','Fonte removida da Agenda Anual e do Planner'));
+      const restore=element('button','agenda-source-remove','Restaurar');
+      restore.type='button';
+      restore.disabled=saving;
+      restore.addEventListener('click',async()=>{
+        if(saving||!persistShared)return;
+        saving=true;render();
+        try{
+          await persistShared({removedSourceIds:removedFixed.filter(id=>id!==source.id)});
+          show('Fonte restaurada.');
+        }catch(error){show(error.message||'Falha ao restaurar a fonte.',true);}
+        finally{saving=false;render();}
+      });
+      row.append(copy,restore);list.append(row);
     }
     checkbox.checked=state.merge;
     const mode=document.getElementById('agenda-fontes-sharing-note');
