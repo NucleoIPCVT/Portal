@@ -1,4 +1,4 @@
-import { createPlannerStore } from './planner-store.js?v=20261116-delete-scope-v1'
+import { createPlannerStore } from './planner-store.js?v=20261116-plan-owner-v1'
 import { renderTaskActivity } from './planner-reports.js?v=20261116-relatorios-v3'
 import { renderPlannerDashboard } from './planner-reports-dashboard.js?v=20261116-aging-v5'
 import { downloadProjectTemplate, readProjectFile, existingProjectByName } from './planner-excel-import.js?v=20261114-project-import-v2'
@@ -850,6 +850,7 @@ function renderPlans(content) {
     const card = node('article', { class: 'plan-card' })
     card.append(node('span', { class: 'plan-card-icon', 'aria-hidden': 'true', text: plan.name.slice(0, 1).toLocaleUpperCase('pt-BR') }))
     card.append(button(plan.name, () => openPlanBoard(plan.id), 'plan-card-title'))
+    card.append(node('p',{class:'plan-card-owner',text:'Responsável: '+planOwnerDisplay(plan)}))
     const cycleDates=config?.unit==='week'?planCycleWindow(config,plan,pmPlanCycle(plan.id)):null
     card.append(node('p', { class: 'plan-card-description',
       text:(config?'↻ Recorrente · '+(cycleDates
@@ -1661,10 +1662,54 @@ function pmDayDetails(date,tasks) {
   document.body.append(dialog);dialog.showModal()
 }
 function pmIsMine(task){return (task.assignees||[]).some(person=>person.email?.toLowerCase()===session.email)}
+const planOwnerEmail=plan=>String(plan?.ownerEmail||plan?.createdBy||'').toLowerCase().trim()
+let authorizedPlanMembers=null
+let ownerDirectoryRequest=0
+function planOwnerCandidates(plan) {
+  const known=new Map()
+  const add=(email,name='')=>{
+    const normalized=String(email||'').toLowerCase().trim()
+    if(!normalized||!normalized.includes('@'))return
+    const friendly=String(name||'').trim()
+    if(!known.has(normalized)||(!known.get(normalized)&&friendly))known.set(normalized,friendly)
+  }
+  add(session.email,session.name)
+  for(const member of authorizedPlanMembers||[])add(member.email,member.name)
+  for(const task of state.tasks)for(const person of task.assignees||[])add(person.email,person.name)
+  for(const candidate of state.plans)add(candidate.ownerEmail,candidate.ownerName)
+  add(plan?.ownerEmail,plan?.ownerName)
+  add(plan?.createdBy)
+  return known
+}
+function planOwnerDisplay(plan) {
+  const email=planOwnerEmail(plan)
+  if(!email)return 'Não definido'
+  const name=String(plan?.ownerName||planOwnerCandidates(plan).get(email)||'').trim()
+  return name&&name.toLowerCase()!==email?name+' · '+email:email
+}
+function updatePlanOwnerSuggestions(plan){
+  const candidates=planOwnerCandidates(plan)
+  const list=$('plan-owner-suggestions')
+  list.replaceChildren(...[...candidates].sort((a,b)=>(a[1]||a[0]).localeCompare(b[1]||b[0],'pt-BR'))
+    .map(([email,name])=>node('option',{value:email,label:name||email})))
+  return candidates
+}
+function loadAuthorizedPlanOwners(plan) {
+  updatePlanOwnerSuggestions(plan)
+  if(!session.isAdmin||authorizedPlanMembers)return
+  const request=++ownerDirectoryRequest
+  void store.listActiveCommissionMembers().then(members=>{
+    if(request!==ownerDirectoryRequest||session.status!=='authorized')return
+    authorizedPlanMembers=members
+    if($('plan-dialog').open)updatePlanOwnerSuggestions(plan)
+  }).catch(()=>{
+    // Membros já atribuídos continuam sugeridos; o campo aceita e-mail.
+  })
+}
 function pmIsMyPlan(plan) {
   const email=(session.email||'').toLowerCase()
   if(!email)return false
-  return (plan.createdBy||'').toLowerCase()===email
+  return planOwnerEmail(plan)===email
     || liveTasks().some(task=>task.planId===plan.id&&pmIsMine(task))
     || state.routines.some(routine=>!routine.deleted&&routine.planId===plan.id&&
       (routine.assignees||[]).some(person=>(person.email||'').toLowerCase()===email))
@@ -3035,6 +3080,11 @@ function openPlan(plan = null, defaults = {}) {
   $('plan-id').value = plan?.id || ''
   $('plan-dialog').dataset.version = plan?.version ?? ''
   $('plan-name').value = plan?.name || ''
+  $('plan-owner-email').value=plan?planOwnerEmail(plan):(session.email||'').toLowerCase()
+  const creator=$('plan-creator-row')
+  creator.hidden=!plan
+  creator.textContent=plan?'Criado por: '+(plan.createdBy||'Registro antigo'):''
+  loadAuthorizedPlanOwners(plan)
   $('plan-dialog-title').textContent = plan ? 'Editar plano' : 'Novo plano'
   const repeatSettings=plan?planCycleConfig(plan.id):null
   $('plan-kind').value = repeatSettings?'recurring':plan?.kind || defaults.kind || 'continuous'
@@ -3142,7 +3192,16 @@ $('plan-form').addEventListener('submit', async event => {
       throw new Error('O primeiro ciclo semanal precisa de início e prazo dentro do intervalo escolhido.')
     }
     const settings=wantsRecurrence?{unit,interval,anchor}:null
+    const ownerEmail=value('plan-owner-email').toLowerCase()
+    if(!/^[^\s@/]+@[^\s@/]+\.[^\s@/]+$/.test(ownerEmail)||ownerEmail.length>254){
+      throw new Error('Informe o e-mail válido do responsável autorizado pela Comissão.')
+    }
+    const ownerCandidates=planOwnerCandidates(old)
+    const ownerName=(old?.ownerEmail||'').toLowerCase()===ownerEmail&&old?.ownerName
+      ?old.ownerName
+      :String(ownerCandidates.get(ownerEmail)||'').slice(0,120)
     const plan = { ...(old || {}), id: old?.id || newId(), name: value('plan-name'),
+      ownerEmail,ownerName,
       // A configuração recorrente ocupa um registro técnico compatível
       // com as regras atuais do Firestore.
       kind:wantsRecurrence?'continuous':value('plan-kind'),
@@ -3379,6 +3438,10 @@ const store = createPlannerStore({
     const previousEmail = session.email
     const wasAdmin = session.isAdmin
     session = next
+    if(previousEmail!==next.email||(wasAdmin&&!next.isAdmin)){
+      authorizedPlanMembers=null
+      ownerDirectoryRequest++
+    }
     pmSetSession(next)
     const allowed = next.status === 'authorized'
     if (!allowed || previousEmail !== next.email || (wasAdmin && !next.isAdmin)) {
