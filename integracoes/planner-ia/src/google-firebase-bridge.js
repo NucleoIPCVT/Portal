@@ -15,7 +15,7 @@ export async function exchangeGoogleIdForFirebase(
   // O Google ID token deve vir de callback OAuth concluído pelo servidor.
   // O componente responsável pelo OAuth deve validar state, nonce, PKCE
   // (quando aplicável), redirect_uri e o cliente autorizado.
-  if (typeof googleIdToken !== 'string' || googleIdToken.length > 8192
+  if (typeof googleIdToken !== 'string' || googleIdToken.length < 100 || googleIdToken.length > 8192
       || !GOOGLE_ID_TOKEN_RE.test(googleIdToken)) {
     throw new AccessError(401, 'invalid_google_credential');
   }
