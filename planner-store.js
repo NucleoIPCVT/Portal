@@ -123,7 +123,7 @@ function snapshotItem(kind, item) {
 }
 
 /** Each item is a separate versioned Firestore document; no shared board snapshot is overwritten. */
-export function createPlannerStore({ onSession = () => {}, onData = () => {}, onActivity = () => {}, onActivityError = () => {}, onConfig = () => {}, onConfigError = () => {}, onError = () => {} } = {}) {
+export function createPlannerStore({ sessionOnly = false, onSession = () => {}, onData = () => {}, onActivity = () => {}, onActivityError = () => {}, onConfig = () => {}, onConfigError = () => {}, onError = () => {} } = {}) {
   const app = getApps().find(candidate => candidate.name === 'ipcvt-comissao') || initializeApp(firebaseConfig, 'ipcvt-comissao')
   const auth = getAuth(app)
   const db = getFirestore(app)
@@ -392,7 +392,7 @@ export function createPlannerStore({ onSession = () => {}, onData = () => {}, on
           return
         }
         publishSession({ status: 'authorized', name: access.nome || user.displayName || email, isAdmin: access.perfil === 'admin', message: '' })
-        watchData(currentSequence)
+        if (!sessionOnly) watchData(currentSequence)
       }, cause => {
         if (sequence !== currentSequence) return
         const problem = readableError(cause)
