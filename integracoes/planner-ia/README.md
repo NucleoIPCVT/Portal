@@ -269,3 +269,43 @@ de testar uma conexão real. Não pedir API tokens ou segredos pelo chat. Não
 ativar cobrança nem publicar a API sem autorização explícita.
 
 O código atual não altera e nem substitui o login do Portal IPCVT.
+
+## Continuação da autenticação (ponte Google → Firebase, 18/11/2026)
+
+O Work reconheceu as ferramentas do plugin hospedado no Sites, mas não
+conseguiu concluir uma leitura real após o login. **Isso não é solucionado
+simplesmente copiando a identidade de quem entrou no ChatGPT**: um e-mail
+de cabeçalho `oai-authenticated-user-email` não é autorização para Firestore.
+O ChatGPT Sites pode autenticar a identidade ChatGPT, mas a autorização da
+Comissão continua sendo a do Firebase original.
+
+Preparação isolada: `src/google-firebase-bridge.js` usa o endpoint oficial
+`accounts:signInWithIdp` para trocar um **Google ID token** recebido de um
+fluxo Google OAuth confiável por um Firebase ID token do projeto
+`repertorio-ipcvt`. Em seguida, verifica assinatura e claims com
+`verifyFirebaseIdToken` e consulta `comissao_acessos/{email}` com o token
+resultante. Usuário sem autorização continua bloqueado. A função não
+exibe tokens de refresh ao cliente e não está exposta no MCP.
+
+**Ainda falta a parte crítica para a conexão funcionar:**
+- OAuth do Google com callback no servidor, proteção `state`/nonce e,
+  quando aplicável, PKCE; adquirir a credencial diretamente do provedor,
+  não aceitá-la via argumento de ferramenta criado pela IA;
+- vincular o usuário autorizado à sessão OAuth **do conector** no Sites,
+  sem colocar tokens na URL, chat, HTML público ou repositório;
+- definir armazenamento de credenciais de curta duração e renovação segura,
+  sem depender do login do navegador original em outro domínio;
+- testar uma chamada de leitura real com autorização ativa e uma negada.
+  Não solicitar nem compartilhar credenciais ou tokens no chat.
+
+**Nenhuma interface nova de Planner, novo banco de tarefas ou segunda conta
+Google é necessária.** Pode haver uma tela de consentimento ao conectar a
+IA, usando a mesma identidade Google do Planner.
+
+Documentação oficial:
+- https://help.openai.com/en/articles/20001547-hosting-a-plugin-with-chatgpt-sites
+- https://learn.chatgpt.com/docs/extend/mcp
+- https://docs.cloud.google.com/identity-platform/docs/reference/rest/v1/accounts/signInWithIdp
+
+**Não ativar endpoints de criação nem aprovações externas nesta fase.**
+A integração de leitura precisa funcionar de ponta a ponta primeiro.
