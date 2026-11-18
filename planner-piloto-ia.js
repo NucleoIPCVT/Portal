@@ -17,7 +17,7 @@ const reports = {
 function forget() {
   try { sessionStorage.removeItem(key) } catch { /* já indisponível */ }
 }
-function dialog(title, message, action, accept, cancel) {
+function dialog(title, message, action, accept, cancel, cancelLabel = 'Cancelar') {
   const el = document.getElementById('confirm-dialog')
   const yes = document.getElementById('confirm-accept')
   const no = document.getElementById('confirm-cancel')
@@ -27,6 +27,7 @@ function dialog(title, message, action, accept, cancel) {
   yes.textContent = action
   yes.disabled = false
   yes.onclick = () => { yes.disabled = true; accept() }
+  no.textContent = cancelLabel
   no.hidden = !cancel
   no.onclick = cancel || null
   el.oncancel = event => { event.preventDefault(); (cancel || accept)() }
@@ -34,6 +35,11 @@ function dialog(title, message, action, accept, cancel) {
 }
 function finish(kind) {
   forget()
+  if (kind === 'expirado') {
+    return dialog('Vínculo expirado', 'Reinicie o vínculo para autorizar um plano com a sua sessão atual.',
+      'Reiniciar vínculo', () => location.replace(connector+'/vincular'),
+      () => location.replace('comissao.html'), 'Voltar à Comissão')
+  }
   dialog('Vinculação com o ChatGPT', reports[kind] || reports.falha, 'Voltar à Comissão', () => location.replace('comissao.html'))
 }
 function submit(path, state, token) {
@@ -66,10 +72,12 @@ export async function startPilot(openPlanner) {
     return
   }
   let record
-  try { record = JSON.parse(sessionStorage.getItem(key) || 'null') } catch { /* tratar abaixo */ }
+  try { record = JSON.parse(sessionStorage.getItem(key) || 'null') }
+  catch { if (!requested) return finish('expirado') }
   if (record && (!validState.test(record.state) || !(record.until > Date.now()) || record.until > Date.now()+lifetime)) {
     record = null
     forget()
+    if (!requested) return finish('expirado')
   }
   const request = /^#ipcvt-ia-pedido=([A-Za-z0-9_-]{43})$/.exec(fragment)
   const callback = /^#ipcvt-ia-confirmar=([A-Za-z0-9_-]{43})$/.exec(fragment)
