@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { TOOL_DESCRIPTORS, createMcpTools, calculateOverdue } from '../src/mcp-tools.js';
 import { handleMcpHttp, handleMcpMessage } from '../src/mcp-http.js';
+import { createHandler } from '../src/index.js';
+import { AccessError } from '../src/auth.js';
 const identity={email:'tester@example.com'};
 const items=[
  {id:'t1',title:'Atrasada',dueDate:'2026-11-16',status:'todo',assignees:[{email:'tester@example.com'}]},
@@ -58,4 +60,44 @@ test('rejeita ferramentas inexistentes, lotes e origens externas',async()=>{
 test('notificação não tem resposta e métodos ilegais são recusados',async()=>{
  assert.equal(await handleMcpMessage({jsonrpc:'2.0',method:'notifications/initialized'},{tools}),null);
  assert.equal((await handleMcpMessage(rpc('delete',{}),{tools})).error.code,-32601);
+});
+
+test('gateway MCP fica desligado por padrão',async()=>{
+ const handler=createHandler({
+  verifyToken:async()=>({uid:'u1',email:'tester@example.com'}),
+  lookupMembership:async()=>({authorized:true})
+ });
+ const request=req(rpc('tools/list',{}));
+ const response=await handler(request,{});
+ assert.equal(response.status,404);
+});
+test('gateway experimental verifica Firebase e autorização a cada mensagem',async()=>{
+ let membership=0,writes=0;
+ const handler=createHandler({
+  verifyToken:async()=>({uid:'u1',email:'tester@example.com'}),
+  lookupMembership:async()=>{membership++;return {authorized:true};},
+  listItems:async()=>({items:[],nextPageToken:null}),
+  createRecord:async()=>{writes++;return {created:true};}
+ });
+ const original=req(rpc('tools/list',{}));
+ const response=await handler(new Request(original.url,{
+  method:'POST',headers:{...Object.fromEntries(original.headers),Authorization:'Bearer valid-token'},
+  body:JSON.stringify(rpc('tools/list',{}))
+ }),{MCP_FIREBASE_DEV_ONLY:'true'});
+ assert.equal(response.status,200);
+ assert.equal((await response.json()).result.tools.length,6);
+ assert.equal(membership,1);
+ assert.equal(writes,0);
+});
+test('gateway MCP recusa membro desativado e chamada sem login',async()=>{
+ const handler=createHandler({
+  verifyToken:async()=>({uid:'u1',email:'tester@example.com'}),
+  lookupMembership:async()=>{throw new AccessError(403,'not_authorized');}
+ });
+ const noToken=await handler(req(rpc('tools/list',{})),{MCP_FIREBASE_DEV_ONLY:'true'});
+ assert.equal(noToken.status,401);
+ const raw=req(rpc('tools/list',{}));
+ const bad=new Request(raw.url,{method:'POST',headers:{...Object.fromEntries(raw.headers),Authorization:'Bearer x'},body:JSON.stringify(rpc('tools/list',{}))});
+ const denied=await handler(bad,{MCP_FIREBASE_DEV_ONLY:'true'});
+ assert.equal(denied.status,403);
 });
