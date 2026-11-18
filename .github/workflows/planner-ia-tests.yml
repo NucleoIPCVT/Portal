@@ -30,6 +30,7 @@ jobs:
         run: |
           node --check src/index.js
           node --check src/auth.js
+          node --check src/google-firebase-bridge.js
           node --check src/create.js
           node --check src/approval.js
           node --check src/firestore-read.js
