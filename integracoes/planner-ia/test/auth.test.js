@@ -77,7 +77,7 @@ test('sessao apenas depois de token valido e autorizacao',async()=>{
   assert.equal(response.status,200);
   assert.deepEqual(await response.json(),{
     authenticated:true,authorized:true,uid:'firebase-user-123',
-    email:'tester@example.com',capabilities:[]
+    email:'tester@example.com',capabilities:['read']
   });
   assert.equal(response.headers.get('access-control-allow-origin'),null);
 });
@@ -86,7 +86,9 @@ test('bloqueia login ausente, escrita e outras rotas',async()=>{
   assert.equal((await handle(req('/api/session'))).status,401);
   for(const method of ['POST','PUT','PATCH','DELETE'])
     assert.equal((await handle(req('/api/session',method))).status,405);
-  for(const path of ['/api/plans','/api/tasks','/mcp','/'])
+  for(const path of ['/api/plans','/api/tasks'])
+    assert.equal((await handle(req(path))).status,401);
+  for(const path of ['/mcp','/'])
     assert.equal((await handle(req(path))).status,404);
 });
 test('sessao recusa membro sem autorizacao',async()=>{
