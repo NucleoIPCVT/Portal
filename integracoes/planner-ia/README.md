@@ -1,4 +1,4 @@
-# Integração IA · Planner IPCVT — etapa 3
+# Integração IA · Planner IPCVT — etapa 4
 
 Base **isolada** para um Cloudflare Worker. Este diretório não é importado pelo
 Portal nem pelo Planner publicado, e não contém credenciais ou modificações nas
@@ -9,7 +9,10 @@ regras do Firebase.
 - `GET /health`: informa disponibilidade sem revelar dados do Planner.
 - `GET /api/session`: valida token Firebase já emitido pelo login Google; verifica assinatura RS256, emissor, audiência, validade, e-mail verificado e provedor `google.com`; consulta `comissao_acessos/{email}` com o **mesmo ID token**, respeitando as regras atuais do Firestore.
 - Membros desativados, tokens inválidos e solicitações sem login são bloqueados.
-- Outras rotas (`/api/plans`, `/api/tasks`, `/mcp`) continuam desabilitadas; nenhum método de criação ou edição existe.
+- `GET /api/plans`, `/api/buckets`, `/api/tasks`, `/api/events`, `/api/routines` e `/api/activity`: consultas paginadas ao Firestore usando o **ID token do usuário** (sem credencial administrativa). Cada requisição repete a verificação de identidade e de autorização ativa.
+- `pageSize`: 1 a 50 (padrão 25); `pageToken`: cursor do Firestore retornado na página anterior. Uma resposta com `hasMore: true` **não representa todos os registros**.
+- Converte os tipos do Firestore em objetos JSON: IDs, nomes, prazos, status, responsáveis, checklists, recorrências e histórico. O relatório de atrasos deverá percorrer **todas** as páginas e ignorar demandas concluídas/arquivadas.
+- Nenhuma rota MCP ou método de criação, edição, conclusão e exclusão existe nesta etapa.
 - **Não há credenciais administrativas, conexão MCP ou publicação em produção nesta etapa.**
 - O Planner normal continua colaborativo e com as mesmas permissões.
 
@@ -72,7 +75,7 @@ conectada ou configurada. Firebase permanece na configuração atual.
 ## Próximas etapas
 
 - Etapa 3: autenticação/autorização implementadas no código e testadas localmente; **falta ensaio real com contas Firebase e Cloudflare**.
-- Etapa 4: consultas.
+- Etapa 4: consultas paginadas implementadas em código e cobertas por testes simulados; **falta teste ao vivo com contas reais**.
 - Etapa 5: criação, com aprovação e idempotência.
 - Etapa 6: MCP e integração com as IAs.
 
@@ -87,3 +90,25 @@ comprovar comportamento com membro ativo, desativado e sem login.
 **Integração por IA ainda indisponível:** ChatGPT/Claude/Gemini não enviam
 necessariamente um Firebase ID token do site ao MCP. OAuth e consentimento
 para esses clientes são uma etapa separada e ainda não implementada.
+
+## Consultas disponíveis (etapa 4)
+
+Todas exigem `Authorization: Bearer <Firebase ID token>` válido, e-mail verificado,
+provedor `google.com` e membro ativo em `comissao_acessos`:
+
+- `GET /api/plans` — planos da Comissão.
+- `GET /api/buckets` — colunas dos quadros.
+- `GET /api/tasks` — demandas e suas propriedades.
+- `GET /api/events` — eventos internos salvos no Firestore.
+- `GET /api/routines` — rotinas legadas.
+- `GET /api/activity` — histórico de atividades.
+
+Todos aceitam `?pageSize=25&pageToken=...`. Retornam `items`, `pageSize`,
+`nextPageToken` e `hasMore`. Calendários públicos iCal são carregados fora
+do Firestore pelo Planner e **não são incluídos** neste conjunto de consultas.
+
+**Sem alterações em produção:** nenhuma rota é acessível via MCP ou pelas IAs
+até concluirmos OAuth e publicarmos um Worker revisado.
+
+**Ainda faltam:** limites de requisições por pessoa, testes com sessões reais,
+relatórios agregados por data/status e revisão dos custos de leituras no Firebase.
