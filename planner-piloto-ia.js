@@ -126,8 +126,30 @@ export async function startPilot(openPlanner) {
         if (store.session.user?.uid!==session.user.uid || store.session.status!=='authorized' || record.until<=Date.now()) return finish('expirado')
         record.uid = session.user.uid
         try { sessionStorage.setItem(key,JSON.stringify(record)) } catch { return finish('armazenamento') }
-        // Antes de transmitir a credencial, o mesmo navegador confirma o vínculo no conector privado.
-        submit('/vinculo/verificar',record.state)
+        const popup = window.open(connector+'/vinculo/ponte#'+record.state,'_blank','popup,width=480,height=360')
+        if (!popup) return finish('falha')
+        let sent = false
+        const timer = setInterval(() => {
+          if (popup.closed || Date.now()>=record.until) complete('falha')
+        },1000)
+        function complete(result) {
+          clearInterval(timer)
+          window.removeEventListener('message',receive)
+          popup.close()
+          finish(result)
+        }
+        async function receive(event) {
+          if (event.origin!==connector || event.source!==popup || event.data?.state!==record.state) return
+          if (sent && ['pronto','falha'].includes(event.data.result)) return complete(event.data.result)
+          if (sent || event.data.ready!==true) return
+          sent = true
+          try {
+            const token = await session.user.getIdToken()
+            if (store.session.status!=='authorized' || store.session.user?.uid!==record.uid || Date.now()>=record.until) return complete('expirado')
+            popup.postMessage({state:record.state,token},connector)
+          } catch { complete('sessao') }
+        }
+        window.addEventListener('message',receive)
       }, () => finish('cancelado'))
   }})
 }
