@@ -8,7 +8,7 @@ test('health informa somente disponibilidade em desenvolvimento',async()=>{
   assert.equal(response.headers.get('cache-control'),'no-store');
   assert.equal(response.headers.get('access-control-allow-origin'),null);
   assert.deepEqual(await response.json(),{
-    service:'ipcvt-planner-ia',status:'read-development',
+    service:'ipcvt-planner-ia',status:'creation-development',
     firestoreConnected:false,capabilitiesEnabled:[]
   });
 });
