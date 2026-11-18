@@ -1,4 +1,4 @@
-# Integração IA · Planner IPCVT — etapa 2
+# Integração IA · Planner IPCVT — etapa 3
 
 Base **isolada** para um Cloudflare Worker. Este diretório não é importado pelo
 Portal nem pelo Planner publicado, e não contém credenciais ou modificações nas
@@ -6,10 +6,11 @@ regras do Firebase.
 
 ## Situação atual
 
-- `GET /health`: responde somente que a estrutura está preparada.
-- Qualquer outra rota ou método: `404 not_found`.
-- **Nenhuma leitura ou escrita no Firestore está implementada.**
-- Não há autenticação, servidor MCP ou implantação em produção nesta etapa.
+- `GET /health`: informa disponibilidade sem revelar dados do Planner.
+- `GET /api/session`: valida token Firebase já emitido pelo login Google; verifica assinatura RS256, emissor, audiência, validade, e-mail verificado e provedor `google.com`; consulta `comissao_acessos/{email}` com o **mesmo ID token**, respeitando as regras atuais do Firestore.
+- Membros desativados, tokens inválidos e solicitações sem login são bloqueados.
+- Outras rotas (`/api/plans`, `/api/tasks`, `/mcp`) continuam desabilitadas; nenhum método de criação ou edição existe.
+- **Não há credenciais administrativas, conexão MCP ou publicação em produção nesta etapa.**
 - O Planner normal continua colaborativo e com as mesmas permissões.
 
 ## Desenvolvimento local
@@ -27,12 +28,11 @@ npm run dev
 **depois** de concluídos os controles de segurança e testes. Não automatizar
 deploy para a branch principal nesta etapa.
 
-## Arquitetura prevista (a implementar)
+## Arquitetura (segurança-base implementada; integração ainda pendente)
 
-1. Identificar cada pessoa via Google/Firebase Auth; verificar no **servidor** a
-   autenticidade do token, expiração, emissor, público, e-mail verificado e provedor Google.
-2. Verificar autorização ativa em `comissao_acessos/{email-minúsculo}`.
-3. Usar acesso ao Firestore limitado ao usuário, sempre que possível; se uma
+1. **Implementado em teste:** verificar no servidor o Firebase ID token existente, incluindo assinatura Google e claims obrigatórias.
+2. **Implementado em teste:** consultar autorização ativa em `comissao_acessos/{email-minúsculo}` com o ID token do próprio usuário.
+3. Para consultas e criação futuras, usar acesso ao Firestore limitado ao usuário; se uma
    credencial de serviço for necessária, reimplementar os controles no backend
    (Admin SDK e credenciais privilegiadas não obedecem às regras do Firestore).
 4. Expor **somente** consultas autorizadas e criação de planos, buckets e demandas,
@@ -71,7 +71,19 @@ conectada ou configurada. Firebase permanece na configuração atual.
 
 ## Próximas etapas
 
-- Etapa 3: autenticação e autorização no servidor; testes de segurança.
+- Etapa 3: autenticação/autorização implementadas no código e testadas localmente; **falta ensaio real com contas Firebase e Cloudflare**.
 - Etapa 4: consultas.
 - Etapa 5: criação, com aprovação e idempotência.
 - Etapa 6: MCP e integração com as IAs.
+
+## Teste local e limites
+
+`npm test` executa testes de segurança com chaves RSA geradas localmente e
+simulação do Firestore; não altera dados reais. A etapa foi testada com Node 22.
+Para validar em serviço real será necessário conectar conta Cloudflare, publicar
+**somente após aprovação**, usar token Firebase real do próprio usuário e
+comprovar comportamento com membro ativo, desativado e sem login.
+
+**Integração por IA ainda indisponível:** ChatGPT/Claude/Gemini não enviam
+necessariamente um Firebase ID token do site ao MCP. OAuth e consentimento
+para esses clientes são uma etapa separada e ainda não implementada.
