@@ -2,6 +2,8 @@ import { AccessError, firebaseBearerToken, verifyFirebaseIdToken, readCommission
 import { READABLE_COLLECTIONS, listPlannerDocuments } from './firestore-read.js';
 import { validateCreateRequest, normalizeDraft, draftHash, createPlannerDocument } from './create.js';
 import { verifyApprovalReceipt } from './approval.js';
+import { createMcpTools } from './mcp-tools.js';
+import { handleMcpHttp } from './mcp-http.js';
 const headers = {
   'Content-Type':'application/json; charset=utf-8', 'Cache-Control':'no-store',
   'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer', 'Vary':'Authorization'
@@ -31,6 +33,31 @@ export function createHandler({ verifyToken=verifyFirebaseIdToken, lookupMembers
   checkApproval=verifyApprovalReceipt }={}) {
   return async function handle(request,env={}) {
     const url=new URL(request.url),path=url.pathname;
+    // Ponte MCP somente para testes controlados com Firebase ID token.
+    // Em produção, o MCP precisará de OAuth 2.1 e consentimento humano.
+    if(path==='/mcp' && env.MCP_FIREBASE_DEV_ONLY==='true'){
+      try{
+        const token=firebaseBearerToken(request);
+        const identity=await verifyToken(token);
+        await lookupMembership(identity.email,token);
+        const tools=createMcpTools({
+          identity,
+          list:(kind,options)=>listItems(kind,token,new URLSearchParams({
+            pageSize:String(options.pageSize),...(options.pageToken?{pageToken:options.pageToken}:{})
+          })),
+          preview:async(kind,body)=>{
+            const requestDraft=validateCreateRequest(body);
+            const normalized=await normalizeDraft(kind,requestDraft.draft,requestDraft.idempotencyKey);
+            return {kind,draft:normalized,draftHash:await draftHash(normalized),
+              idempotencyKey:requestDraft.idempotencyKey,persisted:false,requiresHumanApproval:true};
+          }
+        });
+        return handleMcpHttp(request,{tools});
+      }catch(error){
+        if(error instanceof AccessError)return json(error.status,{error:error.code});
+        return json(503,{error:'service_unavailable'});
+      }
+    }
     if (path==='/health' && request.method==='GET')
       return json(200,{service:'ipcvt-planner-ia',status:'creation-development',firestoreConnected:false,capabilitiesEnabled:[]});
     const kind = /^\/api\/([a-z]+)$/.exec(path)?.[1];
