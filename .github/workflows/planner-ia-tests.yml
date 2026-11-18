@@ -1,0 +1,38 @@
+name: "Planner IA — testes (sem publicação)"
+on:
+  pull_request:
+    paths:
+      - "integracoes/planner-ia/**"
+      - ".github/workflows/planner-ia-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: "Validar segurança e integrações em simulação"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: integracoes/planner-ia
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: "Instalar dependências"
+        run: npm install --no-audit --no-fund
+      - name: "Executar testes"
+        run: npm test
+      - name: "Verificar sintaxe da API e módulos"
+        run: |
+          node --check src/index.js
+          node --check src/auth.js
+          node --check src/google-firebase-bridge.js
+          node --check src/create.js
+          node --check src/approval.js
+          node --check src/firestore-read.js
+          node --check src/mcp-tools.js
+          node --check src/mcp-http.js

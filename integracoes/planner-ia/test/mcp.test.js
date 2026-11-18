@@ -1,0 +1,135 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { TOOL_DESCRIPTORS, createMcpTools, calculateOverdue } from '../src/mcp-tools.js';
+import { handleMcpHttp, handleMcpMessage } from '../src/mcp-http.js';
+import { createHandler } from '../src/index.js';
+import { AccessError } from '../src/auth.js';
+const identity={email:'tester@example.com'};
+const items=[
+ {id:'t1',title:'Atrasada',dueDate:'2026-11-16',status:'todo',assignees:[{email:'tester@example.com'}]},
+ {id:'t2',title:'Concluída',dueDate:'2026-11-01',status:'done'},
+ {id:'t3',title:'Hoje',dueDate:'2026-11-18',status:'todo'},
+ {id:'t4',title:'Excluída',dueDate:'2026-11-12',status:'doing',deleted:true},
+ {id:'t5',title:'Outro membro',dueDate:'2026-11-03',status:'doing',assignees:[{email:'other@example.com'}]}
+];
+const list=async()=>({items,nextPageToken:null});
+const clock=()=>new Date('2026-11-18T14:00:00Z');
+const tools=createMcpTools({identity,list,preview:async()=>({persisted:false})});
+const rpc=(method,params,id=1)=>({jsonrpc:'2.0',id,method,params});
+const req=(data,other={})=>new Request('https://mcp.example/mcp',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json',...other},body:JSON.stringify(data)});
+test('catálogo MCP não possui ferramentas de edição/exclusão/conclusão',()=>{
+ assert.equal(TOOL_DESCRIPTORS.length,8);
+ assert(!TOOL_DESCRIPTORS.some(t=>/editar|excluir|concluir|confirmar_criacao/.test(t.name)));
+});
+test('relatório filtra concluídas, excluídas e atrasadas',async()=>{
+ const r=await calculateOverdue({list,identity,clock});
+ assert.equal(r.hoje,'2026-11-18');assert.equal(r.quantidadeAtrasadas,2);
+ assert.deepEqual(r.demandas.map(t=>t.id),['t1','t5']);
+});
+test('relatório minhas demandas respeita email autenticado',async()=>{
+ const r=await calculateOverdue({list,identity,clock,options:{apenasMinhas:true}});
+ assert.deepEqual(r.demandas.map(t=>t.id),['t1']);
+});
+test('consultas de prazo e de responsável atravessam páginas no mesmo catálogo MCP',async()=>{
+ const pages = [];
+ const first = {id:'a',planId:'p1',title:'Escalas',dueDate:'2026-11-17',status:'todo',assignees:[{name:'José',email:'teste@example.com'},{name:'José',email:'teste@example.com'}]};
+ const last = {...first, id:'b',dueDate:'2026-11-20'};
+ const memberTools = createMcpTools({
+  identity, clock, preview:async()=>({persisted:false}),
+  list:async(kind,options)=>{
+   assert.equal(kind,'tasks');
+   pages.push(options.pageToken);
+   return options.pageToken ? {items:[last],nextPageToken:null} : {items:[first,{...first,id:'c',deleted:true}],nextPageToken:'segunda'};
+  }
+ });
+ const deadlines = await memberTools.execute('consultar_prazos',{planoId:'p1',de:'2026-11-18',responsavel:'jose'});
+ assert.deepEqual(deadlines.demandas.map(task=>task.id),['b']);
+ const people = await memberTools.execute('consultar_responsaveis',{nomeOuEmail:'JOSÉ'});
+ assert.equal(people.responsaveis[0].demandas,2);
+ assert.equal(people.responsaveis[0].atrasadas,1);
+ assert.equal(people.registrosLidos,3);
+ assert.deepEqual(pages,['','segunda','','segunda']);
+});
+test('filtros inválidos não iniciam leitura e os relatórios identificam resultados parciais',async()=>{
+ let reads=0;
+ const memberTools = createMcpTools({identity,clock,preview:async()=>({persisted:false}),
+  list:async()=>({items:[],nextPageToken:'pagina-'+(++reads)})});
+ await assert.rejects(memberTools.execute('consultar_prazos',{de:'2026-02-29'}),{code:'invalid_arguments'});
+ await assert.rejects(memberTools.execute('consultar_responsaveis',{uid:'outra-conta'}),{code:'invalid_arguments'});
+ assert.equal(reads,0);
+ const result=await memberTools.execute('consultar_responsaveis',{});
+ assert.equal(reads,20);
+ assert.equal(result.resultadoCompleto,false);
+ assert.match(result.aviso,/parcial/);
+});
+test('limite de 20 páginas não produz total falso',async()=>{
+ let n=0;
+ const r=await calculateOverdue({list:async()=>({items:[{id:'x'+n++,dueDate:'2026-11-10',status:'todo'}],nextPageToken:'page'+n}),identity,clock});
+ assert.equal(r.resultadoCompleto,false);
+ assert.equal(r.quantidadeAtrasadasParcial,20);
+});
+test('prévia nunca grava, e não é possível confirmar pelo MCP',async()=>{
+ let calls=0;
+ const instance=createMcpTools({list,identity,preview:async()=>{calls++;return {persisted:false};}});
+ const result=await instance.execute('preparar_criacao',{tipo:'plans',rascunho:{name:'Teste'},chaveIdempotencia:'uniqueOperationKey123'});
+ assert.equal(calls,1);assert.equal(result.gravado,false);
+ await assert.rejects(instance.execute('confirmar_criacao',{}),{code:'invalid_arguments'});
+});
+test('handshake, catálogo e consulta JSON-RPC',async()=>{
+ const initialize=await handleMcpMessage(rpc('initialize',{}),{tools});
+ assert.equal(initialize.result.protocolVersion,'2025-11-25');
+ const catalog=await handleMcpMessage(rpc('tools/list',{}),{tools});
+ assert.equal(catalog.result.tools.length,8);
+ const result=await handleMcpHttp(req(rpc('tools/call',{name:'listar_planos',arguments:{}})),{tools});
+ assert.equal(result.status,200);assert.equal((await result.json()).result.isError,false);
+});
+test('rejeita ferramentas inexistentes, lotes e origens externas',async()=>{
+ const bad=await handleMcpMessage(rpc('tools/call',{name:'excluir_demanda',arguments:{}}),{tools});
+ assert.equal(bad.error.code,-32602);
+ assert.equal((await handleMcpHttp(req([rpc('ping')]),{tools})).status,400);
+ assert.equal((await handleMcpHttp(req(rpc('ping'),{Origin:'https://evil.example'}),{tools})).status,403);
+});
+test('notificação não tem resposta e métodos ilegais são recusados',async()=>{
+ assert.equal(await handleMcpMessage({jsonrpc:'2.0',method:'notifications/initialized'},{tools}),null);
+ assert.equal((await handleMcpMessage(rpc('delete',{}),{tools})).error.code,-32601);
+});
+
+test('gateway MCP fica desligado por padrão',async()=>{
+ const handler=createHandler({
+  verifyToken:async()=>({uid:'u1',email:'tester@example.com'}),
+  lookupMembership:async()=>({authorized:true})
+ });
+ const request=req(rpc('tools/list',{}));
+ const response=await handler(request,{});
+ assert.equal(response.status,404);
+});
+test('gateway experimental verifica Firebase e autorização a cada mensagem',async()=>{
+ let membership=0,writes=0;
+ const handler=createHandler({
+  verifyToken:async()=>({uid:'u1',email:'tester@example.com'}),
+  lookupMembership:async()=>{membership++;return {authorized:true};},
+  listItems:async()=>({items:[],nextPageToken:null}),
+  createRecord:async()=>{writes++;return {created:true};}
+ });
+ const original=req(rpc('tools/list',{}));
+ const response=await handler(new Request(original.url,{
+  method:'POST',headers:{...Object.fromEntries(original.headers),Authorization:'Bearer valid-token'},
+  body:JSON.stringify(rpc('tools/list',{}))
+ }),{MCP_FIREBASE_DEV_ONLY:'true'});
+ assert.equal(response.status,200);
+ assert.equal((await response.json()).result.tools.length,8);
+ assert.equal(membership,1);
+ assert.equal(writes,0);
+});
+test('gateway MCP recusa membro desativado e chamada sem login',async()=>{
+ const handler=createHandler({
+  verifyToken:async()=>({uid:'u1',email:'tester@example.com'}),
+  lookupMembership:async()=>{throw new AccessError(403,'not_authorized');}
+ });
+ const noToken=await handler(req(rpc('tools/list',{})),{MCP_FIREBASE_DEV_ONLY:'true'});
+ assert.equal(noToken.status,401);
+ const raw=req(rpc('tools/list',{}));
+ const bad=new Request(raw.url,{method:'POST',headers:{...Object.fromEntries(raw.headers),Authorization:'Bearer x'},body:JSON.stringify(rpc('tools/list',{}))});
+ const denied=await handler(bad,{MCP_FIREBASE_DEV_ONLY:'true'});
+ assert.equal(denied.status,403);
+});
