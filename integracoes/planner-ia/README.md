@@ -1,4 +1,4 @@
-# Integração IA · Planner IPCVT — etapa 5
+# Integração IA · Planner IPCVT — etapa 6 (MCP experimental)
 
 Base **isolada** para um Cloudflare Worker. Este diretório não é importado pelo
 Portal nem pelo Planner publicado, e não contém credenciais ou modificações nas
@@ -175,3 +175,76 @@ pelo Firestore porque a requisição usa o token do próprio integrante.
 - Unicidade por nome de plano e limitações de custo/abuso exigem testes e
   decisões adicionais antes de habilitar a escrita.
 - Toda publicação dependerá de revisão explícita; este PR continua rascunho.
+
+## Etapa 6 — Núcleo MCP preparado, conexão ainda bloqueada
+
+Arquivos adicionados:
+- `src/mcp-tools.js`: catálogo de **6 ferramentas**: listar planos, buckets,
+  demandas e eventos internos; consultar atrasos e preparar criação.
+- `src/mcp-http.js`: protótipo MCP sobre JSON-RPC / HTTP stateless, sem SSE;
+  compatibilidade de transporte final **ainda depende de validação com clientes**.
+- `test/mcp.test.js`: testes de catálogo, atrasos, ausência de ferramentas de
+  edição/exclusão, bloqueio de origens e autenticação da ponte.
+- `.github/workflows/planner-ia-tests.yml`: CI para testes em PR, **sem deploy**.
+
+A rota `POST /mcp` permanece **404 por padrão**. Somente uma configuração
+explícita `MCP_FIREBASE_DEV_ONLY=true` permite chamadas em teste, e mesmo assim
+exige o **Firebase ID token Google** válido e o membro ativo em
+`comissao_acessos`, verificado a cada requisição. Não ativar essa flag no Worker
+público: clientes ChatGPT/Claude/Gemini não recebem automaticamente o token do
+login web da igreja; a autenticação MCP precisa de OAuth 2.1.
+
+A ferramenta `preparar_criacao` NÃO salva. O usuário deve confirmar em página
+independente, autenticada pelo Google, e o servidor deve assinar um recibo
+vinculado a identidade, conteúdo e validade; fluxo **ainda não implementado**.
+Nenhuma ferramenta MCP de `create`, `update`, `complete` ou `delete`
+é publicada.
+
+### OAuth — implantação planejada, ainda não configurada
+
+Utilizar `@cloudflare/workers-oauth-provider` v1 (Cloudflare, outubro/2026),
+preferencialmente com dois Workers e Service Binding:
+1. Um Worker emissor OAuth 2.1 autentica a conta Google/Firebase da pessoa,
+   solicita consentimento para leitura do Planner e guarda autorizações em
+   Cloudflare Workers KV.
+2. O Worker MCP valida o token OAuth por Service Binding, verifica novamente
+   a identidade Firebase e o membro ativo da Comissão; usa Firebase Auth ID
+   token para o Firestore e respeita as regras existentes.
+3. Para criação, abrir página segura em navegador externo à IA, exigir clique
+   explícito do usuário e emitir comprovante assinado de curta duração.
+4. Testar compatibilidade com cliente real; após validação, substituir o
+   protótipo MCP por transporte conforme versão atual do protocolo.
+
+Exige URLs de Worker definitivas, namespace KV, consentimento, fluxo de
+autenticação real, configuração de domínio autorizado no Firebase (quando
+necessário), configuração de segredos no Cloudflare e testes. **Nunca colocar
+token Firebase ou segredo no GitHub ou nesta conversa.**
+
+### Compatibilidade das IAs (consultada em 18/11/2026)
+
+- **Claude:** conectores MCP personalizados disponíveis em planos individuais,
+  inclusive o gratuito, conforme documentação oficial.
+- **ChatGPT:** a documentação atual de conexão MCP personalizada no ChatGPT
+  menciona Business e Enterprise/Edu; **não presumir que Plus/Pro individuais
+  conseguem instalar essa integração**.
+- **Gemini Apps:** a função de apps MCP personalizados exige, no momento,
+  conta pessoal nos Estados Unidos, idade 18+, e inglês; **não está anunciada
+  para uso regular no Brasil**.
+- Essas condições pertencem às plataformas e podem mudar; verificar no momento
+  do teste e não recomendar upgrade de assinatura sem decisão do usuário.
+
+Referências oficiais:
+- https://developers.cloudflare.com/agents/model-context-protocol/protocol/authorization/
+- https://developers.cloudflare.com/changelog/post/2026-10-01-workers-oauth-provider-1x/
+- https://help.openai.com/en/articles/12584461-connecting-custom-mcp-servers-in-chatgpt
+- https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp
+- https://support.google.com/gemini/answer/17209137
+
+### Ponto de intervenção humana necessário para continuar
+
+Uma conta Cloudflare Workers Free precisa ser criada e o ambiente de OAuth
+(KV, URL do emissor e URL do MCP) precisa ser disponibilizado **antes**
+de testar uma conexão real. Não pedir API tokens ou segredos pelo chat. Não
+ativar cobrança nem publicar a API sem autorização explícita.
+
+O código atual não altera e nem substitui o login do Portal IPCVT.
