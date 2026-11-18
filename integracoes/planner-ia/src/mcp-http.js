@@ -32,8 +32,21 @@ export async function handleMcpHttp(request,{tools,allowedOrigins=[]}={}){
  const accept=request.headers.get('accept')||'';
  if(!accept.includes('application/json')&&!accept.includes('text/event-stream'))return new Response('',{status:406,headers});
  if(Number(request.headers.get('content-length')||0)>26000)return new Response('',{status:413,headers});
- const raw=await request.text();
- if(raw.length>26000)return new Response('',{status:413,headers});
+ const reader=request.body?.getReader();
+ if(!reader)return new Response(JSON.stringify(fail(null,-32700,'Parse error')),{status:400,headers});
+ const chunks=[];let total=0;
+ for(;;){
+  const {value,done}=await reader.read();
+  if(done)break;
+  total+=value.byteLength;
+  if(total>26000){await reader.cancel();return new Response('',{status:413,headers});}
+  chunks.push(value);
+ }
+ const bytes=new Uint8Array(total);let offset=0;
+ for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}
+ let raw;
+ try{raw=new TextDecoder('utf-8',{fatal:true}).decode(bytes);}
+ catch{return new Response(JSON.stringify(fail(null,-32700,'Parse error')),{status:400,headers});}
  let message;
  try{message=JSON.parse(raw);}catch{return new Response(JSON.stringify(fail(null,-32700,'Parse error')),{status:400,headers});}
  if(Array.isArray(message))return new Response(JSON.stringify(fail(null,-32600,'Batch not supported')),{status:400,headers});
