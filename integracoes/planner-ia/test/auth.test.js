@@ -77,7 +77,7 @@ test('sessao apenas depois de token valido e autorizacao',async()=>{
   assert.equal(response.status,200);
   assert.deepEqual(await response.json(),{
     authenticated:true,authorized:true,uid:'firebase-user-123',
-    email:'tester@example.com',capabilities:['read']
+    email:'tester@example.com',capabilities:['read','preview_creation']
   });
   assert.equal(response.headers.get('access-control-allow-origin'),null);
 });
