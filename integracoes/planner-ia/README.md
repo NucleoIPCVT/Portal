@@ -1,4 +1,4 @@
-# Integração IA · Planner IPCVT — etapa 4
+# Integração IA · Planner IPCVT — etapa 5
 
 Base **isolada** para um Cloudflare Worker. Este diretório não é importado pelo
 Portal nem pelo Planner publicado, e não contém credenciais ou modificações nas
@@ -12,7 +12,9 @@ regras do Firebase.
 - `GET /api/plans`, `/api/buckets`, `/api/tasks`, `/api/events`, `/api/routines` e `/api/activity`: consultas paginadas ao Firestore usando o **ID token do usuário** (sem credencial administrativa). Cada requisição repete a verificação de identidade e de autorização ativa.
 - `pageSize`: 1 a 50 (padrão 25); `pageToken`: cursor do Firestore retornado na página anterior. Uma resposta com `hasMore: true` **não representa todos os registros**.
 - Converte os tipos do Firestore em objetos JSON: IDs, nomes, prazos, status, responsáveis, checklists, recorrências e histórico. O relatório de atrasos deverá percorrer **todas** as páginas e ignorar demandas concluídas/arquivadas.
-- Nenhuma rota MCP ou método de criação, edição, conclusão e exclusão existe nesta etapa.
+- `POST /api/preview/{plans|buckets|tasks}` valida o rascunho e devolve a prévia, **sem salvar**.
+- `POST /api/create/{plans|buckets|tasks}` contém a lógica de criação, mas exige um recibo criptográfico de aprovação humana que **ainda não pode ser emitido pela integração**. Sem `APPROVAL_SECRET`, retorna `503 approval_not_configured`.
+- Não existem operações de edição, conclusão, arquivamento ou exclusão nesta API.
 - **Não há credenciais administrativas, conexão MCP ou publicação em produção nesta etapa.**
 - O Planner normal continua colaborativo e com as mesmas permissões.
 
@@ -76,7 +78,7 @@ conectada ou configurada. Firebase permanece na configuração atual.
 
 - Etapa 3: autenticação/autorização implementadas no código e testadas localmente; **falta ensaio real com contas Firebase e Cloudflare**.
 - Etapa 4: consultas paginadas implementadas em código e cobertas por testes simulados; **falta teste ao vivo com contas reais**.
-- Etapa 5: criação, com aprovação e idempotência.
+- Etapa 5: criação e validação implementadas, incluindo recibo criptográfico, idempotência, gravação e auditoria atômicas. **Bloqueada até existir fluxo externo de aprovação humana e testes reais.**
 - Etapa 6: MCP e integração com as IAs.
 
 ## Teste local e limites
@@ -112,3 +114,64 @@ até concluirmos OAuth e publicarmos um Worker revisado.
 
 **Ainda faltam:** limites de requisições por pessoa, testes com sessões reais,
 relatórios agregados por data/status e revisão dos custos de leituras no Firebase.
+
+## Criação (etapa 5, bloqueada até a etapa 6)
+
+A API de prévia aceita apenas planos comuns (`kind: project|continuous`), buckets
+e demandas, respeitando as regras existentes do Firebase. Recorrências, transferência
+de responsável de plano e importação de dados históricos são intencionalmente
+excluídos por enquanto.
+
+### Prévia (não grava)
+
+`POST /api/preview/plans` ou `/api/preview/buckets` ou `/api/preview/tasks`:
+
+```json
+{
+  "draft": {
+    "name": "Culto de Ação de Graças",
+    "kind": "project",
+    "dueDate": "2026-11-26"
+  },
+  "idempotencyKey": "pedido-culto-acao-gracas-2026"
+}
+```
+
+Exige token Firebase da própria conta Google no cabeçalho Authorization. Retorna
+rascunho normalizado, digest SHA-256 e `requiresHumanApproval: true`; jamais grava.
+
+### Criação (proibida sem confirmação independente)
+
+`POST /api/create/plans` / `/api/create/buckets` / `/api/create/tasks`
+usa o **mesmo** rascunho e idempotencyKey, acrescidos do campo `approval`.
+
+O servidor exige `approval` assinado por componente **independente da IA**.
+O recibo comprova identidade Firebase do usuário, categoria, conteúdo exato,
+idempotencyKey e prazo de validade curto (até 10 minutos).
+
+**Não existe atualmente endpoint que emita esse recibo**: a autenticação do
+usuário e o clique de confirmação na interface confiável serão implementados
+nas próximas etapas. Não confundir `confirmed: true` enviado pela IA com
+aprovação humana. Não configurar `APPROVAL_SECRET` nem ativar criação sem
+implementar e testar esse fluxo.
+
+Cada gravação futura deve ocorrer através de **um commit atômico Firestore REST**
+com o token do usuário, adicionando documento e entrada do histórico da Comissão
+juntos, ambos com condição de `exists: false`. IDs determinísticos impedem duplicatas
+por reutilização da mesma idempotencyKey; conflitos retornam HTTP 409.
+
+O servidor fixa `createdBy`, `updatedBy`, versão, datas de criação e atualização;
+as demandas nascem `todo`, checklists `done: false`. Esses campos não podem
+ser falsificados no rascunho. As regras existentes continuam sendo validadas
+pelo Firestore porque a requisição usa o token do próprio integrante.
+
+### Limitações
+
+- Ainda não há forma de o ChatGPT/Claude/Gemini passar uma autorização de usuário
+  ao Worker; o fluxo OAuth/MCP e a tela de confirmação ficam para a etapa 6.
+- Não foram executados commits em Firebase de produção.
+- Regras atuais de plano não suportam `ownerEmail`, `ownerName` e
+  `kind: recurring`; a API não envia esses campos.
+- Unicidade por nome de plano e limitações de custo/abuso exigem testes e
+  decisões adicionais antes de habilitar a escrita.
+- Toda publicação dependerá de revisão explícita; este PR continua rascunho.
