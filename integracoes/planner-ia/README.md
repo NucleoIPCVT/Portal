@@ -201,14 +201,25 @@ Nenhuma ferramenta MCP de `create`, `update`, `complete` ou `delete`
 
 ### Conector pessoal no ChatGPT Work
 
-O conector privado do Work usa o mesmo catálogo da PR. A abertura pelo navegador
-leva ao Planner da Comissão no Portal. A página `/conectar` atende exclusivamente
-à vinculação e à desconexão da conta Google. Consultas e prévias ficam na conversa.
+A versão 3 do conector foi publicada com acesso exclusivo do proprietário. O
+Work disponibilizou as oito ferramentas na conversa da conta Plus de teste.
+Uma chamada real a `listar_planos`, com `pageSize: 1`, recebeu o aviso de que
+as leituras estão desativadas. Nenhum registro do Firestore foi consultado.
 
-A versão de revisão mantém as leituras reais desligadas. A publicação privada
-do conector permite testar a descoberta das ferramentas no Work. A habilitação
-de consultas com a conta da Comissão é uma etapa posterior. O teste de
-descoberta dispensa uma conta Cloudflare própria.
+A abertura do conector no navegador, inclusive pelo antigo endereço
+`/conectar`, leva ao Planner oficial. A versão publicada dispensa páginas
+de interface, scripts de login Google e banco de sessões.
+
+O módulo `planner-store.js` do Portal reutiliza o aplicativo Firebase
+`ipcvt-comissao`. Em simulação com esse módulo e dependências fictícias,
+uma sessão Google existente chegou a `authorized` após a verificação de um
+membro ativo. A inativação, a saída e a conta sem e-mail verificado impediram
+o uso daquela sessão. O teste dispensou outro login e acesso à rede.
+
+O próximo ensaio é a primeira leitura real de um plano. A conta do Work
+ainda precisa ser vinculada, com consentimento, à sessão do Planner original.
+A autorização para o ensaio e os dados de produção ficam fora da publicação
+de descoberta. Claude e Gemini seguem em avaliação separada.
 
 ### OAuth — implantação planejada, ainda não configurada
 
