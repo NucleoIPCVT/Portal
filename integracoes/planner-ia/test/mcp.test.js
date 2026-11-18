@@ -18,7 +18,7 @@ const tools=createMcpTools({identity,list,preview:async()=>({persisted:false})})
 const rpc=(method,params,id=1)=>({jsonrpc:'2.0',id,method,params});
 const req=(data,other={})=>new Request('https://mcp.example/mcp',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json',...other},body:JSON.stringify(data)});
 test('catálogo MCP não possui ferramentas de edição/exclusão/conclusão',()=>{
- assert.equal(TOOL_DESCRIPTORS.length,6);
+ assert.equal(TOOL_DESCRIPTORS.length,8);
  assert(!TOOL_DESCRIPTORS.some(t=>/editar|excluir|concluir|confirmar_criacao/.test(t.name)));
 });
 test('relatório filtra concluídas, excluídas e atrasadas',async()=>{
@@ -29,6 +29,38 @@ test('relatório filtra concluídas, excluídas e atrasadas',async()=>{
 test('relatório minhas demandas respeita email autenticado',async()=>{
  const r=await calculateOverdue({list,identity,clock,options:{apenasMinhas:true}});
  assert.deepEqual(r.demandas.map(t=>t.id),['t1']);
+});
+test('consultas de prazo e de responsável atravessam páginas no mesmo catálogo MCP',async()=>{
+ const pages = [];
+ const first = {id:'a',planId:'p1',title:'Escalas',dueDate:'2026-11-17',status:'todo',assignees:[{name:'José',email:'teste@example.com'},{name:'José',email:'teste@example.com'}]};
+ const last = {...first, id:'b',dueDate:'2026-11-20'};
+ const memberTools = createMcpTools({
+  identity, clock, preview:async()=>({persisted:false}),
+  list:async(kind,options)=>{
+   assert.equal(kind,'tasks');
+   pages.push(options.pageToken);
+   return options.pageToken ? {items:[last],nextPageToken:null} : {items:[first,{...first,id:'c',deleted:true}],nextPageToken:'segunda'};
+  }
+ });
+ const deadlines = await memberTools.execute('consultar_prazos',{planoId:'p1',de:'2026-11-18',responsavel:'jose'});
+ assert.deepEqual(deadlines.demandas.map(task=>task.id),['b']);
+ const people = await memberTools.execute('consultar_responsaveis',{nomeOuEmail:'JOSÉ'});
+ assert.equal(people.responsaveis[0].demandas,2);
+ assert.equal(people.responsaveis[0].atrasadas,1);
+ assert.equal(people.registrosLidos,3);
+ assert.deepEqual(pages,['','segunda','','segunda']);
+});
+test('filtros inválidos não iniciam leitura e os relatórios identificam resultados parciais',async()=>{
+ let reads=0;
+ const memberTools = createMcpTools({identity,clock,preview:async()=>({persisted:false}),
+  list:async()=>({items:[],nextPageToken:'pagina-'+(++reads)})});
+ await assert.rejects(memberTools.execute('consultar_prazos',{de:'2026-02-29'}),{code:'invalid_arguments'});
+ await assert.rejects(memberTools.execute('consultar_responsaveis',{uid:'outra-conta'}),{code:'invalid_arguments'});
+ assert.equal(reads,0);
+ const result=await memberTools.execute('consultar_responsaveis',{});
+ assert.equal(reads,20);
+ assert.equal(result.resultadoCompleto,false);
+ assert.match(result.aviso,/parcial/);
 });
 test('limite de 20 páginas não produz total falso',async()=>{
  let n=0;
@@ -47,7 +79,7 @@ test('handshake, catálogo e consulta JSON-RPC',async()=>{
  const initialize=await handleMcpMessage(rpc('initialize',{}),{tools});
  assert.equal(initialize.result.protocolVersion,'2025-11-25');
  const catalog=await handleMcpMessage(rpc('tools/list',{}),{tools});
- assert.equal(catalog.result.tools.length,6);
+ assert.equal(catalog.result.tools.length,8);
  const result=await handleMcpHttp(req(rpc('tools/call',{name:'listar_planos',arguments:{}})),{tools});
  assert.equal(result.status,200);assert.equal((await result.json()).result.isError,false);
 });
@@ -85,7 +117,7 @@ test('gateway experimental verifica Firebase e autorização a cada mensagem',as
   body:JSON.stringify(rpc('tools/list',{}))
  }),{MCP_FIREBASE_DEV_ONLY:'true'});
  assert.equal(response.status,200);
- assert.equal((await response.json()).result.tools.length,6);
+ assert.equal((await response.json()).result.tools.length,8);
  assert.equal(membership,1);
  assert.equal(writes,0);
 });

@@ -178,9 +178,8 @@ pelo Firestore porque a requisição usa o token do próprio integrante.
 
 ## Etapa 6 — Núcleo MCP preparado, conexão ainda bloqueada
 
-Arquivos adicionados:
-- `src/mcp-tools.js`: catálogo de **6 ferramentas**: listar planos, buckets,
-  demandas e eventos internos; consultar atrasos e preparar criação.
+- O catálogo em `src/mcp-tools.js` oferece oito ferramentas para listar planos, buckets, demandas e eventos internos, consultar atrasos, prazos e responsáveis, e preparar uma prévia de criação.
+- Os relatórios de demandas usam a mesma paginação em `src/task-queries.js`. Os prazos aceitam filtros por período, plano e responsável. As contagens indicam quando a leitura atingiu o limite de páginas.
 - `src/mcp-http.js`: protótipo MCP sobre JSON-RPC / HTTP stateless, sem SSE;
   compatibilidade de transporte final **ainda depende de validação com clientes**.
 - `test/mcp.test.js`: testes de catálogo, atrasos, ausência de ferramentas de
@@ -199,6 +198,17 @@ independente, autenticada pelo Google, e o servidor deve assinar um recibo
 vinculado a identidade, conteúdo e validade; fluxo **ainda não implementado**.
 Nenhuma ferramenta MCP de `create`, `update`, `complete` ou `delete`
 é publicada.
+
+### Conector pessoal no ChatGPT Work
+
+O conector privado do Work usa o mesmo catálogo da PR. A abertura pelo navegador
+leva ao Planner da Comissão no Portal. A página `/conectar` atende exclusivamente
+à vinculação e à desconexão da conta Google. Consultas e prévias ficam na conversa.
+
+A versão de revisão mantém as leituras reais desligadas. A publicação privada
+do conector permite testar a descoberta das ferramentas no Work. A habilitação
+de consultas com a conta da Comissão é uma etapa posterior. O teste de
+descoberta dispensa uma conta Cloudflare própria.
 
 ### OAuth — implantação planejada, ainda não configurada
 
@@ -240,7 +250,7 @@ Referências oficiais:
 - https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp
 - https://support.google.com/gemini/answer/17209137
 
-### Ponto de intervenção humana necessário para continuar
+### Infraestrutura para o Worker OAuth externo
 
 Uma conta Cloudflare Workers Free precisa ser criada e o ambiente de OAuth
 (KV, URL do emissor e URL do MCP) precisa ser disponibilizado **antes**
