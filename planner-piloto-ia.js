@@ -5,8 +5,8 @@ const key = 'ipcvt:planner:piloto-ia'
 const lifetime = 15 * 60 * 1000
 const validState = /^[A-Za-z0-9_-]{43}$/
 const reports = {
-  pronto: 'A consulta terminou. Volte à conversa no ChatGPT para receber o resultado.',
-  encerrado: 'Este teste de um único plano já foi encerrado.',
+  pronto: 'Conexão autorizada. Volte ao ChatGPT para consultar o Planner ou preparar uma prévia.',
+  encerrado: 'Esta vinculação foi encerrada.',
   expirado: 'O vínculo expirou ou o navegador não reconheceu a sessão. Abra o link de vinculação de novo, nesta mesma janela.',
   sessao: 'A sessão não pôde ser confirmada. Entre no Work e na Comissão com as contas usadas no teste.',
   'sem-acesso': 'Esta conta Google precisa de autorização ativa na Comissão.',
@@ -36,8 +36,8 @@ function dialog(title, message, action, accept, cancel, cancelLabel = 'Cancelar'
 function finish(kind) {
   forget()
   if (kind === 'expirado') {
-    return dialog('Vínculo expirado', 'Reinicie o vínculo para autorizar um plano com a sua sessão atual.',
-      'Reiniciar vínculo', () => location.replace(connector+'/vincular'),
+    return dialog('Vínculo expirado', 'Reinicie o vínculo para autorizar as consultas do Planner com a sua sessão atual.',
+      'Reiniciar vínculo', () => location.replace(connector+'/vincular-geral'),
       () => location.replace('comissao.html'), 'Voltar à Comissão')
   }
   dialog('Vinculação com o ChatGPT', reports[kind] || reports.falha, 'Voltar à Comissão', () => location.replace('comissao.html'))
@@ -68,7 +68,7 @@ export async function startPilot(openPlanner) {
   }
   if (fragment === '#ipcvt-ia') {
     forget()
-    location.replace(connector + '/vincular')
+    location.replace(connector + '/vincular-geral')
     return
   }
   let record
@@ -115,18 +115,18 @@ export async function startPilot(openPlanner) {
           const current = store.session
           if (current.status!=='authorized' || current.user?.uid!==record.uid || !hasPanelEntry('planner',record.uid) || record.until<=Date.now()) return finish('expirado')
           forget()
-          submit('/vinculo/confirmar',record.state,token)
+          submit('/vinculo-geral/confirmar',record.state,token)
         } catch { finish('sessao') }
       })()
       return
     }
     document.getElementById('planner-app').hidden = false
-    dialog('Autorizar a leitura de um plano?', 'O ChatGPT receberá somente o nome de um plano do Planner. A conta da Comissão é '+session.email+'. A gravação está bloqueada.',
-      'Autorizar um plano', () => {
+    dialog('Autorizar o ChatGPT a consultar o Planner?', 'O ChatGPT poderá consultar todos os planos, buckets, demandas, responsáveis, prazos e eventos internos e preparar prévias de criação enquanto sua sessão estiver válida. A conta da Comissão é '+session.email+'. A gravação está bloqueada.',
+      'Autorizar consultas', () => {
         if (store.session.user?.uid!==session.user.uid || store.session.status!=='authorized' || record.until<=Date.now()) return finish('expirado')
         record.uid = session.user.uid
         try { sessionStorage.setItem(key,JSON.stringify(record)) } catch { return finish('armazenamento') }
-        const popup = window.open(connector+'/vinculo/ponte#'+record.state,'_blank','popup,width=480,height=360')
+        const popup = window.open(connector+'/vinculo-geral/ponte#'+record.state,'_blank','popup,width=480,height=360')
         if (!popup) return finish('falha')
         let sent = false
         const timer = setInterval(() => {
