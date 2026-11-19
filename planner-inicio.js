@@ -14,6 +14,7 @@ async function authorizeClaude(record) {
   const {hasPanelEntry,clearPanelEntry} = await import('./comissao-entrada.js?v=20261114-v1')
   if (!hasPanelEntry('planner')) return location.replace('comissao.html')
   const {createPlannerStore} = await import('./planner-store.js?v=20261118-session-only-v1')
+  const {consentGoogle}=await import('./planner-piloto-ia.js?v=20261119-acoes')
   const store = createPlannerStore({sessionOnly:true,onSession(session) {
     if (session.status === 'checking') return
     if (session.status !== 'authorized' || !hasPanelEntry('planner',session.user?.uid)) {
@@ -26,20 +27,21 @@ async function authorizeClaude(record) {
     const cancel = document.getElementById('confirm-cancel')
     document.getElementById('planner-app').hidden = false
     document.getElementById('confirm-title').textContent = 'Autorizar o Claude?'
-    document.getElementById('confirm-message').textContent = 'O Claude poderá consultar todos os planos, buckets, demandas, responsáveis, prazos e eventos internos e preparar prévias de criação por 15 minutos. Conta da Comissão: '+session.email
-    accept.textContent = 'Autorizar leitura'
+    document.getElementById('confirm-message').textContent = 'Vínculo renovável para consultar o Planner, criar após confirmação no chat e concluir demandas atribuídas a você. Você pode remover a conexão no Claude. Conta da Comissão: '+session.email
+    accept.textContent = 'Vincular minha conta'
     cancel.textContent = 'Cancelar'
     cancel.hidden = false
     cancel.onclick = dialog.oncancel = () => {sessionStorage.removeItem(claudeKey); location.replace('comissao.html')}
     accept.onclick = async () => {
       accept.disabled = true
       try {
+        const google=await consentGoogle(session.email)
         const token = await session.user.getIdToken()
         if (store.session.status !== 'authorized' || store.session.user?.uid !== session.user.uid || record.until <= Date.now() || !hasPanelEntry('planner',session.user.uid)) throw Error()
         const form = document.createElement('form')
         form.method = 'post'
         form.action = 'https://ipcvt-planner-claude.hudsonamorim08.workers.dev/confirm-geral'
-        for (const [name,value] of Object.entries({state:record.id,id_token:token})) {
+        for (const [name,value] of Object.entries({state:record.id,id_token:token,google})) {
           const input = document.createElement('input')
           input.type = 'hidden'
           input.name = name
@@ -61,7 +63,7 @@ try { pending = Boolean(sessionStorage.getItem('ipcvt:planner:piloto-ia')) } cat
 if (claudePending && window.top === window.self && !location.hash.startsWith('#ipcvt-ia')) {
   await authorizeClaude(claudePending)
 } else if (/^#ipcvt-ia(?:$|[-=])/.test(location.hash) || pending) {
-  const { startPilot } = await import('./planner-piloto-ia.js?v=20261119-geral')
+  const { startPilot } = await import('./planner-piloto-ia.js?v=20261119-acoes')
   await startPilot(() => import('./planner.js?v=20261117-mobile-v6'))
 } else {
   await import('./planner.js?v=20261117-mobile-v6')
