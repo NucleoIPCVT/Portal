@@ -1,3 +1,14 @@
+import {GOOGLE_CLIENT_ID,GOOGLE_LOGIN_SCOPES} from './ipcvt-google-login.js?v=20261112-google-direto-02'
+export function consentGoogle(email){
+  return new Promise((resolve,reject)=>{
+    const client=window.google.accounts.oauth2.initTokenClient({
+      client_id:GOOGLE_CLIENT_ID,scope:GOOGLE_LOGIN_SCOPES,login_hint:email,include_granted_scopes:false,
+      callback:r=>r.access_token?resolve(r.access_token):reject(Error('Conta não confirmada')),
+      error_callback:reject
+    })
+    client.requestAccessToken({prompt:'select_account'})
+  })
+}
 import { hasPanelEntry, clearPanelEntry } from './comissao-entrada.js?v=20261114-v1'
 
 const connector = 'https://planner-ipcvt-integracao-ia.hudsonamorim.chatgpt.site'
@@ -121,8 +132,11 @@ export async function startPilot(openPlanner) {
       return
     }
     document.getElementById('planner-app').hidden = false
-    dialog('Autorizar o ChatGPT a consultar o Planner?', 'O ChatGPT poderá consultar todos os planos, buckets, demandas, responsáveis, prazos e eventos internos e preparar prévias de criação enquanto sua sessão estiver válida. A conta da Comissão é '+session.email+'. A gravação está bloqueada.',
-      'Autorizar consultas', () => {
+    dialog('Vincular o ChatGPT ao Planner?', 'A conta '+session.email+' permitirá consultas contínuas, criação após confirmação no chat e conclusão das demandas atribuídas a você. Para revogar, abra o conector em /desvincular.',
+      'Vincular minha conta', async () => {
+        let google
+        try { google=await consentGoogle(session.email) } catch { return finish('sessao') }
+        dialog('Confirmar conta do Work', 'Finalize o vínculo desta conta Google com seu ChatGPT.', 'Finalizar vínculo', () => {
         if (store.session.user?.uid!==session.user.uid || store.session.status!=='authorized' || record.until<=Date.now()) return finish('expirado')
         record.uid = session.user.uid
         try { sessionStorage.setItem(key,JSON.stringify(record)) } catch { return finish('armazenamento') }
@@ -146,10 +160,11 @@ export async function startPilot(openPlanner) {
           try {
             const token = await session.user.getIdToken()
             if (store.session.status!=='authorized' || store.session.user?.uid!==record.uid || Date.now()>=record.until) return complete('expirado')
-            popup.postMessage({state:record.state,token},connector)
+            popup.postMessage({state:record.state,token,google},connector)
           } catch { complete('sessao') }
         }
         window.addEventListener('message',receive)
+        }, () => finish('cancelado'))
       }, () => finish('cancelado'))
   }})
 }
