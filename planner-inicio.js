@@ -1,5 +1,5 @@
-const claudeKey = 'ipcvt:planner:claude'
-const claudeRequest = /^#ipcvt-claude=([A-Za-z0-9_-]{43})$/.exec(location.hash)
+const claudeKey = 'ipcvt:planner:claude-geral'
+const claudeRequest = /^#ipcvt-claude-geral=([A-Za-z0-9_-]{43})$/.exec(location.hash)
 let claudePending
 try {
   if (claudeRequest) sessionStorage.setItem(claudeKey, JSON.stringify({id:claudeRequest[1],until:Date.now()+600000}))
@@ -26,7 +26,7 @@ async function authorizeClaude(record) {
     const cancel = document.getElementById('confirm-cancel')
     document.getElementById('planner-app').hidden = false
     document.getElementById('confirm-title').textContent = 'Autorizar o Claude?'
-    document.getElementById('confirm-message').textContent = 'O Claude poderá consultar o nome de um plano por 15 minutos. Conta da Comissão: '+session.email
+    document.getElementById('confirm-message').textContent = 'O Claude poderá consultar todos os planos, buckets, demandas, responsáveis, prazos e eventos internos e preparar prévias de criação por 15 minutos. Conta da Comissão: '+session.email
     accept.textContent = 'Autorizar leitura'
     cancel.textContent = 'Cancelar'
     cancel.hidden = false
@@ -38,7 +38,7 @@ async function authorizeClaude(record) {
         if (store.session.status !== 'authorized' || store.session.user?.uid !== session.user.uid || record.until <= Date.now() || !hasPanelEntry('planner',session.user.uid)) throw Error()
         const form = document.createElement('form')
         form.method = 'post'
-        form.action = 'https://ipcvt-planner-claude.hudsonamorim08.workers.dev/confirm'
+        form.action = 'https://ipcvt-planner-claude.hudsonamorim08.workers.dev/confirm-geral'
         for (const [name,value] of Object.entries({state:record.id,id_token:token})) {
           const input = document.createElement('input')
           input.type = 'hidden'
@@ -61,7 +61,7 @@ try { pending = Boolean(sessionStorage.getItem('ipcvt:planner:piloto-ia')) } cat
 if (claudePending && window.top === window.self && !location.hash.startsWith('#ipcvt-ia')) {
   await authorizeClaude(claudePending)
 } else if (/^#ipcvt-ia(?:$|[-=])/.test(location.hash) || pending) {
-  const { startPilot } = await import('./planner-piloto-ia.js?v=20261118-3')
+  const { startPilot } = await import('./planner-piloto-ia.js?v=20261119-geral')
   await startPilot(() => import('./planner.js?v=20261117-mobile-v6'))
 } else {
   await import('./planner.js?v=20261117-mobile-v6')
