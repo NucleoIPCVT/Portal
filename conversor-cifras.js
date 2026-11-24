@@ -2,7 +2,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebas
 import { getAuth,onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 import { getFirestore,doc,onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 import { hasPanelEntry } from './comissao-entrada.js?v=20261124-cifras-v1';
-import { convertLines } from './conversor-cifras-core.js?v=1';
+import { convertClipboard } from './conversor-cifras-core.js?v=20261124-clipboard-v1';
 const firebase=initializeApp({
   apiKey: 'AIzaSyAg9w5QohkcmXUFRgLfSI5Sh1chnCD1Owc',
   authDomain: 'repertorio-ipcvt.firebaseapp.com',
@@ -15,7 +15,7 @@ const auth=getAuth(firebase),db=getFirestore(firebase),$=id=>document.getElement
 let allowed=false,stop=null,seq=0,pending=null,original='',song='cifra-ipcvt';
 let accessTimer=null;
 const setGateMessage=(title,msg)=>{$('gate').querySelector('h1').textContent=title;$('gate-message').textContent=msg;};
-function gate(msg,loading=false){allowed=false;$('gate').hidden=false;$('app').hidden=true;setGateMessage(loading?'Verificando acesso':'Acesso ao conversor',msg);pending=null;$('import').disabled=false;original='';$('editor').value='';render()}
+function gate(msg,loading=false){allowed=false;$('gate').hidden=false;$('app').hidden=true;setGateMessage(loading?'Verificando acesso':'Acesso ao conversor',msg);pending=null;$('import').disabled=false;$('workspace').hidden=true;$('paste-fallback').hidden=true;$('paste-box').value='';original='';$('editor').value='';render()}
 function clearAccessTimer(){clearTimeout(accessTimer);accessTimer=null}
 function deadline(p,ms,msg){let t;return Promise.race([p,new Promise((_,reject)=>{t=setTimeout(()=>reject(Error(msg)),ms)})]).finally(()=>clearTimeout(t))}
 function startAuth(){
@@ -46,13 +46,26 @@ function startAuth(){
 function theme(){const dark=document.documentElement.dataset.portalTheme==='dark';$('theme').querySelector('i').className=dark?'ph ph-sun':'ph ph-moon-stars';$('theme').setAttribute('aria-label',dark?'Ativar modo claro':'Ativar modo escuro');$('theme').setAttribute('aria-pressed',String(dark));document.querySelector('meta[name=theme-color]').content=dark?'#252b34':'#eef6ff'}
 $('theme').onclick=()=>{document.documentElement.dataset.portalTheme=document.documentElement.dataset.portalTheme==='dark'?'light':'dark';try{localStorage.setItem('ipcvt-portal-theme',document.documentElement.dataset.portalTheme)}catch{}theme()};theme();
 function status(s,error=false){$('status').textContent=s;$('status').classList.toggle('error',error)}
-const IMPORT_URL='https://ipcvt-cifras-importador.hudsonamorim08.workers.dev/import';
-$('form').onsubmit=async e=>{e.preventDefault();if(!allowed||pending)return;let url;try{url=new URL($('url').value.trim());if(url.protocol!=='https:'||!['cifraclub.com.br','www.cifraclub.com.br'].includes(url.hostname)||url.port||!/^\/[a-z0-9_-]+\/[a-z0-9_-]+\/?$/i.test(url.pathname)||url.username||url.password)throw Error()}catch{status('Informe um link HTTPS de uma música do Cifra Club.',true);return}
-if($('editor').value!==original&&$('editor').value&&!confirm('Substituir a cifra que está sendo editada?'))return;
-const id=crypto.randomUUID();pending=id;$('import').disabled=true;status('Consultando o Cifra Club...');
-const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),45000);
-try{const token=await auth.currentUser.getIdToken();const response=await fetch(IMPORT_URL,{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({url:url.href}),signal:controller.signal});const m=await response.json();if(!allowed||pending!==id)return;if(!response.ok||!m.ok)throw Error(m.error||'Não foi possível importar.');
-const data=m.data;if(!Array.isArray(data?.lines)||data.lines.length>20000)throw Error('Estrutura da cifra inválida.');const result=convertLines(data.lines);if(!result.trim())throw Error('Nenhuma cifra identificada.');original=result;song=String(data.title||'cifra-ipcvt');$('editor').value=result;render();status('Cifra importada: '+song+'. Confira as posições antes de copiar.')}catch(err){if(allowed&&pending===id)status(err.name==='AbortError'?'Tempo limite da consulta. Tente novamente.':err.message||'Falha ao consultar a origem.',true)}finally{clearTimeout(timer);if(pending===id){pending=null;$('import').disabled=false}}};
+
+function sourceUrl(){const u=new URL($('url').value.trim());if(u.protocol!=='https:'||!['cifraclub.com.br','www.cifraclub.com.br'].includes(u.hostname)||u.port||u.username||u.password||u.pathname.split('/').filter(Boolean).length<2)throw Error('Informe um link HTTPS de uma música do Cifra Club.');return u}
+$('form').onsubmit=e=>{e.preventDefault();if(!allowed)return;try{const url=sourceUrl();window.open(url.href,'_blank','noopener,noreferrer');$('clipboard-help').hidden=false;status('Na nova aba, escolha a versão e o tom, selecione a cifra completa e copie (Ctrl+C). Depois volte aqui.')}catch(err){status(err.message,true)}};
+function applyClipboard(html,text){
+ if(!allowed)return;
+ if($('editor').value!==original&&$('editor').value&&!confirm('Substituir a cifra que está sendo editada?'))return;
+ try{const data=convertClipboard(html,text);original=data.result;try{song=sourceUrl().pathname.split('/').filter(Boolean).at(-1)||'cifra-ipcvt'}catch{song='cifra-ipcvt'}
+ $('editor').value=original;$('workspace').hidden=false;$('paste-fallback').hidden=true;$('paste-box').value='';render();
+ status(data.mode==='HTML'?'Cifra convertida pelo HTML original. Confira a posição dos acordes.':'Cifra convertida pelo texto copiado. Confira o alinhamento: a área de transferência não forneceu marcações HTML.');
+ $('workspace').scrollIntoView({behavior:'smooth',block:'start'});
+ }catch(err){status(err.message,true)}
+}
+function fallback(){if(!allowed)return;$('paste-fallback').hidden=false;$('paste-box').focus();status('O navegador não liberou a leitura automática. Pressione Ctrl+V no campo abaixo; ele também aproveita o HTML copiado, quando disponível.',true)}
+$('import').onclick=async()=>{if(!allowed||pending)return;const id=Symbol();pending=id;$('import').disabled=true;
+ try{let html='',text='';if(navigator.clipboard?.read){try{for(const item of await navigator.clipboard.read()){if(!html&&item.types.includes('text/html'))html=await (await item.getType('text/html')).text();if(!text&&item.types.includes('text/plain'))text=await (await item.getType('text/plain')).text();if(html||text)break}}catch{}}if(!html&&!text&&navigator.clipboard?.readText)try{text=await navigator.clipboard.readText()}catch{}
+ if(!allowed||pending!==id)return;if(html||text)applyClipboard(html,text);else fallback();
+ }catch{fallback()}finally{if(pending===id){pending=null;$('import').disabled=false}}};
+$('paste-box').addEventListener('paste',event=>{if(!allowed)return;const data=event.clipboardData;if(!data)return;event.preventDefault();applyClipboard(data.getData('text/html'),data.getData('text/plain'))});
+$('manual-convert').onclick=()=>applyClipboard('',$('paste-box').value);
+$('manual-open').onclick=()=>{if(allowed){$('workspace').hidden=false;$('editor').focus()}};
 function render(){const value=$('editor').value,preview=$('preview');preview.replaceChildren();let count=0;for(const part of value.split(/(\[[^\]\n]+\])/g)){if(/^\[[^\]\n]+\]$/.test(part)){const span=document.createElement('span');const chord=/^\[[A-G](?:#|b|♯|♭)?(?:[0-9mMaAjJsSuUdDiIgGoO+°ºøΔ()#b♯♭,.\-]*)?(?:\/[A-G](?:#|b|♯|♭)?)?\]$/.test(part);span.className=chord?'chord':'part';span.textContent=part;preview.append(span);if(chord)count++}else preview.append(document.createTextNode(part))}$('count').textContent=count+' acordes';$('copy').disabled=!value.trim();$('txt').disabled=!value.trim();$('undo').disabled=!original||original===value}
 $('editor').oninput=render;$('undo').onclick=()=>{if(allowed&&confirm('Restaurar a cifra importada e descartar edições?')){$('editor').value=original;render()}};$('clear').onclick=()=>{if(allowed&&(!$('editor').value||confirm('Limpar a cifra atual?'))){$('editor').value='';original='';render();status('Editor limpo.')}};
 $('copy').onclick=async()=>{if(!allowed)return;try{await navigator.clipboard.writeText($('editor').value);status('Cifra copiada. Cole no aplicativo de louvor.')}catch{$('editor').focus();$('editor').select();status('Texto selecionado. Pressione Ctrl+C para copiar.',true)}};
