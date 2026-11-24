@@ -1,25 +1,25 @@
 /* Cartão do Conversor de Cifras, mantendo o padrão da Comissão. */
-.tool-card-cifras{background:linear-gradient(120deg,#fce7d5,#f5d4bb 55%,#e9b794)}
-.tool-card-cifras::before{background:linear-gradient(90deg,#fce7d5 0%,#fce7d5f2 30%,#fce7d5aa 60%,#fce7d522 100%)}
-.tool-card-cifras .tool-icon{color:#a65c35;background:#f6d7bd;border-color:#e6b791}
-.tool-card-cifras .status{border-color:#c9906a;color:#854724}
-.preview-cifras-window{width:440px;min-height:310px;padding:21px;background:#fffaf4;border:1px solid #e3bd9f;border-radius:17px;box-shadow:0 16px 30px #72421d25;transform:rotate(2deg);color:#5b3e2e;font:500 12px Inter,Arial,sans-serif}
-.preview-cifras-header{display:flex;align-items:center;gap:9px;font-weight:700;font-size:16px;padding-bottom:13px;border-bottom:1px solid #e9cbb4}
-.preview-cifras-header i{background:#f5d5bd;color:#ad653d;border-radius:8px;padding:8px;font-size:20px}
-.preview-cifras-url{display:flex;align-items:center;gap:9px;margin:13px 0;background:#fff;border:1px solid #e7c9b0;border-radius:7px;padding:9px;color:#9a785f;font-size:10px}
-.preview-cifras-url b{margin-left:auto;background:#efc8a9;color:#854724;padding:6px 10px;border-radius:6px}
+.tool-card-cifras{background:linear-gradient(120deg,#e0edf9,#cce0f4 55%,#aac9e6)}
+.tool-card-cifras::before{background:linear-gradient(90deg,#e0edf9 0%,#e0edf9f2 30%,#e0edf9aa 60%,#e0edf922 100%)}
+.tool-card-cifras .tool-icon{color:#416e9a;background:#cfe3f6;border-color:#aac9e6}
+.tool-card-cifras .status{border-color:#7fa6cc;color:#355c83}
+.preview-cifras-window{width:440px;min-height:310px;padding:21px;background:#f8fbff;border:1px solid #b6d1e8;border-radius:17px;box-shadow:0 16px 30px #335d8425;transform:rotate(2deg);color:#344d65;font:500 12px Inter,Arial,sans-serif}
+.preview-cifras-header{display:flex;align-items:center;gap:9px;font-weight:700;font-size:16px;padding-bottom:13px;border-bottom:1px solid #cadced}
+.preview-cifras-header i{background:#d4e5f6;color:#4a759d;border-radius:8px;padding:8px;font-size:20px}
+.preview-cifras-url{display:flex;align-items:center;gap:9px;margin:13px 0;background:#fff;border:1px solid #c3d9ed;border-radius:7px;padding:9px;color:#5d7b98;font-size:10px}
+.preview-cifras-url b{margin-left:auto;background:#bfd8ef;color:#355c83;padding:6px 10px;border-radius:6px}
 .preview-cifras-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.preview-cifras-col{border:1px solid #e8cdb8;border-radius:8px;padding:9px;min-height:139px;font:10px/1.8 monospace}
-.preview-cifras-col small{display:block;font:700 8px Inter,sans-serif;color:#9a785f;margin-bottom:12px}
-.preview-cifras-col b{color:#b66d44}
+.preview-cifras-col{border:1px solid #ccdeef;border-radius:8px;padding:9px;min-height:139px;font:10px/1.8 monospace}
+.preview-cifras-col small{display:block;font:700 8px Inter,sans-serif;color:#5d7b98;margin-bottom:12px}
+.preview-cifras-col b{color:#487ba9}
 .preview-cifras-col p{font:inherit!important;margin:0!important;color:inherit!important}
-html[data-portal-theme=dark] .tool-card-cifras{background:linear-gradient(120deg,#3b302a,#4f392e 55%,#644735)}
-html[data-portal-theme=dark] .tool-card-cifras::before{background:linear-gradient(90deg,#3b302a 0%,#3b302aee 35%,#3b302a60 85%,transparent)}
-html[data-portal-theme=dark] .tool-card-cifras :is(h2,p,.tool-number){color:#f5e7dc}
-html[data-portal-theme=dark] .tool-card-cifras .tool-icon{color:#efbf99;background:#644735;border-color:#886149}
-html[data-portal-theme=dark] .tool-card-cifras .status{background:#efc6a6;color:#593a28}
-html[data-portal-theme=dark] .preview-cifras-window{background:#40342e;border-color:#785a48;color:#f5e3d4}
-html[data-portal-theme=dark] .preview-cifras-url{background:#493a32;border-color:#785a48;color:#d8b69f}
-html[data-portal-theme=dark] .preview-cifras-header,html[data-portal-theme=dark] .preview-cifras-col{border-color:#785a48}
-html[data-portal-theme=dark] .preview-cifras-col b,html[data-portal-theme=dark] .preview-cifras-col small{color:#e8b28b}
+html[data-portal-theme=dark] .tool-card-cifras{background:linear-gradient(120deg,#303e50,#384d66 55%,#46617d)}
+html[data-portal-theme=dark] .tool-card-cifras::before{background:linear-gradient(90deg,#303e50 0%,#303e50ee 35%,#303e5060 85%,transparent)}
+html[data-portal-theme=dark] .tool-card-cifras :is(h2,p,.tool-number){color:#e7eef7}
+html[data-portal-theme=dark] .tool-card-cifras .tool-icon{color:#b7d7f3;background:#46617d;border-color:#6585a5}
+html[data-portal-theme=dark] .tool-card-cifras .status{background:#c4dcf3;color:#304b66}
+html[data-portal-theme=dark] .preview-cifras-window{background:#344255;border-color:#60758e;color:#e3edf8}
+html[data-portal-theme=dark] .preview-cifras-url{background:#3b4e64;border-color:#60758e;color:#b9cfe7}
+html[data-portal-theme=dark] .preview-cifras-header,html[data-portal-theme=dark] .preview-cifras-col{border-color:#60758e}
+html[data-portal-theme=dark] .preview-cifras-col b,html[data-portal-theme=dark] .preview-cifras-col small{color:#accdec}
 @media(max-width:780px){.tool-card-cifras .tool-card-preview{opacity:.25;right:-135px}}
