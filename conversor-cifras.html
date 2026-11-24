@@ -13,4 +13,11 @@ main{max-width:1440px;margin:0 auto;padding:24px clamp(12px,3vw,40px) 48px}.surf
 <p class="meta">A importação é feita diretamente pelo serviço do Portal, sem instalar extensões. Utilize cifras para as quais você possui autorização de uso.</p>
 </section><div class="workspace"><section class="surface panel"><div class="panel-head"><h2>Editar cifra</h2><div class="actions"><button id="undo" type="button" disabled><i class="ph ph-arrow-counter-clockwise"></i> Restaurar</button><button id="clear" type="button"><i class="ph ph-trash"></i> Limpar</button></div></div><label class="sr-only" for="editor">Cifra formatada editável</label><textarea id="editor" class="editor" spellcheck="false" placeholder="Importe uma cifra para começar. Você também pode escrever seus próprios arranjos aqui."></textarea><span class="meta" id="count">0 acordes</span></section>
 <section class="surface panel"><div class="panel-head"><h2>Prévia para o aplicativo</h2><div class="actions"><button id="txt" type="button" disabled><i class="ph ph-file-text"></i> TXT</button><button id="copy" type="button" class="primary" disabled><i class="ph ph-copy"></i> Copiar cifra</button></div></div><pre id="preview" class="preview" aria-label="Prévia em tempo real"></pre><span class="meta">Acordes entre colchetes · 14 espaços nas passagens instrumentais · prévia textual, não uma simulação exata do app.</span></section></div></div></main><footer><span>IPCVT · Comissão do Núcleo</span><span>Ferramentas do louvor</span></footer>
-<script type="module" src="conversor-cifras.js?v=20261124-fix-v3"></script></body></html>
+<script>
+(function(){
+  var gate=document.getElementById('gate'), msg=document.getElementById('gate-message');
+  msg.textContent='Carregando os módulos do conversor...';
+  var t=setTimeout(function(){if(!gate.hidden&&msg.textContent==='Carregando os módulos do conversor...'){gate.querySelector('h1').textContent='Falha ao carregar';msg.textContent='O carregamento dos módulos demorou demais. Atualize a página.';}},15000);
+  import('./conversor-cifras.js?v=20261124-auth-v4').then(function(){clearTimeout(t)}).catch(function(error){clearTimeout(t);gate.hidden=false;document.getElementById('app').hidden=true;gate.querySelector('h1').textContent='Falha ao carregar';msg.textContent='Não foi possível iniciar o conversor: '+(error.message||'erro de carregamento')+'. Atualize a página ou volte à Comissão.';console.error(error);});
+})();
+</script></body></html>
