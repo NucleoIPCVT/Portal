@@ -23,3 +23,21 @@ html[data-portal-theme=dark] .preview-cifras-url{background:#3b4e64;border-color
 html[data-portal-theme=dark] .preview-cifras-header,html[data-portal-theme=dark] .preview-cifras-col{border-color:#60758e}
 html[data-portal-theme=dark] .preview-cifras-col b,html[data-portal-theme=dark] .preview-cifras-col small{color:#accdec}
 @media(max-width:780px){.tool-card-cifras .tool-card-preview{opacity:.25;right:-135px}}
+
+/* A cor do acesso deve prevalecer sobre a paleta neutra geral da Comissão. */
+html:not([data-portal-theme="dark"]) .tool-grid .tool-card-cifras{
+  background:linear-gradient(125deg,#dcecfb 0%,#bed9f1 55%,#a3c5e6 100%);border-color:#b4d1ec;color:#294d70;
+}
+html:not([data-portal-theme="dark"]) .tool-grid .tool-card-cifras::before{
+  background:linear-gradient(90deg,#dcecfb 0%,#dcecfbf5 26%,#dcecfbd9 48%,#dcecfb55 78%,#dcecfb14 100%);
+}
+html:not([data-portal-theme="dark"]) .tool-grid .tool-card-cifras .tool-icon{color:#386c9d;background:#c4dff5;border-color:#a5c7e7}
+html:not([data-portal-theme="dark"]) .tool-grid .tool-card-cifras h2{color:#294d70}
+html:not([data-portal-theme="dark"]) .tool-grid .tool-card-cifras p{color:#405f7b}
+html:not([data-portal-theme="dark"]) .tool-grid .tool-card-cifras .tool-number{color:#4f7597}
+html:not([data-portal-theme="dark"]) .tool-grid .tool-card-cifras .status{color:#315c85;background:#e9f4ff;border-color:#89b3d9}
+html[data-portal-theme="dark"] .tool-grid .tool-card-cifras{background:linear-gradient(125deg,#2b4059,#354e6b 55%,#4a6686);border-color:#6585a5}
+html[data-portal-theme="dark"] .tool-grid .tool-card-cifras::before{background:linear-gradient(90deg,#2b4059 0%,#2b4059ef 32%,#2b405965 80%,transparent)}
+html[data-portal-theme="dark"] .tool-grid .tool-card-cifras .tool-icon{color:#c5e0f8;background:#435f7c;border-color:#7296b7}
+html[data-portal-theme="dark"] .tool-grid .tool-card-cifras .status{color:#294866;background:#c4dcf3;border-color:#91b4d4}
+html[data-portal-theme="dark"] .tool-grid .tool-card-cifras :is(h2,p,.tool-number){color:#e3effb}
