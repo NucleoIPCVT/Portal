@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "IPCVT · Importador de cifras",
+  "version": "1.0.0",
+  "description": "Importa a cifra visível no Cifra Club para o Conversor IPCVT, localmente.",
+  "permissions": [
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://www.cifraclub.com.br/*",
+    "https://cifraclub.com.br/*"
+  ],
+  "background": {
+    "service_worker": "worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://nucleoipcvt.github.io/Portal/conversor-cifras.html*"
+      ],
+      "js": [
+        "bridge.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
