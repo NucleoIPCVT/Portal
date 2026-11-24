@@ -2006,14 +2006,15 @@ function pmDemandView(content,tasks) {
     task,label:i===0||pmGroupTaskLabel(sorted[i-1])!==pmGroupTaskLabel(task)?pmGroupTaskLabel(task):''
   }))
   const table=pmGroup('table','pm-demand-table')
-  table.append(node('thead',{},node('tr',{},['','Demanda','Equipe','Responsável','Prazo','Status','Prioridade',''].map(x=>node('th',{scope:'col',text:x})))))
+  table.append(node('thead',{},node('tr',{},['','Demanda','Plano','Equipe','Responsável','Prazo','Status','Prioridade',''].map(x=>node('th',{scope:'col',text:x})))))
   const body=node('tbody')
   for(const {task,label} of rows){
-    if(label)body.append(node('tr',{class:'pm-group-row'},node('td',{colSpan:8,text:label})))
+    if(label)body.append(node('tr',{class:'pm-group-row'},node('td',{colSpan:9,text:label})))
     const check=node('input',{type:'checkbox',checked:task.status==='done','aria-label':'Concluir '+task.title,onChange:async e=>{try{await pmComplete(task,e.target.checked)}catch{e.target.checked=task.status==='done'}}})
     body.append(node('tr',{},[
       node('td',{},check),
       node('td',{},[pmButton(task.title,()=>openTask(task),'pm-table-task'),taskRecurrence(task)?pmText('small','task-repeat-badge','↻ '+recurrenceLabel(task)):null]),
+      node('td',{text:planName(task.planId)}),
       node('td',{},pmText('span','pm-team-tag',task.team||'Sem equipe')),
       node('td',{},pmGroup('div','pm-table-person',[pmAvatarFor(task),pmText('span','',pmPerson(task))])),
       node('td',{class:isOverdue(task,todayISO())?'pm-overdue':'' ,text:task.dueDate?pmShort(task.dueDate):'Sem prazo'}),
