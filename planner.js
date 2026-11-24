@@ -2054,6 +2054,7 @@ function pmFilterSelect(id,label) {
       [...source.options].map(o=>node('option',{value:o.value,text:o.textContent,selected:o.value===source.value})))
   ])
 }
+const pmChecklistSaving = new Set()
 function pmKanbanView(content,tasks) {
   pmTaskTools(content,tasks,'board')
   const focused=pmTaskListItems(tasks)
@@ -2074,11 +2075,12 @@ function pmKanbanView(content,tasks) {
     const stack=pmGroup('div','pm-kanban-stack')
     for(const task of items){
       const card=pmGroup('article','pm-kanban-task')
-      card.draggable=boardGrouping!=='dueDate';card.setAttribute('data-task-id',task.id)
+      card.draggable=boardGrouping!=='dueDate'&&!pmChecklistSaving.has(task.id);card.setAttribute('data-task-id',task.id)
       card.addEventListener('dragstart',e=>{draggedTask=task.id;draggedTaskGroup=group.id;e.dataTransfer?.setData('text/plain',task.id)})
       const doneToggle=node('input',{
         type:'checkbox',
         class:'pm-kanban-complete-toggle',
+        disabled:pmChecklistSaving.has(task.id),
         checked:task.status==='done',
         'aria-label':(task.status==='done'?'Reabrir demanda: ':'Concluir demanda: ')+task.title,
         title:task.status==='done'?'Reabrir demanda':'Concluir demanda',
@@ -2132,20 +2134,56 @@ function pmKanbanView(content,tasks) {
           'aria-label':'Checklist da demanda',
           style:'list-style:none;margin:0;padding:0;display:grid;gap:4px'
         })
+        list.addEventListener('dragstart',event=>{event.preventDefault();event.stopPropagation()})
         for(const item of checklist){
-          list.append(node('li',{
-            style:'display:flex;align-items:flex-start;gap:6px;font-size:11px;line-height:1.4;min-width:0'
+          const control=node('input',{
+            type:'checkbox',
+            checked:item.done,
+            disabled:pmChecklistSaving.has(task.id),
+            'aria-label':item.text,
+            style:'appearance:auto;accent-color:#54896b;width:13px;height:13px;flex:0 0 13px;margin:1px 0 0;cursor:pointer',
+            onChange:async event=>{
+              const checkbox=event.currentTarget
+              const checked=checkbox.checked
+              const current=byId('tasks',task.id)
+              if(pmChecklistSaving.has(task.id)||!current||current.deleted||
+                !current.checklist?.some(entry=>entry.id===item.id)){
+                checkbox.checked=item.done
+                return
+              }
+              pmChecklistSaving.add(task.id)
+              card.draggable=false
+              doneToggle.disabled=true
+              list.querySelectorAll('input').forEach(input=>{input.disabled=true})
+              const email=session.email
+              try{
+                const saved=await action(()=>save('tasks',{
+                  ...current,
+                  checklist:current.checklist.map(entry=>entry.id===item.id?{...entry,done:checked}:entry)
+                }),'Demanda atualizada.')
+                // The live Firestore listener usually arrives first. Keep the
+                // confirmed version if its notification is still in transit.
+                const latest=byId('tasks',task.id)
+                if(session.status==='authorized'&&session.email===email&&latest&&latest.version<saved.version){
+                  state={...state,tasks:state.tasks.map(entry=>entry.id===task.id?{...entry,...saved}:entry)}
+                }
+              }catch{
+                checkbox.checked=item.done
+              }finally{
+                pmChecklistSaving.delete(task.id)
+                if(currentView==='board')render()
+              }
+            }
+          })
+          list.append(node('li',{},node('label',{
+            style:'display:flex;align-items:flex-start;gap:6px;font-size:11px;line-height:1.4;min-width:0;cursor:pointer'
           },[
-            node('span',{
-              role:'img','aria-label':item.done?'Concluído':'Pendente',
-              text:item.done?'☑':'☐',
-              style:'flex:0 0 auto;color:var(--pm-muted);font-size:13px;line-height:1.2'
-            }),
+            control,
             node('span',{
               text:item.text,
               style:'min-width:0;overflow-wrap:anywhere;'+(item.done?'text-decoration:line-through;color:var(--pm-muted);':'')
             })
-          ]))
+          ])))
         }
         card.append(node('div',{
           class:'pm-kanban-checklist',
