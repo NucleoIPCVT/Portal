@@ -2121,6 +2121,37 @@ function pmKanbanView(content,tasks) {
         owners,
         pmGroup('div','pm-kanban-dates',[due,pmText('span',timing.className,timing.text)])
       ]))
+      if(task.checklist?.length){
+        const checklist=task.checklist
+        const completed=checklist.filter(item=>item.done).length
+        const heading=node('div',{
+          text:'Checklist · '+completed+'/'+checklist.length,
+          style:'font-size:11px;font-weight:600;color:var(--pm-muted);margin-bottom:5px'
+        })
+        const list=node('ul',{
+          'aria-label':'Checklist da demanda',
+          style:'list-style:none;margin:0;padding:0;display:grid;gap:4px'
+        })
+        for(const item of checklist){
+          list.append(node('li',{
+            style:'display:flex;align-items:flex-start;gap:6px;font-size:11px;line-height:1.4;min-width:0'
+          },[
+            node('span',{
+              role:'img','aria-label':item.done?'Concluído':'Pendente',
+              text:item.done?'☑':'☐',
+              style:'flex:0 0 auto;color:var(--pm-muted);font-size:13px;line-height:1.2'
+            }),
+            node('span',{
+              text:item.text,
+              style:'min-width:0;overflow-wrap:anywhere;'+(item.done?'text-decoration:line-through;color:var(--pm-muted);':'')
+            })
+          ]))
+        }
+        card.append(node('div',{
+          class:'pm-kanban-checklist',
+          style:'margin-top:8px;padding-top:8px;border-top:1px solid var(--pm-border)'
+        },[heading,list]))
+      }
       card.append(pmGroup('div','pm-kanban-card-foot',[
         pmText('span','pm-team-tag',task.team||pmPriorityLabel(task.priority)),pmAvatarFor(task)
       ]))
