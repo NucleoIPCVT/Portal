@@ -8,7 +8,7 @@ import {
   setDoc, updateDoc, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'
 import { createGoogleLogin } from './ipcvt-google-login.js?v=20261112-google-direto-02'
-import { grantPanelEntry, clearPanelEntry } from './comissao-entrada.js?v=20261114-v1'
+import { grantPanelEntry, clearPanelEntry } from './comissao-entrada.js?v=20261124-cifras-v1'
 
 const firebaseConfig = {
   apiKey: 'AIzaSyAg9w5QohkcmXUFRgLfSI5Sh1chnCD1Owc',
