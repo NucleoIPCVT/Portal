@@ -1997,6 +1997,66 @@ function pmTaskTools(content,tasks,mode){
   ]))
 }
 
+// Shared dependency indicators for the task grid and board. Resolve against
+// all active tasks, not just the ones currently displayed by the filters.
+function pmDependencyIndex(visibleTasks){
+  const dependentTasks=visibleTasks.filter(task=>task.dependencyIds?.length)
+  const result=new Map()
+  if(!dependentTasks.length)return result
+  const all=liveTasks()
+  const byTaskId=new Map(all.map(task=>[task.id,task]))
+  const resolved=resolveGanttDependencies(all,dependentTasks)
+  const append=(id,entry)=>{
+    if(!result.has(id))result.set(id,[])
+    result.get(id).push(entry)
+  }
+  for(const link of [...resolved.links,...resolved.outOfView]){
+    const predecessor=byTaskId.get(link.from)
+    if(predecessor)append(link.to,{
+      task:predecessor,title:predecessor.title,
+      status:predecessor.status==='done'?'Concluída':pmIsReview(predecessor)?'Em revisão':labels[predecessor.status]||'Não iniciada',
+      done:predecessor.status==='done',date:link.dateAligned?link.predecessorDate:''
+    })
+  }
+  for(const missing of resolved.missing){
+    append(missing.to,{
+      title:byId('tasks',missing.from)?.title||'Demanda anterior indisponível',
+      status:missing.reason==='ocorrência correspondente ainda não gerada'?'Ocorrência ainda não gerada':'Indisponível',
+      done:false
+    })
+  }
+  return result
+}
+function pmDependencyPanel(task,index,mode){
+  if(!task.dependencyIds?.length)return mode==='list'?pmText('span','pm-muted','—'):null
+  const entries=index.get(task.id)||[]
+  // An unresolved reference must never be shown as ready.
+  const ready=entries.length>0&&entries.every(entry=>entry.done)
+  const heading=pmText('span','pm-kanban-ontrack '+(ready?'pm-kanban-on-time':'pm-kanban-today'),
+    ready?'Liberada':'Aguardando dependência')
+  heading.style.whiteSpace='normal'
+  const panel=node('div',{
+    class:'pm-task-dependency-panel',
+    style:'display:grid;gap:5px;min-width:0;justify-items:start;'+(mode==='board'?'margin-top:8px;padding-top:8px;border-top:1px solid var(--pm-border)':'min-width:140px;max-width:260px')
+  },[heading])
+  if(!entries.length)panel.append(node('small',{text:'Dependência não resolvida',style:'font-size:11px;color:var(--pm-muted)'}))
+  for(const entry of entries){
+    const title=entry.task
+      ?pmButton(entry.title,()=>openTask(entry.task),'pm-table-task')
+      :pmText('span','',entry.title)
+    title.style.cssText='font-size:11px;line-height:1.4;white-space:normal;overflow-wrap:anywhere;min-width:0;'
+    if(entry.task)title.title='Abrir demanda anterior: '+entry.title
+    const status=pmText('span','pm-kanban-ontrack '+(entry.done?'pm-kanban-complete':'pm-kanban-no-due'),entry.status)
+    status.style.whiteSpace='normal'
+    const detail=node('div',{style:'display:flex;align-items:center;gap:5px;flex-wrap:wrap;min-width:0'},[
+      status,entry.date?node('small',{text:pmShort(entry.date),style:'font-size:10px;color:var(--pm-muted)'}):null
+    ])
+    panel.append(node('div',{style:'display:grid;gap:3px;min-width:0;max-width:100%'},[title,detail]))
+  }
+  panel.addEventListener('dragstart',event=>{event.preventDefault();event.stopPropagation()})
+  return panel
+}
+
 function pmDemandView(content,tasks) {
   pmTaskTools(content,tasks,'list')
   const sorted=pmTaskListItems(tasks).sort((a,b)=>
@@ -2005,11 +2065,12 @@ function pmDemandView(content,tasks) {
   const rows=sorted.map((task,i)=>({
     task,label:i===0||pmGroupTaskLabel(sorted[i-1])!==pmGroupTaskLabel(task)?pmGroupTaskLabel(task):''
   }))
+  const dependencyIndex=pmDependencyIndex(sorted)
   const table=pmGroup('table','pm-demand-table')
-  table.append(node('thead',{},node('tr',{},['','Demanda','Plano','Equipe','Responsável','Prazo','Status','Prioridade',''].map(x=>node('th',{scope:'col',text:x})))))
+  table.append(node('thead',{},node('tr',{},['','Demanda','Plano','Equipe','Responsável','Prazo','Status','Dependências','Prioridade',''].map(x=>node('th',{scope:'col',text:x})))))
   const body=node('tbody')
   for(const {task,label} of rows){
-    if(label)body.append(node('tr',{class:'pm-group-row'},node('td',{colSpan:9,text:label})))
+    if(label)body.append(node('tr',{class:'pm-group-row'},node('td',{colSpan:10,text:label})))
     const check=node('input',{type:'checkbox',checked:task.status==='done','aria-label':'Concluir '+task.title,onChange:async e=>{try{await pmComplete(task,e.target.checked)}catch{e.target.checked=task.status==='done'}}})
     body.append(node('tr',{},[
       node('td',{},check),
@@ -2019,6 +2080,7 @@ function pmDemandView(content,tasks) {
       node('td',{},pmGroup('div','pm-table-person',[pmAvatarFor(task),pmText('span','',pmPerson(task))])),
       node('td',{class:isOverdue(task,todayISO())?'pm-overdue':'' ,text:task.dueDate?pmShort(task.dueDate):'Sem prazo'}),
       node('td',{},pmText('span','pm-status-chip pm-status-'+task.status,labels[task.status]||'A fazer')),
+      node('td',{},pmDependencyPanel(task,dependencyIndex,'list')),
       node('td',{},pmText('span','pm-priority-chip pm-priority-'+(task.priority||'normal'),pmPriorityLabel(task.priority))),
       node('td',{},pmButton('⋮',()=>openTask(task),'pm-table-menu'))
     ]))
@@ -2058,6 +2120,7 @@ const pmChecklistSaving = new Set()
 function pmKanbanView(content,tasks) {
   pmTaskTools(content,tasks,'board')
   const focused=pmTaskListItems(tasks)
+  const dependencyIndex=pmDependencyIndex(focused)
   const groups=(boardGrouping==='dueDate'?pmDueGroups(focused):groupBoardTasks({grouping:boardGrouping,tasks:focused,plans:state.plans,buckets:state.buckets,events:liveEvents(),teams,planId:selectedPlan(),eventId:value('event-filter')}))
     .filter(group=>boardGrouping!=='status'||group.id!=='review'||group.tasks.length)
   const editingPlan=activePlans().find(plan=>plan.id===selectedPlan())
@@ -2123,6 +2186,8 @@ function pmKanbanView(content,tasks) {
         owners,
         pmGroup('div','pm-kanban-dates',[due,pmText('span',timing.className,timing.text)])
       ]))
+      const dependencies=pmDependencyPanel(task,dependencyIndex,'board')
+      if(dependencies)card.append(dependencies)
       if(task.checklist?.length){
         const checklist=task.checklist
         const completed=checklist.filter(item=>item.done).length
