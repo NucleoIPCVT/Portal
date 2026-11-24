@@ -13,8 +13,36 @@ const firebase=initializeApp({
 },'ipcvt-comissao');
 const auth=getAuth(firebase),db=getFirestore(firebase),$=id=>document.getElementById(id);
 let allowed=false,stop=null,seq=0,pending=null,original='',song='cifra-ipcvt';
-function gate(msg){allowed=false;$('gate').hidden=false;$('app').hidden=true;$('gate-message').textContent=msg;pending=null;$('import').disabled=false;original='';$('editor').value='';render()}
-onAuthStateChanged(auth,async user=>{const id=++seq;stop?.();gate('Conferindo a sessão da Comissão...');if(!user){gate('Entre na Comissão e abra a ferramenta pelo painel.');return}try{const token=await user.getIdTokenResult();if(id!==seq)return;const email=(user.email||'').trim().toLowerCase();if(!email||!user.emailVerified||token.claims.firebase?.sign_in_provider!=='google.com'||!hasPanelEntry('cifras',user.uid)){gate('Abra a ferramenta pelo Painel da Comissão com sua conta Google autorizada.');return}stop=onSnapshot(doc(db,'comissao_acessos',email),snap=>{if(id!==seq)return;if(!snap.exists()||snap.data().ativo!==true){gate('Sua conta não está autorizada na Comissão.');return}allowed=true;$('gate').hidden=true;$('app').hidden=false},()=>gate('Não foi possível verificar a autorização.'))}catch{if(id===seq)gate('Não foi possível validar sua sessão.')}});
+let accessTimer=null;
+const setGateMessage=(title,msg)=>{$('gate').querySelector('h1').textContent=title;$('gate-message').textContent=msg;};
+function gate(msg,loading=false){allowed=false;$('gate').hidden=false;$('app').hidden=true;setGateMessage(loading?'Verificando acesso':'Acesso ao conversor',msg);pending=null;$('import').disabled=false;original='';$('editor').value='';render()}
+function clearAccessTimer(){clearTimeout(accessTimer);accessTimer=null}
+function deadline(p,ms,msg){let t;return Promise.race([p,new Promise((_,reject)=>{t=setTimeout(()=>reject(Error(msg)),ms)})]).finally(()=>clearTimeout(t))}
+function startAuth(){
+  let firstTimer=setTimeout(()=>{gate('O serviço de login não respondeu. Atualize a página ou volte à Comissão.')},12000);
+  onAuthStateChanged(auth,async user=>{
+    clearTimeout(firstTimer);const id=++seq;stop?.();stop=null;clearAccessTimer();
+    gate('Conferindo sua conta Google...',true);
+    if(!user){gate('Entre no Painel da Comissão e abra a ferramenta pelo painel.');return}
+    try{
+      const token=await deadline(user.getIdTokenResult(),12000,'A validação da conta Google demorou demais. Abra novamente a Comissão.');
+      if(id!==seq)return;
+      const email=(user.email||'').trim().toLowerCase();
+      if(!email||!user.emailVerified||token.claims.firebase?.sign_in_provider!=='google.com'){gate('Entre com uma conta Google verificada e autorizada.');return}
+      if(!hasPanelEntry('cifras',user.uid)){gate('A entrada desta aba expirou ou não foi registrada. Abra o Conversor novamente pelo Painel da Comissão.');return}
+      setGateMessage('Verificando acesso','Consultando sua autorização no Firebase...');
+      accessTimer=setTimeout(()=>{if(id===seq&&!allowed)gate('A consulta de autorização não respondeu. Confira a conexão e tente novamente pela Comissão.')},12000);
+      stop=onSnapshot(doc(db,'comissao_acessos',email),snap=>{
+        if(id!==seq)return;
+        // Não liberar acesso com uma resposta apenas do cache.
+        if(snap.metadata?.fromCache)return;
+        clearAccessTimer();
+        if(!snap.exists()||snap.data().ativo!==true){gate('Sua conta não está autorizada na Comissão.');return}
+        allowed=true;$('gate').hidden=true;$('app').hidden=false;
+      },error=>{if(id!==seq)return;clearAccessTimer();gate('Não foi possível verificar a autorização no Firebase ('+(error.code||'falha de conexão')+').')});
+    }catch(error){if(id===seq){clearAccessTimer();gate(error.message||'Não foi possível validar sua sessão.')}}
+  },error=>{clearTimeout(firstTimer);clearAccessTimer();gate('Falha ao iniciar o login ('+(error.code||'erro de conexão')+').')});
+}
 function theme(){const dark=document.documentElement.dataset.portalTheme==='dark';$('theme').querySelector('i').className=dark?'ph ph-sun':'ph ph-moon-stars';$('theme').setAttribute('aria-label',dark?'Ativar modo claro':'Ativar modo escuro');$('theme').setAttribute('aria-pressed',String(dark));document.querySelector('meta[name=theme-color]').content=dark?'#252b34':'#eef6ff'}
 $('theme').onclick=()=>{document.documentElement.dataset.portalTheme=document.documentElement.dataset.portalTheme==='dark'?'light':'dark';try{localStorage.setItem('ipcvt-portal-theme',document.documentElement.dataset.portalTheme)}catch{}theme()};theme();
 function status(s,error=false){$('status').textContent=s;$('status').classList.toggle('error',error)}
@@ -31,3 +59,4 @@ $('copy').onclick=async()=>{if(!allowed)return;try{await navigator.clipboard.wri
 function save(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)}
 $('txt').onclick=()=>{if(allowed)save(new Blob([$('editor').value],{type:'text/plain;charset=utf-8'}),song.replace(/[^\p{L}\p{N} _-]/gu,'').trim().slice(0,80)+'.txt')};
 render();
+startAuth();
