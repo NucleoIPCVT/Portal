@@ -52,7 +52,7 @@ function htmlLines(raw){
  for(const child of selected.childNodes)visit(child);
  // Require real markup, not a guess based on a single bold note.
  const marked=lines.reduce((sum,l)=>sum+l.chords.length,0);
- if(marked<2)return null;
+ if(marked<1)return null;
  // Recover chord-only lines where the clipboard stripped some bold markup.
  return lines.map(l=>l.chords.length?l:plainLines(l.text)[0]);
 }
@@ -63,36 +63,28 @@ function convertClipboard(html,text){
  if(!lines||(!lines.some(l=>!l.chords.length&&l.text.trim())&&plain.some(l=>!l.chords.length&&l.text.trim()))){mode='texto';lines=plain}
  if(lines.length>20000||lines.reduce((n,l)=>n+l.text.length,0)>500000)throw Error('Seleção muito grande. Copie somente a cifra.');
  const count=lines.reduce((n,l)=>n+l.chords.length,0);
- if(count<2)throw Error('Não encontrei acordes suficientes. Selecione somente o bloco completo da cifra no Cifra Club, incluindo os acordes, e copie novamente.');
+ if(count<1)throw Error('Não encontrei acordes suficientes. Selecione somente o bloco completo da cifra no Cifra Club, incluindo os acordes, e copie novamente.');
  const result=convertLines(lines);if(!result.trim())throw Error('A seleção está vazia.');
  return {result,mode,count};
 }
-export { plainLines, htmlLines, convertClipboard };
+function preparePaste(html,text){
+ const raw=(text||'').replace(/\r\n?/g,'\n').replace(/\u00a0/g,' ');
+ let rich=null;
+ if(html&&html.length<=2000000)try{rich=htmlLines(html)}catch{}
+ const plain=plainLines(raw);
+ const score=l=>l.reduce((n,x)=>n+x.chords.length,0);
+ // Prefer the plain clipboard for spacing unless the HTML preserves at least as many notes and comparable lyric text.
+ const lyricSize=l=>l.filter(x=>!x.chords.length).map(x=>x.text.replace(/\s/g,'')).join('').length;
+ let lines=plain,mode='texto';
+ if(rich&&score(rich)>=score(plain)&&(!raw||lyricSize(rich)>=lyricSize(plain)*0.85)){lines=rich;mode='HTML'}
+ const display=lines.map(l=>l.text).join('\n').replace(/^\n+|\n+$/g,'');
+ return {lines,display,mode,count:score(lines)};
+}
+function convertPrepared(prepared){
+ const {lines,count}=prepared;
+ if(lines.length>20000||lines.reduce((n,l)=>n+l.text.length,0)>500000)throw Error('Seleção muito grande. Copie somente a cifra.');
+ if(!count)throw Error('Não encontrei acordes em linhas separadas. Confira se os acordes vieram junto com a letra e ajuste o texto original.');
+ return convertLines(lines);
+}
+export { plainLines, htmlLines, convertClipboard, preparePaste, convertPrepared };
 
-const CAPTURE_PREFIX='IPCVT-CIFRA/1\n';
-function decodeCapture(value){
- if(typeof value!=='string'||!value.startsWith(CAPTURE_PREFIX))return null;
- if(value.length>2500000)throw Error('Captura muito grande.');
- let p;try{p=JSON.parse(value.slice(CAPTURE_PREFIX.length))}catch{throw Error('Captura inválida. Execute o favorito novamente.')}
- let u;try{u=new URL(p.url)}catch{throw Error('Endereço da captura inválido.')}
- if(u.protocol!=='https:'||!['www.cifraclub.com.br','cifraclub.com.br'].includes(u.hostname)||u.port||u.username||u.password||typeof p.text!=='string'||typeof p.html!=='string'||!Number.isFinite(p.time))throw Error('Captura inválida.');
- return p;
-}
-function captureOnSource(){
- if(!['www.cifraclub.com.br','cifraclub.com.br'].includes(location.hostname)||location.protocol!=='https:'){alert('Abra a música no Cifra Club e clique no favorito IPCVT.');return}
- const chord=/^[A-G](?:[#b♯♭])?(?:(?:maj|min|dim|aug|sus|add|omit|no|M|m|º|°|ø|Δ|[0-9+#b♯♭(),.\-])+)?(?:\/(?:[A-G](?:[#b♯♭])?|[0-9]+))?$/;
- const mark='b,strong,[data-chord],.chord,[class*="chordName"],[class*="ChordName"]';
- const score=e=>[...e.querySelectorAll(mark)].filter(n=>chord.test(n.textContent.trim())).length;
- const candidates=[...document.querySelectorAll('pre,.cifra_cnt,#cifra,[data-testid="chord-sheet"],[class*="chordSheet"],[class*="ChordSheet"]')].filter(e=>e.getClientRects().length>0&&getComputedStyle(e).visibility!=='hidden');
- const best=candidates.map(e=>({e,n:score(e),len:e.textContent.length})).sort((a,b)=>b.n-a.n||a.len-b.len)[0];
- if(!best||best.n<2){alert('Não encontrei o bloco da cifra. Confira se a música está carregada e os acordes estão visíveis.');return}
- const node=best.e,clone=node.cloneNode(true);
- clone.querySelectorAll('script,style,svg,iframe,object,button,img,[hidden],[aria-hidden="true"]').forEach(e=>e.remove());
- const payload='IPCVT-CIFRA/1\n'+JSON.stringify({url:location.href,time:Date.now(),html:clone.outerHTML,text:node.innerText||node.textContent});
- if(payload.length>2500000){alert('A cifra selecionada é muito grande.');return}
- function show(ok){const old=document.getElementById('ipcvt-capture-notice');old?.remove();const box=document.createElement('div');box.id='ipcvt-capture-notice';box.setAttribute('role','status');box.style.cssText='position:fixed;right:16px;bottom:16px;max-width:340px;z-index:2147483647;padding:18px;background:#e0edf9;color:#233d58;border:1px solid #9bbbd8;border-radius:12px;box-shadow:0 6px 25px #0004;font:14px/1.5 Arial,sans-serif';box.textContent=ok?'Cifra capturada! Volte à aba do Portal IPCVT. Se o editor não abrir, clique em Receber cifra.':'O navegador não permitiu enviar a captura. Clique no favorito novamente.';document.body.append(box);setTimeout(()=>box.remove(),15000)}
- function fallback(){const t=document.createElement('textarea');t.value=payload;t.style.cssText='position:fixed;left:-9999px;top:0';document.body.append(t);t.select();let ok=false;try{ok=document.execCommand('copy')}catch{}t.remove();show(ok)}
- if(navigator.clipboard?.writeText)navigator.clipboard.writeText(payload).then(()=>show(true),fallback);else fallback();
-}
-function bookmarklet(){return 'javascript:void('+captureOnSource.toString().replace(/\n\s*/g,' ')+'())'}
-export { decodeCapture,bookmarklet };
