@@ -17,6 +17,6 @@ main{max-width:1440px;margin:0 auto;padding:24px clamp(12px,3vw,40px) 48px}.surf
   var gate=document.getElementById('gate'), msg=document.getElementById('gate-message');
   msg.textContent='Carregando os módulos do conversor...';
   var t=setTimeout(function(){if(!gate.hidden&&msg.textContent==='Carregando os módulos do conversor...'){gate.querySelector('h1').textContent='Falha ao carregar';msg.textContent='O carregamento dos módulos demorou demais. Atualize a página.';}},15000);
-  import('./conversor-cifras.js?v=20261124-colar-v7').then(function(){clearTimeout(t)}).catch(function(error){clearTimeout(t);gate.hidden=false;document.getElementById('app').hidden=true;gate.querySelector('h1').textContent='Falha ao carregar';msg.textContent='Não foi possível iniciar o conversor: '+(error.message||'erro de carregamento')+'. Atualize a página ou volte à Comissão.';console.error(error);});
+  import('./conversor-cifras.js?v=20261124-colar-v8').then(function(){clearTimeout(t)}).catch(function(error){clearTimeout(t);gate.hidden=false;document.getElementById('app').hidden=true;gate.querySelector('h1').textContent='Falha ao carregar';msg.textContent='Não foi possível iniciar o conversor: '+(error.message||'erro de carregamento')+'. Atualize a página ou volte à Comissão.';console.error(error);});
 })();
 </script></body></html>
