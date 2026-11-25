@@ -2,7 +2,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebas
 import { getAuth,onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 import { getFirestore,doc,onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 import { hasPanelEntry } from './comissao-entrada.js?v=20261124-cifras-v1';
-import { preparePaste, convertPrepared } from './conversor-cifras-core.js?v=20261124-colar-v7';
+import { preparePaste, convertPrepared, isChord } from './conversor-cifras-core.js?v=20261124-colar-v8';
 const firebase=initializeApp({
   apiKey: 'AIzaSyAg9w5QohkcmXUFRgLfSI5Sh1chnCD1Owc',
   authDomain: 'repertorio-ipcvt.firebaseapp.com',
@@ -78,7 +78,7 @@ $('paste-box').addEventListener('paste',event=>{
 $('paste-box').addEventListener('input',()=>{prepared=null;updateSourceInfo()});
 $('manual-convert').onclick=convertSource;
 $('clear-source').onclick=()=>{if(!allowed)return;if($('paste-box').value&&!confirm('Limpar a cifra original?'))return;prepared=null;$('paste-box').value='';$('source-info').textContent='';status('Campo original limpo.');$('paste-box').focus()};
-function render(){const value=$('editor').value,preview=$('preview');preview.replaceChildren();let count=0;for(const part of value.split(/(\[[^\]\n]+\])/g)){if(/^\[[^\]\n]+\]$/.test(part)){const span=document.createElement('span');const chord=/^\[[A-G](?:#|b|♯|♭)?(?:[0-9mMaAjJsSuUdDiIgGoO+°ºøΔ()#b♯♭,.\-]*)?(?:\/[A-G](?:#|b|♯|♭)?)?\]$/.test(part);span.className=chord?'chord':'part';span.textContent=part;preview.append(span);if(chord)count++}else preview.append(document.createTextNode(part))}$('count').textContent=count+' acordes';$('copy').disabled=!value.trim();$('txt').disabled=!value.trim();$('undo').disabled=!original||original===value}
+function render(){const value=$('editor').value,preview=$('preview');preview.replaceChildren();let count=0;for(const part of value.split(/(\[[^\]\n]+\])/g)){if(/^\[[^\]\n]+\]$/.test(part)){const span=document.createElement('span');const chord=isChord(part.slice(1,-1));span.className=chord?'chord':'part';span.textContent=part;preview.append(span);if(chord)count++}else preview.append(document.createTextNode(part))}$('count').textContent=count+' acordes';$('copy').disabled=!value.trim();$('txt').disabled=!value.trim();$('undo').disabled=!original||original===value}
 $('editor').oninput=render;$('undo').onclick=()=>{if(allowed&&confirm('Restaurar a cifra importada e descartar edições?')){$('editor').value=original;render()}};$('clear').onclick=()=>{if(allowed&&(!$('editor').value||confirm('Limpar a cifra atual?'))){$('editor').value='';original='';render();status('Editor limpo.')}};
 $('copy').onclick=async()=>{if(!allowed)return;try{await navigator.clipboard.writeText($('editor').value);status('Cifra copiada. Cole no aplicativo de louvor.')}catch{$('editor').focus();$('editor').select();status('Texto selecionado. Pressione Ctrl+C para copiar.',true)}};
 function save(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)}
