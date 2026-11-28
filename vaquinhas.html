@@ -46,7 +46,7 @@
         })();
     </script>
     <link rel="stylesheet" href="vaquinhas-ui.css?v=20261107-titulos-privados">
-    <link rel="stylesheet" href="vaquinhas-nucleo.css?v=20261114-verde-bege-contraste-v3">
+    <link rel="stylesheet" href="vaquinhas-nucleo.css?v=20261128-contribuir">
     <link rel="stylesheet" href="ipcvt-topbar.css?v=20261117-topbar-v2">
     <script defer src="ipcvt-topbar.js?v=20261117-topbar-v2"></script>
 </head>
@@ -176,10 +176,15 @@
                         <input id="input-pixname" type="text" placeholder="Nome na conta" class="w-full px-4 py-3 text-sm border border-slate-300 rounded-xl outline-none focus:border-presb-green font-medium">
                             </div>
                         </div>
-                        <div class="mt-4">
-                            <label for="input-receipt-phone" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">WhatsApp para comprovantes</label>
-                            <input id="input-receipt-phone" type="tel" inputmode="tel" placeholder="Ex.: 21 99999-9999" class="w-full px-4 py-3 text-sm border border-slate-300 rounded-xl outline-none focus:border-presb-green font-medium">
-                            <p class="text-xs text-slate-500 mt-2">Informe o número que receberá os comprovantes, com DDD.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <div>
+                                <label for="input-receipt-name" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Quem recebe o comprovante? (opcional)</label>
+                                <input id="input-receipt-name" type="text" maxlength="120" placeholder="Nome da pessoa responsável" class="w-full px-4 py-3 text-sm border border-slate-300 rounded-xl outline-none focus:border-presb-green font-medium">
+                            </div>
+                            <div>
+                                <label for="input-receipt-phone" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Telefone para comprovantes (opcional)</label>
+                                <input id="input-receipt-phone" type="tel" inputmode="tel" placeholder="(21) 99999-9999" class="w-full px-4 py-3 text-sm border border-slate-300 rounded-xl outline-none focus:border-presb-green font-medium">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -224,64 +229,33 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="detail-information lg:col-span-2 space-y-8">
-                    <div class="bg-white p-8 md:p-10 rounded-[3rem] shadow-xl border border-slate-100 relative overflow-hidden">
-                        <div class="absolute top-0 right-0 p-8 opacity-5">
-                            <i data-lucide="piggy-bank" class="w-32 h-32 text-presb-green"></i>
-                        </div>
-                        <div id="detail-tags" class="flex flex-wrap items-center gap-3 mb-6 relative z-10"></div>
-                        <h1 id="detail-title" class="text-3xl md:text-5xl font-bold font-serif text-presb-green mb-6 leading-tight relative z-10 tracking-tight"></h1>
-                        <p id="detail-desc" class="text-slate-500 text-base mb-10 leading-relaxed whitespace-pre-wrap relative z-10 font-medium"></p>
-                        
-                        <div id="detail-finance-progress" class="relative z-10"></div>
-                        <div id="detail-items-needed" class="relative z-10"></div>
+            <div class="detail-information space-y-8">
+                <div class="bg-white p-8 md:p-10 rounded-[3rem] shadow-xl border border-slate-100 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-8 opacity-5">
+                        <i data-lucide="piggy-bank" class="w-32 h-32 text-presb-green"></i>
                     </div>
+                    <div id="detail-tags" class="flex flex-wrap items-center gap-3 mb-6 relative z-10"></div>
+                    <h1 id="detail-title" class="text-3xl md:text-5xl font-bold font-serif text-presb-green mb-6 leading-tight relative z-10 tracking-tight"></h1>
+                    <p id="detail-desc" class="text-slate-500 text-base mb-10 leading-relaxed whitespace-pre-wrap relative z-10 font-medium"></p>
 
-                    <div id="detail-contributors-section" class="hidden bg-white p-8 rounded-[3rem] shadow-xl border border-slate-100">
-                        <h3 class="text-xl font-bold font-serif text-presb-green mb-8 flex items-center gap-3 pb-6 border-b border-slate-100">
-                            <i data-lucide="users" class="w-6 h-6 text-presb-gold"></i> <span id="contributor-list-title">Contribuições</span>
-                        </h3>
-                        <div id="detail-contributors-list"></div>
+                    <div id="contrib-init">
+                        <button id="contrib-open" type="button" aria-haspopup="dialog"><i data-lucide="heart-handshake" aria-hidden="true"></i> Contribuir</button>
+                        <p id="contrib-availability"></p>
+                        <p id="contrib-status" role="status" tabindex="-1"></p>
                     </div>
-                    <div id="admin-contributions-section" class="hidden bg-white p-8 rounded-[3rem] shadow-xl border border-slate-100">
-                        <h3 class="text-xl font-bold font-serif text-presb-green mb-6">Contribuições pendentes</h3>
-                        <div id="admin-contributions-list" class="space-y-3"></div>
-                    </div>
+                    <div id="detail-finance-progress" class="relative z-10"></div>
+                    <div id="detail-items-needed" class="relative z-10"></div>
                 </div>
 
-                <div class="lg:col-span-1">
-                    <div class="contribution-panel bg-presb-green p-8 rounded-[3rem] shadow-2xl text-white sticky top-28 border-t-8 border-presb-gold">
-                        <h3 class="text-2xl font-bold font-serif mb-3 flex items-center gap-3">
-                            Fazer Parte <i data-lucide="heart-handshake" class="w-6 h-6 text-presb-gold"></i>
-                        </h3>
-                        <p id="contrib-subtitle" class="text-presb-gold/80 mb-8 text-xs font-medium leading-relaxed"></p>
-                        
-                        <div id="contrib-init">
-                            <button onclick="window.toggleContribForm(true)" class="w-full bg-presb-gold hover:bg-yellow-500 text-white font-black py-4 px-4 rounded-2xl transition-all shadow-lg active:scale-95 text-[11px] uppercase tracking-widest border-b-4 border-yellow-600">
-                                Registrar minha Oferta
-                            </button>
-                        </div>
-
-                        <form id="contrib-form" onsubmit="window.submitContribution(event)" class="space-y-6 bg-white/5 p-6 rounded-[2rem] border border-white/10 hidden fade-in">
-                            <div>
-                                <label for="contrib-name" class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Seu Nome / Família</label>
-                        <input required id="contrib-name" type="text" placeholder="Ex: Família Silva" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none focus:ring-4 focus:ring-presb-gold/50 text-sm">
-                            </div>
-
-                            <div id="contrib-dynamic-fields"></div>
-                            <div id="detail-pix-block"></div>
-
-                            <div class="pt-6 flex flex-col gap-3">
-                                <button type="submit" class="w-full bg-presb-gold hover:bg-yellow-500 text-white font-black py-4 px-4 rounded-xl transition-all shadow-md text-[10px] uppercase tracking-widest">
-                                    Confirmar Oferta
-                                </button>
-                                <button type="button" onclick="window.toggleContribForm(false)" class="w-full text-white/50 hover:text-white font-bold py-3 transition-colors text-[10px] uppercase tracking-widest">
-                                    Cancelar
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                <div id="detail-contributors-section" class="hidden bg-white p-8 rounded-[3rem] shadow-xl border border-slate-100">
+                    <h3 class="text-xl font-bold font-serif text-presb-green mb-8 flex items-center gap-3 pb-6 border-b border-slate-100">
+                        <i data-lucide="users" class="w-6 h-6 text-presb-gold"></i> <span id="contributor-list-title">Contribuições</span>
+                    </h3>
+                    <div id="detail-contributors-list"></div>
+                </div>
+                <div id="admin-contributions-section" class="hidden bg-white p-8 rounded-[3rem] shadow-xl border border-slate-100">
+                    <h3 class="text-xl font-bold font-serif text-presb-green mb-6">Contribuições pendentes</h3>
+                    <div id="admin-contributions-list" class="space-y-3"></div>
                 </div>
             </div>
         </div>
@@ -295,17 +269,77 @@
         <span>Vaquinhas · Núcleo IPCVT</span>
     </footer>
 
-    <!-- Confirmação de registro financeiro e envio de comprovante -->
-    <div id="contribution-confirmation" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[150] hidden flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="contribution-confirmation-title">
-        <div class="bg-white rounded-3xl max-w-md w-full p-8 text-center shadow-xl">
-            <i data-lucide="clock-3" class="w-10 h-10 text-amber-500 mx-auto mb-4"></i>
-            <h2 id="contribution-confirmation-title" class="font-bold text-xl text-presb-green mb-3">Contribuição pendente</h2>
-            <p class="text-sm text-slate-600 mb-6">Seu registro foi enviado. O valor só será contabilizado depois da confirmação do responsável.</p>
-            <a id="contribution-whatsapp" href="#" target="_blank" rel="noopener noreferrer" class="hidden bg-[#128C7E] text-white rounded-xl px-5 py-4 font-bold text-sm mb-3 items-center justify-center gap-2"><i data-lucide="message-circle" class="w-5 h-5"></i> Enviar comprovante pelo WhatsApp</a>
-            <p id="contribution-whatsapp-hint" class="text-xs text-slate-500 mb-4 hidden">Anexe a imagem do comprovante na conversa. O WhatsApp não envia o arquivo automaticamente.</p>
-            <button type="button" onclick="window.closeContributionConfirmation()" class="block w-full text-slate-600 px-4 py-3 font-bold text-sm">Concluir</button>
-        </div>
-    </div>
+    <dialog id="contribution-dialog" aria-labelledby="contrib-heading">
+        <header>
+            <p id="contrib-step">Etapa 1 de 2</p>
+            <h2 id="contrib-heading" tabindex="-1">Sua contribuição</h2>
+            <p id="contrib-campaign"></p>
+        </header>
+
+        <form id="contrib-entry">
+            <label for="contrib-name">Seu nome</label>
+            <input id="contrib-name" type="text" autocomplete="name" required maxlength="120" autofocus>
+
+            <fieldset data-modes="finance-open" hidden disabled>
+                <label for="c-amount">Quanto você vai doar? (R$)</label>
+                <input id="c-amount" type="text" inputmode="decimal" required placeholder="Ex.: 25,00">
+            </fieldset>
+            <fieldset data-modes="finance-fixed" hidden disabled>
+                <label for="c-quota-qty">Quantas cotas você vai doar?</label>
+                <p id="c-quota-price" class="contrib-hint"></p>
+                <input id="c-quota-qty" type="number" inputmode="numeric" min="1" step="1" value="1" required aria-describedby="c-quota-price">
+                <output id="c-quota-total" for="c-quota-qty"></output>
+            </fieldset>
+            <fieldset data-modes="finance-person" hidden disabled>
+                <p>Valor por pessoa</p>
+                <strong id="c-person-price"></strong>
+                <p class="contrib-hint">Cada pessoa registra uma contribuição em seu nome.</p>
+            </fieldset>
+            <fieldset data-modes="item-open" hidden disabled>
+                <label for="c-item-name">O que você vai levar?</label>
+                <input id="c-item-name" type="text" maxlength="200" required>
+            </fieldset>
+            <fieldset data-modes="item-fixed" hidden disabled>
+                <label for="c-item-select">Qual item você vai levar?</label>
+                <select id="c-item-select" required></select>
+            </fieldset>
+            <fieldset data-modes="item-open item-fixed" hidden disabled>
+                <label for="c-item-qty">Quantidade</label>
+                <input id="c-item-qty" type="number" inputmode="numeric" min="1" max="1000" step="1" value="1" required>
+            </fieldset>
+            <div class="contrib-actions">
+                <button id="contrib-cancel" type="button">Cancelar</button>
+                <button id="contrib-next" type="submit" class="contrib-primary">Continuar</button>
+            </div>
+        </form>
+
+        <section id="contrib-review" hidden>
+            <div class="contrib-review-body">
+                <div class="contrib-summary">
+                    <span id="contrib-review-name"></span>
+                    <strong id="contrib-review-total"></strong>
+                </div>
+                <div id="contrib-payment" hidden>
+                    <p id="contrib-bank-instruction"></p>
+                    <dl>
+                        <dt>Titular da conta</dt>
+                        <dd id="contrib-holder"></dd>
+                        <dt>Chave Pix</dt>
+                        <dd id="contrib-key"></dd>
+                    </dl>
+                    <button type="button" id="contrib-copy" aria-live="polite">Copiar chave Pix</button>
+                    <p id="contrib-copy-status" role="status"></p>
+                    <p id="contrib-receipt" class="contrib-notice">Após o Pix, envie o comprovante para <strong id="contrib-contact-name"></strong>.<span id="contrib-contact-phone"></span></p>
+                </div>
+                <p id="contrib-item-instruction" hidden>Confira o item e a quantidade. Toque em Concluir para avisar a organização do que você vai levar.</p>
+            </div>
+            <div class="contrib-actions">
+                <button id="contrib-back" type="button">Voltar</button>
+                <button id="contrib-finish" type="button" class="contrib-primary">Concluir</button>
+            </div>
+        </section>
+        <p id="contrib-error" role="alert"></p>
+    </dialog>
 
     <!-- Login administrativo -->
     <div id="auth-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden">
@@ -331,6 +365,7 @@
     <script src="arrecadacoes.js?v=20261107-pessoas"></script>
     <script src="arrecadacoes-relatorios.js"></script>
     <script type="module">
+        import { initContributionFlow } from "./vaquinhas-contribuicao.js?v=20261128-contribuir";
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, setDoc, updateDoc, onSnapshot, getDoc, runTransaction, collection, addDoc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously, signOut, setPersistence, browserLocalPersistence, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -355,7 +390,7 @@
         const publicDocRef = doc(db, 'app_ipcvt', 'interas_publicas');
         const pendingCollection = collection(db, 'interas_contribuicoes');
         IPCVTLedger.configure({
-            onOpen: () => { ['list','form','detail'].forEach(v=>document.getElementById('view-'+v).classList.add('hidden')); currentView='ledger'; renderPendingContributions(); window.scrollTo(0,0); },
+            onOpen: () => { contributionFlow.reset(); ['list','form','detail'].forEach(v=>document.getElementById('view-'+v).classList.add('hidden')); currentView='ledger'; renderPendingContributions(); window.scrollTo(0,0); },
             onClose: () => window.switchView('list'),
             remove: (id, version) => removeCampaignRecord(id, version),
             reauthenticateRemoval: person => new Promise(resolve => {
@@ -412,6 +447,12 @@
         let editingCampaignId = null; // Controle do modo de Edição
 
         window.formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
+
+        const contributionFlow = initContributionFlow({
+            getCampaign: () => currentView === 'detail' && (manager || selectedCampaign?.visibility !== 'private') ? selectedCampaign : null,
+            formatCurrency: window.formatCurrency,
+            save: contribution => addDoc(pendingCollection, {...contribution, status: 'pending', createdAt: serverTimestamp()})
+        });
 
         const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
         const approvedContributions = camp => (camp.contributors || []).filter(c => !c.status || c.status === 'approved');
@@ -633,6 +674,7 @@
 
         // Navegação e Views
         window.switchView = function(viewName) {
+            contributionFlow.reset();
             IPCVTLedger.hide();
             ['list', 'form', 'detail'].forEach(v => document.getElementById(`view-${v}`).classList.add('hidden'));
             ['list', 'form'].forEach(v => {
@@ -777,6 +819,7 @@
                 document.getElementById('input-goal').value = selectedCampaign.goal || '';
                 document.getElementById('input-pixkey').value = selectedCampaign.pixKey || '';
                 document.getElementById('input-pixname').value = selectedCampaign.pixName || '';
+                document.getElementById('input-receipt-name').value = selectedCampaign.receiptName || '';
                 document.getElementById('input-receipt-phone').value = selectedCampaign.receiptPhone || '';
                 if (selectedCampaign.mode === 'fixed' || selectedCampaign.mode === 'person') {
                     document.getElementById('input-quota').value = selectedCampaign.quotaValue || '';
@@ -870,11 +913,12 @@
             // Captura os dados com base no tipo
             if (type === 'finance') {
                 campData.goal = mode === 'person' ? null : parseFloat(document.getElementById('input-goal').value);
-                campData.pixKey = document.getElementById('input-pixkey').value;
-                campData.pixName = document.getElementById('input-pixname').value;
+                campData.pixKey = document.getElementById('input-pixkey').value.trim();
+                campData.pixName = document.getElementById('input-pixname').value.trim();
+                campData.receiptName = document.getElementById('input-receipt-name').value.trim();
                 campData.receiptPhone = document.getElementById('input-receipt-phone').value.replace(/\D/g, '');
-                if (!/^\d{10,13}$/.test(campData.receiptPhone)) {
-                    alert('Informe o WhatsApp de comprovantes com DDD.'); return;
+                if (document.getElementById('input-receipt-phone').value.trim() && !/^\d{10,13}$/.test(campData.receiptPhone)) {
+                    alert('Confira o telefone para comprovantes e inclua o DDD.'); return;
                 }
                 if(mode === 'fixed' || mode === 'person') campData.quotaValue = parseFloat(document.getElementById('input-quota').value);
             } else if (type === 'item' && mode === 'fixed') {
@@ -1005,6 +1049,7 @@
         }
 
         function renderDetail() {
+            contributionFlow.refresh();
             if (selectedCampaign?.visibility === 'private' && !manager) { window.requireAuth('open-private'); return; }
             const camp = selectedCampaign; const isFinance = camp.type === 'finance';
             if (manager && camp.mode === 'person') {
@@ -1015,7 +1060,6 @@
             document.getElementById('detail-contributors-section').classList.toggle('hidden', !manager);
             document.getElementById('admin-contributions-section').classList.toggle('hidden', !manager);
             document.getElementById('contributor-list-title').textContent = manager ? 'Registros de contribuições' : 'Resumo de contribuições';
-            document.getElementById('contrib-init').parentElement.hidden=false;
             document.getElementById('detail-tags').innerHTML = `
                 <span class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm ${isFinance ? 'bg-presb-green text-white' : 'bg-presb-gold text-presb-dark'}">
                     <i data-lucide="${isFinance ? 'wallet' : 'coffee'}" class="w-4 h-4"></i> ${isFinance ? 'Financeira' : 'Itens/Comida'}
@@ -1082,20 +1126,6 @@
                 itemsBlock.innerHTML = `<div class="mb-8 bg-slate-50 p-8 rounded-[2rem] border border-slate-200"><h3 class="text-lg font-bold font-serif text-presb-green mb-5 flex items-center gap-2"><i data-lucide="list-checks" class="text-presb-gold w-5 h-5"></i> O que precisamos:</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-4">${itemsHtml}</div></div>`;
             }
 
-            const pixBlock = document.getElementById('detail-pix-block');
-            pixBlock.innerHTML = '';
-            if (isFinance && camp.pixKey) {
-                pixBlock.innerHTML = `
-                    <div class="bg-white text-presb-green p-4 rounded-xl border border-presb-gold/50 shadow-md">
-                        <h4 class="font-bold text-sm mb-2 flex items-center gap-2"><i data-lucide="qr-code" class="w-4 h-4"></i> Pague com PIX</h4>
-                        <p class="text-slate-600 text-xs mb-2">Favorecido: <strong>${escapeHtml(camp.pixName)}</strong></p>
-                        <p class="text-slate-700 font-mono text-xs break-all bg-slate-50 p-3 rounded-lg border">${escapeHtml(camp.pixKey)}</p>
-                        <button type="button" id="btn-copy-pix" class="w-full mt-3 px-4 py-3 bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2"><i data-lucide="copy" class="w-4 h-4"></i> Copiar chave PIX</button>
-                    </div>
-                `;
-                document.getElementById('btn-copy-pix').onclick = () => window.copyPix(camp.pixKey);
-            }
-
             const listBlock = document.getElementById('detail-contributors-list');
             if (!manager) {
                 const count = Number(camp.contributorCount ?? 0);
@@ -1121,51 +1151,8 @@
             }
             renderPendingContributions();
             
-            document.getElementById('contrib-subtitle').innerText = isFinance ? "Registre sua oferta e veja os dados para o PIX." : "Assuma um item da lista e contribua com a comunhão!";
-            window.toggleContribForm(false);
-            
-            // Build Dynamic Form
-            const dynFields = document.getElementById('contrib-dynamic-fields');
-            if (isFinance) {
-                if(camp.mode === 'person') {
-                    dynFields.innerHTML = `<div class="border border-presb-gold/30 rounded-xl p-4 text-sm"><p class="font-bold">Oferta única: ${window.formatCurrency(camp.quotaValue)}</p><p class="mt-2 text-xs">Uma contribuição confirmada por nome. Após o PIX, envie o comprovante para validação.</p></div>`;
-                } else if(camp.mode === 'fixed') {
-                    dynFields.innerHTML = `
-                        <div class="flex items-center justify-between mb-4"><span class="text-xs font-bold text-white">Valor da Cota:</span> <span class="text-sm font-black text-presb-gold">${window.formatCurrency(camp.quotaValue)}</span></div>
-                        <label for="c-quota-qty" class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Quantas cotas?</label>
-                        <input required id="c-quota-qty" type="number" min="1" value="1" oninput="document.getElementById('c-quota-total').innerText = window.formatCurrency(this.value * ${camp.quotaValue})" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none focus:ring-4 focus:ring-presb-gold/50 text-sm mb-2">
-                        <div class="text-right text-xs font-bold text-white/80">Total: <span id="c-quota-total" class="text-presb-gold font-black">${window.formatCurrency(camp.quotaValue)}</span></div>
-                    `;
-                } else {
-                    dynFields.innerHTML = `<div><label for="c-amount" class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Valor Ofertado (R$)</label>
-                        <input required id="c-amount" type="number" step="0.01" min="0.01" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none focus:ring-4 focus:ring-presb-gold/50 text-sm"></div>`;
-                }
-            } else {
-                if(camp.mode === 'fixed') {
-                    const options = camp.itemsNeeded.filter(i => i.pledged < i.needed).map(i => `<option value="${escapeHtml(i.id)}">${escapeHtml(i.name)} (Faltam ${i.needed - i.pledged})</option>`).join('');
-                    if(options) {
-                        dynFields.innerHTML = `
-                            <div class="mb-4"><label for="c-item-select" class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">O que vai levar?</label>
-                        <select required id="c-item-select" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none">${options}</select></div>
-                            <div><label for="c-item-qty" class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Quantidade</label>
-                        <input required id="c-item-qty" type="number" min="1" value="1" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none text-sm"></div>
-                        `;
-                    } else {
-                        dynFields.innerHTML = `<div class="text-center text-presb-gold font-bold text-sm bg-presb-dark p-4 rounded-xl">Todos os itens já foram preenchidos! Obrigado!</div>`;
-                    }
-                } else {
-                    dynFields.innerHTML = `<div><label for="c-item-name" class="block text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">O que vai levar?</label>
-                        <input required id="c-item-name" type="text" class="w-full px-4 py-3 bg-white text-presb-green font-bold rounded-xl outline-none focus:ring-4 focus:ring-presb-gold/50 text-sm"></div>`;
-                }
-            }
             lucide.createIcons();
         }
-
-        window.toggleContribForm = function(show) {
-            document.getElementById('contrib-init').classList.toggle('hidden', show);
-            document.getElementById('contrib-form').classList.toggle('hidden', !show);
-            if(show) document.getElementById('contrib-name').value = '';
-        };
 
         function renderPendingContributions() {
             const records = pendingContributions.filter(record =>
@@ -1300,99 +1287,6 @@
             } catch (error) {
                 console.error('Falha ao analisar contribuição:', error);
                 alert('Não foi possível concluir: ' + error.message);
-            }
-        };
-
-        window.closeContributionConfirmation = () => {
-            document.getElementById('contribution-confirmation').classList.add('hidden');
-        };
-
-        function showContributionConfirmation(camp, contributionId) {
-            const modal = document.getElementById('contribution-confirmation');
-            const link = document.getElementById('contribution-whatsapp');
-            const hint = document.getElementById('contribution-whatsapp-hint');
-            const phone = String(camp.receiptPhone || '').replace(/\D/g, '');
-            const canSendProof = camp.type === 'finance' && /^\d{10,13}$/.test(phone);
-            link.classList.toggle('hidden', !canSendProof);
-            link.classList.toggle('flex', canSendProof);
-            hint.classList.toggle('hidden', camp.type !== 'finance');
-            hint.textContent = canSendProof
-                ? 'Anexe o comprovante na conversa. O WhatsApp não envia o arquivo automaticamente.'
-                : 'O responsável ainda não informou o WhatsApp. Guarde seu comprovante para apresentar à gestão.';
-            if (canSendProof) {
-                const recipient = phone.startsWith('55') ? phone : '55' + phone;
-                const message = `Oi! Acabei de fazer minha contribuição para ${camp.title}. Segue meu comprovante de pagamento! Referência: ${contributionId.slice(0, 8).toUpperCase()}.`;
-                link.href = `https://wa.me/${recipient}?text=${encodeURIComponent(message)}`;
-            }
-            modal.classList.remove('hidden');
-            lucide.createIcons();
-        }
-
-        window.submitContribution = async function(e) {
-            e.preventDefault();
-            const camp = selectedCampaign;
-            if (!camp || (camp.visibility !== 'public' && !manager)) return;
-            let payload = {
-                campaignId: String(camp.id), name: document.getElementById('contrib-name').value.trim(),
-                type: camp.type, status: 'pending', createdAt: serverTimestamp()
-            };
-            if (!payload.name || payload.name.length > 120) return alert('Informe seu nome (até 120 caracteres).');
-            
-            if (camp.type === 'finance') {
-                if(camp.mode === 'person') {
-                    payload.amount = Number(camp.quotaValue);
-                } else if(camp.mode === 'fixed') {
-                    payload.amount = camp.quotaValue * parseInt(document.getElementById('c-quota-qty').value);
-                } else {
-                    payload.amount = parseFloat(document.getElementById('c-amount').value);
-                }
-                if (!Number.isFinite(payload.amount) || payload.amount <= 0) return alert('Informe um valor válido.');
-            } else {
-                if (camp.mode === 'fixed') {
-                    const itemSelect = document.getElementById('c-item-select');
-                    if(!itemSelect) return;
-                    const itemId = itemSelect.value;
-                    const qty = parseInt(document.getElementById('c-item-qty').value);
-                    const item = camp.itemsNeeded.find(i => i.id === itemId);
-                    if (!item || !Number.isInteger(qty) || qty < 1 || qty > Number(item.needed) - Number(item.pledged || 0)) {
-                        return alert('Informe uma quantidade válida.');
-                    }
-                    payload.itemId = itemId;
-                    payload.itemName = item.name;
-                    payload.quantity = qty;
-                } else {
-                    payload.itemName = document.getElementById('c-item-name').value;
-                    payload.quantity = 1; 
-                }
-            }
-            
-            const submit = document.querySelector('#contrib-form button[type=submit]');
-            submit.disabled = true;
-            try {
-                const submitted = await addDoc(pendingCollection, payload);
-                renderDetail();
-                showContributionConfirmation(camp, submitted.id);
-            } catch (error) {
-                console.error('Falha ao registrar contribuição:', error);
-                alert('Não foi possível registrar sua contribuição. Tente novamente.');
-            } finally { submit.disabled = false; }
-        };
-
-        window.copyPix = function(text) {
-            const textArea = document.createElement("textarea"); textArea.value = text; document.body.appendChild(textArea); textArea.select();
-            try { document.execCommand('copy'); } catch (err) { console.error('Erro ao copiar', err); }
-            document.body.removeChild(textArea);
-            
-            const btn = document.getElementById('btn-copy-pix');
-            if(btn) {
-                btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Copiado`;
-                btn.classList.replace('bg-slate-800', 'bg-emerald-600');
-                lucide.createIcons();
-                setTimeout(() => {
-                    btn.innerHTML = `<i data-lucide="copy" class="w-4 h-4"></i> Copiar Chave`;
-                    btn.classList.replace('bg-emerald-600', 'bg-slate-800');
-                    lucide.createIcons();
-                }, 2000);
             }
         };
 

@@ -20,9 +20,12 @@ antes de substituí-lo.
    A Escala Geral já consulta essa lista para liberar o modo administrador.
    O Planejamento Estratégico usa essa lista para liberar o painel de equipes.
 
-O WhatsApp é informado em cada vaquinha financeira. O botão abre uma conversa
-com a mensagem pronta; o contribuinte precisa anexar o arquivo manualmente.
-O comprovante não é enviado nem guardado no Firebase.
+Ao tocar em **Contribuir**, o visitante informa seu nome e os dados da doação.
+Nas campanhas financeiras, a etapa seguinte mostra o valor, a chave Pix, o titular
+e as orientações para enviar o comprovante diretamente ao responsável. A gestão
+pode cadastrar o nome e o telefone desse contato. Nas campanhas de itens, o
+visitante confere o item e a quantidade. **Concluir** cria o registro pendente
+para a gestão aprovar.
 
 ## Regras completas
 
